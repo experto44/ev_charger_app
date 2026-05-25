@@ -133,6 +133,57 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
     return 2 * r * asin(sqrt(x));
   }
 
+  // ── Linear progress of a point along origin→destination (0.0–1.0) ─────────
+  // Used to sort all waypoints (manual + charging) into the correct visit order
+  // before handing them to the Google Maps URL.
+  static double _linearProgress(LatLng pt, LatLng origin, LatLng dest) {
+    final total = _haversine(origin, dest);
+    if (total == 0) { return 0; }
+    return (_haversine(origin, pt) / total).clamp(0.0, 1.0);
+  }
+
+  // ── Find N charging-station waypoints evenly spaced along origin→dest ──────
+  // Interpolates N intermediate positions along the straight-line route and
+  // picks the nearest *available* station to each position (each station can
+  // only be picked once).  Returns them in geographic order (already sorted
+  // by interpolation parameter t, so no extra sort needed here).
+  List<Station> _chargingStationWaypoints(int count) {
+    if (count <= 0) { return <Station>[]; }
+    final origin = _stops.first.coords;
+    final dest   = _stops.last.coords;
+    if (origin == null || dest == null) { return <Station>[]; }
+
+    final available = widget.stations
+        .where((s) => s.available > 0)
+        .toList();
+    if (available.isEmpty) { return <Station>[]; }
+
+    final result = <Station>[];
+    final used   = <String>{}; // station name used as a unique key
+
+    for (int i = 1; i <= count; i++) {
+      // Evenly-spaced fraction along the straight-line origin→dest
+      final t   = i / (count + 1);
+      final lat = origin.latitude  + (dest.latitude  - origin.latitude)  * t;
+      final lng = origin.longitude + (dest.longitude - origin.longitude) * t;
+      final pt  = LatLng(lat, lng);
+
+      // Nearest unused available station to this interpolated point
+      Station? best;
+      double   minD = double.infinity;
+      for (final s in available) {
+        if (used.contains(s.name)) { continue; }
+        final d = _haversine(pt, LatLng(s.lat, s.lng));
+        if (d < minD) { minD = d; best = s; }
+      }
+      if (best != null) {
+        result.add(best);
+        used.add(best.name);
+      }
+    }
+    return result;
+  }
+
   // ── Haversine chain across all resolved stops ─────────────────────────────
   // A 1.25× road-distance multiplier converts straight-line km to an estimate
   // that closely matches real driving distance shown by Google Maps.
@@ -162,7 +213,13 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
     return (batteryAtArrivalPct: pct, stopsNeeded: stops);
   }
 
-  // ── Open route in native Google Maps ─────────────────────────────────────
+  // ── Open complete multi-stop route in native Google Maps ─────────────────
+  // Waypoint build order:
+  //   1. Manual intermediate stops the user added (RouteStop entries 1..n-2)
+  //   2. EV charging stops derived from _evPreview (nearest available station
+  //      to each evenly-spaced position along the route)
+  // All waypoints are sorted by their linear progress from origin→destination
+  // so Google Maps always receives them in the correct geographic visit order.
   Future<void> _planRoute() async {
     setState(() => _isPlanning = true);
     try {
@@ -175,14 +232,35 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
           '&destination=${destination.latitude},${destination.longitude}'
           '&travelmode=driving';
 
-      // Intermediate waypoints
+      // ── Collect every waypoint with its route-progress fraction ───────────
+      // Using a positional record (progress, coord-string) for lightweight sorting.
+      final wps = <(double, String)>[];
+
+      // 1. Manual intermediate stops (user-added via the +/stop UI)
       if (_stops.length > 2) {
-        final mid = _stops.sublist(1, _stops.length - 1);
-        final wps = mid
-            .where((s) => s.coords != null)
-            .map((s) => '${s.coords!.latitude},${s.coords!.longitude}')
-            .join('|');
-        if (wps.isNotEmpty) { urlStr += '&waypoints=$wps'; }
+        for (final s in _stops.sublist(1, _stops.length - 1)) {
+          if (s.coords == null) { continue; }
+          wps.add((
+            _linearProgress(s.coords!, origin, destination),
+            '${s.coords!.latitude},${s.coords!.longitude}',
+          ));
+        }
+      }
+
+      // 2. EV charging-station waypoints from the route preview
+      final chargingStops = _chargingStationWaypoints(_evPreview.stopsNeeded);
+      for (final s in chargingStops) {
+        final ll = LatLng(s.lat, s.lng);
+        wps.add((
+          _linearProgress(ll, origin, destination),
+          '${s.lat},${s.lng}',
+        ));
+      }
+
+      // Sort by progress so the order is always origin→…→destination
+      if (wps.isNotEmpty) {
+        wps.sort((a, b) => a.$1.compareTo(b.$1));
+        urlStr += '&waypoints=${wps.map((w) => w.$2).join('|')}';
       }
 
       final uri = Uri.parse(urlStr);
