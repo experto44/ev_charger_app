@@ -6,6 +6,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'profile_screen.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   PaintingBinding.instance.imageCache.maximumSize = 30;
@@ -323,7 +325,13 @@ class _SearchBarWidget extends StatelessWidget {
               ),
             ),
           ),
-          const _IconBtn(icon: Icons.account_circle_outlined),
+          _IconBtn(
+            icon: Icons.account_circle_outlined,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            ),
+          ),
           const SizedBox(width: 8),
         ],
       ),
@@ -389,14 +397,18 @@ class _Chip extends StatelessWidget {
 }
 
 class _IconBtn extends StatelessWidget {
-  const _IconBtn({required this.icon});
+  const _IconBtn({required this.icon, this.onTap});
   final IconData icon;
+  final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => Container(
-    width: 38, height: 38,
-    decoration: BoxDecoration(color: _bgSurface, borderRadius: BorderRadius.circular(10)),
-    child: Icon(icon, color: _textSec, size: 20),
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      width: 38, height: 38,
+      decoration: BoxDecoration(color: _bgSurface, borderRadius: BorderRadius.circular(10)),
+      child: Icon(icon, color: _textSec, size: 20),
+    ),
   );
 }
 
