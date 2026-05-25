@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -6,7 +7,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'places_service.dart';
 import 'profile_screen.dart';
+import 'route_planner_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -84,13 +87,16 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   static const _tbilisi = LatLng(41.7151, 44.8271);
 
-  final _searchCtrl       = TextEditingController();
-  final _mapCtrl          = MapController();
-  bool  _filterDC         = false;
-  bool  _filterAvail      = false;
-  LatLng?          _userPos;
-  List<_Station>   _stations = const [];
-  bool             _loading  = true;
+  final _searchCtrl        = TextEditingController();
+  final _searchFocus       = FocusNode();
+  final _mapCtrl           = MapController();
+  bool  _filterDC          = false;
+  bool  _filterAvail       = false;
+  LatLng?               _userPos;
+  List<_Station>        _stations    = const [];
+  bool                  _loading     = true;
+  List<PlacePrediction> _suggestions = const [];
+  Timer?                _debounce;
 
   @override
   void initState() {
@@ -145,7 +151,30 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _searchFocus.dispose();
+    _debounce?.cancel();
     super.dispose();
+  }
+
+  void _onSearchChanged(String query) {
+    setState(() {}); // refresh station filter immediately
+    _debounce?.cancel();
+    if (query.trim().length < 2) {
+      setState(() => _suggestions = const []);
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 400), () async {
+      final results = await PlacesService.autocomplete(query);
+      if (mounted) { setState(() => _suggestions = results); }
+    });
+  }
+
+  Future<void> _onSuggestionSelected(PlacePrediction p) async {
+    _searchCtrl.text = p.description;
+    _searchFocus.unfocus();
+    setState(() => _suggestions = const []);
+    final coords = await PlacesService.getCoordinates(p.placeId);
+    if (coords != null && mounted) { _mapCtrl.move(coords, 15); }
   }
 
   List<_Station> get _filtered {
@@ -224,8 +253,16 @@ class _MapScreenState extends State<MapScreen> {
                 children: [
                   _SearchBarWidget(
                     controller: _searchCtrl,
-                    onChanged: (_) => setState(() {}),
+                    focusNode:  _searchFocus,
+                    onChanged:  _onSearchChanged,
                   ),
+                  if (_suggestions.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    _SuggestionsList(
+                      suggestions: _suggestions,
+                      onTap: _onSuggestionSelected,
+                    ),
+                  ],
                   const SizedBox(height: 10),
                   _FilterChips(
                     filterDC:    _filterDC,
@@ -234,6 +271,28 @@ class _MapScreenState extends State<MapScreen> {
                     onAvail:     (v) => setState(() => _filterAvail = v),
                   ),
                 ],
+              ),
+            ),
+          ),
+
+          // ── Route planner button ──────────────────────────────────────────
+          Positioned(
+            right: 16,
+            bottom: 316, // 256 (GPS btn) + 48 (btn height) + 12 (gap)
+            child: GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const RoutePlannerScreen()),
+              ),
+              child: Container(
+                width: 48, height: 48,
+                decoration: BoxDecoration(
+                  color: _bgCard,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: _bgSurface),
+                  boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4))],
+                ),
+                child: const Icon(Icons.alt_route_rounded, color: _textSec, size: 22),
               ),
             ),
           ),
@@ -294,8 +353,13 @@ class _MapScreenState extends State<MapScreen> {
 
 // ── Search bar ────────────────────────────────────────────────────────────────
 class _SearchBarWidget extends StatelessWidget {
-  const _SearchBarWidget({required this.controller, required this.onChanged});
+  const _SearchBarWidget({
+    required this.controller,
+    required this.focusNode,
+    required this.onChanged,
+  });
   final TextEditingController controller;
+  final FocusNode focusNode;
   final ValueChanged<String> onChanged;
 
   @override
@@ -315,10 +379,11 @@ class _SearchBarWidget extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
-              onChanged: onChanged,
+              focusNode:  focusNode,
+              onChanged:  onChanged,
               style: const TextStyle(color: _textPri, fontSize: 15),
               decoration: const InputDecoration(
-                hintText: 'Search charging stations…',
+                hintText: 'Search stations or address…',
                 hintStyle: TextStyle(color: _textSec, fontSize: 15),
                 border: InputBorder.none,
                 isDense: true,
@@ -334,6 +399,59 @@ class _SearchBarWidget extends StatelessWidget {
           ),
           const SizedBox(width: 8),
         ],
+      ),
+    );
+  }
+}
+
+// ── Suggestions dropdown ──────────────────────────────────────────────────────
+class _SuggestionsList extends StatelessWidget {
+  const _SuggestionsList({required this.suggestions, required this.onTap});
+  final List<PlacePrediction> suggestions;
+  final Future<void> Function(PlacePrediction) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _bgCard,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 16, offset: Offset(0, 6))],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: suggestions.asMap().entries.map((e) {
+          final isLast = e.key == suggestions.length - 1;
+          final p = e.value;
+          return GestureDetector(
+            onTap: () => onTap(p),
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                border: isLast ? null : const Border(
+                  bottom: BorderSide(color: _bgSurface, width: 0.5),
+                ),
+              ),
+              child: Row(children: [
+                const Icon(Icons.location_on_outlined, color: _emerald, size: 18),
+                const SizedBox(width: 10),
+                Expanded(child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(p.mainText,
+                        style: const TextStyle(color: _textPri, fontSize: 14, fontWeight: FontWeight.w500),
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                    if (p.secondaryText.isNotEmpty)
+                      Text(p.secondaryText,
+                          style: const TextStyle(color: _textSec, fontSize: 12),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ],
+                )),
+              ]),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
