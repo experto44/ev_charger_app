@@ -3,7 +3,12 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-void main() => runApp(const EVChargerApp());
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  PaintingBinding.instance.imageCache.maximumSize = 30;
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 10 * 1024 * 1024; // 10 MB
+  runApp(const EVChargerApp());
+}
 
 // ── Theme ────────────────────────────────────────────────────────────────────
 const _bgDark    = Color(0xFF1A1A1A);
@@ -105,7 +110,10 @@ class _MapScreenState extends State<MapScreen> {
                 urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
                 subdomains: const ['a', 'b', 'c', 'd'],
                 userAgentPackageName: 'com.example.ev_charger_app',
-                retinaMode: MediaQuery.devicePixelRatioOf(context) >= 2,
+                retinaMode: false,
+                maxNativeZoom: 18,
+                keepBuffer: 0,
+                panBuffer: 0,
               ),
               MarkerLayer(
                 markers: stations.map((s) => Marker(
