@@ -9,7 +9,8 @@
     "price": "0.59 ₾/kWh",
     "available_spots": "4 available",
     "city": "Gori Autobahn",
-    "provider": "Tegeta Motors"
+    "provider": "Tegeta Motors",
+    "last_updated": "Cached (offline)"
   },
   {
     "id": "es_urbnisi_001",
@@ -21,7 +22,8 @@
     "price": "0.60 ₾/kWh",
     "available_spots": "2 available",
     "city": "Urbnisi",
-    "provider": "E-Space"
+    "provider": "E-Space",
+    "last_updated": "Cached (offline)"
   },
   {
     "id": "ws_smart_gori",
@@ -33,7 +35,8 @@
     "price": "0.58 ₾/kWh",
     "available_spots": "2 available",
     "city": "Gori",
-    "provider": "Wissol"
+    "provider": "Wissol",
+    "last_updated": "Cached (offline)"
   },
   {
     "id": "ws_zestafoni_001",
@@ -45,7 +48,8 @@
     "price": "0.58 ₾/kWh",
     "available_spots": "4 available",
     "city": "Zestafoni",
-    "provider": "Wissol"
+    "provider": "Wissol",
+    "last_updated": "Cached (offline)"
   },
   {
     "id": "gf_khashuri_001",
@@ -57,6 +61,7 @@
     "price": "0.55 ₾/kWh",
     "available_spots": "2 available",
     "city": "Khashuri",
-    "provider": "Gulf Georgia"
+    "provider": "Gulf Georgia",
+    "last_updated": "Cached (offline)"
   }
 ]

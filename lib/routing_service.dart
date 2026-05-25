@@ -20,8 +20,9 @@ class Station {
     required this.isDC,
     required this.kw,
     required this.price,
-    this.distance = '',
-    this.provider = '',
+    this.distance    = '',
+    this.provider    = '',
+    this.lastUpdated = '',
   });
 
   /// Handles both the production format (available_spots / type / power / city)
@@ -32,34 +33,37 @@ class Station {
       final spots = j['available_spots'] as String; // "4 available"
       final power = j['power']           as String; // "150 kW"
       return Station(
-        name:      j['name']     as String,
-        location:  j['city']     as String,
-        available: int.tryParse(spots.split(' ').first) ?? 0,
-        lat:       (j['lat']     as num).toDouble(),
-        lng:       (j['lng']     as num).toDouble(),
-        isDC:      (j['type']    as String) == 'Fast DC',
-        kw:        int.tryParse(power.split(' ').first) ?? 0,
-        price:     j['price']    as String,
-        provider:  j['provider'] as String? ?? '',
+        name:        j['name']         as String,
+        location:    j['city']         as String,
+        available:   int.tryParse(spots.split(' ').first) ?? 0,
+        lat:         (j['lat']         as num).toDouble(),
+        lng:         (j['lng']         as num).toDouble(),
+        isDC:        (j['type']        as String) == 'Fast DC',
+        kw:          int.tryParse(power.split(' ').first) ?? 0,
+        price:       j['price']        as String,
+        provider:    j['provider']     as String? ?? '',
+        lastUpdated: j['last_updated'] as String? ?? '',
       );
     }
     // Legacy schema
     return Station(
-      name:      j['name']      as String,
-      location:  j['location']  as String,
-      available: j['available'] as int,
-      lat:       (j['lat']      as num).toDouble(),
-      lng:       (j['lng']      as num).toDouble(),
-      isDC:      j['isDC']      as bool,
-      kw:        j['kw']        as int,
-      price:     j['price']     as String,
-      distance:  j['distance']  as String? ?? '',
+      name:        j['name']         as String,
+      location:    j['location']     as String,
+      available:   j['available']    as int,
+      lat:         (j['lat']         as num).toDouble(),
+      lng:         (j['lng']         as num).toDouble(),
+      isDC:        j['isDC']         as bool,
+      kw:          j['kw']           as int,
+      price:       j['price']        as String,
+      distance:    j['distance']     as String? ?? '',
+      lastUpdated: j['last_updated'] as String? ?? '',
     );
   }
 
   final String name, location, price;
-  final String distance; // empty for production-schema entries
+  final String distance;    // empty for production-schema entries
   final String provider;
+  final String lastUpdated; // ISO date or human string; empty if not present
   final int    available, kw;
   final double lat, lng;
   final bool   isDC;

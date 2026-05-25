@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -29,6 +30,11 @@ const _textSec   = Color(0xFF9E9E9E);
 
 // Fallback centre used only when GPS is unavailable
 const _tbilisi = LatLng(41.7151, 44.8271);
+
+// Cloud data source — weekly-synced GitHub Gist
+const _kGistUrl =
+    'https://gist.githubusercontent.com/experto44/36f39392ce7a4abe14ab065aa8e846bd'
+    '/raw/ce8426381a8d56fd144d5726fcd42a94216170fb/chargers.json';
 
 // ── Battery colour helper (shared by route summary widgets) ───────────────────
 Color _batColor(double pct) {
@@ -94,8 +100,30 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _loadStations() async {
+    // Capture the asset bundle NOW (synchronously, before any await gap)
+    // so we don't access BuildContext after an async suspension.
+    final bundle = DefaultAssetBundle.of(context);
+
+    // ── 1. Try live cloud data (Gist) ────────────────────────────────────────
     try {
-      final raw  = await DefaultAssetBundle.of(context).loadString('assets/data/chargers.json');
+      final res = await http
+          .get(Uri.parse(_kGistUrl))
+          .timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200) {
+        final list = (jsonDecode(res.body) as List)
+            .map((e) => Station.fromJson(e as Map<String, dynamic>))
+            .toList();
+        if (!mounted) { return; }
+        setState(() { _stations = list; _loading = false; });
+        return; // success — skip local fallback
+      }
+    } catch (_) {
+      // Network unavailable, timeout, or parse error — fall through
+    }
+
+    // ── 2. Local asset fallback ───────────────────────────────────────────────
+    try {
+      final raw  = await bundle.loadString('assets/data/chargers.json');
       final list = (jsonDecode(raw) as List)
           .map((e) => Station.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -1020,6 +1048,20 @@ class _StationSheetState extends State<_StationSheet> {
             ),
           ]),
           const SizedBox(height: 16),
+
+          // Last-updated timestamp
+          if (s.lastUpdated.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(children: [
+              const Icon(Icons.history_rounded, color: _textSec, size: 13),
+              const SizedBox(width: 5),
+              Text(
+                'Last verified: ${s.lastUpdated}',
+                style: const TextStyle(color: _textSec, fontSize: 11),
+              ),
+            ]),
+          ],
+          const SizedBox(height: 10),
 
           // Availability row + refresh button
           Row(children: [
