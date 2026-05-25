@@ -12,24 +12,54 @@ const _kApiKey = 'AIzaSyAF1rz6kk4MpMaHwzCmdmepSJlg8GwcS78';
 // ── Station (public model shared across screens) ──────────────────────────────
 class Station {
   const Station({
-    required this.name,      required this.location,  required this.distance,
-    required this.available, required this.lat,        required this.lng,
-    required this.isDC,      required this.kw,         required this.price,
+    required this.name,
+    required this.location,
+    required this.available,
+    required this.lat,
+    required this.lng,
+    required this.isDC,
+    required this.kw,
+    required this.price,
+    this.distance = '',
+    this.provider = '',
   });
 
-  factory Station.fromJson(Map<String, dynamic> j) => Station(
-    name:      j['name']      as String,
-    location:  j['location']  as String,
-    distance:  j['distance']  as String,
-    available: j['available'] as int,
-    lat:       (j['lat']      as num).toDouble(),
-    lng:       (j['lng']      as num).toDouble(),
-    isDC:      j['isDC']      as bool,
-    kw:        j['kw']        as int,
-    price:     j['price']     as String,
-  );
+  /// Handles both the production format (available_spots / type / power / city)
+  /// and the legacy format (available / isDC / kw / location).
+  factory Station.fromJson(Map<String, dynamic> j) {
+    if (j.containsKey('available_spots')) {
+      // Production schema
+      final spots = j['available_spots'] as String; // "4 available"
+      final power = j['power']           as String; // "150 kW"
+      return Station(
+        name:      j['name']     as String,
+        location:  j['city']     as String,
+        available: int.tryParse(spots.split(' ').first) ?? 0,
+        lat:       (j['lat']     as num).toDouble(),
+        lng:       (j['lng']     as num).toDouble(),
+        isDC:      (j['type']    as String) == 'Fast DC',
+        kw:        int.tryParse(power.split(' ').first) ?? 0,
+        price:     j['price']    as String,
+        provider:  j['provider'] as String? ?? '',
+      );
+    }
+    // Legacy schema
+    return Station(
+      name:      j['name']      as String,
+      location:  j['location']  as String,
+      available: j['available'] as int,
+      lat:       (j['lat']      as num).toDouble(),
+      lng:       (j['lng']      as num).toDouble(),
+      isDC:      j['isDC']      as bool,
+      kw:        j['kw']        as int,
+      price:     j['price']     as String,
+      distance:  j['distance']  as String? ?? '',
+    );
+  }
 
-  final String name, location, distance, price;
+  final String name, location, price;
+  final String distance; // empty for production-schema entries
+  final String provider;
   final int    available, kw;
   final double lat, lng;
   final bool   isDC;

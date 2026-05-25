@@ -623,6 +623,10 @@ class _StationCard extends StatelessWidget {
               style: const TextStyle(color: _textPri, fontSize: 14, fontWeight: FontWeight.bold),
               maxLines: 1, overflow: TextOverflow.ellipsis),
           Text(s.location, style: const TextStyle(color: _textSec, fontSize: 12)),
+          if (s.provider.isNotEmpty)
+            Text(s.provider,
+                style: const TextStyle(color: Color(0xFF666666), fontSize: 10),
+                maxLines: 1, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 8),
           Row(children: [
             Container(
@@ -643,9 +647,11 @@ class _StationCard extends StatelessWidget {
           ]),
           const Spacer(),
           Row(children: [
-            const Icon(Icons.near_me_outlined, color: _textSec, size: 13),
-            const SizedBox(width: 4),
-            Text(s.distance, style: const TextStyle(color: _textSec, fontSize: 12)),
+            if (s.distance.isNotEmpty) ...[
+              const Icon(Icons.near_me_outlined, color: _textSec, size: 13),
+              const SizedBox(width: 4),
+              Text(s.distance, style: const TextStyle(color: _textSec, fontSize: 12)),
+            ],
             const Spacer(),
             const Icon(Icons.bolt, color: _emerald, size: 16),
           ]),
