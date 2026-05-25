@@ -86,8 +86,12 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
-    _initLocation();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadStations());
+    // Both calls go in addPostFrameCallback so FlutterMap is mounted and
+    // MapController is attached before we attempt _mapCtrl.move().
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadStations();
+      _initLocation();
+    });
   }
 
   Future<void> _loadStations() async {
@@ -112,17 +116,29 @@ class _MapScreenState extends State<MapScreen> {
       }
       if (perm == LocationPermission.denied ||
           perm == LocationPermission.deniedForever) { return; }
+
+      // ── Step 1: instant center using cached last-known position ───────────
+      final last = await Geolocator.getLastKnownPosition();
+      if (last != null && mounted) {
+        final latlng = LatLng(last.latitude, last.longitude);
+        setState(() => _userPos = latlng);
+        _mapCtrl.move(latlng, 14);
+      }
+
+      // ── Step 2: refine with a fresh high-accuracy fix ─────────────────────
       final pos    = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
           timeLimit: Duration(seconds: 10),
         ),
       );
-      final latlng = LatLng(pos.latitude, pos.longitude);
       if (!mounted) { return; }
+      final latlng = LatLng(pos.latitude, pos.longitude);
       setState(() => _userPos = latlng);
       _mapCtrl.move(latlng, 14);
-    } catch (_) {}
+    } catch (_) {
+      // Permission denied or GPS timeout — Tbilisi fallback stays in place.
+    }
   }
 
   @override
