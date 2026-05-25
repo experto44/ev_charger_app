@@ -31,43 +31,6 @@ const _textSec   = Color(0xFF9E9E9E);
 // Fallback centre used only when GPS is unavailable
 const _tbilisi = LatLng(41.7151, 44.8271);
 
-// ── Georgia map-focus polygons ────────────────────────────────────────────────
-// Simplified but accurate clockwise border trace used for the dim-overlay and
-// the emerald border highlight.  Abkhazia / S.Ossetia lines follow the
-// de-facto administrative boundary for display purposes.
-const _georgiaOutline = <LatLng>[
-  LatLng(41.535, 41.475), // Sarpi – Turkey / Black Sea SW
-  LatLng(41.470, 41.770), // Batumi area
-  LatLng(41.275, 42.335), // Turkey border continues SE
-  LatLng(41.120, 42.785), // Ardahan / Artvin border
-  LatLng(41.060, 43.130), // Armenia border begins (W)
-  LatLng(41.250, 43.545), // Armenia border N
-  LatLng(41.290, 43.880), // Armenia / Azerbaijan triple border
-  LatLng(41.385, 44.840), // Tbilisi south
-  LatLng(41.540, 45.655), // Alazani valley SE
-  LatLng(41.875, 46.740), // Lagodekhi – Azerbaijan NE corner
-  LatLng(42.375, 46.230), // Kakheti E
-  LatLng(42.685, 45.615), // Kakheti NE – Dedoplistskaro
-  LatLng(43.545, 44.985), // Kazbegi / Stepantsminda
-  LatLng(43.590, 44.465), // Russia N border (E segment)
-  LatLng(43.525, 43.595), // Russia N border (mid)
-  LatLng(43.385, 42.455), // Russia N border (Racha)
-  LatLng(43.315, 41.995), // Svaneti NW
-  LatLng(43.065, 41.545), // Abkhazia de-facto border
-  LatLng(42.820, 41.095), // Abkhazia coast
-  LatLng(42.375, 40.315), // Black Sea coast
-  LatLng(41.535, 41.475), // close polygon
-];
-
-// World rectangle that wraps the entire map — used as the outer ring of the
-// dimming polygon so everything *outside* Georgia is darkened.
-const _worldRect = <LatLng>[
-  LatLng(-85.0, -180.0),
-  LatLng( 85.0, -180.0),
-  LatLng( 85.0,  180.0),
-  LatLng(-85.0,  180.0),
-];
-
 // Cloud data source — weekly-synced GitHub Gist
 const _kGistUrl =
     'https://gist.githubusercontent.com/experto44/36f39392ce7a4abe14ab065aa8e846bd'
@@ -294,36 +257,16 @@ class _MapScreenState extends State<MapScreen> {
               onMapReady: _initLocation,
             ),
             children: [
-              // Stadia Alidade Smooth Dark — significantly better road and
-              // terrain contrast than CartoDB Dark Matter while keeping the
-              // premium dark aesthetic.
+              // CartoDB Dark Matter — reliable dark basemap, highways and
+              // arterials visible as lighter grey lines, water as dark blue.
               TileLayer(
-                urlTemplate: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png',
+                urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                subdomains: const ['a', 'b', 'c', 'd'],
                 userAgentPackageName: 'com.example.ev_charger_app',
-                maxNativeZoom: 20,
+                retinaMode: false,
+                maxNativeZoom: 18,
                 keepBuffer: 0,
                 panBuffer: 0,
-              ),
-              // ── Georgia focus overlay ─────────────────────────────────────
-              // 1. Dimming vignette: darkens everything outside Georgia while
-              //    leaving the country at full tile brightness.
-              // 2. Emerald border ring: subtle country outline glow.
-              PolygonLayer(
-                polygons: [
-                  Polygon(
-                    points: _worldRect,
-                    holePointsList: [_georgiaOutline],
-                    color: Colors.black.withOpacity(0.52),
-                    borderStrokeWidth: 0,
-                    borderColor: Colors.transparent,
-                  ),
-                  Polygon(
-                    points: _georgiaOutline,
-                    color: Colors.transparent,
-                    borderStrokeWidth: 1.8,
-                    borderColor: _emerald.withOpacity(0.42),
-                  ),
-                ],
               ),
               // Station dots — tappable
               MarkerLayer(
@@ -685,7 +628,7 @@ class _StationCarousel extends StatelessWidget {
       ),
       padding: const EdgeInsets.only(top: 32, bottom: 24),
       child: SizedBox(
-        height: 210, // slightly taller to accommodate two-button row
+        height: 240, // taller for stacked Navigate + Plan & Go buttons
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -776,14 +719,15 @@ class _StationCard extends StatelessWidget {
             const Icon(Icons.bolt, color: _emerald, size: 16),
           ]),
           const SizedBox(height: 10),
-          // ── Navigate  |  Plan & Go ────────────────────────────────────────
-          Row(children: [
-            // Navigate — opens Google Maps directly at charger coordinates
-            Expanded(
-              child: GestureDetector(
+          // ── Stacked full-width action buttons ─────────────────────────────
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Primary — Navigate (direct Google Maps launch)
+              GestureDetector(
                 onTap: () => _navigate(s.lat, s.lng),
                 child: Container(
-                  height: 32,
+                  height: 34,
                   decoration: BoxDecoration(
                     color: _emerald,
                     borderRadius: BorderRadius.circular(9),
@@ -791,24 +735,22 @@ class _StationCard extends StatelessWidget {
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.navigation_rounded, color: Colors.black, size: 13),
-                      SizedBox(width: 4),
+                      Icon(Icons.navigation_rounded, color: Colors.black, size: 14),
+                      SizedBox(width: 5),
                       Text('Navigate',
                           style: TextStyle(
-                              color: Colors.black, fontSize: 11,
+                              color: Colors.black, fontSize: 12,
                               fontWeight: FontWeight.w700)),
                     ],
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 6),
-            // Plan & Go — opens Route Planner pre-filled with this station
-            Expanded(
-              child: GestureDetector(
+              const SizedBox(height: 8),
+              // Secondary — Plan & Go (Route Planner pre-filled)
+              GestureDetector(
                 onTap: onPlanAndGo,
                 child: Container(
-                  height: 32,
+                  height: 34,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(9),
                     border: Border.all(color: _emerald, width: 1.5),
@@ -816,18 +758,18 @@ class _StationCard extends StatelessWidget {
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.alt_route_rounded, color: _emerald, size: 13),
-                      SizedBox(width: 4),
+                      Icon(Icons.alt_route_rounded, color: _emerald, size: 14),
+                      SizedBox(width: 5),
                       Text('Plan & Go',
                           style: TextStyle(
-                              color: _emerald, fontSize: 11,
+                              color: _emerald, fontSize: 12,
                               fontWeight: FontWeight.w700)),
                     ],
                   ),
                 ),
               ),
-            ),
-          ]),
+            ],
+          ),
         ],
       ),
     );
