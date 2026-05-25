@@ -10,15 +10,16 @@ import 'package:url_launcher/url_launcher.dart';
 import 'places_service.dart';
 import 'profile_screen.dart';
 import 'route_planner_screen.dart';
+import 'routing_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   PaintingBinding.instance.imageCache.maximumSize = 30;
-  PaintingBinding.instance.imageCache.maximumSizeBytes = 10 * 1024 * 1024; // 10 MB
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 10 * 1024 * 1024;
   runApp(const EVChargerApp());
 }
 
-// ── Theme ────────────────────────────────────────────────────────────────────
+// ── Theme ─────────────────────────────────────────────────────────────────────
 const _bgDark    = Color(0xFF1A1A1A);
 const _bgCard    = Color(0xFF252525);
 const _bgSurface = Color(0xFF2E2E2E);
@@ -26,33 +27,14 @@ const _emerald   = Color(0xFF00C896);
 const _textPri   = Color(0xFFFFFFFF);
 const _textSec   = Color(0xFF9E9E9E);
 
-// ── Model ────────────────────────────────────────────────────────────────────
-class _Station {
-  const _Station({
-    required this.name, required this.location, required this.distance,
-    required this.available, required this.lat, required this.lng,
-    required this.isDC, required this.kw, required this.price,
-  });
-
-  factory _Station.fromJson(Map<String, dynamic> j) => _Station(
-    name:      j['name']      as String,
-    location:  j['location']  as String,
-    distance:  j['distance']  as String,
-    available: j['available'] as int,
-    lat:       (j['lat']      as num).toDouble(),
-    lng:       (j['lng']      as num).toDouble(),
-    isDC:      j['isDC']      as bool,
-    kw:        j['kw']        as int,
-    price:     j['price']     as String,
-  );
-
-  final String name, location, distance, price;
-  final int available, kw;
-  final double lat, lng;
-  final bool isDC;
+// ── Battery colour helper (shared by route summary widgets) ───────────────────
+Color _batColor(double pct) {
+  if (pct >= 50) { return _emerald; }
+  if (pct >= 20) { return Colors.orangeAccent; }
+  return Colors.redAccent;
 }
 
-// ── Navigate ──────────────────────────────────────────────────────────────────
+// ── Navigate to coordinates in Google Maps ────────────────────────────────────
 Future<void> _navigate(double lat, double lng) async {
   final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
   if (await canLaunchUrl(uri)) {
@@ -76,7 +58,7 @@ class EVChargerApp extends StatelessWidget {
   );
 }
 
-// ── MapScreen — owns all filter / search state ────────────────────────────────
+// ── MapScreen ─────────────────────────────────────────────────────────────────
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
@@ -87,40 +69,38 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   static const _tbilisi = LatLng(41.7151, 44.8271);
 
-  final _searchCtrl        = TextEditingController();
-  final _searchFocus       = FocusNode();
-  final _mapCtrl           = MapController();
-  bool  _filterDC          = false;
-  bool  _filterAvail       = false;
+  final _searchCtrl  = TextEditingController();
+  final _searchFocus = FocusNode();
+  final _mapCtrl     = MapController();
+
+  bool  _filterDC    = false;
+  bool  _filterAvail = false;
+
   LatLng?               _userPos;
-  List<_Station>        _stations    = const [];
+  List<Station>         _stations    = const [];
   bool                  _loading     = true;
   List<PlacePrediction> _suggestions = const [];
   Timer?                _debounce;
+  EVRouteResult?        _routeResult;
 
   @override
   void initState() {
     super.initState();
     _initLocation();
-    // Schedule after first frame so DefaultAssetBundle context is ready
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadStations());
   }
 
   Future<void> _loadStations() async {
     try {
-      final raw = await DefaultAssetBundle.of(context)
-          .loadString('assets/data/chargers.json');
+      final raw  = await DefaultAssetBundle.of(context).loadString('assets/data/chargers.json');
       final list = (jsonDecode(raw) as List)
-          .map((e) => _Station.fromJson(e as Map<String, dynamic>))
+          .map((e) => Station.fromJson(e as Map<String, dynamic>))
           .toList();
       if (!mounted) { return; }
-      setState(() {
-        _stations = list;
-        _loading  = false;
-      });
+      setState(() { _stations = list; _loading = false; });
     } catch (_) {
       if (!mounted) { return; }
-      setState(() => _loading = false); // show empty state rather than spin forever
+      setState(() => _loading = false);
     }
   }
 
@@ -132,8 +112,7 @@ class _MapScreenState extends State<MapScreen> {
       }
       if (perm == LocationPermission.denied ||
           perm == LocationPermission.deniedForever) { return; }
-
-      final pos = await Geolocator.getCurrentPosition(
+      final pos    = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
           timeLimit: Duration(seconds: 10),
@@ -143,9 +122,7 @@ class _MapScreenState extends State<MapScreen> {
       if (!mounted) { return; }
       setState(() => _userPos = latlng);
       _mapCtrl.move(latlng, 14);
-    } catch (_) {
-      // Permission denied or timeout — stay on Tbilisi fallback
-    }
+    } catch (_) {}
   }
 
   @override
@@ -156,16 +133,18 @@ class _MapScreenState extends State<MapScreen> {
     super.dispose();
   }
 
+  void _clearRoute() => setState(() => _routeResult = null);
+
   void _onSearchChanged(String query) {
-    setState(() {}); // refresh station filter immediately
+    setState(() {});
     _debounce?.cancel();
     if (query.trim().length < 2) {
       setState(() => _suggestions = const []);
       return;
     }
     _debounce = Timer(const Duration(milliseconds: 400), () async {
-      final results = await PlacesService.autocomplete(query);
-      if (mounted) { setState(() => _suggestions = results); }
+      final r = await PlacesService.autocomplete(query);
+      if (mounted) { setState(() => _suggestions = r); }
     });
   }
 
@@ -177,7 +156,7 @@ class _MapScreenState extends State<MapScreen> {
     if (coords != null && mounted) { _mapCtrl.move(coords, 15); }
   }
 
-  List<_Station> get _filtered {
+  List<Station> get _filtered {
     final q = _searchCtrl.text.trim().toLowerCase();
     return _stations.where((s) {
       if (q.isNotEmpty &&
@@ -195,7 +174,7 @@ class _MapScreenState extends State<MapScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // ── Map + live markers ─────────────────────────────────────────────
+          // ── Map ──────────────────────────────────────────────────────────────
           FlutterMap(
             mapController: _mapCtrl,
             options: const MapOptions(initialCenter: _tbilisi, initialZoom: 13),
@@ -209,12 +188,24 @@ class _MapScreenState extends State<MapScreen> {
                 keepBuffer: 0,
                 panBuffer: 0,
               ),
+              // Route polyline
+              if (_routeResult != null)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points:      _routeResult!.polylinePoints,
+                      color:       _emerald,
+                      strokeWidth: 4.5,
+                    ),
+                  ],
+                ),
+              // Station dots
               MarkerLayer(
                 markers: stations.map((s) => Marker(
-                  point: LatLng(s.lat, s.lng),
-                  width: 36,
+                  point:  LatLng(s.lat, s.lng),
+                  width:  36,
                   height: 36,
-                  child: Container(
+                  child:  Container(
                     decoration: BoxDecoration(
                       color: s.available > 0 ? _emerald : Colors.orangeAccent,
                       shape: BoxShape.circle,
@@ -224,14 +215,32 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 )).toList(),
               ),
-              // ── User location dot ────────────────────────────────────────
+              // Charging-stop markers (route active)
+              if (_routeResult != null && _routeResult!.chargingStops.isNotEmpty)
+                MarkerLayer(
+                  markers: _routeResult!.chargingStops.map((stop) => Marker(
+                    point:  LatLng(stop.station.lat, stop.station.lng),
+                    width:  46,
+                    height: 46,
+                    child:  Container(
+                      decoration: BoxDecoration(
+                        color: Colors.orangeAccent,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 3),
+                        boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 8)],
+                      ),
+                      child: const Icon(Icons.bolt, color: Colors.black, size: 22),
+                    ),
+                  )).toList(),
+                ),
+              // User location dot
               if (_userPos != null)
                 MarkerLayer(markers: [
                   Marker(
-                    point: _userPos!,
-                    width: 22,
+                    point:  _userPos!,
+                    width:  22,
                     height: 22,
-                    child: Container(
+                    child:  Container(
                       decoration: BoxDecoration(
                         color: const Color(0xFF2196F3),
                         shape: BoxShape.circle,
@@ -244,7 +253,7 @@ class _MapScreenState extends State<MapScreen> {
             ],
           ),
 
-          // ── Search bar + filter chips ──────────────────────────────────────
+          // ── Search bar + suggestions + filter chips ───────────────────────
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -258,10 +267,7 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                   if (_suggestions.isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    _SuggestionsList(
-                      suggestions: _suggestions,
-                      onTap: _onSuggestionSelected,
-                    ),
+                    _SuggestionsList(suggestions: _suggestions, onTap: _onSuggestionSelected),
                   ],
                   const SizedBox(height: 10),
                   _FilterChips(
@@ -275,49 +281,62 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
 
-          // ── Route planner button ──────────────────────────────────────────
+          // ── Route planner FAB ─────────────────────────────────────────────
           Positioned(
-            right: 16,
-            bottom: 316, // 256 (GPS btn) + 48 (btn height) + 12 (gap)
+            right:  16,
+            bottom: 316,
             child: GestureDetector(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const RoutePlannerScreen()),
-              ),
-              child: Container(
+              onTap: () async {
+                final result = await Navigator.push<EVRouteResult>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => RoutePlannerScreen(stations: _stations),
+                  ),
+                );
+                if (result != null && mounted) {
+                  setState(() => _routeResult = result);
+                  if (result.polylinePoints.isNotEmpty) {
+                    final mid = result.polylinePoints[result.polylinePoints.length ~/ 2];
+                    _mapCtrl.move(mid, 11);
+                  }
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
                 width: 48, height: 48,
                 decoration: BoxDecoration(
-                  color: _bgCard,
+                  color: _routeResult != null ? _emerald : _bgCard,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: _bgSurface),
+                  border: Border.all(
+                    color: _routeResult != null ? _emerald : _bgSurface,
+                  ),
                   boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4))],
                 ),
-                child: const Icon(Icons.alt_route_rounded, color: _textSec, size: 22),
+                child: Icon(
+                  Icons.alt_route_rounded,
+                  color: _routeResult != null ? Colors.black : _textSec,
+                  size: 22,
+                ),
               ),
             ),
           ),
 
-          // ── Recenter GPS button ────────────────────────────────────────────
+          // ── Recenter GPS FAB ──────────────────────────────────────────────
           Positioned(
-            right: 16,
-            bottom: 256, // sits above the carousel (32 top pad + 195 list + 24 bottom pad + ~5 gap)
+            right:  16,
+            bottom: 256,
             child: GestureDetector(
-              onTap: _userPos == null
-                  ? null
-                  : () => _mapCtrl.move(_userPos!, 14),
+              onTap: _userPos == null ? null : () => _mapCtrl.move(_userPos!, 14),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width: 48,
-                height: 48,
+                width: 48, height: 48,
                 decoration: BoxDecoration(
                   color: _userPos == null ? _bgSurface : _bgCard,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: _userPos == null ? _bgSurface : _emerald,
                   ),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4)),
-                  ],
+                  boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4))],
                 ),
                 child: Icon(
                   Icons.my_location_rounded,
@@ -328,7 +347,7 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
 
-          // ── Bottom station cards (or loading indicator) ───────────────────
+          // ── Bottom panel: route summary OR station carousel ───────────────
           Positioned(
             left: 0, right: 0, bottom: 0,
             child: _loading
@@ -337,13 +356,13 @@ class _MapScreenState extends State<MapScreen> {
                     child: Center(
                       child: SizedBox(
                         width: 24, height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2, color: _emerald,
-                        ),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: _emerald),
                       ),
                     ),
                   )
-                : _StationCarousel(stations: stations),
+                : _routeResult != null
+                    ? _RouteSummaryPanel(result: _routeResult!, onClear: _clearRoute)
+                    : _StationCarousel(stations: stations),
           ),
         ],
       ),
@@ -354,13 +373,11 @@ class _MapScreenState extends State<MapScreen> {
 // ── Search bar ────────────────────────────────────────────────────────────────
 class _SearchBarWidget extends StatelessWidget {
   const _SearchBarWidget({
-    required this.controller,
-    required this.focusNode,
-    required this.onChanged,
+    required this.controller, required this.focusNode, required this.onChanged,
   });
   final TextEditingController controller;
-  final FocusNode focusNode;
-  final ValueChanged<String> onChanged;
+  final FocusNode             focusNode;
+  final ValueChanged<String>  onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -383,18 +400,17 @@ class _SearchBarWidget extends StatelessWidget {
               onChanged:  onChanged,
               style: const TextStyle(color: _textPri, fontSize: 15),
               decoration: const InputDecoration(
-                hintText: 'Search stations or address…',
+                hintText:  'Search stations or address…',
                 hintStyle: TextStyle(color: _textSec, fontSize: 15),
-                border: InputBorder.none,
-                isDense: true,
+                border:    InputBorder.none,
+                isDense:   true,
               ),
             ),
           ),
           _IconBtn(
-            icon: Icons.account_circle_outlined,
+            icon:  Icons.account_circle_outlined,
             onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              context, MaterialPageRoute(builder: (_) => const ProfileScreen()),
             ),
           ),
           const SizedBox(width: 8),
@@ -407,8 +423,8 @@ class _SearchBarWidget extends StatelessWidget {
 // ── Suggestions dropdown ──────────────────────────────────────────────────────
 class _SuggestionsList extends StatelessWidget {
   const _SuggestionsList({required this.suggestions, required this.onTap});
-  final List<PlacePrediction> suggestions;
-  final Future<void> Function(PlacePrediction) onTap;
+  final List<PlacePrediction>                    suggestions;
+  final Future<void> Function(PlacePrediction)   onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -422,10 +438,10 @@ class _SuggestionsList extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: suggestions.asMap().entries.map((e) {
           final isLast = e.key == suggestions.length - 1;
-          final p = e.value;
+          final p      = e.value;
           return GestureDetector(
-            onTap: () => onTap(p),
-            behavior: HitTestBehavior.opaque,
+            onTap:     () => onTap(p),
+            behavior:  HitTestBehavior.opaque,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
@@ -484,8 +500,8 @@ class _FilterChips extends StatelessWidget {
 
 class _Chip extends StatelessWidget {
   const _Chip({required this.label, required this.active, required this.onTap});
-  final String label;
-  final bool active;
+  final String   label;
+  final bool     active;
   final VoidCallback onTap;
 
   @override
@@ -505,8 +521,7 @@ class _Chip extends StatelessWidget {
           label,
           style: TextStyle(
             color: active ? Colors.black : _textSec,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+            fontSize: 13, fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -516,7 +531,7 @@ class _Chip extends StatelessWidget {
 
 class _IconBtn extends StatelessWidget {
   const _IconBtn({required this.icon, this.onTap});
-  final IconData icon;
+  final IconData     icon;
   final VoidCallback? onTap;
 
   @override
@@ -533,7 +548,7 @@ class _IconBtn extends StatelessWidget {
 // ── Station carousel ──────────────────────────────────────────────────────────
 class _StationCarousel extends StatelessWidget {
   const _StationCarousel({required this.stations});
-  final List<_Station> stations;
+  final List<Station> stations;
 
   @override
   Widget build(BuildContext context) {
@@ -549,9 +564,9 @@ class _StationCarousel extends StatelessWidget {
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
+          end:   Alignment.topCenter,
           colors: [_bgDark, Colors.transparent],
-          stops: [0.6, 1.0],
+          stops:  [0.6, 1.0],
         ),
       ),
       padding: const EdgeInsets.only(top: 32, bottom: 24),
@@ -572,18 +587,17 @@ class _StationCarousel extends StatelessWidget {
 // ── Station card ──────────────────────────────────────────────────────────────
 class _StationCard extends StatelessWidget {
   const _StationCard(this.s);
-  final _Station s;
+  final Station s;
 
   Color get _statusColor {
-    if (s.available == 0) return _textSec;
-    if (s.available == 1) return Colors.orangeAccent;
+    if (s.available == 0) { return _textSec; }
+    if (s.available == 1) { return Colors.orangeAccent; }
     return _emerald;
   }
 
   @override
   Widget build(BuildContext context) {
     final avail = s.available > 0;
-
     return Container(
       width: 170,
       padding: const EdgeInsets.all(14),
@@ -595,7 +609,6 @@ class _StationCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Status dot ─────────────────────────────────────────────────────
           Row(children: [
             Container(width: 8, height: 8,
                 decoration: BoxDecoration(color: _statusColor, shape: BoxShape.circle)),
@@ -606,20 +619,16 @@ class _StationCard extends StatelessWidget {
             ),
           ]),
           const SizedBox(height: 6),
-          // ── Name + neighbourhood ───────────────────────────────────────────
           Text(s.name,
               style: const TextStyle(color: _textPri, fontSize: 14, fontWeight: FontWeight.bold),
               maxLines: 1, overflow: TextOverflow.ellipsis),
           Text(s.location, style: const TextStyle(color: _textSec, fontSize: 12)),
           const SizedBox(height: 8),
-          // ── Speed + price ──────────────────────────────────────────────────
           Row(children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: s.isDC
-                    ? _emerald.withOpacity(0.15)
-                    : _bgSurface,
+                color: s.isDC ? _emerald.withOpacity(0.15) : _bgSurface,
                 borderRadius: BorderRadius.circular(5),
               ),
               child: Text('${s.kw} kW',
@@ -633,7 +642,6 @@ class _StationCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis)),
           ]),
           const Spacer(),
-          // ── Distance ───────────────────────────────────────────────────────
           Row(children: [
             const Icon(Icons.near_me_outlined, color: _textSec, size: 13),
             const SizedBox(width: 4),
@@ -642,7 +650,6 @@ class _StationCard extends StatelessWidget {
             const Icon(Icons.bolt, color: _emerald, size: 16),
           ]),
           const SizedBox(height: 10),
-          // ── Navigate button ────────────────────────────────────────────────
           GestureDetector(
             onTap: () => _navigate(s.lat, s.lng),
             child: Container(
@@ -659,6 +666,161 @@ class _StationCard extends StatelessWidget {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Route summary panel ───────────────────────────────────────────────────────
+class _RouteSummaryPanel extends StatelessWidget {
+  const _RouteSummaryPanel({required this.result, required this.onClear});
+  final EVRouteResult result;
+  final VoidCallback  onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin:  Alignment.bottomCenter,
+          end:    Alignment.topCenter,
+          colors: [_bgDark, Colors.transparent],
+          stops:  [0.65, 1.0],
+        ),
+      ),
+      padding: const EdgeInsets.only(top: 32, bottom: 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Stat chips row
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                _StatChip(
+                  icon:  Icons.route_rounded,
+                  label: '${result.totalDistanceKm.toStringAsFixed(1)} km',
+                  color: _emerald,
+                ),
+                const SizedBox(width: 8),
+                _StatChip(
+                  icon:  Icons.battery_charging_full_rounded,
+                  label: '${result.batteryAtArrivalPct.toStringAsFixed(0)}% arrival',
+                  color: _batColor(result.batteryAtArrivalPct),
+                ),
+                const SizedBox(width: 8),
+                _StatChip(
+                  icon:  Icons.bolt,
+                  label: '${result.chargingStops.length} stop${result.chargingStops.length == 1 ? '' : 's'}',
+                  color: Colors.orangeAccent,
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: onClear,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: _bgCard,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: _bgSurface),
+                    ),
+                    child: const Text('Clear',
+                        style: TextStyle(color: _textSec, fontSize: 12)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Charging stop tiles
+          if (result.chargingStops.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 90,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: result.chargingStops.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (_, i) => _ChargingStopTile(result.chargingStops[i]),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  const _StatChip({required this.icon, required this.label, required this.color});
+  final IconData icon;
+  final String   label;
+  final Color    color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: _bgCard,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.35)),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, color: color, size: 13),
+        const SizedBox(width: 5),
+        Text(label,
+            style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+      ]),
+    );
+  }
+}
+
+class _ChargingStopTile extends StatelessWidget {
+  const _ChargingStopTile(this.stop);
+  final ChargingStop stop;
+
+  String _fmtCharge(double h) {
+    if (h < 1) { return '~${(h * 60).round()} min charge'; }
+    return '~${h.toStringAsFixed(1)} h charge';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = stop.station;
+    return Container(
+      width: 162,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: _bgCard,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 8, offset: Offset(0, 3))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(s.name,
+              style: const TextStyle(color: _textPri, fontSize: 12, fontWeight: FontWeight.bold),
+              maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(s.location, style: const TextStyle(color: _textSec, fontSize: 10)),
+          const Spacer(),
+          Row(children: [
+            Icon(Icons.battery_charging_full_rounded,
+                color: _batColor(stop.batteryOnArrivalPct), size: 12),
+            const SizedBox(width: 3),
+            Text('${stop.batteryOnArrivalPct.toStringAsFixed(0)}% on arrival',
+                style: TextStyle(
+                    color: _batColor(stop.batteryOnArrivalPct),
+                    fontSize: 10)),
+          ]),
+          if (stop.chargeHours != null)
+            Text(
+              _fmtCharge(stop.chargeHours!),
+              style: const TextStyle(color: _textSec, fontSize: 10),
+            )
+          else
+            const Text('Fast DC charge', style: TextStyle(color: _emerald, fontSize: 10)),
         ],
       ),
     );
