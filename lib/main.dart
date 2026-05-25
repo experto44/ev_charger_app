@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -26,19 +28,24 @@ class _Station {
     required this.available, required this.lat, required this.lng,
     required this.isDC, required this.kw, required this.price,
   });
+
+  factory _Station.fromJson(Map<String, dynamic> j) => _Station(
+    name:      j['name']      as String,
+    location:  j['location']  as String,
+    distance:  j['distance']  as String,
+    available: j['available'] as int,
+    lat:       (j['lat']      as num).toDouble(),
+    lng:       (j['lng']      as num).toDouble(),
+    isDC:      j['isDC']      as bool,
+    kw:        j['kw']        as int,
+    price:     j['price']     as String,
+  );
+
   final String name, location, distance, price;
   final int available, kw;
   final double lat, lng;
   final bool isDC;
 }
-
-const _all = [
-  _Station(name: 'Tegeta Motors', location: 'Vake',      distance: '1.2 km', available: 4, lat: 41.6925, lng: 44.7734, isDC: true,  kw: 120, price: '0.49 ₾/kWh'),
-  _Station(name: 'E-Space',       location: 'Saburtalo', distance: '2.5 km', available: 2, lat: 41.7234, lng: 44.7658, isDC: false, kw: 22,  price: '0.35 ₾/kWh'),
-  _Station(name: 'Autopark',      location: 'Didube',    distance: '3.1 km', available: 6, lat: 41.7393, lng: 44.7855, isDC: true,  kw: 150, price: '0.52 ₾/kWh'),
-  _Station(name: 'GreenCharge',   location: 'Isani',     distance: '4.8 km', available: 0, lat: 41.6852, lng: 44.8301, isDC: false, kw: 11,  price: '0.30 ₾/kWh'),
-  _Station(name: 'City Hub',      location: 'Gldani',    distance: '5.4 km', available: 3, lat: 41.7797, lng: 44.7935, isDC: true,  kw: 50,  price: '0.44 ₾/kWh'),
-];
 
 // ── Navigate ──────────────────────────────────────────────────────────────────
 Future<void> _navigate(double lat, double lng) async {
@@ -75,16 +82,38 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   static const _tbilisi = LatLng(41.7151, 44.8271);
 
-  final _searchCtrl  = TextEditingController();
-  final _mapCtrl     = MapController();
-  bool  _filterDC    = false;
-  bool  _filterAvail = false;
-  LatLng? _userPos;
+  final _searchCtrl       = TextEditingController();
+  final _mapCtrl          = MapController();
+  bool  _filterDC         = false;
+  bool  _filterAvail      = false;
+  LatLng?          _userPos;
+  List<_Station>   _stations = const [];
+  bool             _loading  = true;
 
   @override
   void initState() {
     super.initState();
     _initLocation();
+    // Schedule after first frame so DefaultAssetBundle context is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadStations());
+  }
+
+  Future<void> _loadStations() async {
+    try {
+      final raw = await DefaultAssetBundle.of(context)
+          .loadString('assets/data/chargers.json');
+      final list = (jsonDecode(raw) as List)
+          .map((e) => _Station.fromJson(e as Map<String, dynamic>))
+          .toList();
+      if (!mounted) { return; }
+      setState(() {
+        _stations = list;
+        _loading  = false;
+      });
+    } catch (_) {
+      if (!mounted) { return; }
+      setState(() => _loading = false); // show empty state rather than spin forever
+    }
   }
 
   Future<void> _initLocation() async {
@@ -119,7 +148,7 @@ class _MapScreenState extends State<MapScreen> {
 
   List<_Station> get _filtered {
     final q = _searchCtrl.text.trim().toLowerCase();
-    return _all.where((s) {
+    return _stations.where((s) {
       if (q.isNotEmpty &&
           !s.name.toLowerCase().contains(q) &&
           !s.location.toLowerCase().contains(q)) { return false; }
@@ -238,10 +267,22 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
 
-          // ── Bottom station cards ───────────────────────────────────────────
+          // ── Bottom station cards (or loading indicator) ───────────────────
           Positioned(
             left: 0, right: 0, bottom: 0,
-            child: _StationCarousel(stations: stations),
+            child: _loading
+                ? const SizedBox(
+                    height: 120,
+                    child: Center(
+                      child: SizedBox(
+                        width: 24, height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2, color: _emerald,
+                        ),
+                      ),
+                    ),
+                  )
+                : _StationCarousel(stations: stations),
           ),
         ],
       ),
