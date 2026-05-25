@@ -36,13 +36,6 @@ const _kGistUrl =
     'https://gist.githubusercontent.com/experto44/36f39392ce7a4abe14ab065aa8e846bd'
     '/raw/ce8426381a8d56fd144d5726fcd42a94216170fb/chargers.json';
 
-// ── Battery colour helper (shared by route summary widgets) ───────────────────
-Color _batColor(double pct) {
-  if (pct >= 50) { return _emerald; }
-  if (pct >= 20) { return Colors.orangeAccent; }
-  return Colors.redAccent;
-}
-
 // ── Navigate to coordinates in Google Maps ────────────────────────────────────
 Future<void> _navigate(double lat, double lng) async {
   final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
@@ -88,7 +81,6 @@ class _MapScreenState extends State<MapScreen> {
   bool                  _loading     = true;
   List<PlacePrediction> _suggestions = const [];
   Timer?                _debounce;
-  EVRouteResult?        _routeResult;
 
   @override
   void initState() {
@@ -176,20 +168,8 @@ class _MapScreenState extends State<MapScreen> {
     super.dispose();
   }
 
-  void _clearRoute() => setState(() => _routeResult = null);
-
   void _zoom(double delta) =>
       _mapCtrl.move(_mapCtrl.camera.center, _mapCtrl.camera.zoom + delta);
-
-  // ── Route result handler (shared by FAB and "Get Directions") ────────────
-  void _handleRouteResult(EVRouteResult? result) {
-    if (result == null || !mounted) { return; }
-    setState(() => _routeResult = result);
-    if (result.polylinePoints.isNotEmpty) {
-      final mid = result.polylinePoints[result.polylinePoints.length ~/ 2];
-      _mapCtrl.move(mid, 11);
-    }
-  }
 
   // ── Station marker tap → bottom sheet ────────────────────────────────────
   void _showStationSheet(Station s) {
@@ -206,7 +186,7 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _openRoutePlannerTo(Station destination) async {
     if (mounted) { Navigator.pop(context); } // close the sheet
-    final result = await Navigator.push<EVRouteResult>(
+    await Navigator.push<void>(
       context,
       MaterialPageRoute(
         builder: (_) => RoutePlannerScreen(
@@ -216,7 +196,6 @@ class _MapScreenState extends State<MapScreen> {
         ),
       ),
     );
-    _handleRouteResult(result);
   }
 
   void _onSearchChanged(String query) {
@@ -281,17 +260,6 @@ class _MapScreenState extends State<MapScreen> {
                 keepBuffer: 0,
                 panBuffer: 0,
               ),
-              // Route polyline
-              if (_routeResult != null)
-                PolylineLayer(
-                  polylines: [
-                    Polyline(
-                      points:      _routeResult!.polylinePoints,
-                      color:       _emerald,
-                      strokeWidth: 4.5,
-                    ),
-                  ],
-                ),
               // Station dots — tappable
               MarkerLayer(
                 markers: stations.map((s) => Marker(
@@ -312,24 +280,6 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 )).toList(),
               ),
-              // Charging-stop markers (route active)
-              if (_routeResult != null && _routeResult!.chargingStops.isNotEmpty)
-                MarkerLayer(
-                  markers: _routeResult!.chargingStops.map((stop) => Marker(
-                    point:  LatLng(stop.station.lat, stop.station.lng),
-                    width:  46,
-                    height: 46,
-                    child:  Container(
-                      decoration: BoxDecoration(
-                        color: Colors.orangeAccent,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 3),
-                        boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 8)],
-                      ),
-                      child: const Icon(Icons.bolt, color: Colors.black, size: 22),
-                    ),
-                  )).toList(),
-                ),
               // User location dot
               if (_userPos != null)
                 MarkerLayer(markers: [
@@ -396,31 +346,21 @@ class _MapScreenState extends State<MapScreen> {
             right:  16,
             bottom: 316,
             child: GestureDetector(
-              onTap: () async {
-                final result = await Navigator.push<EVRouteResult>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => RoutePlannerScreen(stations: _stations),
-                  ),
-                );
-                _handleRouteResult(result);
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+              onTap: () => Navigator.push<void>(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => RoutePlannerScreen(stations: _stations),
+                ),
+              ),
+              child: Container(
                 width: 48, height: 48,
                 decoration: BoxDecoration(
-                  color: _routeResult != null ? _emerald : _bgCard,
+                  color: _bgCard,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: _routeResult != null ? _emerald : _bgSurface,
-                  ),
+                  border: Border.all(color: _bgSurface),
                   boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4))],
                 ),
-                child: Icon(
-                  Icons.alt_route_rounded,
-                  color: _routeResult != null ? Colors.black : _textSec,
-                  size: 22,
-                ),
+                child: const Icon(Icons.alt_route_rounded, color: _textSec, size: 22),
               ),
             ),
           ),
@@ -451,7 +391,7 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
 
-          // ── Bottom panel: route summary OR station carousel ───────────────
+          // ── Bottom panel: station carousel ────────────────────────────────
           Positioned(
             left: 0, right: 0, bottom: 0,
             child: _loading
@@ -464,9 +404,7 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     ),
                   )
-                : _routeResult != null
-                    ? _RouteSummaryPanel(result: _routeResult!, onClear: _clearRoute)
-                    : _StationCarousel(stations: stations),
+                : _StationCarousel(stations: stations),
           ),
         ],
       ),
@@ -776,161 +714,6 @@ class _StationCard extends StatelessWidget {
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Route summary panel ───────────────────────────────────────────────────────
-class _RouteSummaryPanel extends StatelessWidget {
-  const _RouteSummaryPanel({required this.result, required this.onClear});
-  final EVRouteResult result;
-  final VoidCallback  onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin:  Alignment.bottomCenter,
-          end:    Alignment.topCenter,
-          colors: [_bgDark, Colors.transparent],
-          stops:  [0.65, 1.0],
-        ),
-      ),
-      padding: const EdgeInsets.only(top: 32, bottom: 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Stat chips row
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                _StatChip(
-                  icon:  Icons.route_rounded,
-                  label: '${result.totalDistanceKm.toStringAsFixed(1)} km',
-                  color: _emerald,
-                ),
-                const SizedBox(width: 8),
-                _StatChip(
-                  icon:  Icons.battery_charging_full_rounded,
-                  label: '${result.batteryAtArrivalPct.toStringAsFixed(0)}% arrival',
-                  color: _batColor(result.batteryAtArrivalPct),
-                ),
-                const SizedBox(width: 8),
-                _StatChip(
-                  icon:  Icons.bolt,
-                  label: '${result.chargingStops.length} stop${result.chargingStops.length == 1 ? '' : 's'}',
-                  color: Colors.orangeAccent,
-                ),
-                const Spacer(),
-                GestureDetector(
-                  onTap: onClear,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _bgCard,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: _bgSurface),
-                    ),
-                    child: const Text('Clear',
-                        style: TextStyle(color: _textSec, fontSize: 12)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Charging stop tiles
-          if (result.chargingStops.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 90,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: result.chargingStops.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
-                itemBuilder: (_, i) => _ChargingStopTile(result.chargingStops[i]),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _StatChip extends StatelessWidget {
-  const _StatChip({required this.icon, required this.label, required this.color});
-  final IconData icon;
-  final String   label;
-  final Color    color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: _bgCard,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.35)),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, color: color, size: 13),
-        const SizedBox(width: 5),
-        Text(label,
-            style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
-      ]),
-    );
-  }
-}
-
-class _ChargingStopTile extends StatelessWidget {
-  const _ChargingStopTile(this.stop);
-  final ChargingStop stop;
-
-  String _fmtCharge(double h) {
-    if (h < 1) { return '~${(h * 60).round()} min charge'; }
-    return '~${h.toStringAsFixed(1)} h charge';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final s = stop.station;
-    return Container(
-      width: 162,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: _bgCard,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 8, offset: Offset(0, 3))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(s.name,
-              style: const TextStyle(color: _textPri, fontSize: 12, fontWeight: FontWeight.bold),
-              maxLines: 1, overflow: TextOverflow.ellipsis),
-          Text(s.location, style: const TextStyle(color: _textSec, fontSize: 10)),
-          const Spacer(),
-          Row(children: [
-            Icon(Icons.battery_charging_full_rounded,
-                color: _batColor(stop.batteryOnArrivalPct), size: 12),
-            const SizedBox(width: 3),
-            Text('${stop.batteryOnArrivalPct.toStringAsFixed(0)}% on arrival',
-                style: TextStyle(
-                    color: _batColor(stop.batteryOnArrivalPct),
-                    fontSize: 10)),
-          ]),
-          if (stop.chargeHours != null)
-            Text(
-              _fmtCharge(stop.chargeHours!),
-              style: const TextStyle(color: _textSec, fontSize: 10),
-            )
-          else
-            const Text('Fast DC charge', style: TextStyle(color: _emerald, fontSize: 10)),
         ],
       ),
     );

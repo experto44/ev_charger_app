@@ -1,9 +1,14 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'places_service.dart';
+import 'profile_screen.dart';
 import 'routing_service.dart';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
@@ -43,9 +48,10 @@ class RoutePlannerScreen extends StatefulWidget {
 }
 
 class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
-  final _stops = [RouteStop(), RouteStop()];
-  double _batteryPct  = 80.0;
-  bool   _isPlanning  = false;
+  final _stops       = [RouteStop(), RouteStop()];
+  double _batteryPct = 80.0;
+  double _maxRangeKm = 300.0;
+  bool   _isPlanning = false;
 
   @override
   void initState() {
@@ -61,6 +67,13 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
       _stops.last.coords = LatLng(d.lat, d.lng);
       _stops.last.controller.text = d.name;
     }
+    _loadMaxRange();
+  }
+
+  Future<void> _loadMaxRange() async {
+    final prefs = await SharedPreferences.getInstance();
+    final val   = double.tryParse(prefs.getString(kMaxRange) ?? '') ?? 300.0;
+    if (mounted) { setState(() => _maxRangeKm = val); }
   }
 
   @override
@@ -83,33 +96,119 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
 
   int get _resolvedCount => _stops.where((s) => s.coords != null).length;
 
+  bool get _canPreview =>
+      _stops.first.coords != null && _stops.last.coords != null;
+
+  // ── GPS auto-fill for the Start field ────────────────────────────────────
+  Future<void> _fillMyLocation() async {
+    try {
+      LocationPermission perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) { return; }
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+      if (!mounted) { return; }
+      setState(() {
+        _stops.first.coords = LatLng(pos.latitude, pos.longitude);
+        _stops.first.controller.text = 'My Current Location';
+      });
+    } catch (_) {}
+  }
+
+  // ── Haversine distance between two points (km) ────────────────────────────
+  static double _haversine(LatLng a, LatLng b) {
+    const r    = 6371.0;
+    final dLat = (b.latitude  - a.latitude)  * pi / 180;
+    final dLng = (b.longitude - a.longitude) * pi / 180;
+    final x    = sin(dLat / 2) * sin(dLat / 2) +
+        cos(a.latitude * pi / 180) * cos(b.latitude * pi / 180) *
+        sin(dLng / 2) * sin(dLng / 2);
+    return 2 * r * asin(sqrt(x));
+  }
+
+  // ── Haversine chain across all resolved stops ─────────────────────────────
+  double get _totalDistanceKm {
+    double total = 0;
+    for (int i = 0; i < _stops.length - 1; i++) {
+      final a = _stops[i].coords;
+      final b = _stops[i + 1].coords;
+      if (a != null && b != null) { total += _haversine(a, b); }
+    }
+    return total;
+  }
+
+  // ── Real-time EV preview (updates as slider moves) ───────────────────────
+  ({double batteryAtArrivalPct, int stopsNeeded}) get _evPreview {
+    final effectiveKm = _maxRangeKm * 0.90;
+    final totalDist   = _totalDistanceKm;
+    final startKm     = (_batteryPct / 100.0) * effectiveKm;
+    final int stops   = totalDist <= startKm
+        ? 0
+        : ((totalDist - startKm) / effectiveKm).ceil();
+    final double leftover = startKm + stops * effectiveKm - totalDist;
+    final double pct = effectiveKm > 0
+        ? (leftover / effectiveKm * 100.0).clamp(0.0, 100.0)
+        : 0.0;
+    return (batteryAtArrivalPct: pct, stopsNeeded: stops);
+  }
+
+  // ── Open route in native Google Maps ─────────────────────────────────────
   Future<void> _planRoute() async {
     setState(() => _isPlanning = true);
-    final waypoints = _stops.map((s) => s.coords!).toList();
-    final result = await RoutingService.planRoute(
-      waypoints:         waypoints,
-      currentBatteryPct: _batteryPct,
-      stations:          widget.stations,
-    );
-    if (!mounted) { return; }
-    setState(() => _isPlanning = false);
-    if (result == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        backgroundColor: _bgCard,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        content: const Text(
-          'Could not calculate route. Check your connection.',
-          style: TextStyle(color: _textPri),
-        ),
-      ));
-      return;
+    try {
+      final origin      = _stops.first.coords!;
+      final destination = _stops.last.coords!;
+
+      String urlStr =
+          'https://www.google.com/maps/dir/?api=1'
+          '&origin=${origin.latitude},${origin.longitude}'
+          '&destination=${destination.latitude},${destination.longitude}'
+          '&travelmode=driving';
+
+      // Intermediate waypoints
+      if (_stops.length > 2) {
+        final mid = _stops.sublist(1, _stops.length - 1);
+        final wps = mid
+            .where((s) => s.coords != null)
+            .map((s) => '${s.coords!.latitude},${s.coords!.longitude}')
+            .join('|');
+        if (wps.isNotEmpty) { urlStr += '&waypoints=$wps'; }
+      }
+
+      final uri = Uri.parse(urlStr);
+      if (!mounted) { return; }
+
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (mounted) { Navigator.pop(context); }
+      } else {
+        if (!mounted) { return; }
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: _bgCard,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          content: const Text(
+            'Could not open Google Maps. Please install Google Maps.',
+            style: TextStyle(color: _textPri),
+          ),
+        ));
+      }
+    } finally {
+      if (mounted) { setState(() => _isPlanning = false); }
     }
-    Navigator.pop(context, result);
   }
 
   @override
   Widget build(BuildContext context) {
+    final allResolved = _resolvedCount == _stops.length;
+    final preview     = _evPreview;
     return Scaffold(
       backgroundColor: _bgDark,
       appBar: AppBar(
@@ -135,10 +234,11 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                   // Stop rows
                   for (int i = 0; i < _stops.length; i++) ...[
                     _StopRow(
-                      index:    i,
-                      total:    _stops.length,
-                      stop:     _stops[i],
-                      onRemove: _stops.length > 2 ? () => _removeStop(i) : null,
+                      index:        i,
+                      total:        _stops.length,
+                      stop:         _stops[i],
+                      onRemove:     _stops.length > 2 ? () => _removeStop(i) : null,
+                      onMyLocation: i == 0 ? _fillMyLocation : null,
                       onPlaceSelected: (pred, coords) => setState(() {
                         _stops[i].coords = coords;
                         _stops[i].controller.text = pred.description;
@@ -156,6 +256,14 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                     value:     _batteryPct,
                     onChanged: (v) => setState(() => _batteryPct = v),
                   ),
+                  const SizedBox(height: 12),
+                  // Live EV route preview — reactive to slider changes
+                  _RoutePreviewStats(
+                    distanceKm:          _totalDistanceKm,
+                    batteryAtArrivalPct: preview.batteryAtArrivalPct,
+                    stopsNeeded:         preview.stopsNeeded,
+                    hasRoute:            _canPreview,
+                  ),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -165,7 +273,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
             resolvedCount: _resolvedCount,
             total:         _stops.length,
             isPlanning:    _isPlanning,
-            onPlanRoute:   _resolvedCount == _stops.length ? _planRoute : null,
+            onPlanRoute:   allResolved ? _planRoute : null,
           ),
         ],
       ),
@@ -176,13 +284,18 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
 // ── Stop row ──────────────────────────────────────────────────────────────────
 class _StopRow extends StatelessWidget {
   const _StopRow({
-    required this.index, required this.total, required this.stop,
-    required this.onPlaceSelected, this.onRemove,
+    required this.index,
+    required this.total,
+    required this.stop,
+    required this.onPlaceSelected,
+    this.onRemove,
+    this.onMyLocation,
   });
   final int index, total;
   final RouteStop stop;
   final void Function(PlacePrediction, LatLng?) onPlaceSelected;
   final VoidCallback? onRemove;
+  final VoidCallback? onMyLocation; // shown only for index == 0
 
   String get _label {
     if (index == 0)         { return 'Start'; }
@@ -218,6 +331,22 @@ class _StopRow extends StatelessWidget {
             onPlaceSelected: onPlaceSelected,
           ),
         ),
+        // GPS shortcut — only for the Start (index 0) field
+        if (onMyLocation != null) ...[
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: onMyLocation,
+            child: Container(
+              width: 34, height: 34,
+              decoration: BoxDecoration(
+                color: _bgCard,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _bgSurface),
+              ),
+              child: const Icon(Icons.my_location_rounded, color: _emerald, size: 17),
+            ),
+          ),
+        ],
         if (onRemove != null) ...[
           const SizedBox(width: 8),
           GestureDetector(
@@ -329,6 +458,115 @@ class _BatterySlider extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── Reactive EV route preview stats ──────────────────────────────────────────
+class _RoutePreviewStats extends StatelessWidget {
+  const _RoutePreviewStats({
+    required this.distanceKm,
+    required this.batteryAtArrivalPct,
+    required this.stopsNeeded,
+    required this.hasRoute,
+  });
+  final double distanceKm;
+  final double batteryAtArrivalPct;
+  final int    stopsNeeded;
+  final bool   hasRoute; // true once origin + destination are both resolved
+
+  Color _batColor(double pct) {
+    if (pct >= 50) { return _emerald; }
+    if (pct >= 20) { return Colors.orangeAccent; }
+    return Colors.redAccent;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: hasRoute ? 1.0 : 0.38,
+      duration: const Duration(milliseconds: 250),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _bgCard,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _bgSurface),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'ROUTE PREVIEW',
+              style: TextStyle(color: _textSec, fontSize: 11,
+                  fontWeight: FontWeight.w600, letterSpacing: 0.6),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _StatChip(
+                  icon:  Icons.route_rounded,
+                  label: hasRoute
+                      ? '${distanceKm.toStringAsFixed(1)} km'
+                      : '– km',
+                  color: _emerald,
+                ),
+                _StatChip(
+                  icon:  Icons.battery_charging_full_rounded,
+                  label: hasRoute
+                      ? '${batteryAtArrivalPct.toStringAsFixed(0)}% arrival'
+                      : '–% arrival',
+                  color: hasRoute ? _batColor(batteryAtArrivalPct) : _textSec,
+                ),
+                _StatChip(
+                  icon:  Icons.bolt,
+                  label: hasRoute
+                      ? '$stopsNeeded stop${stopsNeeded == 1 ? '' : 's'}'
+                      : '– stops',
+                  color: hasRoute
+                      ? (stopsNeeded == 0 ? _emerald : Colors.orangeAccent)
+                      : _textSec,
+                ),
+              ],
+            ),
+            if (!hasRoute) ...[
+              const SizedBox(height: 10),
+              const Text(
+                'Set start & destination to see EV stats',
+                style: TextStyle(color: _textSec, fontSize: 11),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Stat chip (used by route preview) ────────────────────────────────────────
+class _StatChip extends StatelessWidget {
+  const _StatChip({required this.icon, required this.label, required this.color});
+  final IconData icon;
+  final String   label;
+  final Color    color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: _bgSurface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.35)),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, color: color, size: 13),
+        const SizedBox(width: 5),
+        Text(label,
+            style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+      ]),
     );
   }
 }
@@ -502,8 +740,8 @@ class _BottomBar extends StatelessWidget {
     required this.isPlanning,
     this.onPlanRoute,
   });
-  final int          resolvedCount, total;
-  final bool         isPlanning;
+  final int           resolvedCount, total;
+  final bool          isPlanning;
   final VoidCallback? onPlanRoute;
 
   @override
@@ -529,7 +767,7 @@ class _BottomBar extends StatelessWidget {
                   )
                 : Text(
                     resolvedCount == total
-                        ? 'Plan Route  →'
+                        ? 'Open in Google Maps  →'
                         : 'Set all stops  ($resolvedCount / $total)',
                     style: TextStyle(
                       color: ready ? Colors.black : _textSec,
