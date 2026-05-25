@@ -134,6 +134,9 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
   }
 
   // ── Haversine chain across all resolved stops ─────────────────────────────
+  // A 1.25× road-distance multiplier converts straight-line km to an estimate
+  // that closely matches real driving distance shown by Google Maps.
+  // (Average detour factor for Georgian roads ≈ 1.20–1.30.)
   double get _totalDistanceKm {
     double total = 0;
     for (int i = 0; i < _stops.length - 1; i++) {
@@ -141,7 +144,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
       final b = _stops[i + 1].coords;
       if (a != null && b != null) { total += _haversine(a, b); }
     }
-    return total;
+    return total * 1.25; // road-distance estimate
   }
 
   // ── Real-time EV preview (updates as slider moves) ───────────────────────
@@ -487,6 +490,9 @@ class _RoutePreviewStats extends StatelessWidget {
       opacity: hasRoute ? 1.0 : 0.38,
       duration: const Duration(milliseconds: 250),
       child: Container(
+        // Explicit full-width so this block is always the same size as
+        // the _BatterySlider container directly above it.
+        width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: _bgCard,
