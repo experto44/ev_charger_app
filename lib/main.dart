@@ -357,7 +357,7 @@ class _StationCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: s.isDC
-                    ? _emerald.withValues(alpha: 0.15)
+                    ? _emerald.withOpacity(0.15)
                     : _bgSurface,
                 borderRadius: BorderRadius.circular(5),
               ),
