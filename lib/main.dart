@@ -27,6 +27,9 @@ const _emerald   = Color(0xFF00C896);
 const _textPri   = Color(0xFFFFFFFF);
 const _textSec   = Color(0xFF9E9E9E);
 
+// Fallback centre used only when GPS is unavailable
+const _tbilisi = LatLng(41.7151, 44.8271);
+
 // ── Battery colour helper (shared by route summary widgets) ───────────────────
 Color _batColor(double pct) {
   if (pct >= 50) { return _emerald; }
@@ -67,8 +70,6 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  static const _tbilisi = LatLng(41.7151, 44.8271);
-
   final _searchCtrl  = TextEditingController();
   final _searchFocus = FocusNode();
   final _mapCtrl     = MapController();
@@ -86,12 +87,10 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
-    // Both calls go in addPostFrameCallback so FlutterMap is mounted and
-    // MapController is attached before we attempt _mapCtrl.move().
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadStations();
-      _initLocation();
-    });
+    // Station data can load independently of the map controller.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadStations());
+    // _initLocation() is called from MapOptions.onMapReady, which fires only
+    // after FlutterMap has mounted and the MapController is fully attached.
   }
 
   Future<void> _loadStations() async {
@@ -151,6 +150,9 @@ class _MapScreenState extends State<MapScreen> {
 
   void _clearRoute() => setState(() => _routeResult = null);
 
+  void _zoom(double delta) =>
+      _mapCtrl.move(_mapCtrl.camera.center, _mapCtrl.camera.zoom + delta);
+
   void _onSearchChanged(String query) {
     setState(() {});
     _debounce?.cancel();
@@ -193,7 +195,16 @@ class _MapScreenState extends State<MapScreen> {
           // ── Map ──────────────────────────────────────────────────────────────
           FlutterMap(
             mapController: _mapCtrl,
-            options: const MapOptions(initialCenter: _tbilisi, initialZoom: 13),
+            options: MapOptions(
+              initialCenter: _tbilisi,
+              initialZoom:   13,
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all,
+              ),
+              // onMapReady fires once the controller is attached — the only
+              // safe moment to call _mapCtrl.move() on startup.
+              onMapReady: _initLocation,
+            ),
             children: [
               TileLayer(
                 urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
@@ -294,6 +305,19 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ],
               ),
+            ),
+          ),
+
+          // ── Zoom +/− buttons ─────────────────────────────────────────────
+          Positioned(
+            right:  16,
+            bottom: 380,
+            child: Column(
+              children: [
+                _ZoomBtn(icon: Icons.add_rounded,    onTap: () => _zoom(1)),
+                const SizedBox(height: 8),
+                _ZoomBtn(icon: Icons.remove_rounded, onTap: () => _zoom(-1)),
+              ],
             ),
           ),
 
@@ -844,6 +868,30 @@ class _ChargingStopTile extends StatelessWidget {
           else
             const Text('Fast DC charge', style: TextStyle(color: _emerald, fontSize: 10)),
         ],
+      ),
+    );
+  }
+}
+
+// ── Zoom +/- button ───────────────────────────────────────────────────────────
+class _ZoomBtn extends StatelessWidget {
+  const _ZoomBtn({required this.icon, required this.onTap});
+  final IconData     icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 48, height: 48,
+        decoration: BoxDecoration(
+          color: _bgCard,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _bgSurface),
+          boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4))],
+        ),
+        child: Icon(icon, color: _textSec, size: 22),
       ),
     );
   }
