@@ -3,35 +3,38 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-void main() {
-  runApp(const EVChargerApp());
-}
+void main() => runApp(const EVChargerApp());
 
-// ── Theme constants ──────────────────────────────────────────────────────────
-const _bgDark = Color(0xFF1A1A1A);
-const _bgCard = Color(0xFF252525);
+// ── Theme ────────────────────────────────────────────────────────────────────
+const _bgDark    = Color(0xFF1A1A1A);
+const _bgCard    = Color(0xFF252525);
 const _bgSurface = Color(0xFF2E2E2E);
-const _emerald = Color(0xFF00C896);
-const _textPrimary = Color(0xFFFFFFFF);
-const _textSecondary = Color(0xFF9E9E9E);
+const _emerald   = Color(0xFF00C896);
+const _textPri   = Color(0xFFFFFFFF);
+const _textSec   = Color(0xFF9E9E9E);
 
-// ── Station data with real Tbilisi coordinates ────────────────────────────────
+// ── Model ────────────────────────────────────────────────────────────────────
 class _Station {
-  const _Station(
-      this.name, this.location, this.distance, this.available, this.lat, this.lng);
-  final String name, location, distance;
-  final int available;
+  const _Station({
+    required this.name, required this.location, required this.distance,
+    required this.available, required this.lat, required this.lng,
+    required this.isDC, required this.kw, required this.price,
+  });
+  final String name, location, distance, price;
+  final int available, kw;
   final double lat, lng;
+  final bool isDC;
 }
 
-const _stations = [
-  _Station('Tegeta Motors', 'Vake',      '1.2 km', 4, 41.6925, 44.7734),
-  _Station('E-Space',       'Saburtalo', '2.5 km', 2, 41.7234, 44.7658),
-  _Station('Autopark',      'Didube',    '3.1 km', 6, 41.7393, 44.7855),
-  _Station('GreenCharge',   'Isani',     '4.8 km', 1, 41.6852, 44.8301),
-  _Station('City Hub',      'Gldani',    '5.4 km', 3, 41.7797, 44.7935),
+const _all = [
+  _Station(name: 'Tegeta Motors', location: 'Vake',      distance: '1.2 km', available: 4, lat: 41.6925, lng: 44.7734, isDC: true,  kw: 120, price: '0.49 ₾/kWh'),
+  _Station(name: 'E-Space',       location: 'Saburtalo', distance: '2.5 km', available: 2, lat: 41.7234, lng: 44.7658, isDC: false, kw: 22,  price: '0.35 ₾/kWh'),
+  _Station(name: 'Autopark',      location: 'Didube',    distance: '3.1 km', available: 6, lat: 41.7393, lng: 44.7855, isDC: true,  kw: 150, price: '0.52 ₾/kWh'),
+  _Station(name: 'GreenCharge',   location: 'Isani',     distance: '4.8 km', available: 0, lat: 41.6852, lng: 44.8301, isDC: false, kw: 11,  price: '0.30 ₾/kWh'),
+  _Station(name: 'City Hub',      location: 'Gldani',    distance: '5.4 km', available: 3, lat: 41.7797, lng: 44.7935, isDC: true,  kw: 50,  price: '0.44 ₾/kWh'),
 ];
 
+// ── Navigate ──────────────────────────────────────────────────────────────────
 Future<void> _navigate(double lat, double lng) async {
   final uri = Uri.parse('https://www.google.com/maps/@$lat,$lng,15z');
   if (await canLaunchUrl(uri)) {
@@ -39,64 +42,116 @@ Future<void> _navigate(double lat, double lng) async {
   }
 }
 
-// ── App root ─────────────────────────────────────────────────────────────────
+// ── App root ──────────────────────────────────────────────────────────────────
 class EVChargerApp extends StatelessWidget {
   const EVChargerApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'EV Charger Georgia',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: _bgDark,
-        colorScheme: const ColorScheme.dark(
-          primary: _emerald,
-          surface: _bgCard,
-        ),
-      ),
-      home: const MapScreen(),
-    );
-  }
+  Widget build(BuildContext context) => MaterialApp(
+    title: 'EV Charger Georgia',
+    debugShowCheckedModeBanner: false,
+    theme: ThemeData.dark().copyWith(
+      scaffoldBackgroundColor: _bgDark,
+      colorScheme: const ColorScheme.dark(primary: _emerald, surface: _bgCard),
+    ),
+    home: const MapScreen(),
+  );
 }
 
-// ── Main screen ───────────────────────────────────────────────────────────────
-class MapScreen extends StatelessWidget {
+// ── MapScreen — owns all filter / search state ────────────────────────────────
+class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
+  @override
+  State<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends State<MapScreen> {
   static const _tbilisi = LatLng(41.7151, 44.8271);
+
+  final _searchCtrl = TextEditingController();
+  bool _filterDC    = false;
+  bool _filterAvail = false;
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  List<_Station> get _filtered {
+    final q = _searchCtrl.text.trim().toLowerCase();
+    return _all.where((s) {
+      if (q.isNotEmpty &&
+          !s.name.toLowerCase().contains(q) &&
+          !s.location.toLowerCase().contains(q)) { return false; }
+      if (_filterDC    && !s.isDC)          { return false; }
+      if (_filterAvail && s.available == 0) { return false; }
+      return true;
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final stations = _filtered;
     return Scaffold(
       body: Stack(
         children: [
+          // ── Map + live markers ─────────────────────────────────────────────
           FlutterMap(
-            options: const MapOptions(
-              initialCenter: _tbilisi,
-              initialZoom: 13,
-            ),
+            options: const MapOptions(initialCenter: _tbilisi, initialZoom: 13),
             children: [
               TileLayer(
-                urlTemplate:
-                    'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
                 subdomains: const ['a', 'b', 'c', 'd'],
                 userAgentPackageName: 'com.example.ev_charger_app',
                 retinaMode: MediaQuery.devicePixelRatioOf(context) >= 2,
               ),
+              MarkerLayer(
+                markers: stations.map((s) => Marker(
+                  point: LatLng(s.lat, s.lng),
+                  width: 36,
+                  height: 36,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: s.available > 0 ? _emerald : Colors.orangeAccent,
+                      shape: BoxShape.circle,
+                      boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 6)],
+                    ),
+                    child: const Icon(Icons.bolt, color: Colors.black, size: 20),
+                  ),
+                )).toList(),
+              ),
             ],
           ),
-          const SafeArea(
+
+          // ── Search bar + filter chips ──────────────────────────────────────
+          SafeArea(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: _SearchBar(),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _SearchBarWidget(
+                    controller: _searchCtrl,
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 10),
+                  _FilterChips(
+                    filterDC:    _filterDC,
+                    filterAvail: _filterAvail,
+                    onDC:        (v) => setState(() => _filterDC    = v),
+                    onAvail:     (v) => setState(() => _filterAvail = v),
+                  ),
+                ],
+              ),
             ),
           ),
-          const Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _StationCarousel(),
+
+          // ── Bottom station cards ───────────────────────────────────────────
+          Positioned(
+            left: 0, right: 0, bottom: 0,
+            child: _StationCarousel(stations: stations),
           ),
         ],
       ),
@@ -105,8 +160,10 @@ class MapScreen extends StatelessWidget {
 }
 
 // ── Search bar ────────────────────────────────────────────────────────────────
-class _SearchBar extends StatelessWidget {
-  const _SearchBar();
+class _SearchBarWidget extends StatelessWidget {
+  const _SearchBarWidget({required this.controller, required this.onChanged});
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -115,31 +172,86 @@ class _SearchBar extends StatelessWidget {
       decoration: BoxDecoration(
         color: _bgCard,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(color: Colors.black38, blurRadius: 12, offset: Offset(0, 4))
-        ],
+        boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 12, offset: Offset(0, 4))],
       ),
-      child: const Row(
+      child: Row(
         children: [
-          SizedBox(width: 14),
-          Icon(Icons.search, color: _textSecondary, size: 22),
-          SizedBox(width: 10),
+          const SizedBox(width: 14),
+          const Icon(Icons.search, color: _textSec, size: 22),
+          const SizedBox(width: 10),
           Expanded(
             child: TextField(
-              style: TextStyle(color: _textPrimary, fontSize: 15),
-              decoration: InputDecoration(
+              controller: controller,
+              onChanged: onChanged,
+              style: const TextStyle(color: _textPri, fontSize: 15),
+              decoration: const InputDecoration(
                 hintText: 'Search charging stations…',
-                hintStyle: TextStyle(color: _textSecondary, fontSize: 15),
+                hintStyle: TextStyle(color: _textSec, fontSize: 15),
                 border: InputBorder.none,
                 isDense: true,
               ),
             ),
           ),
-          _IconBtn(icon: Icons.tune),
-          SizedBox(width: 4),
-          _IconBtn(icon: Icons.account_circle_outlined),
-          SizedBox(width: 8),
+          const _IconBtn(icon: Icons.account_circle_outlined),
+          const SizedBox(width: 8),
         ],
+      ),
+    );
+  }
+}
+
+// ── Filter chips ──────────────────────────────────────────────────────────────
+class _FilterChips extends StatelessWidget {
+  const _FilterChips({
+    required this.filterDC, required this.filterAvail,
+    required this.onDC,     required this.onAvail,
+  });
+  final bool filterDC, filterAvail;
+  final ValueChanged<bool> onDC, onAvail;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 36,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          _Chip(label: '⚡ Fast DC',   active: filterDC,    onTap: () => onDC(!filterDC)),
+          const SizedBox(width: 8),
+          _Chip(label: '🟢 Available', active: filterAvail, onTap: () => onAvail(!filterAvail)),
+        ],
+      ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  const _Chip({required this.label, required this.active, required this.onTap});
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: active ? _emerald : _bgCard,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: active ? _emerald : _bgSurface),
+          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 6)],
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: active ? Colors.black : _textSec,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }
@@ -150,25 +262,28 @@ class _IconBtn extends StatelessWidget {
   final IconData icon;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 38,
-      height: 38,
-      decoration: BoxDecoration(
-        color: _bgSurface,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Icon(icon, color: _textSecondary, size: 20),
-    );
-  }
+  Widget build(BuildContext context) => Container(
+    width: 38, height: 38,
+    decoration: BoxDecoration(color: _bgSurface, borderRadius: BorderRadius.circular(10)),
+    child: Icon(icon, color: _textSec, size: 20),
+  );
 }
 
 // ── Station carousel ──────────────────────────────────────────────────────────
 class _StationCarousel extends StatelessWidget {
-  const _StationCarousel();
+  const _StationCarousel({required this.stations});
+  final List<_Station> stations;
 
   @override
   Widget build(BuildContext context) {
+    if (stations.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 28),
+        alignment: Alignment.center,
+        child: const Text('No stations match your filters',
+            style: TextStyle(color: _textSec, fontSize: 13)),
+      );
+    }
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -180,13 +295,13 @@ class _StationCarousel extends StatelessWidget {
       ),
       padding: const EdgeInsets.only(top: 32, bottom: 24),
       child: SizedBox(
-        height: 168,
+        height: 195,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: _stations.length,
+          itemCount: stations.length,
           separatorBuilder: (_, __) => const SizedBox(width: 12),
-          itemBuilder: (_, i) => _StationCard(_stations[i]),
+          itemBuilder: (_, i) => _StationCard(stations[i]),
         ),
       ),
     );
@@ -198,10 +313,15 @@ class _StationCard extends StatelessWidget {
   const _StationCard(this.s);
   final _Station s;
 
+  Color get _statusColor {
+    if (s.available == 0) return _textSec;
+    if (s.available == 1) return Colors.orangeAccent;
+    return _emerald;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isLow = s.available <= 1;
-    final statusColor = isLow ? Colors.orangeAccent : _emerald;
+    final avail = s.available > 0;
 
     return Container(
       width: 170,
@@ -209,75 +329,71 @@ class _StationCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: _bgCard,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4))
-        ],
+        boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Status indicator
-          Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '${s.available} available',
-                style: TextStyle(
-                    color: statusColor, fontSize: 11, fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
+          // ── Status dot ─────────────────────────────────────────────────────
+          Row(children: [
+            Container(width: 8, height: 8,
+                decoration: BoxDecoration(color: _statusColor, shape: BoxShape.circle)),
+            const SizedBox(width: 6),
+            Text(
+              avail ? '${s.available} available' : 'Unavailable',
+              style: TextStyle(color: _statusColor, fontSize: 11, fontWeight: FontWeight.w600),
+            ),
+          ]),
+          const SizedBox(height: 6),
+          // ── Name + neighbourhood ───────────────────────────────────────────
+          Text(s.name,
+              style: const TextStyle(color: _textPri, fontSize: 14, fontWeight: FontWeight.bold),
+              maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(s.location, style: const TextStyle(color: _textSec, fontSize: 12)),
           const SizedBox(height: 8),
-          // Name + neighbourhood
-          Text(
-            s.name,
-            style: const TextStyle(
-                color: _textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-          Text(s.location,
-              style: const TextStyle(color: _textSecondary, fontSize: 12)),
+          // ── Speed + price ──────────────────────────────────────────────────
+          Row(children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: s.isDC
+                    ? _emerald.withValues(alpha: 0.15)
+                    : _bgSurface,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Text('${s.kw} kW',
+                  style: TextStyle(
+                      color: s.isDC ? _emerald : _textSec,
+                      fontSize: 11, fontWeight: FontWeight.w700)),
+            ),
+            const SizedBox(width: 6),
+            Flexible(child: Text(s.price,
+                style: const TextStyle(color: _textSec, fontSize: 11),
+                overflow: TextOverflow.ellipsis)),
+          ]),
           const Spacer(),
-          // Distance row
-          Row(
-            children: [
-              const Icon(Icons.near_me_outlined, color: _textSecondary, size: 13),
-              const SizedBox(width: 4),
-              Text(s.distance,
-                  style: const TextStyle(color: _textSecondary, fontSize: 12)),
-              const Spacer(),
-              const Icon(Icons.bolt, color: _emerald, size: 16),
-            ],
-          ),
+          // ── Distance ───────────────────────────────────────────────────────
+          Row(children: [
+            const Icon(Icons.near_me_outlined, color: _textSec, size: 13),
+            const SizedBox(width: 4),
+            Text(s.distance, style: const TextStyle(color: _textSec, fontSize: 12)),
+            const Spacer(),
+            const Icon(Icons.bolt, color: _emerald, size: 16),
+          ]),
           const SizedBox(height: 10),
-          // Navigate button
+          // ── Navigate button ────────────────────────────────────────────────
           GestureDetector(
             onTap: () => _navigate(s.lat, s.lng),
             child: Container(
               height: 32,
-              decoration: BoxDecoration(
-                color: _emerald,
-                borderRadius: BorderRadius.circular(9),
-              ),
+              decoration: BoxDecoration(color: _emerald, borderRadius: BorderRadius.circular(9)),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.navigation_rounded, color: Colors.black, size: 14),
                   SizedBox(width: 5),
-                  Text(
-                    'Navigate',
-                    style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700),
-                  ),
+                  Text('Navigate',
+                      style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w700)),
                 ],
               ),
             ),
