@@ -1,21 +1,21 @@
 [
   {
-    "id": "tg_001",
-    "name": "Tegeta Motors - Central East-West Highway",
-    "lat": 42.0025,
-    "lng": 44.1110,
+    "id": "tg_gori_001",
+    "name": "Tegeta Motors High-Power DC",
+    "lat": 42.002381,
+    "lng": 44.110844,
     "power": "150 kW",
     "type": "Fast DC",
     "price": "0.59 ₾/kWh",
     "available_spots": "4 available",
-    "city": "Gori",
+    "city": "Gori Autobahn",
     "provider": "Tegeta Motors"
   },
   {
-    "id": "es_001",
-    "name": "E-Space - Wissol Plaza Urbnisi",
-    "lat": 42.0118,
-    "lng": 43.9242,
+    "id": "es_urbnisi_001",
+    "name": "E-Space Wissol Plaza",
+    "lat": 42.011624,
+    "lng": 43.924051,
     "power": "120 kW",
     "type": "Fast DC",
     "price": "0.60 ₾/kWh",
@@ -24,22 +24,22 @@
     "provider": "E-Space"
   },
   {
-    "id": "gf_001",
-    "name": "Gulf Georgia - Khashuri Bypass DC",
-    "lat": 42.0150,
-    "lng": 43.6120,
+    "id": "ws_smart_gori",
+    "name": "Wissol Smart - Gori Station",
+    "lat": 42.005112,
+    "lng": 44.072210,
     "power": "60 kW",
     "type": "Fast DC",
-    "price": "0.55 ₾/kWh",
+    "price": "0.58 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Khashuri",
-    "provider": "Gulf Georgia"
+    "city": "Gori",
+    "provider": "Wissol"
   },
   {
-    "id": "ws_001",
-    "name": "Wissol - Argveta Interchange",
-    "lat": 42.1124,
-    "lng": 43.0316,
+    "id": "ws_zestafoni_001",
+    "name": "Wissol Argveta Interchange",
+    "lat": 42.112105,
+    "lng": 43.031422,
     "power": "180 kW",
     "type": "Fast DC",
     "price": "0.58 ₾/kWh",
@@ -48,51 +48,15 @@
     "provider": "Wissol"
   },
   {
-    "id": "ec_001",
-    "name": "Ecocars - Kutaisi West Station",
-    "lat": 42.2530,
-    "lng": 42.6180,
-    "power": "50 kW",
-    "type": "Fast DC",
-    "price": "0.50 ₾/kWh",
-    "available_spots": "2 available",
-    "city": "Kutaisi",
-    "provider": "Ecocars Georgia"
-  },
-  {
-    "id": "dt_001",
-    "name": "Datene - Samtredia Junction",
-    "lat": 42.1485,
-    "lng": 42.3412,
-    "power": "22 kW",
-    "type": "AC",
-    "price": "0.35 ₾/kWh",
-    "available_spots": "2 available",
-    "city": "Samtredia",
-    "provider": "Datene"
-  },
-  {
-    "id": "me_001",
-    "name": "martEV - Grigoleti Coast",
-    "lat": 42.0422,
-    "lng": 41.7315,
+    "id": "gf_khashuri_001",
+    "name": "Gulf Georgia DC Hub",
+    "lat": 42.014890,
+    "lng": 43.611850,
     "power": "60 kW",
     "type": "Fast DC",
     "price": "0.55 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Grigoleti",
-    "provider": "martEV"
-  },
-  {
-    "id": "gt_001",
-    "name": "Gadatene - Kobuleti Entry DC",
-    "lat": 41.8310,
-    "lng": 41.7845,
-    "power": "120 kW",
-    "type": "Fast DC",
-    "price": "0.52 ₾/kWh",
-    "available_spots": "2 available",
-    "city": "Kobuleti",
-    "provider": "Gadatene"
+    "city": "Khashuri",
+    "provider": "Gulf Georgia"
   }
 ]

@@ -153,6 +153,44 @@ class _MapScreenState extends State<MapScreen> {
   void _zoom(double delta) =>
       _mapCtrl.move(_mapCtrl.camera.center, _mapCtrl.camera.zoom + delta);
 
+  // ── Route result handler (shared by FAB and "Get Directions") ────────────
+  void _handleRouteResult(EVRouteResult? result) {
+    if (result == null || !mounted) { return; }
+    setState(() => _routeResult = result);
+    if (result.polylinePoints.isNotEmpty) {
+      final mid = result.polylinePoints[result.polylinePoints.length ~/ 2];
+      _mapCtrl.move(mid, 11);
+    }
+  }
+
+  // ── Station marker tap → bottom sheet ────────────────────────────────────
+  void _showStationSheet(Station s) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _StationSheet(
+        station: s,
+        onGetDirections: () => _openRoutePlannerTo(s),
+      ),
+    );
+  }
+
+  Future<void> _openRoutePlannerTo(Station destination) async {
+    if (mounted) { Navigator.pop(context); } // close the sheet
+    final result = await Navigator.push<EVRouteResult>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RoutePlannerScreen(
+          stations:           _stations,
+          initialOrigin:      _userPos,
+          initialDestination: destination,
+        ),
+      ),
+    );
+    _handleRouteResult(result);
+  }
+
   void _onSearchChanged(String query) {
     setState(() {});
     _debounce?.cancel();
@@ -226,19 +264,23 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                   ],
                 ),
-              // Station dots
+              // Station dots — tappable
               MarkerLayer(
                 markers: stations.map((s) => Marker(
                   point:  LatLng(s.lat, s.lng),
-                  width:  36,
-                  height: 36,
-                  child:  Container(
-                    decoration: BoxDecoration(
-                      color: s.available > 0 ? _emerald : Colors.orangeAccent,
-                      shape: BoxShape.circle,
-                      boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 6)],
+                  width:  40,
+                  height: 40,
+                  child:  GestureDetector(
+                    onTap: () => _showStationSheet(s),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: s.available > 0 ? _emerald : Colors.orangeAccent,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white.withOpacity(0.25), width: 2),
+                        boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 6)],
+                      ),
+                      child: const Icon(Icons.bolt, color: Colors.black, size: 20),
                     ),
-                    child: const Icon(Icons.bolt, color: Colors.black, size: 20),
                   ),
                 )).toList(),
               ),
@@ -333,13 +375,7 @@ class _MapScreenState extends State<MapScreen> {
                     builder: (_) => RoutePlannerScreen(stations: _stations),
                   ),
                 );
-                if (result != null && mounted) {
-                  setState(() => _routeResult = result);
-                  if (result.polylinePoints.isNotEmpty) {
-                    final mid = result.polylinePoints[result.polylinePoints.length ~/ 2];
-                    _mapCtrl.move(mid, 11);
-                  }
-                }
+                _handleRouteResult(result);
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
@@ -893,6 +929,178 @@ class _ZoomBtn extends StatelessWidget {
         ),
         child: Icon(icon, color: _textSec, size: 22),
       ),
+    );
+  }
+}
+
+// ── Station popup bottom sheet ────────────────────────────────────────────────
+class _StationSheet extends StatefulWidget {
+  const _StationSheet({required this.station, required this.onGetDirections});
+  final Station      station;
+  final VoidCallback onGetDirections;
+
+  @override
+  State<_StationSheet> createState() => _StationSheetState();
+}
+
+class _StationSheetState extends State<_StationSheet> {
+  bool _refreshing = false;
+  bool _justRefreshed = false;
+
+  Future<void> _refresh() async {
+    setState(() { _refreshing = true; _justRefreshed = false; });
+    await Future.delayed(const Duration(seconds: 1));
+    if (mounted) {
+      setState(() { _refreshing = false; _justRefreshed = true; });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.station;
+    final avail = s.available > 0;
+    final statusColor = avail ? _emerald : Colors.orangeAccent;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: _bgCard,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        20, 10, 20,
+        20 + MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Drag handle
+          Center(
+            child: Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: _bgSurface, borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Provider label
+          Text(
+            s.provider,
+            style: const TextStyle(color: _textSec, fontSize: 12,
+                fontWeight: FontWeight.w600, letterSpacing: 0.4),
+          ),
+          const SizedBox(height: 4),
+
+          // Station name
+          Text(
+            s.name,
+            style: const TextStyle(color: _textPri, fontSize: 17,
+                fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 14),
+
+          // Power + city chips
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            _InfoChip(
+              icon:  s.isDC ? Icons.bolt : Icons.power_rounded,
+              label: '${s.kw} kW · ${s.isDC ? 'Fast DC' : 'AC'}',
+              color: s.isDC ? _emerald : Colors.blueAccent,
+            ),
+            _InfoChip(
+              icon:  Icons.location_on_outlined,
+              label: s.location,
+              color: _textSec,
+            ),
+            _InfoChip(
+              icon:  Icons.sell_outlined,
+              label: s.price,
+              color: _textSec,
+            ),
+          ]),
+          const SizedBox(height: 16),
+
+          // Availability row + refresh button
+          Row(children: [
+            Container(
+              width: 9, height: 9,
+              decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              avail
+                  ? '${s.available} connector${s.available == 1 ? '' : 's'} available'
+                  : 'No connectors available',
+              style: TextStyle(
+                color: statusColor, fontSize: 14, fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 10),
+            GestureDetector(
+              onTap: _refreshing ? null : _refresh,
+              child: _refreshing
+                  ? const SizedBox(
+                      width: 17, height: 17,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: _textSec),
+                    )
+                  : Icon(Icons.refresh_rounded,
+                      color: _justRefreshed ? _emerald : _textSec, size: 19),
+            ),
+            if (_justRefreshed) ...[
+              const SizedBox(width: 6),
+              const Text('Updated', style: TextStyle(color: _emerald, fontSize: 11)),
+            ],
+          ]),
+          const SizedBox(height: 22),
+
+          // Get Directions button
+          GestureDetector(
+            onTap: widget.onGetDirections,
+            child: Container(
+              width: double.infinity,
+              height: 52,
+              decoration: BoxDecoration(
+                color: _emerald, borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.alt_route_rounded, color: Colors.black, size: 20),
+                  SizedBox(width: 8),
+                  Text('Get Directions',
+                      style: TextStyle(color: Colors.black, fontSize: 15,
+                          fontWeight: FontWeight.w700)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Info chip (used inside station sheet) ─────────────────────────────────────
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({required this.icon, required this.label, required this.color});
+  final IconData icon;
+  final String   label;
+  final Color    color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: _bgSurface, borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, color: color, size: 13),
+        const SizedBox(width: 5),
+        Text(label, style: TextStyle(color: color, fontSize: 12,
+            fontWeight: FontWeight.w500)),
+      ]),
     );
   }
 }

@@ -25,9 +25,18 @@ class RouteStop {
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 class RoutePlannerScreen extends StatefulWidget {
-  const RoutePlannerScreen({super.key, required this.stations});
+  const RoutePlannerScreen({
+    super.key,
+    required this.stations,
+    this.initialOrigin,
+    this.initialDestination,
+  });
 
   final List<Station> stations;
+  /// Pre-fills the Start stop with the user's current GPS position.
+  final LatLng?   initialOrigin;
+  /// Pre-fills the End stop with a station chosen via "Get Directions".
+  final Station?  initialDestination;
 
   @override
   State<RoutePlannerScreen> createState() => _RoutePlannerScreenState();
@@ -37,6 +46,22 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
   final _stops = [RouteStop(), RouteStop()];
   double _batteryPct  = 80.0;
   bool   _isPlanning  = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill Start with user GPS if available
+    if (widget.initialOrigin != null) {
+      _stops.first.coords = widget.initialOrigin;
+      _stops.first.controller.text = 'My Location';
+    }
+    // Pre-fill End with tapped station
+    if (widget.initialDestination != null) {
+      final d = widget.initialDestination!;
+      _stops.last.coords = LatLng(d.lat, d.lng);
+      _stops.last.controller.text = d.name;
+    }
+  }
 
   @override
   void dispose() {
