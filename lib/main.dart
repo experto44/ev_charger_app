@@ -207,6 +207,37 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
 
+          // ── Recenter GPS button ────────────────────────────────────────────
+          Positioned(
+            right: 16,
+            bottom: 256, // sits above the carousel (32 top pad + 195 list + 24 bottom pad + ~5 gap)
+            child: GestureDetector(
+              onTap: _userPos == null
+                  ? null
+                  : () => _mapCtrl.move(_userPos!, 14),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: _userPos == null ? _bgSurface : _bgCard,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: _userPos == null ? _bgSurface : _emerald,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4)),
+                  ],
+                ),
+                child: Icon(
+                  Icons.my_location_rounded,
+                  color: _userPos == null ? _textSec : _emerald,
+                  size: 22,
+                ),
+              ),
+            ),
+          ),
+
           // ── Bottom station cards ───────────────────────────────────────────
           Positioned(
             left: 0, right: 0, bottom: 0,
