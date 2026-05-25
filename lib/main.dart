@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -74,9 +75,41 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   static const _tbilisi = LatLng(41.7151, 44.8271);
 
-  final _searchCtrl = TextEditingController();
-  bool _filterDC    = false;
-  bool _filterAvail = false;
+  final _searchCtrl  = TextEditingController();
+  final _mapCtrl     = MapController();
+  bool  _filterDC    = false;
+  bool  _filterAvail = false;
+  LatLng? _userPos;
+
+  @override
+  void initState() {
+    super.initState();
+    _initLocation();
+  }
+
+  Future<void> _initLocation() async {
+    try {
+      LocationPermission perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) { return; }
+
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+      final latlng = LatLng(pos.latitude, pos.longitude);
+      if (!mounted) { return; }
+      setState(() => _userPos = latlng);
+      _mapCtrl.move(latlng, 14);
+    } catch (_) {
+      // Permission denied or timeout — stay on Tbilisi fallback
+    }
+  }
 
   @override
   void dispose() {
@@ -104,6 +137,7 @@ class _MapScreenState extends State<MapScreen> {
         children: [
           // ── Map + live markers ─────────────────────────────────────────────
           FlutterMap(
+            mapController: _mapCtrl,
             options: const MapOptions(initialCenter: _tbilisi, initialZoom: 13),
             children: [
               TileLayer(
@@ -130,6 +164,23 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 )).toList(),
               ),
+              // ── User location dot ────────────────────────────────────────
+              if (_userPos != null)
+                MarkerLayer(markers: [
+                  Marker(
+                    point: _userPos!,
+                    width: 22,
+                    height: 22,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2196F3),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 3),
+                        boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 6)],
+                      ),
+                    ),
+                  ),
+                ]),
             ],
           ),
 
