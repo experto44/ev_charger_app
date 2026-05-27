@@ -31,10 +31,10 @@ const _textSec   = Color(0xFF9E9E9E);
 // Fallback centre used only when GPS is unavailable
 const _tbilisi = LatLng(41.7151, 44.8271);
 
-// Cloud data source — weekly-synced GitHub Gist
+// Cloud data source — always points to latest revision (no pinned commit hash)
 const _kGistUrl =
     'https://gist.githubusercontent.com/experto44/36f39392ce7a4abe14ab065aa8e846bd'
-    '/raw/ce8426381a8d56fd144d5726fcd42a94216170fb/chargers.json';
+    '/raw/chargers.json';
 
 // ── Navigate to coordinates in Google Maps ────────────────────────────────────
 Future<void> _navigate(double lat, double lng) async {
@@ -73,8 +73,9 @@ class _MapScreenState extends State<MapScreen> {
   final _searchFocus = FocusNode();
   final _mapCtrl     = MapController();
 
-  bool  _filterDC    = false;
-  bool  _filterAvail = false;
+  bool             _filterDC         = false;
+  bool             _filterAvail      = false;
+  final Set<String> _filterConnectors = {};  // empty = no connector filter
 
   LatLng?               _userPos;
   List<Station>         _stations    = const [];
@@ -233,6 +234,8 @@ class _MapScreenState extends State<MapScreen> {
           !s.location.toLowerCase().contains(q)) { return false; }
       if (_filterDC    && !s.isDC)          { return false; }
       if (_filterAvail && s.available == 0) { return false; }
+      if (_filterConnectors.isNotEmpty &&
+          !s.connectors.any((c) => _filterConnectors.contains(c))) { return false; }
       return true;
     }).toList();
   }
@@ -326,10 +329,18 @@ class _MapScreenState extends State<MapScreen> {
                   ],
                   const SizedBox(height: 10),
                   _FilterChips(
-                    filterDC:    _filterDC,
-                    filterAvail: _filterAvail,
-                    onDC:        (v) => setState(() => _filterDC    = v),
-                    onAvail:     (v) => setState(() => _filterAvail = v),
+                    filterDC:         _filterDC,
+                    filterAvail:      _filterAvail,
+                    onDC:             (v) => setState(() => _filterDC    = v),
+                    onAvail:          (v) => setState(() => _filterAvail = v),
+                    filterConnectors: _filterConnectors,
+                    onConnector:      (ct) => setState(() {
+                      if (_filterConnectors.contains(ct)) {
+                        _filterConnectors.remove(ct);
+                      } else {
+                        _filterConnectors.add(ct);
+                      }
+                    }),
                   ),
                 ],
               ),
@@ -529,11 +540,20 @@ class _SuggestionsList extends StatelessWidget {
 // ── Filter chips ──────────────────────────────────────────────────────────────
 class _FilterChips extends StatelessWidget {
   const _FilterChips({
-    required this.filterDC, required this.filterAvail,
-    required this.onDC,     required this.onAvail,
+    required this.filterDC,
+    required this.filterAvail,
+    required this.onDC,
+    required this.onAvail,
+    required this.filterConnectors,
+    required this.onConnector,
   });
-  final bool filterDC, filterAvail;
+  final bool              filterDC, filterAvail;
   final ValueChanged<bool> onDC, onAvail;
+  final Set<String>        filterConnectors;
+  final ValueChanged<String> onConnector;
+
+  // Fixed connector types — always shown regardless of loaded station data.
+  static const _kConnectors = ['CCS1', 'CCS2', 'GB/T', 'CHAdeMO', 'Type 2', 'NACS'];
 
   @override
   Widget build(BuildContext context) {
@@ -545,6 +565,15 @@ class _FilterChips extends StatelessWidget {
           _Chip(label: '⚡ Fast DC',   active: filterDC,    onTap: () => onDC(!filterDC)),
           const SizedBox(width: 8),
           _Chip(label: '🟢 Available', active: filterAvail, onTap: () => onAvail(!filterAvail)),
+          // Fixed connector-type chips — multi-select
+          ..._kConnectors.map((ct) => Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: _Chip(
+              label:  ct,
+              active: filterConnectors.contains(ct),
+              onTap:  () => onConnector(ct),
+            ),
+          )),
         ],
       ),
     );
@@ -617,6 +646,8 @@ class _StationCarousel extends StatelessWidget {
             style: TextStyle(color: _textSec, fontSize: 13)),
       );
     }
+    // Extra bottom inset so "Plan & Go" clears the Android gesture / button nav bar.
+    final navBarHeight = MediaQuery.of(context).padding.bottom;
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -626,7 +657,7 @@ class _StationCarousel extends StatelessWidget {
           stops:  [0.6, 1.0],
         ),
       ),
-      padding: const EdgeInsets.only(top: 32, bottom: 24),
+      padding: EdgeInsets.only(top: 32, bottom: 24 + navBarHeight),
       child: SizedBox(
         height: 240, // taller for stacked Navigate + Plan & Go buttons
         child: ListView.separated(
@@ -828,7 +859,9 @@ class _StationSheetState extends State<_StationSheet> {
     final avail = s.available > 0;
     final statusColor = avail ? _emerald : Colors.orangeAccent;
 
-    return Container(
+    return SafeArea(
+      top: false,
+      child: Container(
       decoration: const BoxDecoration(
         color: _bgCard,
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
@@ -852,14 +885,6 @@ class _StationSheetState extends State<_StationSheet> {
           ),
           const SizedBox(height: 16),
 
-          // Provider label
-          Text(
-            s.provider,
-            style: const TextStyle(color: _textSec, fontSize: 12,
-                fontWeight: FontWeight.w600, letterSpacing: 0.4),
-          ),
-          const SizedBox(height: 4),
-
           // Station name
           Text(
             s.name,
@@ -868,7 +893,7 @@ class _StationSheetState extends State<_StationSheet> {
           ),
           const SizedBox(height: 14),
 
-          // Power + city chips
+          // Power + city + provider + connector chips
           Wrap(spacing: 8, runSpacing: 8, children: [
             _InfoChip(
               icon:  s.isDC ? Icons.bolt : Icons.power_rounded,
@@ -885,6 +910,17 @@ class _StationSheetState extends State<_StationSheet> {
               label: s.price,
               color: _textSec,
             ),
+            if (s.provider.isNotEmpty)
+              _InfoChip(
+                icon:  Icons.ev_station_rounded,
+                label: s.provider,
+                color: _emerald,
+              ),
+            ...s.connectors.map((c) => _InfoChip(
+              icon:  Icons.power_outlined,
+              label: c,
+              color: Colors.blueAccent,
+            )),
           ]),
           const SizedBox(height: 16),
 
@@ -958,6 +994,7 @@ class _StationSheetState extends State<_StationSheet> {
           ),
         ],
       ),
+    ), // SafeArea
     );
   }
 }

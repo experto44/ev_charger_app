@@ -23,6 +23,7 @@ class Station {
     this.distance    = '',
     this.provider    = '',
     this.lastUpdated = '',
+    this.connectors  = const [],
   });
 
   /// Handles both the production format (available_spots / type / power / city)
@@ -43,6 +44,9 @@ class Station {
         price:       j['price']        as String,
         provider:    j['provider']     as String? ?? '',
         lastUpdated: j['last_updated'] as String? ?? '',
+        connectors:  (j['connectors']  as List<dynamic>? ?? [])
+                       .map((e) => e as String)
+                       .toList(),
       );
     }
     // Legacy schema
@@ -61,12 +65,13 @@ class Station {
   }
 
   final String name, location, price;
-  final String distance;    // empty for production-schema entries
+  final String distance;       // empty for production-schema entries
   final String provider;
-  final String lastUpdated; // ISO date or human string; empty if not present
+  final String lastUpdated;    // ISO date or human string; empty if not present
   final int    available, kw;
   final double lat, lng;
   final bool   isDC;
+  final List<String> connectors; // e.g. ["CCS2", "CHAdeMO"]
 }
 
 // ── Route models ──────────────────────────────────────────────────────────────

@@ -1,0 +1,91 @@
+name: Update Chargers Gist
+
+# ── Triggers ──────────────────────────────────────────────────────────────────
+on:
+  schedule:
+    # Every 10 minutes (GitHub's minimum reliable interval is 5 min)
+    - cron: '*/10 * * * *'
+
+  # Also fire immediately whenever chargers.json is committed to main
+  push:
+    branches: [main]
+    paths:
+      - 'assets/data/chargers.json'
+
+  # Allow a manual run from the Actions tab
+  workflow_dispatch:
+
+# ── Job ───────────────────────────────────────────────────────────────────────
+jobs:
+  update-gist:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Push chargers.json to Gist
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+        run: |
+          python3 << 'PYEOF'
+          import json, os, requests
+          from datetime import datetime, timezone
+
+          GIST_ID = "36f39392ce7a4abe14ab065aa8e846bd"
+          token   = os.environ["GIST_TOKEN"]
+          headers = {
+              "Authorization": f"token {token}",
+              "Accept":        "application/vnd.github+json",
+          }
+
+          # ── Load station data from the committed asset file ────────────────
+          with open("assets/data/chargers.json", encoding="utf-8") as f:
+              stations = json.load(f)
+
+          # Stamp every station with the current UTC time so the app shows
+          # a meaningful "last verified" timestamp after each gist refresh.
+          now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+          for s in stations:
+              s["last_updated"] = now
+
+          # ── Fetch the current gist so we keep any other files intact ───────
+          resp = requests.get(
+              f"https://api.github.com/gists/{GIST_ID}",
+              headers=headers,
+              timeout=15,
+          )
+          resp.raise_for_status()
+          gist_data = resp.json()
+
+          # Preserve every file in the gist except chargers.json
+          files = {
+              name: data
+              for name, data in gist_data.get("files", {}).items()
+              if name != "chargers.json"
+          }
+
+          # Replace chargers.json with the freshly timestamped data
+          files["chargers.json"] = {
+              "content": json.dumps(stations, ensure_ascii=False, indent=2)
+          }
+
+          # ── Patch the gist ─────────────────────────────────────────────────
+          patch = requests.patch(
+              f"https://api.github.com/gists/{GIST_ID}",
+              headers=headers,
+              json={"files": files},
+              timeout=15,
+          )
+          patch.raise_for_status()
+
+          print(f"✅  Updated {len(stations)} stations — last_updated = {now}")
+          PYEOF
