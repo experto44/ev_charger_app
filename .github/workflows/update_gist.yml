@@ -48,7 +48,7 @@ jobs:
           }
 
           # ── Load station data from the committed asset file ────────────────
-          with open("assets/data/chargers.json", encoding="utf-8") as f:
+          with open("assets/data/chargers.json", encoding="utf-8-sig") as f:
               stations = json.load(f)
 
           # Stamp every station with the current UTC time so the app shows
