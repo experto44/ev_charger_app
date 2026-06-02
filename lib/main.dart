@@ -524,132 +524,59 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             ),
           ),
 
-          // ── Map style toggle (top of the right control column) ────────────
-          Positioned(
-            right:  16,
-            bottom: 548,
-            child: GestureDetector(
-              onTap: () => setState(() => _darkMap = !_darkMap),
-              child: Container(
-                width: 48, height: 48,
-                decoration: BoxDecoration(
-                  color: _bgCard,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: _bgSurface),
-                  boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4))],
-                ),
-                child: Icon(
-                  _darkMap ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                  color: _darkMap ? _textPri : Colors.amber,
-                  size: 22,
-                ),
-              ),
-            ),
-          ),
-
-          // ── Provider filter FAB (above the zoom + button) ─────────────────
-          Positioned(
-            right:  16,
-            bottom: 492,
-            child: GestureDetector(
-              onTap: _openProviderFilter,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: 48, height: 48,
-                    decoration: BoxDecoration(
-                      color: _bgCard,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: _providerFilterActive ? _emerald : _bgSurface,
-                      ),
-                      boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4))],
-                    ),
-                    child: Icon(
-                      Icons.layers_rounded,
-                      color: _providerFilterActive ? _emerald : _textSec,
-                      size: 22,
-                    ),
-                  ),
-                  // Badge shown only while a provider filter is active.
-                  if (_providerFilterActive)
-                    Positioned(
-                      right: -2, top: -2,
-                      child: Container(
-                        width: 12, height: 12,
-                        decoration: BoxDecoration(
-                          color: _emerald,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: _bgDark, width: 2),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-
-          // ── Zoom +/− buttons ─────────────────────────────────────────────
-          Positioned(
-            right:  16,
-            bottom: 380,
-            child: Column(
-              children: [
-                _ZoomBtn(icon: Icons.add_rounded,    onTap: () => _zoom(1)),
-                const SizedBox(height: 8),
-                _ZoomBtn(icon: Icons.remove_rounded, onTap: () => _zoom(-1)),
-              ],
-            ),
-          ),
-
-          // ── Route planner FAB ─────────────────────────────────────────────
-          Positioned(
-            right:  16,
-            bottom: 316,
-            child: GestureDetector(
-              onTap: () => Navigator.push<void>(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => RoutePlannerScreen(stations: _stations),
-                ),
-              ),
-              child: Container(
-                width: 48, height: 48,
-                decoration: BoxDecoration(
-                  color: _bgCard,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: _bgSurface),
-                  boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4))],
-                ),
-                child: const Icon(Icons.alt_route_rounded, color: _textSec, size: 22),
-              ),
-            ),
-          ),
-
-          // ── Recenter GPS FAB ──────────────────────────────────────────────
+          // ── Right control column (bottom-anchored, grouped) ───────────────
+          // A single bottom-anchored Column keeps the map-style toggle, provider
+          // filter, zoom, route and GPS buttons perfectly grouped at uniform
+          // spacing on ANY screen height — no fragile hardcoded offsets. The
+          // group is anchored just above the station carousel; it grows upward.
           Positioned(
             right:  16,
             bottom: 256,
-            child: GestureDetector(
-              onTap: _userPos == null ? null : () => _animatedMove(_userPos!, 14),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 48, height: 48,
-                decoration: BoxDecoration(
-                  color: _userPos == null ? _bgSurface : _bgCard,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: _userPos == null ? _bgSurface : _emerald,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Map style toggle (Light ↔ Dark)
+                _MapCtrlButton(
+                  onTap: () => setState(() => _darkMap = !_darkMap),
+                  icon:  _darkMap ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                  iconColor: _darkMap ? _textPri : Colors.amber,
+                ),
+                const SizedBox(height: 8),
+                // Provider filter (with active badge)
+                _MapCtrlButton(
+                  onTap: _openProviderFilter,
+                  icon:  Icons.layers_rounded,
+                  iconColor:   _providerFilterActive ? _emerald : _textSec,
+                  borderColor: _providerFilterActive ? _emerald : _bgSurface,
+                  showBadge:   _providerFilterActive,
+                ),
+                const SizedBox(height: 8),
+                // Zoom in / out
+                _ZoomBtn(icon: Icons.add_rounded,    onTap: () => _zoom(1)),
+                const SizedBox(height: 8),
+                _ZoomBtn(icon: Icons.remove_rounded, onTap: () => _zoom(-1)),
+                const SizedBox(height: 8),
+                // Route planner
+                _MapCtrlButton(
+                  onTap: () => Navigator.push<void>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => RoutePlannerScreen(stations: _stations),
+                    ),
                   ),
-                  boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4))],
+                  icon: Icons.alt_route_rounded,
+                  iconColor: _textSec,
                 ),
-                child: Icon(
-                  Icons.my_location_rounded,
-                  color: _userPos == null ? _textSec : _emerald,
-                  size: 22,
+                const SizedBox(height: 8),
+                // Recenter GPS
+                _MapCtrlButton(
+                  onTap: _userPos == null ? null : () => _animatedMove(_userPos!, 14),
+                  icon: Icons.my_location_rounded,
+                  iconColor:   _userPos == null ? _textSec : _emerald,
+                  borderColor: _userPos == null ? _bgSurface : _emerald,
+                  bgColor:     _userPos == null ? _bgSurface : _bgCard,
                 ),
-              ),
+              ],
             ),
           ),
 
@@ -1263,6 +1190,57 @@ class _ZoomBtn extends StatelessWidget {
           boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4))],
         ),
         child: Icon(icon, color: _textSec, size: 22),
+      ),
+    );
+  }
+}
+
+// Shared 48×48 rounded map-control button used across the right control column.
+class _MapCtrlButton extends StatelessWidget {
+  const _MapCtrlButton({
+    required this.icon,
+    required this.iconColor,
+    required this.onTap,
+    this.bgColor     = _bgCard,
+    this.borderColor = _bgSurface,
+    this.showBadge   = false,
+  });
+  final IconData      icon;
+  final Color         iconColor, bgColor, borderColor;
+  final VoidCallback? onTap;
+  final bool          showBadge;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 48, height: 48,
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: borderColor),
+              boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4))],
+            ),
+            child: Icon(icon, color: iconColor, size: 22),
+          ),
+          if (showBadge)
+            Positioned(
+              right: -2, top: -2,
+              child: Container(
+                width: 12, height: 12,
+                decoration: BoxDecoration(
+                  color: _emerald,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: _bgDark, width: 2),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
