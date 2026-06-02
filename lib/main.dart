@@ -31,6 +31,9 @@ const _textSec   = Color(0xFF9E9E9E);
 // Fallback centre used only when GPS is unavailable
 const _tbilisi = LatLng(41.7151, 44.8271);
 
+// Known providers, in display order. "All selected" is the default (no filter).
+const _kAllProviders = ['E-Space', 'mart EV'];
+
 // Cloud data source — always points to latest revision (no pinned commit hash)
 const _kGistUrl =
     'https://gist.githubusercontent.com/experto44/36f39392ce7a4abe14ab065aa8e846bd'
@@ -75,8 +78,13 @@ class _MapScreenState extends State<MapScreen> {
 
   bool             _filterDC         = false;
   bool             _filterAvail      = false;
-  String?          _filterProvider;            // null = all providers
+  // Multi-select provider filter. Defaults to every known provider selected
+  // (= show all). A filter is "active" only when not all providers are selected.
+  final Set<String> _selectedProviders = {..._kAllProviders};
   final Set<String> _filterConnectors = {};  // empty = no connector filter
+
+  bool get _providerFilterActive =>
+      _selectedProviders.length != _kAllProviders.length;
 
   LatLng?               _userPos;
   List<Station>         _stations    = const [];
@@ -173,6 +181,31 @@ class _MapScreenState extends State<MapScreen> {
   void _zoom(double delta) =>
       _mapCtrl.move(_mapCtrl.camera.center, _mapCtrl.camera.zoom + delta);
 
+  // ── Provider filter FAB → multi-select bottom sheet ──────────────────────
+  void _openProviderFilter() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => StatefulBuilder(
+        // setSheet rebuilds the checkbox rows; setState rebuilds the map + badge.
+        builder: (_, setSheet) => _ProviderFilterSheet(
+          all:      _kAllProviders,
+          selected: _selectedProviders,
+          onToggle: (p) {
+            setState(() {
+              if (_selectedProviders.contains(p)) {
+                _selectedProviders.remove(p);
+              } else {
+                _selectedProviders.add(p);
+              }
+            });
+            setSheet(() {});
+          },
+        ),
+      ),
+    );
+  }
+
   // ── Station marker tap → bottom sheet ────────────────────────────────────
   void _showStationSheet(Station s) {
     showModalBottomSheet<void>(
@@ -233,7 +266,7 @@ class _MapScreenState extends State<MapScreen> {
       if (q.isNotEmpty &&
           !s.name.toLowerCase().contains(q) &&
           !s.location.toLowerCase().contains(q)) { return false; }
-      if (_filterProvider != null && s.provider != _filterProvider) { return false; }
+      if (_providerFilterActive && !_selectedProviders.contains(s.provider)) { return false; }
       if (_filterDC    && !s.isDC)          { return false; }
       if (_filterAvail && s.available == 0) { return false; }
       if (_filterConnectors.isNotEmpty &&
@@ -335,8 +368,6 @@ class _MapScreenState extends State<MapScreen> {
                     filterAvail:      _filterAvail,
                     onDC:             (v) => setState(() => _filterDC    = v),
                     onAvail:          (v) => setState(() => _filterAvail = v),
-                    filterProvider:   _filterProvider,
-                    onProvider:       (p) => setState(() => _filterProvider = p),
                     filterConnectors: _filterConnectors,
                     onConnector:      (ct) => setState(() {
                       if (_filterConnectors.contains(ct)) {
@@ -346,6 +377,49 @@ class _MapScreenState extends State<MapScreen> {
                       }
                     }),
                   ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Provider filter FAB (above the zoom + button) ─────────────────
+          Positioned(
+            right:  16,
+            bottom: 492,
+            child: GestureDetector(
+              onTap: _openProviderFilter,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 48, height: 48,
+                    decoration: BoxDecoration(
+                      color: _bgCard,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: _providerFilterActive ? _emerald : _bgSurface,
+                      ),
+                      boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4))],
+                    ),
+                    child: Icon(
+                      Icons.layers_rounded,
+                      color: _providerFilterActive ? _emerald : _textSec,
+                      size: 22,
+                    ),
+                  ),
+                  // Badge shown only while a provider filter is active.
+                  if (_providerFilterActive)
+                    Positioned(
+                      right: -2, top: -2,
+                      child: Container(
+                        width: 12, height: 12,
+                        decoration: BoxDecoration(
+                          color: _emerald,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: _bgDark, width: 2),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -548,20 +622,14 @@ class _FilterChips extends StatelessWidget {
     required this.filterAvail,
     required this.onDC,
     required this.onAvail,
-    required this.filterProvider,
-    required this.onProvider,
     required this.filterConnectors,
     required this.onConnector,
   });
   final bool              filterDC, filterAvail;
   final ValueChanged<bool> onDC, onAvail;
-  final String?            filterProvider;       // null = all providers
-  final ValueChanged<String?> onProvider;        // pass null to clear
   final Set<String>        filterConnectors;
   final ValueChanged<String> onConnector;
 
-  // Provider filters — single-select (tap active chip again to clear).
-  static const _kProviders  = ['E-Space', 'mart EV'];
   // Fixed connector types — always shown regardless of loaded station data.
   static const _kConnectors = ['CCS1', 'CCS2', 'GB/T', 'CHAdeMO', 'Type 2', 'NACS'];
 
@@ -572,16 +640,6 @@ class _FilterChips extends StatelessWidget {
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
-          // Provider chips first — single-select toggle (null clears the filter).
-          ..._kProviders.expand((p) => [
-            _Chip(
-              icon:   Icons.ev_station_rounded,
-              label:  p,
-              active: filterProvider == p,
-              onTap:  () => onProvider(filterProvider == p ? null : p),
-            ),
-            const SizedBox(width: 8),
-          ]),
           _Chip(icon: Icons.bolt, label: 'Fast DC',
               active: filterDC, onTap: () => onDC(!filterDC)),
           const SizedBox(width: 8),
@@ -658,6 +716,92 @@ class _IconBtn extends StatelessWidget {
       child: Icon(icon, color: _textSec, size: 20),
     ),
   );
+}
+
+// ── Provider filter sheet ─────────────────────────────────────────────────────
+class _ProviderFilterSheet extends StatelessWidget {
+  const _ProviderFilterSheet({
+    required this.all,
+    required this.selected,
+    required this.onToggle,
+  });
+  final List<String>       all;
+  final Set<String>        selected;
+  final ValueChanged<String> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: _bgCard,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 10),
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: _bgSurface, borderRadius: BorderRadius.circular(2)),
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 18, 20, 4),
+              child: Row(children: [
+                Icon(Icons.layers_rounded, color: _emerald, size: 20),
+                SizedBox(width: 8),
+                Text('Providers',
+                    style: TextStyle(color: _textPri, fontSize: 16, fontWeight: FontWeight.bold)),
+              ]),
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 0, 20, 6),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Show stations from',
+                    style: TextStyle(color: _textSec, fontSize: 12)),
+              ),
+            ),
+            // One checkbox row per known provider — toggles apply immediately.
+            ...all.map((p) {
+              final on = selected.contains(p);
+              return InkWell(
+                onTap: () => onToggle(p),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+                  child: Row(children: [
+                    Icon(
+                      on ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
+                      color: on ? _emerald : _textSec, size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(p,
+                        style: const TextStyle(
+                            color: _textPri, fontSize: 15, fontWeight: FontWeight.w500)),
+                  ]),
+                ),
+              );
+            }),
+            // Disabled placeholder for providers added in the future.
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+              child: Row(children: [
+                Icon(Icons.check_box_outline_blank_rounded,
+                    color: Color(0xFF555555), size: 24),
+                SizedBox(width: 12),
+                Text('More providers coming soon…',
+                    style: TextStyle(
+                        color: Color(0xFF666666), fontSize: 13, fontStyle: FontStyle.italic)),
+              ]),
+            ),
+            const SizedBox(height: 10),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // ── Station carousel ──────────────────────────────────────────────────────────

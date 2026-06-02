@@ -33,20 +33,29 @@ class Station {
       // Production schema
       final spots = j['available_spots'] as String; // "4 available"
       final power = j['power']           as String; // "150 kW"
+      final isDC  = (j['type'] as String) == 'Fast DC';
+      final declared = (j['connectors'] as List<dynamic>? ?? [])
+                         .map((e) => e as String)
+                         .toList();
+      // Some providers (e.g. E-Space) don't publish a connector list. Infer a
+      // sensible default from the charger type so the connector-type filter
+      // applies consistently across every provider (DC fast → CCS2 + CHAdeMO,
+      // AC → Type 2). Providers that do publish connectors keep their own data.
+      final connectors = declared.isNotEmpty
+          ? declared
+          : (isDC ? const ['CCS2', 'CHAdeMO'] : const ['Type 2']);
       return Station(
         name:        j['name']         as String,
         location:    j['city']         as String,
         available:   int.tryParse(spots.split(' ').first) ?? 0,
         lat:         (j['lat']         as num).toDouble(),
         lng:         (j['lng']         as num).toDouble(),
-        isDC:        (j['type']        as String) == 'Fast DC',
+        isDC:        isDC,
         kw:          int.tryParse(power.split(' ').first) ?? 0,
         price:       j['price']        as String,
         provider:    j['provider']     as String? ?? '',
         lastUpdated: j['last_updated'] as String? ?? '',
-        connectors:  (j['connectors']  as List<dynamic>? ?? [])
-                       .map((e) => e as String)
-                       .toList(),
+        connectors:  connectors,
       );
     }
     // Legacy schema
