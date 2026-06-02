@@ -177,9 +177,14 @@ jobs:
               print(f"Martev: {len(stations)} stations")
               return stations
 
-          # ── Load E-Space station data from the committed asset file ────────
+          # ── Load station data from the committed asset file ────────────────
+          # The bundled asset may already contain a mart EV snapshot (it is
+          # shipped with the app for offline use), so drop any provider == mart EV
+          # rows and re-add them fresh below. This keeps the merge idempotent and
+          # avoids duplicating mart EV on every run. E-Space is static (asset only).
           with open("assets/data/chargers.json", encoding="utf-8-sig") as f:
-              espace_stations = json.load(f)
+              bundled = json.load(f)
+          espace_stations = [s for s in bundled if s.get("provider") != "mart EV"]
 
           # ── Merge in mart EV (AMPECO) live data ────────────────────────────
           try:

@@ -75,6 +75,7 @@ class _MapScreenState extends State<MapScreen> {
 
   bool             _filterDC         = false;
   bool             _filterAvail      = false;
+  String?          _filterProvider;            // null = all providers
   final Set<String> _filterConnectors = {};  // empty = no connector filter
 
   LatLng?               _userPos;
@@ -232,6 +233,7 @@ class _MapScreenState extends State<MapScreen> {
       if (q.isNotEmpty &&
           !s.name.toLowerCase().contains(q) &&
           !s.location.toLowerCase().contains(q)) { return false; }
+      if (_filterProvider != null && s.provider != _filterProvider) { return false; }
       if (_filterDC    && !s.isDC)          { return false; }
       if (_filterAvail && s.available == 0) { return false; }
       if (_filterConnectors.isNotEmpty &&
@@ -333,6 +335,8 @@ class _MapScreenState extends State<MapScreen> {
                     filterAvail:      _filterAvail,
                     onDC:             (v) => setState(() => _filterDC    = v),
                     onAvail:          (v) => setState(() => _filterAvail = v),
+                    filterProvider:   _filterProvider,
+                    onProvider:       (p) => setState(() => _filterProvider = p),
                     filterConnectors: _filterConnectors,
                     onConnector:      (ct) => setState(() {
                       if (_filterConnectors.contains(ct)) {
@@ -544,14 +548,20 @@ class _FilterChips extends StatelessWidget {
     required this.filterAvail,
     required this.onDC,
     required this.onAvail,
+    required this.filterProvider,
+    required this.onProvider,
     required this.filterConnectors,
     required this.onConnector,
   });
   final bool              filterDC, filterAvail;
   final ValueChanged<bool> onDC, onAvail;
+  final String?            filterProvider;       // null = all providers
+  final ValueChanged<String?> onProvider;        // pass null to clear
   final Set<String>        filterConnectors;
   final ValueChanged<String> onConnector;
 
+  // Provider filters — single-select (tap active chip again to clear).
+  static const _kProviders  = ['E-Space', 'mart EV'];
   // Fixed connector types — always shown regardless of loaded station data.
   static const _kConnectors = ['CCS1', 'CCS2', 'GB/T', 'CHAdeMO', 'Type 2', 'NACS'];
 
@@ -562,9 +572,21 @@ class _FilterChips extends StatelessWidget {
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
-          _Chip(label: '⚡ Fast DC',   active: filterDC,    onTap: () => onDC(!filterDC)),
+          // Provider chips first — single-select toggle (null clears the filter).
+          ..._kProviders.expand((p) => [
+            _Chip(
+              icon:   Icons.ev_station_rounded,
+              label:  p,
+              active: filterProvider == p,
+              onTap:  () => onProvider(filterProvider == p ? null : p),
+            ),
+            const SizedBox(width: 8),
+          ]),
+          _Chip(icon: Icons.bolt, label: 'Fast DC',
+              active: filterDC, onTap: () => onDC(!filterDC)),
           const SizedBox(width: 8),
-          _Chip(label: '🟢 Available', active: filterAvail, onTap: () => onAvail(!filterAvail)),
+          _Chip(icon: Icons.check_circle_outline, label: 'Available',
+              active: filterAvail, onTap: () => onAvail(!filterAvail)),
           // Fixed connector-type chips — multi-select
           ..._kConnectors.map((ct) => Padding(
             padding: const EdgeInsets.only(left: 8),
@@ -581,13 +603,15 @@ class _FilterChips extends StatelessWidget {
 }
 
 class _Chip extends StatelessWidget {
-  const _Chip({required this.label, required this.active, required this.onTap});
+  const _Chip({required this.label, required this.active, required this.onTap, this.icon});
   final String   label;
   final bool     active;
   final VoidCallback onTap;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
+    final fg = active ? Colors.black : _textSec;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -599,12 +623,21 @@ class _Chip extends StatelessWidget {
           border: Border.all(color: active ? _emerald : _bgSurface),
           boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 6)],
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: active ? Colors.black : _textSec,
-            fontSize: 13, fontWeight: FontWeight.w600,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 15, color: fg),
+              const SizedBox(width: 5),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: fg,
+                fontSize: 13, fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -659,7 +692,7 @@ class _StationCarousel extends StatelessWidget {
       ),
       padding: EdgeInsets.only(top: 32, bottom: 24 + navBarHeight),
       child: SizedBox(
-        height: 240, // taller for stacked Navigate + Plan & Go buttons
+        height: 254, // taller for stacked Navigate + Plan & Go buttons (+ provider line)
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
