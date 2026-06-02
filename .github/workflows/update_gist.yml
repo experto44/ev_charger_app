@@ -47,9 +47,148 @@ jobs:
               "Accept":        "application/vnd.github+json",
           }
 
-          # ── Load station data from the committed asset file ────────────────
+          # ── mart EV (AMPECO platform) live fetch ───────────────────────────
+          # AMPECO public app API: no OAuth needed. GET /app/pins lists every
+          # location id; GET /app/locations/{id} returns full detail with the
+          # location's evses, connectors and the referenced tariffs/currencies.
+          def fetch_martev():
+              base = "https://cp.martev.io/api/v1"
+              common = {
+                  "Accept": "application/json",
+                  "Accept-Language": "ka",
+                  "App-Version": "3.130.0",
+                  "X-Internal-App-Version": "3.130.0",
+                  "x-mobile-app-bundle-id": "io.martev.app",
+              }
+
+              # 1) Discover all location ids from the lightweight pins endpoint.
+              pr = requests.get(f"{base}/app/pins", headers=common, timeout=60)
+              pr.raise_for_status()
+              pj = pr.json()
+              pin_list = pj.get("pins", []) if isinstance(pj, dict) else pj
+              ids = [p.get("id") for p in pin_list
+                     if isinstance(p, dict) and p.get("id") is not None]
+
+              # connector normalization -> app filter chips (CCS1, CCS2, GB/T, CHAdeMO, Type 2, NACS)
+              CONN_MAP = {
+                  "ccs": "CCS2", "ccs2": "CCS2", "combo2": "CCS2", "iec62196t2combo": "CCS2",
+                  "ccs1": "CCS1", "combo1": "CCS1",
+                  "chademo": "CHAdeMO",
+                  "type2": "Type 2", "mennekes": "Type 2", "iec62196t2": "Type 2",
+                  "type1": "Type 1", "j1772": "Type 1",
+                  "gbt": "GB/T", "gb_t": "GB/T",
+                  "nacs": "NACS", "tesla": "NACS",
+              }
+              def norm_conn(t):
+                  if not t: return None
+                  k = str(t).lower().replace(" ", "").replace("-", "").replace("_", "").replace("/", "")
+                  return CONN_MAP.get(k)
+
+              def fmt_amt(v):
+                  try:
+                      f = float(v)
+                  except Exception:
+                      return None
+                  return f"{f:.2f}".rstrip("0").rstrip(".")
+
+              # Resolve a per-kWh price string from the evse's tariffId against the
+              # top-level tariffs[] / currencies[] arrays returned alongside the location.
+              def tariff_price(tid, tariffs, currencies):
+                  t = tariffs.get(str(tid))
+                  if not isinstance(t, dict):
+                      return ""
+                  ppk = t.get("priceForEnergy")
+                  if ppk is None: ppk = t.get("priceForEnergyAtDay")
+                  if ppk is None: ppk = t.get("priceForEnergyAtNight")
+                  a = fmt_amt(ppk) if ppk is not None else None
+                  cur = currencies.get(t.get("currencyCode")) or {}
+                  sign = cur.get("sign") or cur.get("prefix") or "₾"
+                  return f"{a} {sign}/kWh" if a else ""
+
+              # AMPECO address strings look like "<street>, <city> <postcode>, <country>".
+              def derive_city(addr):
+                  parts = [p.strip() for p in (addr or "").split(",") if p.strip()]
+                  if len(parts) >= 3:
+                      cand = parts[-2]
+                  elif parts:
+                      cand = parts[0]
+                  else:
+                      return ""
+                  toks = [t for t in cand.split() if not any(ch.isdigit() for ch in t)]
+                  return " ".join(toks).replace("T'bilisi", "Tbilisi").strip()
+
+              stations = []
+              for loc_id in ids:
+                  try:
+                      r = requests.get(f"{base}/app/locations/{loc_id}", headers=common, timeout=60)
+                      r.raise_for_status()
+                      body = r.json()
+                  except Exception as e:
+                      print("Martev location", loc_id, "error:", e)
+                      continue
+
+                  tariffs    = {str(t.get("id")): t for t in (body.get("tariffs") or []) if isinstance(t, dict)}
+                  currencies = {c.get("code"): c for c in (body.get("currencies") or []) if isinstance(c, dict)}
+
+                  for loc in (body.get("locations") or []):
+                      coords = str(loc.get("location") or "")
+                      if "," not in coords:
+                          continue
+                      try:
+                          lat, lng = [float(x) for x in coords.split(",")[:2]]
+                      except Exception:
+                          continue
+
+                      conns, max_power, avail, any_dc, price = set(), 0.0, 0, False, ""
+                      for zone in (loc.get("zones") or []):
+                          for e in (zone.get("evses") or []):
+                              if e.get("isAvailable"):
+                                  avail += 1
+                              try: max_power = max(max_power, float(e.get("maxPower") or 0))
+                              except: pass
+                              if str(e.get("currentType", "")).lower() == "dc":
+                                  any_dc = True
+                              for c in (e.get("connectors") or []):
+                                  ic = str(c.get("icon") or "").lower()
+                                  ct = norm_conn(c.get("icon") or c.get("name"))
+                                  if ct: conns.add(ct)
+                                  if "ccs" in ic or "chademo" in ic:
+                                      any_dc = True
+                              if not price:
+                                  price = tariff_price(e.get("tariffId"), tariffs, currencies)
+
+                      kw = round(max_power / 1000) if max_power > 1000 else round(max_power)
+                      addr = loc.get("address") or ""
+                      name = loc.get("name") or addr or "mart EV"
+                      stations.append({
+                          "id": f"martev_{loc.get('id')}",
+                          "name": name,
+                          "lat": lat,
+                          "lng": lng,
+                          "power": (f"{int(kw)} kW" if kw else "—"),
+                          "type": "Fast DC" if any_dc else "AC",
+                          "price": price,
+                          "available_spots": f"{avail} available",
+                          "city": derive_city(addr) or name.split(",")[0],
+                          "provider": "mart EV",
+                          "connectors": sorted(conns),
+                          "last_updated": "Just now",
+                      })
+              print(f"Martev: {len(stations)} stations")
+              return stations
+
+          # ── Load E-Space station data from the committed asset file ────────
           with open("assets/data/chargers.json", encoding="utf-8-sig") as f:
-              stations = json.load(f)
+              espace_stations = json.load(f)
+
+          # ── Merge in mart EV (AMPECO) live data ────────────────────────────
+          try:
+              martev_stations = fetch_martev()
+          except Exception as e:
+              print("Martev fetch failed:", e)
+              martev_stations = []
+
+          stations = espace_stations + martev_stations
 
           # Stamp every station with the current UTC time so the app shows
           # a meaningful "last verified" timestamp after each gist refresh.
