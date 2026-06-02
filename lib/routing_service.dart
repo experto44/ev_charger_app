@@ -168,42 +168,89 @@ class RoutingService {
             ((leg as Map<String, dynamic>)['distance']['value'] as int) / 1000.0;
       }
 
-      // ── EV range math ─────────────────────────────────────────────────────
-      final stops      = <ChargingStop>[];
-      double currentKm = (currentBatteryPct / 100.0) * effectiveKm;
-      double distSoFar = 0.0;
-
-      for (int i = 0; i < pts.length - 1; i++) {
-        final seg = _haversine(pts[i], pts[i + 1]);
-        distSoFar += seg;
-        currentKm -= seg;
-
-        // Insert charging stop when range drops to 2× reserve
-        if (currentKm <= reserveKm * 2) {
-          final nearest = _findNearest(pts[i + 1], stations);
-          if (nearest == null) { continue; }
-
-          final batPct = (currentKm / effectiveKm * 100).clamp(0.0, 100.0);
-          double? chargeH;
-          if (!nearest.isDC) {
-            final capKwh    = maxRangeKm / 6.0; // rough kWh estimate
-            final neededKwh = capKwh * ((effectiveKm - currentKm) / effectiveKm);
-            chargeH = neededKwh / nearest.kw;
-          }
-          stops.add(ChargingStop(
-            station:             nearest,
-            batteryOnArrivalPct: batPct,
-            distanceFromStartKm: distSoFar,
-            chargeHours:         chargeH,
-          ));
-          currentKm = effectiveKm; // assume full recharge
-        }
+      // ── Cumulative along-route distance for every polyline point ───────────
+      final cum = List<double>.filled(pts.length, 0.0);
+      for (int i = 1; i < pts.length; i++) {
+        cum[i] = cum[i - 1] + _haversine(pts[i - 1], pts[i]);
       }
+      final routeKm = pts.isEmpty ? totalDistKm : cum.last;
+
+      // ── Project every available station onto the route polyline ────────────
+      // detourKm = how far the station sits off the road; alongKm = how far
+      // along the route its closest point lies. Picking chargers by minimal
+      // detour + strictly-ahead progress keeps stops ON the highway corridor
+      // and never routes the driver backward or deep into another region.
+      final projected = <_StationProjection>[];
+      for (final s in stations) {
+        if (s.available == 0) { continue; }
+        final sp = LatLng(s.lat, s.lng);
+        double bestDist = double.infinity, bestAlong = 0;
+        for (int i = 0; i < pts.length - 1; i++) {
+          final r = _projectToSegment(sp, pts[i], pts[i + 1]);
+          if (r[0] < bestDist) {
+            bestDist  = r[0];
+            bestAlong = cum[i] + r[1] * (cum[i + 1] - cum[i]);
+          }
+        }
+        projected.add(_StationProjection(s, bestDist, bestAlong));
+      }
+
+      // ── Greedy EV planning along the corridor ──────────────────────────────
+      const corridorKm = 8.0;   // a charger counts as "on the route" within this
+      final stops      = <ChargingStop>[];
+      double coveredKm = 0.0;                                        // progress along route
+      double currentKm = (currentBatteryPct / 100.0) * effectiveKm;  // range remaining
+      int    guard     = 0;
+
+      while (coveredKm + currentKm - reserveKm < routeKm && guard++ < 25) {
+        final reachKm = coveredKm + currentKm - reserveKm; // farthest along we can reach
+
+        // Candidates: strictly ahead, reachable before the reserve, and within
+        // the highway corridor (so we don't dive off into a far-off town).
+        var cands = projected.where((p) =>
+            p.alongKm > coveredKm + 0.5 &&
+            p.alongKm <= reachKm &&
+            p.detourKm <= corridorKm).toList();
+
+        // Fallback: nothing in the tight corridor — widen to any reachable
+        // station ahead and take the least-detour one (still never backward).
+        if (cands.isEmpty) {
+          cands = projected.where((p) =>
+              p.alongKm > coveredKm + 0.5 && p.alongKm <= reachKm).toList();
+          if (cands.isEmpty) { break; } // can't reach a charger — leave rest unplanned
+        }
+
+        // Reward progress along the route, penalise detour off the highway,
+        // so the chosen stop is far enough to minimise the number of stops
+        // while staying as close to the road as possible.
+        cands.sort((a, b) => (b.alongKm - 3.0 * b.detourKm)
+            .compareTo(a.alongKm - 3.0 * a.detourKm));
+        final pick = cands.first;
+
+        final arriveKm = currentKm - (pick.alongKm - coveredKm); // range left on arrival
+        final batPct   = (arriveKm / effectiveKm * 100).clamp(0.0, 100.0);
+        double? chargeH;
+        if (!pick.station.isDC) {
+          final capKwh    = maxRangeKm / 6.0; // rough kWh estimate
+          final neededKwh = capKwh * ((effectiveKm - arriveKm) / effectiveKm);
+          chargeH = neededKwh / (pick.station.kw == 0 ? 1 : pick.station.kw);
+        }
+        stops.add(ChargingStop(
+          station:             pick.station,
+          batteryOnArrivalPct: batPct,
+          distanceFromStartKm: pick.alongKm,
+          chargeHours:         chargeH,
+        ));
+        coveredKm = pick.alongKm;
+        currentKm = effectiveKm; // assume full recharge
+      }
+
+      final remainAtDestKm = currentKm - (routeKm - coveredKm);
 
       return EVRouteResult(
         polylinePoints:      pts,
         totalDistanceKm:     totalDistKm,
-        batteryAtArrivalPct: (currentKm / effectiveKm * 100).clamp(0.0, 100.0),
+        batteryAtArrivalPct: (remainAtDestKm / effectiveKm * 100).clamp(0.0, 100.0),
         chargingStops:       stops,
         effectiveRangeKm:    effectiveKm,
         maxRangeKm:          maxRangeKm,
@@ -250,15 +297,30 @@ class RoutingService {
 
   static double _rad(double d) => d * pi / 180;
 
-  // ── Nearest available station to a point ─────────────────────────────────
-  static Station? _findNearest(LatLng pt, List<Station> stations) {
-    Station? best;
-    double   minD = double.infinity;
-    for (final s in stations) {
-      if (s.available == 0) { continue; }
-      final d = _haversine(pt, LatLng(s.lat, s.lng));
-      if (d < minD) { minD = d; best = s; }
-    }
-    return best;
+  // ── Distance (km) & projection fraction of a point onto a segment ─────────
+  // Uses a local equirectangular projection (accurate over short corridor
+  // distances). Returns [perpendicularDistanceKm, tFraction] where t∈[0,1]
+  // is how far along [a→b] the closest point lies.
+  static List<double> _projectToSegment(LatLng p, LatLng a, LatLng b) {
+    final latRef = _rad(a.latitude);
+    double px(LatLng q) => _rad(q.longitude - a.longitude) * cos(latRef) * 6371.0;
+    double py(LatLng q) => _rad(q.latitude  - a.latitude)               * 6371.0;
+    final bx = px(b), by = py(b);
+    final qx = px(p), qy = py(p);
+    final len2 = bx * bx + by * by;
+    double t = len2 == 0 ? 0.0 : (qx * bx + qy * by) / len2;
+    t = t.clamp(0.0, 1.0);
+    final cx = t * bx, cy = t * by;
+    final dist = sqrt((qx - cx) * (qx - cx) + (qy - cy) * (qy - cy));
+    return [dist, t];
   }
+}
+
+// A station's relationship to the planned route: how far off the road it is
+// (detourKm) and how far along the route its closest point sits (alongKm).
+class _StationProjection {
+  const _StationProjection(this.station, this.detourKm, this.alongKm);
+  final Station station;
+  final double  detourKm;
+  final double  alongKm;
 }

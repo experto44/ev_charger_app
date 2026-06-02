@@ -363,15 +363,33 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           !_selectedProviders.contains(s.provider)) { return false; }
       if (_filterDC    && !s.isDC)          { return false; }
       if (_filterAvail && s.available == 0) { return false; }
+      // Connector filter — case-insensitive match so label/data casing never
+      // hides a station (e.g. "CCS2" vs "ccs2").
       if (_filterConnectors.isNotEmpty &&
-          !s.connectors.any((c) => _filterConnectors.contains(c))) { return false; }
+          !s.connectors.any((c) => _filterConnectors
+              .any((f) => f.toLowerCase() == c.toLowerCase()))) { return false; }
       return true;
     }).toList();
+  }
+
+  // Connector types actually present in the loaded data — used to build the
+  // filter chips so we never show a dead chip (e.g. CCS1/NACS don't exist in
+  // Georgia's networks) and any new connector type appears automatically.
+  Set<String> get _availableConnectors {
+    final out = <String>{};
+    for (final s in _stations) { out.addAll(s.connectors); }
+    return out;
   }
 
   @override
   Widget build(BuildContext context) {
     final stations = _filtered;
+    // Lift the right control column above the bottom carousel so the GPS
+    // button is never hidden. The carousel is taller when station cards are
+    // shown than when it's loading / empty, so adjust dynamically.
+    final navBottom        = MediaQuery.of(context).padding.bottom;
+    final carouselVisible  = !_loading && stations.isNotEmpty;
+    final controlsBottom   = (carouselVisible ? 300.0 : 130.0) + navBottom;
     return Scaffold(
       body: Stack(
         children: [
@@ -510,6 +528,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                     filterAvail:      _filterAvail,
                     onDC:             (v) => setState(() => _filterDC    = v),
                     onAvail:          (v) => setState(() => _filterAvail = v),
+                    availableConnectors: _availableConnectors,
                     filterConnectors: _filterConnectors,
                     onConnector:      (ct) => setState(() {
                       if (_filterConnectors.contains(ct)) {
@@ -531,7 +550,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           // group is anchored just above the station carousel; it grows upward.
           Positioned(
             right:  16,
-            bottom: 256,
+            bottom: controlsBottom,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -714,19 +733,32 @@ class _FilterChips extends StatelessWidget {
     required this.filterAvail,
     required this.onDC,
     required this.onAvail,
+    required this.availableConnectors,
     required this.filterConnectors,
     required this.onConnector,
   });
   final bool              filterDC, filterAvail;
   final ValueChanged<bool> onDC, onAvail;
+  final Set<String>        availableConnectors;  // present in loaded data
   final Set<String>        filterConnectors;
   final ValueChanged<String> onConnector;
 
-  // Fixed connector types — always shown regardless of loaded station data.
+  // Canonical connector types, in display order. Only those actually present
+  // in the loaded data are shown, so there's never a dead chip (Georgia has no
+  // CCS1/NACS chargers, for example). New types appear automatically.
   static const _kConnectors = ['CCS1', 'CCS2', 'GB/T', 'CHAdeMO', 'Type 2', 'NACS'];
 
   @override
   Widget build(BuildContext context) {
+    // Data-driven: keep canonical order but drop connectors absent from data.
+    // Before data loads (empty set) fall back to the full list so the bar
+    // isn't momentarily empty.
+    final conns = availableConnectors.isEmpty
+        ? _kConnectors
+        : _kConnectors
+            .where((c) => availableConnectors
+                .any((a) => a.toLowerCase() == c.toLowerCase()))
+            .toList();
     return SizedBox(
       height: 36,
       child: ListView(
@@ -737,8 +769,8 @@ class _FilterChips extends StatelessWidget {
           const SizedBox(width: 8),
           _Chip(icon: Icons.check_circle_outline, label: 'Available',
               active: filterAvail, onTap: () => onAvail(!filterAvail)),
-          // Fixed connector-type chips — multi-select
-          ..._kConnectors.map((ct) => Padding(
+          // Connector-type chips — multi-select, data-driven
+          ...conns.map((ct) => Padding(
             padding: const EdgeInsets.only(left: 8),
             child: _Chip(
               label:  ct,
