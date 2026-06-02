@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
@@ -323,25 +324,50 @@ class _MapScreenState extends State<MapScreen> {
                 keepBuffer: 0,
                 panBuffer: 0,
               ),
-              // Station dots — tappable
-              MarkerLayer(
-                markers: stations.map((s) => Marker(
-                  point:  LatLng(s.lat, s.lng),
-                  width:  40,
-                  height: 40,
-                  child:  GestureDetector(
-                    onTap: () => _showStationSheet(s),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: s.available > 0 ? _emerald : Colors.orangeAccent,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withOpacity(0.25), width: 2),
-                        boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 6)],
+              // Station dots — clustered. Markers are built from the already
+              // filtered `stations` list, so clustering automatically respects
+              // every active filter (provider / connector / Fast DC / Available).
+              MarkerClusterLayerWidget(
+                options: MarkerClusterLayerOptions(
+                  maxClusterRadius: 50,          // px: only group pins this close
+                  size: const Size(46, 46),
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.all(50),
+                  maxZoom: 16,                   // above this, always show singles
+                  markerChildBehavior: true,     // let each pin's own onTap fire
+                  markers: stations.map((s) => Marker(
+                    point:  LatLng(s.lat, s.lng),
+                    width:  40,
+                    height: 40,
+                    child:  GestureDetector(
+                      onTap: () => _showStationSheet(s),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: s.available > 0 ? _emerald : Colors.orangeAccent,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withOpacity(0.25), width: 2),
+                          boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 6)],
+                        ),
+                        child: const Icon(Icons.bolt, color: Colors.black, size: 20),
                       ),
-                      child: const Icon(Icons.bolt, color: Colors.black, size: 20),
+                    ),
+                  )).toList(),
+                  // Cluster bubble — themed teal circle with the station count.
+                  builder: (context, markers) => Container(
+                    decoration: BoxDecoration(
+                      color: _emerald,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white.withOpacity(0.4), width: 2),
+                      boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 6)],
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '${markers.length}',
+                      style: const TextStyle(
+                        color: Colors.black, fontWeight: FontWeight.bold, fontSize: 15),
                     ),
                   ),
-                )).toList(),
+                ),
               ),
               // User location dot
               if (_userPos != null)

@@ -77,7 +77,10 @@ jobs:
                   "chademo": "CHAdeMO",
                   "type2": "Type 2", "mennekes": "Type 2", "iec62196t2": "Type 2",
                   "type1": "Type 1", "j1772": "Type 1",
-                  "gbt": "GB/T", "gb_t": "GB/T",
+                  # GB/T (Chinese GuoBiao). Live API uses icon "gb-t-dc" / name
+                  # "GB/T DC", which normalizes to "gbtdc"; cover AC + name variants too.
+                  "gbt": "GB/T", "gb_t": "GB/T", "gbtdc": "GB/T", "gbtac": "GB/T",
+                  "gbtdccable": "GB/T", "chinese": "GB/T", "gbtgb": "GB/T",
                   "nacs": "NACS", "tesla": "NACS",
               }
               def norm_conn(t):
@@ -153,7 +156,7 @@ jobs:
                                   ic = str(c.get("icon") or "").lower()
                                   ct = norm_conn(c.get("icon") or c.get("name"))
                                   if ct: conns.add(ct)
-                                  if "ccs" in ic or "chademo" in ic:
+                                  if "ccs" in ic or "chademo" in ic or "gb-t-dc" in ic:
                                       any_dc = True
                               if not price:
                                   price = tariff_price(e.get("tariffId"), tariffs, currencies)
