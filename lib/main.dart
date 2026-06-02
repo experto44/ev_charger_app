@@ -83,7 +83,10 @@ class _MapScreenState extends State<MapScreen> {
   final Set<String> _selectedProviders = {..._kAllProviders};
   final Set<String> _filterConnectors = {};  // empty = no connector filter
 
+  // Filter is "active" (badge shown) only for a proper, non-empty subset.
+  // Empty set or all-selected both mean "show every provider".
   bool get _providerFilterActive =>
+      _selectedProviders.isNotEmpty &&
       _selectedProviders.length != _kAllProviders.length;
 
   LatLng?               _userPos;
@@ -101,40 +104,50 @@ class _MapScreenState extends State<MapScreen> {
     // after FlutterMap has mounted and the MapController is fully attached.
   }
 
+  List<Station> _parseStations(String raw) => (jsonDecode(raw) as List)
+      .map((e) => Station.fromJson(e as Map<String, dynamic>))
+      .toList();
+
   Future<void> _loadStations() async {
     // Capture the asset bundle NOW (synchronously, before any await gap)
     // so we don't access BuildContext after an async suspension.
     final bundle = DefaultAssetBundle.of(context);
 
-    // ── 1. Try live cloud data (Gist) ────────────────────────────────────────
+    // ── Bundled asset ─────────────────────────────────────────────────────────
+    // Always loaded (instant, offline). Doubles as a supplement for the live
+    // feed: any provider bundled with the app but not yet published to the Gist
+    // (e.g. a newly added network the cron hasn't refreshed) is added in, so the
+    // app never hides a provider it ships with. Self-heals once the Gist catches
+    // up (the provider then appears in the live feed and the supplement is empty).
+    List<Station> assetStations = const [];
+    try {
+      assetStations = _parseStations(await bundle.loadString('assets/data/chargers.json'));
+    } catch (_) {
+      // No bundled asset — supplement simply stays empty.
+    }
+
+    // ── Live cloud data (Gist) ────────────────────────────────────────────────
     try {
       final res = await http
           .get(Uri.parse(_kGistUrl))
           .timeout(const Duration(seconds: 8));
       if (res.statusCode == 200) {
-        final list = (jsonDecode(res.body) as List)
-            .map((e) => Station.fromJson(e as Map<String, dynamic>))
+        final live = _parseStations(res.body);
+        final liveProviders = live.map((s) => s.provider).toSet();
+        final supplement = assetStations
+            .where((s) => !liveProviders.contains(s.provider))
             .toList();
         if (!mounted) { return; }
-        setState(() { _stations = list; _loading = false; });
-        return; // success — skip local fallback
+        setState(() { _stations = [...live, ...supplement]; _loading = false; });
+        return; // success
       }
     } catch (_) {
-      // Network unavailable, timeout, or parse error — fall through
+      // Network unavailable, timeout, or parse error — fall through to offline.
     }
 
-    // ── 2. Local asset fallback ───────────────────────────────────────────────
-    try {
-      final raw  = await bundle.loadString('assets/data/chargers.json');
-      final list = (jsonDecode(raw) as List)
-          .map((e) => Station.fromJson(e as Map<String, dynamic>))
-          .toList();
-      if (!mounted) { return; }
-      setState(() { _stations = list; _loading = false; });
-    } catch (_) {
-      if (!mounted) { return; }
-      setState(() => _loading = false);
-    }
+    // ── Offline fallback: bundled asset only ──────────────────────────────────
+    if (!mounted) { return; }
+    setState(() { _stations = assetStations; _loading = false; });
   }
 
   Future<void> _initLocation() async {
@@ -266,7 +279,11 @@ class _MapScreenState extends State<MapScreen> {
       if (q.isNotEmpty &&
           !s.name.toLowerCase().contains(q) &&
           !s.location.toLowerCase().contains(q)) { return false; }
-      if (_providerFilterActive && !_selectedProviders.contains(s.provider)) { return false; }
+      // Provider filter (applied first): empty OR all-selected => show all;
+      // any non-empty subset => keep only those providers. Connector/type
+      // filters below then AND on top of this.
+      if (_selectedProviders.isNotEmpty &&
+          !_selectedProviders.contains(s.provider)) { return false; }
       if (_filterDC    && !s.isDC)          { return false; }
       if (_filterAvail && s.available == 0) { return false; }
       if (_filterConnectors.isNotEmpty &&
