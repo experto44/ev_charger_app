@@ -47,18 +47,19 @@ jobs:
               "Accept":        "application/vnd.github+json",
           }
 
-          # ── mart EV (AMPECO platform) live fetch ───────────────────────────
+          # ── AMPECO platform live fetch (mart EV, Electrify Georgia, …) ──────
           # AMPECO public app API: no OAuth needed. GET /app/pins lists every
           # location id; GET /app/locations/{id} returns full detail with the
           # location's evses, connectors and the referenced tariffs/currencies.
-          def fetch_martev():
-              base = "https://cp.martev.io/api/v1"
+          # Multiple Georgian networks run identical AMPECO instances — only the
+          # host differs — so one parameterized fetcher serves all of them.
+          def fetch_ampeco(host, provider_name, id_prefix):
+              base = f"https://{host}/api/v1"
               common = {
                   "Accept": "application/json",
                   "Accept-Language": "ka",
                   "App-Version": "3.130.0",
                   "X-Internal-App-Version": "3.130.0",
-                  "x-mobile-app-bundle-id": "io.martev.app",
               }
 
               # 1) Discover all location ids from the lightweight pins endpoint.
@@ -124,7 +125,7 @@ jobs:
                       r.raise_for_status()
                       body = r.json()
                   except Exception as e:
-                      print("Martev location", loc_id, "error:", e)
+                      print(provider_name, "location", loc_id, "error:", e)
                       continue
 
                   tariffs    = {str(t.get("id")): t for t in (body.get("tariffs") or []) if isinstance(t, dict)}
@@ -159,9 +160,9 @@ jobs:
 
                       kw = round(max_power / 1000) if max_power > 1000 else round(max_power)
                       addr = loc.get("address") or ""
-                      name = loc.get("name") or addr or "mart EV"
+                      name = loc.get("name") or addr or provider_name
                       stations.append({
-                          "id": f"martev_{loc.get('id')}",
+                          "id": f"{id_prefix}_{loc.get('id')}",
                           "name": name,
                           "lat": lat,
                           "lng": lng,
@@ -170,30 +171,36 @@ jobs:
                           "price": price,
                           "available_spots": f"{avail} available",
                           "city": derive_city(addr) or name.split(",")[0],
-                          "provider": "mart EV",
+                          "provider": provider_name,
                           "connectors": sorted(conns),
                           "last_updated": "Just now",
                       })
-              print(f"Martev: {len(stations)} stations")
+              print(f"{provider_name}: {len(stations)} stations")
               return stations
 
+          def fetch_martev():
+              return fetch_ampeco("cp.martev.io", "mart EV", "martev")
+
+          def fetch_electrify():
+              return fetch_ampeco("cp.electrify.ge", "Electrify Georgia", "electrify")
+
           # ── Load station data from the committed asset file ────────────────
-          # The bundled asset may already contain a mart EV snapshot (it is
-          # shipped with the app for offline use), so drop any provider == mart EV
-          # rows and re-add them fresh below. This keeps the merge idempotent and
-          # avoids duplicating mart EV on every run. E-Space is static (asset only).
+          # The bundled asset ships with snapshots of the live AMPECO providers
+          # for offline use, so for each live provider we drop its bundled rows
+          # and re-add them fresh below. This keeps the merge idempotent and
+          # avoids duplicates on every run. E-Space is static (asset only).
           with open("assets/data/chargers.json", encoding="utf-8-sig") as f:
               bundled = json.load(f)
-          espace_stations = [s for s in bundled if s.get("provider") != "mart EV"]
 
-          # ── Merge in mart EV (AMPECO) live data ────────────────────────────
-          try:
-              martev_stations = fetch_martev()
-          except Exception as e:
-              print("Martev fetch failed:", e)
-              martev_stations = []
-
-          stations = espace_stations + martev_stations
+          # ── Merge in every live AMPECO provider ────────────────────────────
+          stations = list(bundled)
+          for fn, pname in [(fetch_martev, "mart EV"),
+                            (fetch_electrify, "Electrify Georgia")]:
+              stations = [s for s in stations if s.get("provider") != pname]
+              try:
+                  stations += fn()
+              except Exception as e:
+                  print(f"{pname} fetch failed:", e)
 
           # Stamp every station with the current UTC time so the app shows
           # a meaningful "last verified" timestamp after each gist refresh.
