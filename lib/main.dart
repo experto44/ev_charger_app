@@ -102,6 +102,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       _selectedProviders.length != _kAllProviders.length;
 
   LatLng?               _userPos;
+  LatLng?               _searchDest;          // dropped pin from Places search
+  String                _searchDestLabel = '';
   List<Station>         _stations    = const [];
   bool                  _loading     = true;
   List<PlacePrediction> _suggestions = const [];
@@ -309,15 +311,51 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     _searchFocus.unfocus();
     setState(() => _suggestions = const []);
     final coords = await PlacesService.getCoordinates(p.placeId);
-    if (coords != null && mounted) { _animatedMove(coords, 15); }
+    if (coords == null || !mounted) { return; }
+    final label = p.mainText.isNotEmpty ? p.mainText : p.description;
+    setState(() {
+      _searchDest      = coords;       // drop a distinct destination pin
+      _searchDestLabel = label;
+    });
+    _animatedMove(coords, 15);         // smooth pan/zoom to it
+    _showSearchDestinationSheet(coords, label);  // open Navigate / Plan & Go
+  }
+
+  // Action modal for a searched destination — Navigate + Plan & Go.
+  void _showSearchDestinationSheet(LatLng dest, String label) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _SearchDestinationSheet(
+        label: label,
+        onNavigate: () {
+          Navigator.pop(context);
+          _navigate(dest.latitude, dest.longitude);
+        },
+        onPlanAndGo: () {
+          Navigator.pop(context);
+          // Build a lightweight Station for the route planner destination.
+          _pushRoutePlannerTo(Station(
+            name:      label,
+            location:  label,
+            available: 0,
+            lat:       dest.latitude,
+            lng:       dest.longitude,
+            isDC:      false,
+            kw:        0,
+            price:     '',
+          ));
+        },
+      ),
+    );
   }
 
   List<Station> get _filtered {
-    final q = _searchCtrl.text.trim().toLowerCase();
+    // NOTE: the search bar is a Google Places *destination* search — it must NOT
+    // filter the station list (doing so wiped every station off the map once a
+    // place was picked, since the place name matches no charger). Stations are
+    // filtered only by the chip filters below and stay visible at all times.
     return _stations.where((s) {
-      if (q.isNotEmpty &&
-          !s.name.toLowerCase().contains(q) &&
-          !s.location.toLowerCase().contains(q)) { return false; }
       // Provider filter (applied first): empty OR all-selected => show all;
       // any non-empty subset => keep only those providers. Connector/type
       // filters below then AND on top of this.
@@ -426,13 +464,31 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                     ),
                   ),
                 ]),
+              // Searched destination pin (rendered above stations & clusters).
+              if (_searchDest != null)
+                MarkerLayer(markers: [
+                  Marker(
+                    point:     _searchDest!,
+                    width:     46,
+                    height:    46,
+                    alignment: Alignment.topCenter,  // tip sits on the coordinate
+                    child: GestureDetector(
+                      onTap: () => _showSearchDestinationSheet(
+                        _searchDest!,
+                        _searchDestLabel.isEmpty ? 'Destination' : _searchDestLabel),
+                      child: const Icon(
+                        Icons.location_on,
+                        color: Color(0xFFE53935),
+                        size: 44,
+                        shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
+                      ),
+                    ),
+                  ),
+                ]),
             ],
           ),
 
-          // ── Search bar + suggestions + filter chips + map-style toggle ──────
-          // The toggle is in the same Row as the chips so its position is fully
-          // dynamic — it sits flush-right of the chips row and adapts to any
-          // screen height, SafeArea inset, or suggestions-list expansion.
+          // ── Search bar + suggestions + filter chips ───────────────────────
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -449,68 +505,44 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                     _SuggestionsList(suggestions: _suggestions, onTap: _onSuggestionSelected),
                   ],
                   const SizedBox(height: 10),
-                  // Chips scroll + map-style toggle in one row.
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: _FilterChips(
-                          filterDC:         _filterDC,
-                          filterAvail:      _filterAvail,
-                          onDC:             (v) => setState(() => _filterDC    = v),
-                          onAvail:          (v) => setState(() => _filterAvail = v),
-                          filterConnectors: _filterConnectors,
-                          onConnector:      (ct) => setState(() {
-                            if (_filterConnectors.contains(ct)) {
-                              _filterConnectors.remove(ct);
-                            } else {
-                              _filterConnectors.add(ct);
-                            }
-                          }),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Map style toggle — dynamically positioned beside chips.
-                      GestureDetector(
-                        onTap: () => setState(() => _darkMap = !_darkMap),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          height: 36,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
-                            color: _darkMap ? _bgSurface : _bgCard,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: _darkMap ? _textSec : _bgSurface),
-                            boxShadow: const [BoxShadow(
-                              color: Colors.black26, blurRadius: 6)],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _darkMap
-                                    ? Icons.dark_mode_rounded
-                                    : Icons.light_mode_rounded,
-                                color: _darkMap ? _textSec : Colors.amber,
-                                size: 15,
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                _darkMap ? 'Dark' : 'Light',
-                                style: TextStyle(
-                                  color: _darkMap ? _textSec : _textPri,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                  _FilterChips(
+                    filterDC:         _filterDC,
+                    filterAvail:      _filterAvail,
+                    onDC:             (v) => setState(() => _filterDC    = v),
+                    onAvail:          (v) => setState(() => _filterAvail = v),
+                    filterConnectors: _filterConnectors,
+                    onConnector:      (ct) => setState(() {
+                      if (_filterConnectors.contains(ct)) {
+                        _filterConnectors.remove(ct);
+                      } else {
+                        _filterConnectors.add(ct);
+                      }
+                    }),
                   ),
                 ],
+              ),
+            ),
+          ),
+
+          // ── Map style toggle (top of the right control column) ────────────
+          Positioned(
+            right:  16,
+            bottom: 548,
+            child: GestureDetector(
+              onTap: () => setState(() => _darkMap = !_darkMap),
+              child: Container(
+                width: 48, height: 48,
+                decoration: BoxDecoration(
+                  color: _bgCard,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: _bgSurface),
+                  boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4))],
+                ),
+                child: Icon(
+                  _darkMap ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                  color: _darkMap ? _textPri : Colors.amber,
+                  size: 22,
+                ),
               ),
             ),
           ),
@@ -931,6 +963,101 @@ class _ProviderFilterSheet extends StatelessWidget {
             ),
             const SizedBox(height: 10),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Searched destination action sheet (Navigate + Plan & Go) ──────────────────
+class _SearchDestinationSheet extends StatelessWidget {
+  const _SearchDestinationSheet({
+    required this.label,
+    required this.onNavigate,
+    required this.onPlanAndGo,
+  });
+  final String      label;
+  final VoidCallback onNavigate, onPlanAndGo;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: _bgCard,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: _bgSurface, borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(children: [
+                const Icon(Icons.location_on, color: Color(0xFFE53935), size: 22),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      color: _textPri, fontSize: 16, fontWeight: FontWeight.bold),
+                    maxLines: 2, overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ]),
+              const SizedBox(height: 16),
+              // Primary — Navigate (direct Google Maps launch)
+              GestureDetector(
+                onTap: onNavigate,
+                child: Container(
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: _emerald, borderRadius: BorderRadius.circular(12)),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.navigation_rounded, color: Colors.black, size: 18),
+                      SizedBox(width: 8),
+                      Text('Navigate',
+                          style: TextStyle(
+                              color: Colors.black, fontSize: 15, fontWeight: FontWeight.w700)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Secondary — Plan & Go (route planner pre-filled)
+              GestureDetector(
+                onTap: onPlanAndGo,
+                child: Container(
+                  height: 46,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _emerald, width: 1.5),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.alt_route_rounded, color: _emerald, size: 18),
+                      SizedBox(width: 8),
+                      Text('Plan & Go',
+                          style: TextStyle(
+                              color: _emerald, fontSize: 15, fontWeight: FontWeight.w700)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
