@@ -32,7 +32,7 @@ const _textSec   = Color(0xFF9E9E9E);
 const _tbilisi = LatLng(41.7151, 44.8271);
 
 // Known providers, in display order. "All selected" is the default (no filter).
-const _kAllProviders = ['E-Space', 'mart EV', 'Electrify Georgia'];
+const _kAllProviders = ['E-Space', 'mart EV', 'Electrify Georgia', 'EV Power GE'];
 
 // Cloud data source — always points to latest revision (no pinned commit hash)
 const _kGistUrl =

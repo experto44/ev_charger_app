@@ -184,6 +184,9 @@ jobs:
           def fetch_electrify():
               return fetch_ampeco("cp.electrify.ge", "Electrify Georgia", "electrify")
 
+          def fetch_evpower():
+              return fetch_ampeco("cp.evpower.ge", "EV Power GE", "evpower")
+
           # ── Load station data from the committed asset file ────────────────
           # The bundled asset ships with snapshots of the live AMPECO providers
           # for offline use, so for each live provider we drop its bundled rows
@@ -195,7 +198,8 @@ jobs:
           # ── Merge in every live AMPECO provider ────────────────────────────
           stations = list(bundled)
           for fn, pname in [(fetch_martev, "mart EV"),
-                            (fetch_electrify, "Electrify Georgia")]:
+                            (fetch_electrify, "Electrify Georgia"),
+                            (fetch_evpower, "EV Power GE")]:
               stations = [s for s in stations if s.get("provider") != pname]
               try:
                   stations += fn()
