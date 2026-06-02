@@ -35,6 +35,12 @@ const _tbilisi = LatLng(41.7151, 44.8271);
 // Known providers, in display order. "All selected" is the default (no filter).
 const _kAllProviders = ['E-Space', 'mart EV', 'Electrify Georgia', 'EV Power GE'];
 
+// CartoDB basemaps (free, retina-capable, great coverage for Georgia).
+//  • Voyager     — bright, colourful streets + labels (Light Mode, default)
+//  • Dark Matter — dark theme with clear, high-contrast roads & city names
+const _kTileLight = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+const _kTileDark  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+
 // Cloud data source — always points to latest revision (no pinned commit hash)
 const _kGistUrl =
     'https://gist.githubusercontent.com/experto44/36f39392ce7a4abe14ab065aa8e846bd'
@@ -72,10 +78,15 @@ class MapScreen extends StatefulWidget {
   State<MapScreen> createState() => _MapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen> {
+class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   final _searchCtrl  = TextEditingController();
   final _searchFocus = FocusNode();
   final _mapCtrl     = MapController();
+
+  // Basemap style. Defaults to the bright CartoDB Voyager tiles; the top-right
+  // toggle switches to CartoDB Dark Matter.
+  bool             _darkMap          = false;
+  AnimationController? _moveAnim;
 
   bool             _filterDC         = false;
   bool             _filterAvail      = false;
@@ -186,6 +197,7 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   void dispose() {
+    _moveAnim?.dispose();
     _searchCtrl.dispose();
     _searchFocus.dispose();
     _debounce?.cancel();
@@ -194,6 +206,32 @@ class _MapScreenState extends State<MapScreen> {
 
   void _zoom(double delta) =>
       _mapCtrl.move(_mapCtrl.camera.center, _mapCtrl.camera.zoom + delta);
+
+  // Smoothly pan + zoom the map to a target (used by search-result selection
+  // and the recenter button) instead of an abrupt jump.
+  void _animatedMove(LatLng dest, double destZoom) {
+    final cam     = _mapCtrl.camera;
+    final latT    = Tween<double>(begin: cam.center.latitude,  end: dest.latitude);
+    final lngT    = Tween<double>(begin: cam.center.longitude, end: dest.longitude);
+    final zoomT   = Tween<double>(begin: cam.zoom,             end: destZoom);
+
+    _moveAnim?.dispose();
+    final controller = AnimationController(
+      duration: const Duration(milliseconds: 700), vsync: this);
+    _moveAnim = controller;
+    final curve = CurvedAnimation(parent: controller, curve: Curves.easeInOutCubic);
+
+    controller.addListener(() {
+      _mapCtrl.move(
+        LatLng(latT.evaluate(curve), lngT.evaluate(curve)),
+        zoomT.evaluate(curve),
+      );
+    });
+    controller.forward().whenComplete(() {
+      controller.dispose();
+      if (_moveAnim == controller) { _moveAnim = null; }
+    });
+  }
 
   // ── Provider filter FAB → multi-select bottom sheet ──────────────────────
   void _openProviderFilter() {
@@ -271,7 +309,7 @@ class _MapScreenState extends State<MapScreen> {
     _searchFocus.unfocus();
     setState(() => _suggestions = const []);
     final coords = await PlacesService.getCoordinates(p.placeId);
-    if (coords != null && mounted) { _mapCtrl.move(coords, 15); }
+    if (coords != null && mounted) { _animatedMove(coords, 15); }
   }
 
   List<Station> get _filtered {
@@ -313,14 +351,16 @@ class _MapScreenState extends State<MapScreen> {
               onMapReady: _initLocation,
             ),
             children: [
-              // CartoDB Dark Matter — reliable dark basemap, highways and
-              // arterials visible as lighter grey lines, water as dark blue.
+              // CartoDB basemap — Voyager (light) or Dark Matter (dark).
+              // retinaMode pulls @2x tiles on high-DPI screens so streets and
+              // city names stay crisp and easy to read.
               TileLayer(
-                urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                key: ValueKey(_darkMap),
+                urlTemplate: _darkMap ? _kTileDark : _kTileLight,
                 subdomains: const ['a', 'b', 'c', 'd'],
                 userAgentPackageName: 'com.example.ev_charger_app',
-                retinaMode: false,
-                maxNativeZoom: 18,
+                retinaMode: RetinaMode.isHighDensity(context),
+                maxNativeZoom: 20,
                 keepBuffer: 0,
                 panBuffer: 0,
               ),
@@ -389,7 +429,10 @@ class _MapScreenState extends State<MapScreen> {
             ],
           ),
 
-          // ── Search bar + suggestions + filter chips ───────────────────────
+          // ── Search bar + suggestions + filter chips + map-style toggle ──────
+          // The toggle is in the same Row as the chips so its position is fully
+          // dynamic — it sits flush-right of the chips row and adapts to any
+          // screen height, SafeArea inset, or suggestions-list expansion.
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -406,19 +449,66 @@ class _MapScreenState extends State<MapScreen> {
                     _SuggestionsList(suggestions: _suggestions, onTap: _onSuggestionSelected),
                   ],
                   const SizedBox(height: 10),
-                  _FilterChips(
-                    filterDC:         _filterDC,
-                    filterAvail:      _filterAvail,
-                    onDC:             (v) => setState(() => _filterDC    = v),
-                    onAvail:          (v) => setState(() => _filterAvail = v),
-                    filterConnectors: _filterConnectors,
-                    onConnector:      (ct) => setState(() {
-                      if (_filterConnectors.contains(ct)) {
-                        _filterConnectors.remove(ct);
-                      } else {
-                        _filterConnectors.add(ct);
-                      }
-                    }),
+                  // Chips scroll + map-style toggle in one row.
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: _FilterChips(
+                          filterDC:         _filterDC,
+                          filterAvail:      _filterAvail,
+                          onDC:             (v) => setState(() => _filterDC    = v),
+                          onAvail:          (v) => setState(() => _filterAvail = v),
+                          filterConnectors: _filterConnectors,
+                          onConnector:      (ct) => setState(() {
+                            if (_filterConnectors.contains(ct)) {
+                              _filterConnectors.remove(ct);
+                            } else {
+                              _filterConnectors.add(ct);
+                            }
+                          }),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Map style toggle — dynamically positioned beside chips.
+                      GestureDetector(
+                        onTap: () => setState(() => _darkMap = !_darkMap),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          height: 36,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: _darkMap ? _bgSurface : _bgCard,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: _darkMap ? _textSec : _bgSurface),
+                            boxShadow: const [BoxShadow(
+                              color: Colors.black26, blurRadius: 6)],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _darkMap
+                                    ? Icons.dark_mode_rounded
+                                    : Icons.light_mode_rounded,
+                                color: _darkMap ? _textSec : Colors.amber,
+                                size: 15,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                _darkMap ? 'Dark' : 'Light',
+                                style: TextStyle(
+                                  color: _darkMap ? _textSec : _textPri,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -510,7 +600,7 @@ class _MapScreenState extends State<MapScreen> {
             right:  16,
             bottom: 256,
             child: GestureDetector(
-              onTap: _userPos == null ? null : () => _mapCtrl.move(_userPos!, 14),
+              onTap: _userPos == null ? null : () => _animatedMove(_userPos!, 14),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 width: 48, height: 48,
