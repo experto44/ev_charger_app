@@ -100,10 +100,16 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   bool             _filterDC         = false;
   bool             _filterAvail      = false;
-  // Multi-select provider filter. Defaults to every known provider selected
-  // (= show all). A filter is "active" only when not all providers are selected.
-  final Set<String> _selectedProviders = {..._kAllProviders};
+  // Multi-select provider filter. Defaults to every LOCAL provider selected;
+  // "International" (OCM) is intentionally OFF at launch — the user opts in.
+  final Set<String> _selectedProviders = {
+    for (final p in _kAllProviders) if (p != OcmService.kProvider) p,
+  };
   final Set<String> _filterConnectors = {};  // empty = no connector filter
+
+  // International (OCM) viewport loading is on only while the user has the
+  // "International" provider chip checked.
+  bool get _internationalOn => _selectedProviders.contains(OcmService.kProvider);
 
   // Filter is "active" (badge shown) only for a proper, non-empty subset.
   // Empty set or all-selected both mean "show every provider".
@@ -131,13 +137,12 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   Timer?        _ocmDebounce;
   StreamSubscription<MapEvent>? _mapEventSub;
   int           _ocmGen = 0;   // guards against stale viewport responses
+  bool          _centerInGeorgia = true; // carousel only shows over Georgia
 
-  // Selected countries that come from OCM (everything except locally-covered
-  // Georgia/Armenia). OCM stations are only kept if they belong to one of these.
-  Set<String> get _ocmCountryNames => kCountries
-      .where((c) => !c.localCovered && _activeCountries.contains(c.name))
-      .map((c) => c.name)
-      .toSet();
+  // Country names we already cover with local provider data — OCM rows for
+  // these are dropped so international pins never duplicate the local network.
+  static final Set<String> _localCoveredNames =
+      kCountries.where((c) => c.localCovered).map((c) => c.name).toSet();
 
   @override
   void initState() {
@@ -191,14 +196,24 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     _ocmDebounce = Timer(const Duration(milliseconds: 600), _loadOcmViewport);
   }
 
-  // Fetch only the OCM stations within the CURRENT viewport (bbox), then keep
-  // those belonging to a selected non-local country. Georgia/Armenia are served
-  // by local data and never pulled from OCM. Skips when nothing international is
-  // selected, or when zoomed too far out (a continent-wide box is meaningless).
-  // Always clears the loading flag, and a generation guard discards stale
-  // responses so the indicator can never get stuck on.
+  // Track whether the map is centred on Georgia — the local station carousel is
+  // only relevant there; it's hidden when panning to international views.
+  void _updateCenterInGeorgia() {
+    final c     = _mapCtrl.camera.center;
+    final inGeo = countryOf(c.latitude, c.longitude) == 'Georgia';
+    if (inGeo != _centerInGeorgia && mounted) {
+      setState(() => _centerInGeorgia = inGeo);
+    }
+  }
+
+  // Fetch the OCM stations within the CURRENT viewport (bbox) — whatever country
+  // the user has panned to (Turkey, Greece, France, …). Active only while the
+  // "International" chip is on; otherwise no fetch (no overhead). Drops rows for
+  // locally-covered countries so international pins never duplicate the local
+  // network. Always clears the loading flag, and a generation guard discards
+  // stale responses so the indicator can never get stuck on.
   Future<void> _loadOcmViewport() async {
-    if (_ocmCountryNames.isEmpty) {
+    if (!_internationalOn) {
       if (mounted && (_ocmStations.isNotEmpty || _ocmLoading)) {
         setState(() { _ocmStations = const []; _ocmLoading = false; });
       }
@@ -215,7 +230,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     final list = await OcmService.fetchInBounds(b.south, b.west, b.north, b.east);
     if (!mounted || gen != _ocmGen) { return; } // superseded by a newer fetch
     setState(() {
-      _ocmStations = list.where((s) => _ocmCountryNames.contains(s.country)).toList();
+      _ocmStations =
+          list.where((s) => !_localCoveredNames.contains(s.country)).toList();
       _ocmLoading  = false;
     });
   }
@@ -358,6 +374,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               }
             });
             setSheet(() {});
+            // Toggling "International" turns OCM viewport loading on/off.
+            if (p == OcmService.kProvider) { _loadOcmViewport(); }
           },
         ),
       ),
@@ -464,15 +482,17 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     // place was picked, since the place name matches no charger). Stations are
     // filtered only by the chip filters below and stay visible at all times.
     return _allStations.where((s) {
-      // Country filter — OCM stations carry their country; local stations are
-      // classified by coordinates. A station whose country is not selected is
-      // hidden; one outside every known box is always shown.
-      final country = s.country.isNotEmpty ? s.country : countryOf(s.lat, s.lng);
-      if (country != null && country.isNotEmpty &&
-          !_activeCountries.contains(country)) { return false; }
+      // Country filter applies ONLY to local stations (classified by
+      // coordinates). OCM/International stations are gated by the International
+      // provider chip + the viewport instead, so panning to any country shows
+      // its pins without needing a Settings tweak.
+      if (s.country.isEmpty) {
+        final country = countryOf(s.lat, s.lng);
+        if (country != null && !_activeCountries.contains(country)) { return false; }
+      }
       // Provider filter (applied first): empty OR all-selected => show all;
-      // any non-empty subset => keep only those providers. Connector/type
-      // filters below then AND on top of this.
+      // any non-empty subset => keep only those providers. "International" is
+      // off by default, so OCM pins are hidden until the user opts in.
       if (_selectedProviders.isNotEmpty &&
           !_selectedProviders.contains(s.provider)) { return false; }
       if (_filterDC    && !s.isDC)          { return false; }
@@ -498,11 +518,17 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final stations = _filtered;
+    // The bottom carousel lists LOCAL Georgian stations, so it only makes sense
+    // while the map is centred on Georgia. Panning to an international view hides
+    // it entirely (the international pins live on the map, not the carousel).
+    final localStations = _centerInGeorgia
+        ? stations.where((s) => s.provider != OcmService.kProvider).toList()
+        : const <Station>[];
     // Lift the right control column above the bottom carousel so the GPS
     // button is never hidden. The carousel is taller when station cards are
     // shown than when it's loading / empty, so adjust dynamically.
     final navBottom        = MediaQuery.of(context).padding.bottom;
-    final carouselVisible  = !_loading && stations.isNotEmpty;
+    final carouselVisible  = !_loading && _centerInGeorgia && localStations.isNotEmpty;
     final controlsBottom   = (carouselVisible ? 300.0 : 130.0) + navBottom;
     return Scaffold(
       body: Stack(
@@ -522,8 +548,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               // and kicks off the first load. The event stream only emits on
               // real camera changes (never on widget rebuilds), so it can't loop.
               onMapReady: () {
-                _mapEventSub ??=
-                    _mapCtrl.mapEventStream.listen((_) => _scheduleOcmViewport());
+                _mapEventSub ??= _mapCtrl.mapEventStream.listen((_) {
+                  _scheduleOcmViewport();
+                  _updateCenterInGeorgia();
+                });
                 _initLocation();
                 _loadOcmViewport();
               },
@@ -752,24 +780,30 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             ),
           ),
 
-          // ── Bottom panel: station carousel ────────────────────────────────
-          Positioned(
-            left: 0, right: 0, bottom: 0,
-            child: _loading
-                ? const SizedBox(
-                    height: 120,
-                    child: Center(
-                      child: SizedBox(
-                        width: 24, height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: _emerald),
-                      ),
-                    ),
-                  )
-                : _StationCarousel(
-                    stations:    stations,
-                    onPlanAndGo: _pushRoutePlannerTo,
+          // ── Bottom panel: local station carousel ──────────────────────────
+          // Only shown while loading or while centred on Georgia with local
+          // stations to list — hidden entirely on international/away views.
+          if (_loading)
+            const Positioned(
+              left: 0, right: 0, bottom: 0,
+              child: SizedBox(
+                height: 120,
+                child: Center(
+                  child: SizedBox(
+                    width: 24, height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: _emerald),
                   ),
-          ),
+                ),
+              ),
+            )
+          else if (carouselVisible)
+            Positioned(
+              left: 0, right: 0, bottom: 0,
+              child: _StationCarousel(
+                stations:    localStations,
+                onPlanAndGo: _pushRoutePlannerTo,
+              ),
+            ),
         ],
       ),
     );
