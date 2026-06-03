@@ -33,7 +33,7 @@ const _textSec   = Color(0xFF9E9E9E);
 const _tbilisi = LatLng(41.7151, 44.8271);
 
 // Known providers, in display order. "All selected" is the default (no filter).
-const _kAllProviders = ['E-Space', 'mart EV', 'Electrify Georgia', 'EV Power GE'];
+const _kAllProviders = ['E-Space', 'mart EV', 'Electrify Georgia', 'EV Power GE', 'Da-Tene'];
 
 // CartoDB basemaps (free, retina-capable, great coverage for Georgia).
 //  • Voyager     — bright, colourful streets + labels (Light Mode, default)
@@ -746,7 +746,7 @@ class _FilterChips extends StatelessWidget {
   // Canonical connector types, in display order. Only those actually present
   // in the loaded data are shown, so there's never a dead chip (Georgia has no
   // CCS1/NACS chargers, for example). New types appear automatically.
-  static const _kConnectors = ['CCS1', 'CCS2', 'GB/T', 'CHAdeMO', 'Type 2', 'NACS'];
+  static const _kConnectors = ['CCS1', 'CCS2', 'GB/T', 'CHAdeMO', 'Type 1', 'Type 2', 'NACS'];
 
   @override
   Widget build(BuildContext context) {

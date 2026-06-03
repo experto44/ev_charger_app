@@ -34,7 +34,10 @@ jobs:
 
       - name: Push chargers.json to Gist
         env:
-          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          GIST_TOKEN:        ${{ secrets.GIST_TOKEN }}
+          PLUGSHUB_PHONE:     ${{ secrets.PLUGSHUB_PHONE }}
+          PLUGSHUB_PASSWORD:  ${{ secrets.PLUGSHUB_PASSWORD }}
+          PLUGSHUB_TENANT_ID: ${{ secrets.PLUGSHUB_TENANT_ID }}
         run: |
           python3 << 'PYEOF'
           import json, os, requests
@@ -190,6 +193,124 @@ jobs:
           def fetch_evpower():
               return fetch_ampeco("cp.evpower.ge", "EV Power GE", "evpower")
 
+          # ── Da-Tene (PlugsHub platform — NOT AMPECO) ───────────────────────
+          # Multi-tenant API: every request needs an X-Tenant-ID header. We log
+          # in fresh each run (POST /auth/login) and read stations from
+          # /app/charging_stations_v5/. Credentials come from GitHub secrets.
+          def fetch_datene():
+              base   = "https://apps.plugshub.io"
+              phone  = os.environ.get("PLUGSHUB_PHONE")
+              pwd    = os.environ.get("PLUGSHUB_PASSWORD")
+              tenant = os.environ.get("PLUGSHUB_TENANT_ID")
+              if not (phone and pwd and tenant):
+                  print("Da-Tene: PLUGSHUB_PHONE/PASSWORD/TENANT_ID not set — skipping")
+                  return []
+              base_headers = {"Content-Type": "application/json",
+                              "Accept": "application/json", "X-Tenant-ID": tenant}
+
+              # 1) Login -> Bearer token
+              lr = requests.post(f"{base}/auth/login",
+                                 json={"phone": phone, "password": pwd},
+                                 headers=base_headers, timeout=30)
+              lr.raise_for_status()
+              lb = lr.json()
+              token = lb.get("token") or (lb.get("data") or {}).get("token")
+              if not token:
+                  print("Da-Tene: no token in login response")
+                  return []
+              auth = {"Authorization": f"Bearer {token}",
+                      "Accept": "application/json", "X-Tenant-ID": tenant}
+
+              # 2) Stations (returns a plain list; paginate defensively)
+              raw, url, guard = [], f"{base}/app/charging_stations_v5/", 0
+              while url and guard < 50:
+                  guard += 1
+                  r = requests.get(url, headers=auth, timeout=60)
+                  r.raise_for_status()
+                  body = r.json()
+                  if isinstance(body, list):
+                      raw.extend(body); url = None
+                  elif isinstance(body, dict):
+                      raw.extend(body.get("data") or body.get("results") or body.get("stations") or [])
+                      url = (body.get("links") or {}).get("next") or body.get("next")
+                  else:
+                      url = None
+
+              # connector normalization -> app filter chips
+              CONN_MAP = {
+                  "ccs": "CCS2", "ccs2": "CCS2", "combo2": "CCS2", "iec62196t2combo": "CCS2",
+                  "ccs1": "CCS1", "combo1": "CCS1",
+                  "chademo": "CHAdeMO",
+                  "type2": "Type 2", "mennekes": "Type 2", "iec62196t2": "Type 2",
+                  "type1": "Type 1", "j1772": "Type 1",
+                  "gbt": "GB/T", "gb_t": "GB/T", "gbtdc": "GB/T", "gbtac": "GB/T",
+                  "nacs": "NACS", "tesla": "NACS",
+              }
+              def norm_conn(t):
+                  if not t: return None
+                  k = str(t).lower().replace(" ", "").replace("-", "").replace("_", "").replace("/", "")
+                  return CONN_MAP.get(k)
+
+              def fmt_amt(v):
+                  try:
+                      f = float(v)
+                  except Exception:
+                      return None
+                  return f"{f:.2f}".rstrip("0").rstrip(".")
+
+              stations = []
+              for loc in raw:
+                  coords = str(loc.get("geo_coordinates") or "")
+                  if "," not in coords:
+                      continue
+                  try:
+                      lat, lng = [float(x) for x in coords.split(",")[:2]]
+                  except Exception:
+                      continue
+
+                  conns, max_power, avail, any_dc, price = set(), 0.0, 0, False, ""
+                  for ch in (loc.get("chargers") or []):
+                      try: max_power = max(max_power, float(ch.get("max_output") or 0))
+                      except: pass
+                      ch_online = str(ch.get("status", "")).lower() == "online"
+                      ch_has_free = False
+                      for c in (ch.get("connectors") or []):
+                          ctype = str(c.get("type") or "")          # e.g. "CCS2 • DC"
+                          ct = norm_conn(ctype.split("•")[0].strip())
+                          if ct: conns.add(ct)
+                          if "DC" in ctype.upper(): any_dc = True
+                          st = str(c.get("status", "")).lower()
+                          av = str(c.get("availability", "")).lower()
+                          if st == "available" or av == "operative":
+                              ch_has_free = True
+                          if not price:
+                              a = fmt_amt(c.get("price"))
+                              if a:
+                                  cur = c.get("currency") or "₾"
+                                  price = f"{a} {cur}/kWh"
+                      if ch_online and ch_has_free:
+                          avail += 1
+
+                  kw = round(max_power)
+                  name = loc.get("label") or loc.get("address_line_1") or "Da-Tene"
+                  city = loc.get("city") or loc.get("state") or ""
+                  stations.append({
+                      "id": f"datene_{loc.get('id')}",
+                      "name": name,
+                      "lat": lat,
+                      "lng": lng,
+                      "power": (f"{int(kw)} kW" if kw else "—"),
+                      "type": "Fast DC" if any_dc else "AC",
+                      "price": price,
+                      "available_spots": f"{avail} available",
+                      "city": city,
+                      "provider": "Da-Tene",
+                      "connectors": sorted(conns),
+                      "last_updated": "Just now",
+                  })
+              print(f"Da-Tene: {len(stations)} stations")
+              return stations
+
           # ── Load station data from the committed asset file ────────────────
           # The bundled asset ships with snapshots of the live AMPECO providers
           # for offline use, so for each live provider we drop its bundled rows
@@ -198,16 +319,23 @@ jobs:
           with open("assets/data/chargers.json", encoding="utf-8-sig") as f:
               bundled = json.load(f)
 
-          # ── Merge in every live AMPECO provider ────────────────────────────
+          # ── Merge in every live provider ───────────────────────────────────
+          # Only replace a provider's bundled rows when its fetch actually
+          # returns data; on a transient failure or missing secret we keep the
+          # last-known bundled snapshot instead of dropping the provider.
           stations = list(bundled)
           for fn, pname in [(fetch_martev, "mart EV"),
                             (fetch_electrify, "Electrify Georgia"),
-                            (fetch_evpower, "EV Power GE")]:
-              stations = [s for s in stations if s.get("provider") != pname]
+                            (fetch_evpower, "EV Power GE"),
+                            (fetch_datene, "Da-Tene")]:
+              fresh = []
               try:
-                  stations += fn()
+                  fresh = fn()
               except Exception as e:
                   print(f"{pname} fetch failed:", e)
+              if fresh:
+                  stations = [s for s in stations if s.get("provider") != pname]
+                  stations += fresh
 
           # Stamp every station with the current UTC time so the app shows
           # a meaningful "last verified" timestamp after each gist refresh.
