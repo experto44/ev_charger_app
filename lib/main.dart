@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app_constants.dart';
+import 'ocm_service.dart';
 import 'places_service.dart';
 import 'profile_screen.dart';
 import 'route_planner_screen.dart';
@@ -37,7 +38,12 @@ const _textSec   = Color(0xFF9E9E9E);
 const _tbilisi = LatLng(41.7151, 44.8271);
 
 // Known providers, in display order. "All selected" is the default (no filter).
-const _kAllProviders = ['E-Space', 'mart EV', 'Electrify Georgia', 'EV Power GE', 'Da-Tene', 'EcoCars'];
+// Local Georgian providers + a single "International" group for all Open Charge
+// Map networks (so international chargers never clutter the local provider list).
+const _kAllProviders = [
+  'E-Space', 'mart EV', 'Electrify Georgia', 'EV Power GE', 'Da-Tene', 'EcoCars',
+  OcmService.kProvider, // 'International'
+];
 
 // CartoDB basemaps (free, retina-capable, great coverage for Georgia).
 //  • Voyager     — bright, colourful streets + labels (Light Mode, default)
@@ -113,9 +119,23 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   List<PlacePrediction> _suggestions = const [];
   Timer?                _debounce;
 
-  // Country filter (Settings). Defaults to every country active (= show all).
-  Set<String> _activeCountries = kCountries.map((c) => c.name).toSet();
+  // Country filter (Settings). Defaults to Georgia only; other countries load
+  // live from Open Charge Map when selected.
+  Set<String> _activeCountries = {'Georgia'};
   bool get _countryFilterActive => _activeCountries.length != kCountries.length;
+
+  // International stations loaded live from OCM for the CURRENT VIEWPORT, a
+  // loading flag, and a debounce timer so we only refetch when panning settles.
+  List<Station> _ocmStations = const [];
+  bool          _ocmLoading  = false;
+  Timer?        _ocmDebounce;
+
+  // Selected countries that come from OCM (everything except locally-covered
+  // Georgia/Armenia). OCM stations are only kept if they belong to one of these.
+  Set<String> get _ocmCountryNames => kCountries
+      .where((c) => !c.localCovered && _activeCountries.contains(c.name))
+      .map((c) => c.name)
+      .toSet();
 
   @override
   void initState() {
@@ -146,17 +166,47 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         } catch (_) {/* keep default */}
       }
     });
+    // OCM loads viewport-first; the map's onMapReady kicks off the initial load.
   }
 
-  // Re-read the saved country selection after returning from Settings.
+  // Re-read the saved country selection after returning from Settings, then
+  // refresh the live OCM data for the current viewport under the new selection.
   Future<void> _reloadCountries() async {
     final p   = await SharedPreferences.getInstance();
     final raw = p.getString(kActiveCountries);
     if (!mounted) { return; }
     setState(() {
       _activeCountries = raw == null
-          ? kCountries.map((c) => c.name).toSet()
+          ? {'Georgia'}
           : (jsonDecode(raw) as List).map((e) => e as String).toSet();
+    });
+    _loadOcmViewport();
+  }
+
+  // Debounce viewport OCM fetches so we only refetch when panning/zooming stops.
+  void _scheduleOcmViewport() {
+    _ocmDebounce?.cancel();
+    _ocmDebounce = Timer(const Duration(milliseconds: 600), _loadOcmViewport);
+  }
+
+  // Fetch only the OCM stations within the CURRENT viewport (bbox), then keep
+  // those belonging to a selected non-local country. Georgia/Armenia are served
+  // by local data and never pulled from OCM. Skips when nothing international is
+  // selected, or when zoomed too far out (a continent-wide box is meaningless).
+  Future<void> _loadOcmViewport() async {
+    if (_ocmCountryNames.isEmpty) {
+      if (_ocmStations.isNotEmpty && mounted) { setState(() => _ocmStations = const []); }
+      return;
+    }
+    final cam = _mapCtrl.camera;
+    if (cam.zoom < 5) { return; }            // too zoomed out — skip
+    final b = cam.visibleBounds;
+    if (mounted) { setState(() => _ocmLoading = true); }
+    final list = await OcmService.fetchInBounds(b.south, b.west, b.north, b.east);
+    if (!mounted) { return; }
+    setState(() {
+      _ocmStations = list.where((s) => _ocmCountryNames.contains(s.country)).toList();
+      _ocmLoading  = false;
     });
   }
 
@@ -245,6 +295,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     _searchCtrl.dispose();
     _searchFocus.dispose();
     _debounce?.cancel();
+    _ocmDebounce?.cancel();
     super.dispose();
   }
 
@@ -392,18 +443,22 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     );
   }
 
+  // Local Gist stations + live OCM international stations.
+  List<Station> get _allStations =>
+      _ocmStations.isEmpty ? _stations : [..._stations, ..._ocmStations];
+
   List<Station> get _filtered {
     // NOTE: the search bar is a Google Places *destination* search — it must NOT
     // filter the station list (doing so wiped every station off the map once a
     // place was picked, since the place name matches no charger). Stations are
     // filtered only by the chip filters below and stay visible at all times.
-    return _stations.where((s) {
-      // Country filter — keep stations whose country is active; stations
-      // outside every known country box are always shown.
-      if (_countryFilterActive) {
-        final country = countryOf(s.lat, s.lng);
-        if (country != null && !_activeCountries.contains(country)) { return false; }
-      }
+    return _allStations.where((s) {
+      // Country filter — OCM stations carry their country; local stations are
+      // classified by coordinates. A station whose country is not selected is
+      // hidden; one outside every known box is always shown.
+      final country = s.country.isNotEmpty ? s.country : countryOf(s.lat, s.lng);
+      if (country != null && country.isNotEmpty &&
+          !_activeCountries.contains(country)) { return false; }
       // Provider filter (applied first): empty OR all-selected => show all;
       // any non-empty subset => keep only those providers. Connector/type
       // filters below then AND on top of this.
@@ -420,12 +475,12 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     }).toList();
   }
 
-  // Connector types actually present in the loaded data — used to build the
-  // filter chips so we never show a dead chip (e.g. CCS1/NACS don't exist in
-  // Georgia's networks) and any new connector type appears automatically.
+  // Connector types actually present in the loaded data (local + OCM) — used to
+  // build the filter chips so we never show a dead chip and any new connector
+  // type (incl. international ones) appears automatically.
   Set<String> get _availableConnectors {
     final out = <String>{};
-    for (final s in _stations) { out.addAll(s.connectors); }
+    for (final s in _allStations) { out.addAll(s.connectors); }
     return out;
   }
 
@@ -451,8 +506,15 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 flags: InteractiveFlag.all,
               ),
               // onMapReady fires once the controller is attached — the only
-              // safe moment to call _mapCtrl.move() on startup.
-              onMapReady: _initLocation,
+              // safe moment to call _mapCtrl.move() on startup. Also kicks off
+              // the first viewport OCM load.
+              onMapReady: () {
+                _initLocation();
+                _loadOcmViewport();
+              },
+              // Refetch international stations for the new viewport when the
+              // user finishes panning/zooming (debounced).
+              onPositionChanged: (camera, hasGesture) => _scheduleOcmViewport(),
             ),
             children: [
               // CartoDB basemap — Voyager (light) or Dark Matter (dark).
@@ -593,6 +655,30 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                       }
                     }),
                   ),
+                  // Live OCM fetch indicator (international countries).
+                  if (_ocmLoading) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: _bgCard,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: _bgSurface),
+                        ),
+                        child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                          SizedBox(
+                            width: 13, height: 13,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: _emerald),
+                          ),
+                          SizedBox(width: 8),
+                          Text('Loading international stations…',
+                              style: TextStyle(color: _textSec, fontSize: 12)),
+                        ]),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

@@ -21,8 +21,9 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // Default: every country active (= no filtering).
-  Set<String> _active = kCountries.map((c) => c.name).toSet();
+  // Default: only Georgia selected. Users opt into other countries (which then
+  // load live from Open Charge Map).
+  Set<String> _active = {'Georgia'};
 
   @override
   void initState() {

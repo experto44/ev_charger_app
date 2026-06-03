@@ -24,6 +24,7 @@ class Station {
     this.provider    = '',
     this.lastUpdated = '',
     this.connectors  = const [],
+    this.country     = '',
   });
 
   /// Handles both the production format (available_spots / type / power / city)
@@ -56,6 +57,7 @@ class Station {
         provider:    j['provider']     as String? ?? '',
         lastUpdated: j['last_updated'] as String? ?? '',
         connectors:  connectors,
+        country:     j['country']      as String? ?? '',
       );
     }
     // Legacy schema
@@ -81,6 +83,7 @@ class Station {
   final double lat, lng;
   final bool   isDC;
   final List<String> connectors; // e.g. ["CCS2", "CHAdeMO"]
+  final String country;          // country name for OCM stations ('' = derive from coords)
 }
 
 // ── Route models ──────────────────────────────────────────────────────────────
