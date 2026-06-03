@@ -129,6 +129,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   List<Station> _ocmStations = const [];
   bool          _ocmLoading  = false;
   Timer?        _ocmDebounce;
+  StreamSubscription<MapEvent>? _mapEventSub;
+  int           _ocmGen = 0;   // guards against stale viewport responses
 
   // Selected countries that come from OCM (everything except locally-covered
   // Georgia/Armenia). OCM stations are only kept if they belong to one of these.
@@ -193,17 +195,25 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   // those belonging to a selected non-local country. Georgia/Armenia are served
   // by local data and never pulled from OCM. Skips when nothing international is
   // selected, or when zoomed too far out (a continent-wide box is meaningless).
+  // Always clears the loading flag, and a generation guard discards stale
+  // responses so the indicator can never get stuck on.
   Future<void> _loadOcmViewport() async {
     if (_ocmCountryNames.isEmpty) {
-      if (_ocmStations.isNotEmpty && mounted) { setState(() => _ocmStations = const []); }
+      if (mounted && (_ocmStations.isNotEmpty || _ocmLoading)) {
+        setState(() { _ocmStations = const []; _ocmLoading = false; });
+      }
       return;
     }
     final cam = _mapCtrl.camera;
-    if (cam.zoom < 5) { return; }            // too zoomed out — skip
-    final b = cam.visibleBounds;
+    if (cam.zoom < 5) {                       // too zoomed out — skip, clear flag
+      if (mounted && _ocmLoading) { setState(() => _ocmLoading = false); }
+      return;
+    }
+    final gen = ++_ocmGen;
+    final b   = cam.visibleBounds;
     if (mounted) { setState(() => _ocmLoading = true); }
     final list = await OcmService.fetchInBounds(b.south, b.west, b.north, b.east);
-    if (!mounted) { return; }
+    if (!mounted || gen != _ocmGen) { return; } // superseded by a newer fetch
     setState(() {
       _ocmStations = list.where((s) => _ocmCountryNames.contains(s.country)).toList();
       _ocmLoading  = false;
@@ -296,6 +306,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     _searchFocus.dispose();
     _debounce?.cancel();
     _ocmDebounce?.cancel();
+    _mapEventSub?.cancel();
     super.dispose();
   }
 
@@ -506,15 +517,16 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 flags: InteractiveFlag.all,
               ),
               // onMapReady fires once the controller is attached — the only
-              // safe moment to call _mapCtrl.move() on startup. Also kicks off
-              // the first viewport OCM load.
+              // safe moment to call _mapCtrl.move() on startup. Also subscribes
+              // to map movements (debounced) to refetch the viewport's OCM data,
+              // and kicks off the first load. The event stream only emits on
+              // real camera changes (never on widget rebuilds), so it can't loop.
               onMapReady: () {
+                _mapEventSub ??=
+                    _mapCtrl.mapEventStream.listen((_) => _scheduleOcmViewport());
                 _initLocation();
                 _loadOcmViewport();
               },
-              // Refetch international stations for the new viewport when the
-              // user finishes panning/zooming (debounced).
-              onPositionChanged: (camera, hasGesture) => _scheduleOcmViewport(),
             ),
             children: [
               // CartoDB basemap — Voyager (light) or Dark Matter (dark).
@@ -1542,9 +1554,13 @@ class _StationSheetState extends State<_StationSheet> {
             ),
             const SizedBox(width: 8),
             Text(
-              avail
-                  ? '${s.available} connector${s.available == 1 ? '' : 's'} available'
-                  : 'No connectors available',
+              !avail
+                  ? (s.total > 0
+                      ? '0 of ${s.total} plugs available'
+                      : 'No connectors available')
+                  : (s.total > s.available
+                      ? '${s.available} of ${s.total} plugs available'
+                      : '${s.available} plug${s.available == 1 ? '' : 's'} available'),
               style: TextStyle(
                 color: statusColor, fontSize: 14, fontWeight: FontWeight.w600,
               ),

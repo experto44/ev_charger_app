@@ -148,16 +148,21 @@ jobs:
                       except Exception:
                           continue
 
-                      conns, max_power, avail, any_dc, price = set(), 0.0, 0, False, ""
+                      # avail / total count PORTS (connectors), not chargers, so
+                      # a location with 4 plugs reports "x of 4" correctly.
+                      conns, max_power, avail, total, any_dc, price = set(), 0.0, 0, 0, False, ""
                       for zone in (loc.get("zones") or []):
                           for e in (zone.get("evses") or []):
+                              cs = e.get("connectors") or []
+                              ports = max(len(cs), 1)        # an EVSE has >=1 plug
+                              total += ports
                               if e.get("isAvailable"):
-                                  avail += 1
+                                  avail += ports
                               try: max_power = max(max_power, float(e.get("maxPower") or 0))
                               except: pass
                               if str(e.get("currentType", "")).lower() == "dc":
                                   any_dc = True
-                              for c in (e.get("connectors") or []):
+                              for c in cs:
                                   ic = str(c.get("icon") or "").lower()
                                   ct = norm_conn(c.get("icon") or c.get("name"))
                                   if ct: conns.add(ct)
@@ -178,6 +183,7 @@ jobs:
                           "type": "Fast DC" if any_dc else "AC",
                           "price": price,
                           "available_spots": f"{avail} available",
+                          "total_spots": total,
                           "city": derive_city(addr) or name.split(",")[0],
                           "provider": provider_name,
                           "connectors": sorted(conns),
@@ -270,28 +276,28 @@ jobs:
                   except Exception:
                       continue
 
-                  conns, max_power, avail, any_dc, price = set(), 0.0, 0, False, ""
+                  # avail / total count PORTS (connectors) across all chargers.
+                  conns, max_power, avail, total, any_dc, price = set(), 0.0, 0, 0, False, ""
                   for ch in (loc.get("chargers") or []):
                       try: max_power = max(max_power, float(ch.get("max_output") or 0))
                       except: pass
                       ch_online = str(ch.get("status", "")).lower() == "online"
-                      ch_has_free = False
-                      for c in (ch.get("connectors") or []):
+                      cs = ch.get("connectors") or []
+                      total += len(cs)
+                      for c in cs:
                           ctype = str(c.get("type") or "")          # e.g. "CCS2 • DC"
                           ct = norm_conn(ctype.split("•")[0].strip())
                           if ct: conns.add(ct)
                           if "DC" in ctype.upper(): any_dc = True
                           st = str(c.get("status", "")).lower()
                           av = str(c.get("availability", "")).lower()
-                          if st == "available" or av == "operative":
-                              ch_has_free = True
+                          if ch_online and (st == "available" or av == "operative"):
+                              avail += 1
                           if not price:
                               a = fmt_amt(c.get("price"))
                               if a:
                                   cur = c.get("currency") or "₾"
                                   price = f"{a} {cur}/kWh"
-                      if ch_online and ch_has_free:
-                          avail += 1
 
                   kw = round(max_power)
                   name = loc.get("label") or loc.get("address_line_1") or "Da-Tene"
@@ -305,6 +311,7 @@ jobs:
                       "type": "Fast DC" if any_dc else "AC",
                       "price": price,
                       "available_spots": f"{avail} available",
+                      "total_spots": total,
                       "city": city,
                       "provider": "Da-Tene",
                       "connectors": sorted(conns),
@@ -371,8 +378,10 @@ jobs:
                   lat = g.get("lat"); lng = g.get("lon")
                   if lat is None or lng is None or not in_region(lat, lng):
                       continue
-                  conns, maxkw, avail, any_dc, price = set(), 0.0, 0, False, ""
+                  # avail / total count PORTS (connectors) at the station.
+                  conns, maxkw, avail, total, any_dc, price = set(), 0.0, 0, 0, False, ""
                   for c in (s.get("connectors") or []):
+                      total += 1
                       t = c.get("type")
                       nm = conn_name(t)
                       if nm: conns.add(nm)
@@ -400,6 +409,7 @@ jobs:
                       "type": "Fast DC" if any_dc else "AC",
                       "price": price,
                       "available_spots": f"{avail} available",
+                      "total_spots": total,
                       "city": derive_city(s.get("address")),
                       "provider": "EcoCars",
                       "connectors": sort_conns(conns),

@@ -20,6 +20,7 @@ class Station {
     required this.isDC,
     required this.kw,
     required this.price,
+    this.total       = 0,
     this.distance    = '',
     this.provider    = '',
     this.lastUpdated = '',
@@ -45,10 +46,14 @@ class Station {
       final connectors = declared.isNotEmpty
           ? declared
           : (isDC ? const ['CCS2', 'CHAdeMO'] : const ['Type 2']);
+      final available = int.tryParse(spots.split(' ').first) ?? 0;
       return Station(
         name:        j['name']         as String,
         location:    j['city']         as String,
-        available:   int.tryParse(spots.split(' ').first) ?? 0,
+        available:   available,
+        // Total plugs at the location; falls back to the available count for
+        // providers that don't publish a total (keeps "x of x").
+        total:       (j['total_spots'] as num?)?.toInt() ?? available,
         lat:         (j['lat']         as num).toDouble(),
         lng:         (j['lng']         as num).toDouble(),
         isDC:        isDC,
@@ -80,6 +85,7 @@ class Station {
   final String provider;
   final String lastUpdated;    // ISO date or human string; empty if not present
   final int    available, kw;
+  final int    total;            // total plugs/ports at the location
   final double lat, lng;
   final bool   isDC;
   final List<String> connectors; // e.g. ["CCS2", "CHAdeMO"]

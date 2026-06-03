@@ -103,6 +103,7 @@ List<Map<String, dynamic>> _parseOcm(String body) {
       'type':            anyDc ? 'Fast DC' : 'AC',
       'price':           price,
       'available_spots': '$avail available',
+      'total_spots':     avail, // OCM exposes total points, not live free count
       'city':            town,
       'provider':        OcmService.kProvider,
       'country':         countryName,
