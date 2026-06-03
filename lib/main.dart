@@ -37,7 +37,7 @@ const _textSec   = Color(0xFF9E9E9E);
 const _tbilisi = LatLng(41.7151, 44.8271);
 
 // Known providers, in display order. "All selected" is the default (no filter).
-const _kAllProviders = ['E-Space', 'mart EV', 'Electrify Georgia', 'EV Power GE', 'Da-Tene'];
+const _kAllProviders = ['E-Space', 'mart EV', 'Electrify Georgia', 'EV Power GE', 'Da-Tene', 'EcoCars'];
 
 // CartoDB basemaps (free, retina-capable, great coverage for Georgia).
 //  • Voyager     — bright, colourful streets + labels (Light Mode, default)

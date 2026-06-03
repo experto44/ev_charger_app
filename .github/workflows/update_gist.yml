@@ -30,14 +30,16 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: pip install requests
+        run: pip install requests pycognito
 
       - name: Push chargers.json to Gist
         env:
-          GIST_TOKEN:        ${{ secrets.GIST_TOKEN }}
-          PLUGSHUB_PHONE:     ${{ secrets.PLUGSHUB_PHONE }}
-          PLUGSHUB_PASSWORD:  ${{ secrets.PLUGSHUB_PASSWORD }}
-          PLUGSHUB_TENANT_ID: ${{ secrets.PLUGSHUB_TENANT_ID }}
+          GIST_TOKEN:         ${{ secrets.GIST_TOKEN }}
+          PLUGSHUB_PHONE:      ${{ secrets.PLUGSHUB_PHONE }}
+          PLUGSHUB_PASSWORD:   ${{ secrets.PLUGSHUB_PASSWORD }}
+          PLUGSHUB_TENANT_ID:  ${{ secrets.PLUGSHUB_TENANT_ID }}
+          ECOCARS_USERNAME:    ${{ secrets.ECOCARS_USERNAME }}
+          ECOCARS_PASSWORD:    ${{ secrets.ECOCARS_PASSWORD }}
         run: |
           python3 << 'PYEOF'
           import json, os, requests
@@ -311,6 +313,101 @@ jobs:
               print(f"Da-Tene: {len(stations)} stations")
               return stations
 
+          # ── EcoCars (ChargerSystem platform — AWS Cognito SRP auth) ─────────
+          # Global station list at /stations/cache (Bearer only). EcoCars is the
+          # vendorId b534372b...; we filter to that vendor and to GE/AM/TR coords.
+          # Connector `type` is an int enum — mapping derived from a known EcoCars
+          # station (MIONI/GE503): 4=CCS2, 5=Type 1, 8=Type 2, 26=GB/T; other DC
+          # type ints -> CCS2, other AC type ints -> Type 2.
+          def fetch_ecocars():
+              user = os.environ.get("ECOCARS_USERNAME")
+              pwd  = os.environ.get("ECOCARS_PASSWORD")
+              if not (user and pwd):
+                  print("EcoCars: ECOCARS_USERNAME/PASSWORD not set — skipping")
+                  return []
+              from pycognito import Cognito
+              VENDOR = "b534372b-41c5-41b4-b54c-ba5e92851a79"
+              cog = Cognito(
+                  user_pool_id="eu-central-1_jipiA27RZ",
+                  client_id="6621gvg74rlpc54t09nsfc6ja3",
+                  user_pool_region="eu-central-1",
+                  username=user)
+              cog.authenticate(password=pwd)   # SRP under the hood
+              hdr = {"Authorization": f"Bearer {cog.id_token}", "Accept": "application/json"}
+              cache = requests.get("https://api.chargersystem.com/api/v1/stations/cache",
+                                   headers=hdr, timeout=90).json()
+
+              # GE/AM/TR coordinate boxes (STEP C: drop everything else).
+              BOXES = [("Georgia",41.0,43.6,40.0,46.7),
+                       ("Armenia",38.8,41.3,43.4,46.6),
+                       ("Turkey", 35.8,42.1,26.0,44.8)]
+              def in_region(lat, lng):
+                  return any(a<=lat<=b and c<=lng<=d for _,a,b,c,d in BOXES)
+
+              # Connector int -> chip. Confirmed from MIONI; unknowns by power class.
+              CONN_INT = {4:"CCS2", 5:"Type 1", 8:"Type 2", 26:"GB/T"}
+              DC_TYPES = {1,2,3,27,29,30}
+              AC_TYPES = {9,15,25}
+              def conn_name(t):
+                  if t in CONN_INT: return CONN_INT[t]
+                  if t in DC_TYPES: return "CCS2"
+                  if t in AC_TYPES: return "Type 2"
+                  return None
+              ORDER = ["CCS2","GB/T","CHAdeMO","Type 2","NACS","CCS1","Type 1"]
+              def sort_conns(cs):
+                  return sorted(cs, key=lambda c:(ORDER.index(c) if c in ORDER else len(ORDER), c))
+              SIGN = {"GEL":"₾","AMD":"֏","USD":"$","EUR":"€","TRY":"₺","UAH":"₴"}
+              def derive_city(addr):
+                  parts = [p.strip() for p in (addr or "").split(",") if p.strip()]
+                  cand = parts[-2] if len(parts)>=3 else (parts[0] if parts else "")
+                  toks = [t for t in cand.split() if not any(ch.isdigit() for ch in t)]
+                  return " ".join(toks).replace("T'bilisi","Tbilisi").strip()
+
+              stations = []
+              for s in cache:
+                  if s.get("vendorId") != VENDOR:
+                      continue
+                  g = s.get("geo") or {}
+                  lat = g.get("lat"); lng = g.get("lon")
+                  if lat is None or lng is None or not in_region(lat, lng):
+                      continue
+                  conns, maxkw, avail, any_dc, price = set(), 0.0, 0, False, ""
+                  for c in (s.get("connectors") or []):
+                      t = c.get("type")
+                      nm = conn_name(t)
+                      if nm: conns.add(nm)
+                      kw = c.get("maxOutputKw") or 0
+                      try: maxkw = max(maxkw, float(kw))
+                      except: pass
+                      if t in DC_TYPES or t in (4, 26) or (kw and kw >= 43):
+                          any_dc = True
+                      if c.get("status") == 1:
+                          avail += 1
+                      if not price:
+                          en = (c.get("rates") or {}).get("energy") or {}
+                          p = en.get("price")
+                          if p:
+                              cur = en.get("currencyCode", "GEL")
+                              a = f"{float(p):.2f}".rstrip("0").rstrip(".")
+                              price = f"{a} {SIGN.get(cur, cur)}/kWh"
+                  kw = round(maxkw)
+                  stations.append({
+                      "id": f"ecocars_{s.get('id')}",
+                      "name": s.get("name") or "EcoCars",
+                      "lat": lat,
+                      "lng": lng,
+                      "power": (f"{int(kw)} kW" if kw else "—"),
+                      "type": "Fast DC" if any_dc else "AC",
+                      "price": price,
+                      "available_spots": f"{avail} available",
+                      "city": derive_city(s.get("address")),
+                      "provider": "EcoCars",
+                      "connectors": sort_conns(conns),
+                      "last_updated": "Just now",
+                  })
+              print(f"EcoCars: {len(stations)} stations")
+              return stations
+
           # ── Load station data from the committed asset file ────────────────
           # The bundled asset ships with snapshots of the live AMPECO providers
           # for offline use, so for each live provider we drop its bundled rows
@@ -327,7 +424,8 @@ jobs:
           for fn, pname in [(fetch_martev, "mart EV"),
                             (fetch_electrify, "Electrify Georgia"),
                             (fetch_evpower, "EV Power GE"),
-                            (fetch_datene, "Da-Tene")]:
+                            (fetch_datene, "Da-Tene"),
+                            (fetch_ecocars, "EcoCars")]:
               fresh = []
               try:
                   fresh = fn()
