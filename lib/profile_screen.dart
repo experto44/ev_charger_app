@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'app_constants.dart';
+
 // ── Palette (mirrors main.dart) ───────────────────────────────────────────────
 const _bgDark    = Color(0xFF1A1A1A);
 const _bgCard    = Color(0xFF252525);
@@ -25,6 +27,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final _carCtrl   = TextEditingController();
   final _rangeCtrl = TextEditingController();
+  String? _connector;            // default connector (single-select, nullable)
   bool _saved = false;
 
   @override
@@ -46,6 +49,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       _carCtrl.text   = p.getString(kCarModel) ?? '';
       _rangeCtrl.text = p.getString(kMaxRange) ?? '';
+      _connector      = p.getString(kDefaultConnector);
     });
   }
 
@@ -53,6 +57,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final p = await SharedPreferences.getInstance();
     await p.setString(kCarModel, _carCtrl.text.trim());
     await p.setString(kMaxRange, _rangeCtrl.text.trim());
+    if (_connector == null) {
+      await p.remove(kDefaultConnector);
+    } else {
+      await p.setString(kDefaultConnector, _connector!);
+    }
     if (!mounted) { return; }
     setState(() => _saved = true);
     await Future.delayed(const Duration(seconds: 2));
@@ -111,6 +120,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
               hint: 'e.g. Tesla Model 3',
               icon: Icons.directions_car_outlined,
               type: TextInputType.text,
+            ),
+            const SizedBox(height: 20),
+
+            // ── My Connector (single-select default) ──────────────────────────
+            const _Label('My Connector'),
+            const SizedBox(height: 4),
+            const Text(
+              'Used as your default filter on the map',
+              style: TextStyle(color: _textSec, fontSize: 12),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: kConnectorOrder.map((c) {
+                final on = _connector == c;
+                return GestureDetector(
+                  onTap: () => setState(() => _connector = on ? null : c),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: on ? _emerald : _bgCard,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: on ? _emerald : _bgSurface),
+                    ),
+                    child: Text(
+                      c,
+                      style: TextStyle(
+                        color: on ? Colors.black : _textSec,
+                        fontSize: 13, fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
             const SizedBox(height: 20),
 

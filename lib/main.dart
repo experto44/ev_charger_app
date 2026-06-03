@@ -9,10 +9,14 @@ import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'app_constants.dart';
 import 'places_service.dart';
 import 'profile_screen.dart';
 import 'route_planner_screen.dart';
 import 'routing_service.dart';
+import 'settings_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -109,13 +113,51 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   List<PlacePrediction> _suggestions = const [];
   Timer?                _debounce;
 
+  // Country filter (Settings). Defaults to every country active (= show all).
+  Set<String> _activeCountries = kCountries.map((c) => c.name).toSet();
+  bool get _countryFilterActive => _activeCountries.length != kCountries.length;
+
   @override
   void initState() {
     super.initState();
+    _loadPrefs();
     // Station data can load independently of the map controller.
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadStations());
     // _initLocation() is called from MapOptions.onMapReady, which fires only
     // after FlutterMap has mounted and the MapController is fully attached.
+  }
+
+  // Apply the profile's default connector + the saved country selection. The
+  // connector default seeds the active map filter each launch; manual changes
+  // on the map are session-only and reset to this on next launch.
+  Future<void> _loadPrefs() async {
+    final p = await SharedPreferences.getInstance();
+    final defConn  = p.getString(kDefaultConnector);
+    final rawCntry = p.getString(kActiveCountries);
+    if (!mounted) { return; }
+    setState(() {
+      _filterConnectors
+        ..clear()
+        ..addAll(defConn != null && defConn.isNotEmpty ? [defConn] : const []);
+      if (rawCntry != null) {
+        try {
+          _activeCountries =
+              (jsonDecode(rawCntry) as List).map((e) => e as String).toSet();
+        } catch (_) {/* keep default */}
+      }
+    });
+  }
+
+  // Re-read the saved country selection after returning from Settings.
+  Future<void> _reloadCountries() async {
+    final p   = await SharedPreferences.getInstance();
+    final raw = p.getString(kActiveCountries);
+    if (!mounted) { return; }
+    setState(() {
+      _activeCountries = raw == null
+          ? kCountries.map((c) => c.name).toSet()
+          : (jsonDecode(raw) as List).map((e) => e as String).toSet();
+    });
   }
 
   List<Station> _parseStations(String raw) => (jsonDecode(raw) as List)
@@ -356,6 +398,12 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     // place was picked, since the place name matches no charger). Stations are
     // filtered only by the chip filters below and stay visible at all times.
     return _stations.where((s) {
+      // Country filter — keep stations whose country is active; stations
+      // outside every known country box are always shown.
+      if (_countryFilterActive) {
+        final country = countryOf(s.lat, s.lng);
+        if (country != null && !_activeCountries.contains(country)) { return false; }
+      }
       // Provider filter (applied first): empty OR all-selected => show all;
       // any non-empty subset => keep only those providers. Connector/type
       // filters below then AND on top of this.
@@ -517,6 +565,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                     controller: _searchCtrl,
                     focusNode:  _searchFocus,
                     onChanged:  _onSearchChanged,
+                    onSettings: () async {
+                      await Navigator.push<void>(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                      );
+                      await _reloadCountries(); // apply country changes immediately
+                    },
                   ),
                   if (_suggestions.isNotEmpty) ...[
                     const SizedBox(height: 4),
@@ -561,13 +616,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                   iconColor: _darkMap ? _textPri : Colors.amber,
                 ),
                 const SizedBox(height: 8),
-                // Provider filter (with active badge)
+                // Provider filter (badge also lights when country filtering is on)
                 _MapCtrlButton(
                   onTap: _openProviderFilter,
                   icon:  Icons.layers_rounded,
                   iconColor:   _providerFilterActive ? _emerald : _textSec,
                   borderColor: _providerFilterActive ? _emerald : _bgSurface,
-                  showBadge:   _providerFilterActive,
+                  showBadge:   _providerFilterActive || _countryFilterActive,
                 ),
                 const SizedBox(height: 8),
                 // Zoom in / out
@@ -627,10 +682,12 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 class _SearchBarWidget extends StatelessWidget {
   const _SearchBarWidget({
     required this.controller, required this.focusNode, required this.onChanged,
+    required this.onSettings,
   });
   final TextEditingController controller;
   final FocusNode             focusNode;
   final ValueChanged<String>  onChanged;
+  final VoidCallback          onSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -660,6 +717,11 @@ class _SearchBarWidget extends StatelessWidget {
               ),
             ),
           ),
+          _IconBtn(
+            icon:  Icons.settings_outlined,
+            onTap: onSettings,
+          ),
+          const SizedBox(width: 8),
           _IconBtn(
             icon:  Icons.account_circle_outlined,
             onTap: () => Navigator.push(
@@ -743,22 +805,23 @@ class _FilterChips extends StatelessWidget {
   final Set<String>        filterConnectors;
   final ValueChanged<String> onConnector;
 
-  // Canonical connector types, in display order. Only those actually present
-  // in the loaded data are shown, so there's never a dead chip (Georgia has no
-  // CCS1/NACS chargers, for example). New types appear automatically.
-  static const _kConnectors = ['CCS1', 'CCS2', 'GB/T', 'CHAdeMO', 'Type 1', 'Type 2', 'NACS'];
+  // Canonical connector types in the shared display order (kConnectorOrder).
+  // Only those actually present in the loaded data are shown, so there's never
+  // a dead chip; new types appear automatically.
+  static const _kConnectors = kConnectorOrder;
 
   @override
   Widget build(BuildContext context) {
-    // Data-driven: keep canonical order but drop connectors absent from data.
-    // Before data loads (empty set) fall back to the full list so the bar
-    // isn't momentarily empty.
-    final conns = availableConnectors.isEmpty
-        ? _kConnectors
-        : _kConnectors
-            .where((c) => availableConnectors
-                .any((a) => a.toLowerCase() == c.toLowerCase()))
-            .toList();
+    // Data-driven (canonical order): show a connector chip when data is still
+    // loading, when it's present in the loaded data, OR when it's the active
+    // filter (so a default connector with no matches is still toggle-able and
+    // never strands the user on an empty map with no chip to clear).
+    final conns = _kConnectors
+        .where((c) =>
+            availableConnectors.isEmpty ||
+            filterConnectors.contains(c) ||
+            availableConnectors.any((a) => a.toLowerCase() == c.toLowerCase()))
+        .toList();
     return SizedBox(
       height: 36,
       child: ListView(
@@ -1363,7 +1426,7 @@ class _StationSheetState extends State<_StationSheet> {
                 label: s.provider,
                 color: _emerald,
               ),
-            ...s.connectors.map((c) => _InfoChip(
+            ...sortConnectors(s.connectors).map((c) => _InfoChip(
               icon:  Icons.power_outlined,
               label: c,
               color: Colors.blueAccent,
