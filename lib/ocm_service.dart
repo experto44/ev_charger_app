@@ -15,6 +15,15 @@ class OcmService {
   static const _key = 'a374a367-c145-4ac1-82d5-91fb9ce52b36';
   static const kProvider = 'International';
 
+  // OCM blocks requests that carry the default Dart/dart:io User-Agent with a
+  // 503 "API requests by robots are temporarily disabled". A real User-Agent
+  // (plus the key in the X-API-Key header) is required or every fetch fails
+  // silently. This was the root cause of international stations never loading.
+  static const _headers = <String, String>{
+    'User-Agent': 'ev_charger_app/1.0 (Flutter; +https://evchargergeorgia.app)',
+    'X-API-Key':  _key,
+  };
+
   // Session cache: ISO alpha-2 country code -> mapped stations. Populated on the
   // first fetch for a country and reused for the rest of the session, so
   // toggling the International chip or panning the map never refetches. OCM
@@ -42,7 +51,8 @@ class OcmService {
       },
     );
     try {
-      final res = await http.get(uri).timeout(const Duration(seconds: 45));
+      final res = await http.get(uri, headers: _headers)
+          .timeout(const Duration(seconds: 45));
       if (res.statusCode != 200) { return const []; }
       // Decode + map on a background isolate so large payloads never jank the
       // UI. We already know the country (we fetched by code), so we pass its
