@@ -38,6 +38,8 @@ jobs:
           PLUGSHUB_PHONE:      ${{ secrets.PLUGSHUB_PHONE }}
           PLUGSHUB_PASSWORD:   ${{ secrets.PLUGSHUB_PASSWORD }}
           PLUGSHUB_TENANT_ID:  ${{ secrets.PLUGSHUB_TENANT_ID }}
+          GADATENE_PHONE:      ${{ secrets.GADATENE_PHONE }}
+          GADATENE_PASSWORD:   ${{ secrets.GADATENE_PASSWORD }}
           ECOCARS_USERNAME:    ${{ secrets.ECOCARS_USERNAME }}
           ECOCARS_PASSWORD:    ${{ secrets.ECOCARS_PASSWORD }}
         run: |
@@ -320,6 +322,127 @@ jobs:
               print(f"Da-Tene: {len(stations)} stations")
               return stations
 
+          # ── Gadatene (PlugsHub white-label — same platform as Da-Tene) ─────
+          # Identical multi-tenant API and station schema as Da-Tene, but on its
+          # own host/tenant/version: login at auth.gadatene.com, stations at
+          # apps.gadatene.com/app/charging_stations_v3/. Credentials come from
+          # GitHub secrets; tenant id is fixed for this white-label instance.
+          def fetch_gadatene():
+              auth_base = "https://auth.gadatene.com"
+              api_base  = "https://apps.gadatene.com"
+              tenant    = "4aeecc14-b023-4bf4-bec2-34b0eccba8e1"
+              phone     = os.environ.get("GADATENE_PHONE")
+              pwd       = os.environ.get("GADATENE_PASSWORD")
+              if not (phone and pwd):
+                  print("Gadatene: GADATENE_PHONE/PASSWORD not set — skipping")
+                  return []
+              base_headers = {"Content-Type": "application/json",
+                              "Accept": "application/json", "X-Tenant-ID": tenant}
+
+              # 1) Login -> Bearer token
+              lr = requests.post(f"{auth_base}/auth/login",
+                                 json={"phone": phone, "password": pwd},
+                                 headers=base_headers, timeout=30)
+              lr.raise_for_status()
+              lb = lr.json()
+              token = lb.get("token") or (lb.get("data") or {}).get("token")
+              if not token:
+                  print("Gadatene: no token in login response")
+                  return []
+              auth = {"Authorization": f"Bearer {token}",
+                      "Accept": "application/json", "X-Tenant-ID": tenant}
+
+              # 2) Stations (returns a plain list; paginate defensively)
+              raw, url, guard = [], f"{api_base}/app/charging_stations_v3/", 0
+              while url and guard < 50:
+                  guard += 1
+                  r = requests.get(url, headers=auth, timeout=60)
+                  r.raise_for_status()
+                  body = r.json()
+                  if isinstance(body, list):
+                      raw.extend(body); url = None
+                  elif isinstance(body, dict):
+                      raw.extend(body.get("data") or body.get("results") or body.get("stations") or [])
+                      url = (body.get("links") or {}).get("next") or body.get("next")
+                  else:
+                      url = None
+
+              # connector normalization -> app filter chips (same map as Da-Tene)
+              CONN_MAP = {
+                  "ccs": "CCS2", "ccs2": "CCS2", "combo2": "CCS2", "iec62196t2combo": "CCS2",
+                  "ccs1": "CCS1", "combo1": "CCS1",
+                  "chademo": "CHAdeMO",
+                  "type2": "Type 2", "mennekes": "Type 2", "iec62196t2": "Type 2",
+                  "type1": "Type 1", "j1772": "Type 1",
+                  "gbt": "GB/T", "gb_t": "GB/T", "gbtdc": "GB/T", "gbtac": "GB/T",
+                  "nacs": "NACS", "tesla": "NACS",
+              }
+              def norm_conn(t):
+                  if not t: return None
+                  k = str(t).lower().replace(" ", "").replace("-", "").replace("_", "").replace("/", "")
+                  return CONN_MAP.get(k)
+
+              def fmt_amt(v):
+                  try:
+                      f = float(v)
+                  except Exception:
+                      return None
+                  return f"{f:.2f}".rstrip("0").rstrip(".")
+
+              stations = []
+              for loc in raw:
+                  coords = str(loc.get("geo_coordinates") or "")
+                  if "," not in coords:
+                      continue
+                  try:
+                      lat, lng = [float(x) for x in coords.split(",")[:2]]
+                  except Exception:
+                      continue
+
+                  # avail / total count PORTS (connectors) across all chargers.
+                  conns, max_power, avail, total, any_dc, price = set(), 0.0, 0, 0, False, ""
+                  for ch in (loc.get("chargers") or []):
+                      try: max_power = max(max_power, float(ch.get("max_output") or 0))
+                      except: pass
+                      ch_online = str(ch.get("status", "")).lower() == "online"
+                      cs = ch.get("connectors") or []
+                      total += len(cs)
+                      for c in cs:
+                          ctype = str(c.get("type") or "")          # e.g. "CCS2 • DC"
+                          ct = norm_conn(ctype.split("•")[0].strip())
+                          if ct: conns.add(ct)
+                          if "DC" in ctype.upper(): any_dc = True
+                          st = str(c.get("status", "")).lower()
+                          av = str(c.get("availability", "")).lower()
+                          if ch_online and (st == "available" or av == "operative"):
+                              avail += 1
+                          if not price:
+                              a = fmt_amt(c.get("price"))
+                              if a:
+                                  cur = c.get("currency") or "₾"
+                                  price = f"{a} {cur}/kWh"
+
+                  kw = round(max_power)
+                  name = loc.get("label") or loc.get("address_line_1") or "Gadatene"
+                  city = loc.get("city") or loc.get("state") or ""
+                  stations.append({
+                      "id": f"gadatene_{loc.get('id')}",
+                      "name": name,
+                      "lat": lat,
+                      "lng": lng,
+                      "power": (f"{int(kw)} kW" if kw else "—"),
+                      "type": "Fast DC" if any_dc else "AC",
+                      "price": price,
+                      "available_spots": f"{avail} available",
+                      "total_spots": total,
+                      "city": city,
+                      "provider": "Gadatene",
+                      "connectors": sorted(conns),
+                      "last_updated": "Just now",
+                  })
+              print(f"Gadatene: {len(stations)} stations")
+              return stations
+
           # ── EcoCars (ChargerSystem platform — AWS Cognito SRP auth) ─────────
           # Global station list at /stations/cache (Bearer only). EcoCars is the
           # vendorId b534372b...; we filter to that vendor and to GE/AM/TR coords.
@@ -435,6 +558,7 @@ jobs:
                             (fetch_electrify, "Electrify Georgia"),
                             (fetch_evpower, "EV Power GE"),
                             (fetch_datene, "Da-Tene"),
+                            (fetch_gadatene, "Gadatene"),
                             (fetch_ecocars, "EcoCars")]:
               fresh = []
               try:

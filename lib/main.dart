@@ -41,7 +41,7 @@ const _tbilisi = LatLng(41.7151, 44.8271);
 // Local Georgian providers + a single "International" group for all Open Charge
 // Map networks (so international chargers never clutter the local provider list).
 const _kAllProviders = [
-  'E-Space', 'mart EV', 'Electrify Georgia', 'EV Power GE', 'Da-Tene', 'EcoCars',
+  'E-Space', 'mart EV', 'Electrify Georgia', 'EV Power GE', 'Da-Tene', 'Gadatene', 'EcoCars',
   OcmService.kProvider, // 'International'
 ];
 
