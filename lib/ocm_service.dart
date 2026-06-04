@@ -7,33 +7,52 @@ import 'app_constants.dart';
 import 'routing_service.dart';
 
 /// Live Open Charge Map (OCM) data source. Fetches international charging
-/// stations for a set of ISO country codes and maps them onto our shared
-/// [Station] schema. All OCM networks are grouped under a single "International"
-/// provider so they never clutter the local Georgian provider filters.
+/// stations for the user's selected ISO country codes and maps them onto our
+/// shared [Station] schema. All OCM networks are grouped under a single
+/// "International" provider so they never clutter the local Georgian provider
+/// filters.
 class OcmService {
   static const _key = 'a374a367-c145-4ac1-82d5-91fb9ce52b36';
   static const kProvider = 'International';
 
-  // Viewport (bounding-box) fetch: only loads stations currently on screen, so
-  // big countries (France ≈ 16k, Germany ≈ similar) never overload the app.
-  // Caller filters the result to the selected countries. maxresults caps a
-  // single dense viewport; clustering renders the rest as you pan/zoom.
-  static Future<List<Station>> fetchInBounds(
-    double swLat, double swLng, double neLat, double neLng) async {
+  // Session cache: ISO alpha-2 country code -> mapped stations. Populated on the
+  // first fetch for a country and reused for the rest of the session, so
+  // toggling the International chip or panning the map never refetches. OCM
+  // covers 100+ countries, so we fetch per country live (on demand) rather than
+  // bundling every country into the app.
+  static final Map<String, List<Station>> _cache = {};
+
+  /// Fetch every OCM charge point for one ISO 3166-1 alpha-2 [countryCode]
+  /// (e.g. "AT" for Austria), mapped onto our shared [Station] schema and
+  /// grouped under the single "International" provider. Cached in memory for the
+  /// session; returns the cached list immediately on subsequent calls.
+  static Future<List<Station>> fetchByCountry(String countryCode) async {
+    final code = countryCode.toUpperCase();
+    final hit  = _cache[code];
+    if (hit != null) { return hit; }
+
     final uri = Uri.parse('https://api.openchargemap.io/v3/poi/').replace(
       queryParameters: <String, String>{
-        'output':      'json',
-        'boundingbox': '($neLat,$neLng),($swLat,$swLng)',
-        'maxresults':  '1000',
         'key':         _key,
+        'countrycode': code,
+        'maxresults':  '500',
+        'compact':     'true',
+        'verbose':     'false',
+        'output':      'json',
       },
     );
     try {
       final res = await http.get(uri).timeout(const Duration(seconds: 45));
       if (res.statusCode != 200) { return const []; }
-      // Decode + map on a background isolate so large payloads never jank the UI.
-      final maps = await compute(_parseOcm, res.body);
-      return maps.map(Station.fromJson).toList();
+      // Decode + map on a background isolate so large payloads never jank the
+      // UI. We already know the country (we fetched by code), so we pass its
+      // display name in — each station is tagged correctly even though
+      // verbose=false strips the expanded Country object from the payload.
+      final name = countryNameForCode(code) ?? '';
+      final maps = await compute(_parseOcm, <String>[res.body, name]);
+      final list = maps.map(Station.fromJson).toList();
+      _cache[code] = list;
+      return list;
     } catch (_) {
       return const [];
     }
@@ -43,7 +62,11 @@ class OcmService {
 // ── Isolate-safe parsing (top-level function) ─────────────────────────────────
 // Decodes the OCM POI array and maps each entry into our production station
 // schema (returned as plain maps so they cross the isolate boundary cheaply).
-List<Map<String, dynamic>> _parseOcm(String body) {
+// [args] is [body, countryName]: the raw JSON plus the known country display
+// name (we fetch one country at a time, so it's resolved on the caller side).
+List<Map<String, dynamic>> _parseOcm(List<String> args) {
+  final body        = args[0];
+  final countryName = args[1];
   final decoded = jsonDecode(body);
   if (decoded is! List) { return const []; }
 
@@ -70,19 +93,28 @@ List<Map<String, dynamic>> _parseOcm(String body) {
         if (norm != null) { conns.add(norm); }
         final kw = (c['PowerKW'] as num?)?.toDouble() ?? 0;
         if (kw > maxKw) { maxKw = kw; }
+        // DC detection: CurrentTypeID 30 == DC (10=AC1, 20=AC3, 30=DC). With
+        // verbose=false the expanded CurrentType object is usually absent, so we
+        // key off the numeric ID, falling back to the title (when present) and a
+        // power heuristic so obvious fast chargers are still flagged.
+        final curId    = (c['CurrentTypeID'] as num?)?.toInt();
         final cur      = c['CurrentType'];
         final curTitle = ((cur is Map ? cur['Title'] : null) as String? ?? '').toUpperCase();
-        if (curTitle.contains('DC') || kw >= 43) { anyDc = true; }
+        if (curId == 30 || curTitle.contains('DC') || kw >= 43) { anyDc = true; }
         final qty = (c['Quantity'] as num?)?.toInt() ?? 0;
         points += qty;
       }
     }
     final kw = maxKw >= 1000 ? (maxKw / 1000).round() : maxKw.round();
 
-    final country     = ai['Country'];
-    final iso         = (country is Map ? country['ISOCode'] : null) as String?;
-    final countryName = countryNameForCode(iso) ??
-        ((country is Map ? country['Title'] : null) as String? ?? '');
+    // Country: prefer the known name from the fetch (robust under verbose=false);
+    // fall back to whatever the payload carries if it wasn't supplied.
+    final country  = p['Country'] ?? ai['Country'];
+    final iso      = (country is Map ? country['ISOCode'] : null) as String?;
+    final resolved = countryName.isNotEmpty
+        ? countryName
+        : (countryNameForCode(iso) ??
+            ((country is Map ? country['Title'] : null) as String? ?? ''));
 
     final nPoints = (p['NumberOfPoints'] as num?)?.toInt();
     final avail   = nPoints ?? (points > 0 ? points
@@ -106,7 +138,7 @@ List<Map<String, dynamic>> _parseOcm(String body) {
       'total_spots':     avail, // OCM exposes total points, not live free count
       'city':            town,
       'provider':        OcmService.kProvider,
-      'country':         countryName,
+      'country':         resolved,
       'connectors':      sortConnectors(conns),
       'last_updated':    'Just now',
     });

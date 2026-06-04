@@ -130,19 +130,14 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   Set<String> _activeCountries = {'Georgia'};
   bool get _countryFilterActive => _activeCountries.length != kCountries.length;
 
-  // International stations loaded live from OCM for the CURRENT VIEWPORT, a
-  // loading flag, and a debounce timer so we only refetch when panning settles.
+  // International stations loaded live from OCM for the user's SELECTED
+  // countries (fetched by ISO code, cached per-country for the session). A
+  // loading flag drives the "Loading international stations…" pill.
   List<Station> _ocmStations = const [];
   bool          _ocmLoading  = false;
-  Timer?        _ocmDebounce;
   StreamSubscription<MapEvent>? _mapEventSub;
-  int           _ocmGen = 0;   // guards against stale viewport responses
+  int           _ocmGen = 0;   // guards against stale / superseded responses
   bool          _centerInGeorgia = true; // carousel only shows over Georgia
-
-  // Country names we already cover with local provider data — OCM rows for
-  // these are dropped so international pins never duplicate the local network.
-  static final Set<String> _localCoveredNames =
-      kCountries.where((c) => c.localCovered).map((c) => c.name).toSet();
 
   @override
   void initState() {
@@ -187,13 +182,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           ? {'Georgia'}
           : (jsonDecode(raw) as List).map((e) => e as String).toSet();
     });
-    _loadOcmViewport();
-  }
-
-  // Debounce viewport OCM fetches so we only refetch when panning/zooming stops.
-  void _scheduleOcmViewport() {
-    _ocmDebounce?.cancel();
-    _ocmDebounce = Timer(const Duration(milliseconds: 600), _loadOcmViewport);
+    _loadOcmCountries();
   }
 
   // Track whether the map is centred on Georgia — the local station carousel is
@@ -206,32 +195,38 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     }
   }
 
-  // Fetch the OCM stations within the CURRENT viewport (bbox) — whatever country
-  // the user has panned to (Turkey, Greece, France, …). Active only while the
-  // "International" chip is on; otherwise no fetch (no overhead). Drops rows for
-  // locally-covered countries so international pins never duplicate the local
-  // network. Always clears the loading flag, and a generation guard discards
-  // stale responses so the indicator can never get stuck on.
-  Future<void> _loadOcmViewport() async {
+  // Load live OCM international stations for every SELECTED country (Settings)
+  // that we don't already cover with local provider data. Each country is
+  // fetched once by ISO code and cached for the session, so toggling providers
+  // or panning the map never refetches. Active only while the "International"
+  // provider chip is on; otherwise OCM pins are cleared. A generation guard
+  // discards superseded responses so the loading pill can never stick on.
+  Future<void> _loadOcmCountries() async {
     if (!_internationalOn) {
       if (mounted && (_ocmStations.isNotEmpty || _ocmLoading)) {
         setState(() { _ocmStations = const []; _ocmLoading = false; });
       }
       return;
     }
-    final cam = _mapCtrl.camera;
-    if (cam.zoom < 5) {                       // too zoomed out — skip, clear flag
-      if (mounted && _ocmLoading) { setState(() => _ocmLoading = false); }
+    // ISO codes of the selected countries we load from OCM. Locally-covered
+    // countries (Georgia, Armenia) ship richer provider data, so they're skipped
+    // here and never duplicated by international pins.
+    final codes = kCountries
+        .where((c) => _activeCountries.contains(c.name) && !c.localCovered)
+        .map((c) => c.code)
+        .toList();
+    if (codes.isEmpty) {                      // no international country selected
+      if (mounted && (_ocmStations.isNotEmpty || _ocmLoading)) {
+        setState(() { _ocmStations = const []; _ocmLoading = false; });
+      }
       return;
     }
     final gen = ++_ocmGen;
-    final b   = cam.visibleBounds;
     if (mounted) { setState(() => _ocmLoading = true); }
-    final list = await OcmService.fetchInBounds(b.south, b.west, b.north, b.east);
-    if (!mounted || gen != _ocmGen) { return; } // superseded by a newer fetch
+    final results = await Future.wait(codes.map(OcmService.fetchByCountry));
+    if (!mounted || gen != _ocmGen) { return; } // superseded by a newer load
     setState(() {
-      _ocmStations =
-          list.where((s) => !_localCoveredNames.contains(s.country)).toList();
+      _ocmStations = [for (final list in results) ...list];
       _ocmLoading  = false;
     });
   }
@@ -321,7 +316,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     _searchCtrl.dispose();
     _searchFocus.dispose();
     _debounce?.cancel();
-    _ocmDebounce?.cancel();
     _mapEventSub?.cancel();
     super.dispose();
   }
@@ -374,8 +368,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               }
             });
             setSheet(() {});
-            // Toggling "International" turns OCM viewport loading on/off.
-            if (p == OcmService.kProvider) { _loadOcmViewport(); }
+            // Toggling "International" loads/clears the OCM stations for the
+            // user's selected countries.
+            if (p == OcmService.kProvider) { _loadOcmCountries(); }
           },
         ),
       ),
@@ -483,9 +478,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     // filtered only by the chip filters below and stay visible at all times.
     return _allStations.where((s) {
       // Country filter applies ONLY to local stations (classified by
-      // coordinates). OCM/International stations are gated by the International
-      // provider chip + the viewport instead, so panning to any country shows
-      // its pins without needing a Settings tweak.
+      // coordinates). OCM/International stations are already fetched per the
+      // user's selected countries (and gated by the International provider chip),
+      // so they carry a non-empty country and skip this coordinate check.
       if (s.country.isEmpty) {
         final country = countryOf(s.lat, s.lng);
         if (country != null && !_activeCountries.contains(country)) { return false; }
@@ -544,16 +539,16 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               ),
               // onMapReady fires once the controller is attached — the only
               // safe moment to call _mapCtrl.move() on startup. Also subscribes
-              // to map movements (debounced) to refetch the viewport's OCM data,
-              // and kicks off the first load. The event stream only emits on
-              // real camera changes (never on widget rebuilds), so it can't loop.
+              // to map movements to track whether we're centred on Georgia (for
+              // the local carousel), and kicks off the initial OCM load. The
+              // event stream only emits on real camera changes (never on widget
+              // rebuilds), so it can't loop.
               onMapReady: () {
                 _mapEventSub ??= _mapCtrl.mapEventStream.listen((_) {
-                  _scheduleOcmViewport();
                   _updateCenterInGeorgia();
                 });
                 _initLocation();
-                _loadOcmViewport();
+                _loadOcmCountries();
               },
             ),
             children: [
