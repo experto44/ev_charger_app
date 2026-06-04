@@ -541,6 +541,96 @@ jobs:
               print(f"EcoCars: {len(stations)} stations")
               return stations
 
+          # ── Charger Plus (Sitronics Electro platform) ──────────────────────
+          # The Charger Plus Flutter app reads its API base from a list of
+          # "stages" (Production = ezs, Test = p4dev); prod is ezs.sitronics.com.
+          # The public map dataset at /api/bff/v1/MapData/compressed needs ONLY
+          # the app's embedded MobileAppId header — a public client id baked into
+          # the APK (like PlugsHub's X-Tenant-ID or EcoCars' Cognito client_id),
+          # not a user login/SMS token. The endpoint returns plain JSON
+          # {Data:[...]} (despite the "compressed" name).
+          #
+          # Sitronics is multi-country (Russia, Belarus, Armenia, …) so STEP C
+          # keeps only GE/AM/TR by coordinate box, AND additionally drops the
+          # Vladikavkaz cluster — it is Russian (North Ossetia) but leaks through
+          # the Georgia box's NE corner and cannot be excluded by coordinates
+          # without cutting real Georgian territory. The map endpoint exposes no
+          # per-kWh tariff, so price is left blank.
+          def fetch_cplus():
+              MOBILE_APP_ID = "44444444-4f16-4838-afca-e6357128a912"
+              url = "https://ezs.sitronics.com/api/bff/v1/MapData/compressed"
+              hdr = {"MobileAppId": MOBILE_APP_ID, "Accept": "application/json",
+                     "Accept-Language": "ka",
+                     "User-Agent": "ChargerPlus/2.0.1 (Android 13; Flutter)"}
+              r = requests.get(url, headers=hdr, timeout=90)
+              r.raise_for_status()
+              rows = (r.json() or {}).get("Data") or []
+
+              # GE/AM/TR coordinate boxes (drop everything else, esp. Russia).
+              BOXES = [("Georgia",41.0,43.6,40.0,46.7),
+                       ("Armenia",38.8,41.3,43.4,46.6),
+                       ("Turkey", 35.8,42.1,26.0,44.8)]
+              def in_region(lat, lng):
+                  return any(a<=lat<=b and c<=lng<=d for _,a,b,c,d in BOXES)
+              # Russian cities inside the Georgia box's NE corner -> exclude.
+              RU_CITIES = {"владикавказ"}
+
+              # Sitronics connector strings (UPPERCASE) -> app filter chips.
+              CONN_MAP = {
+                  "ccs1": "CCS1", "ccs2": "CCS2", "chademo": "CHAdeMO",
+                  "gbtdc": "GB/T", "gbtac": "GB/T", "gbt": "GB/T",
+                  "type1": "Type 1", "type2": "Type 2", "tesla": "NACS",
+                  # "schuko" -> skipped (domestic socket, not a filter chip)
+              }
+              def norm_conn(t):
+                  if not t: return None
+                  k = str(t).lower().replace(" ", "").replace("-", "").replace("_", "").replace("/", "")
+                  return CONN_MAP.get(k)
+              DC_RAW = {"ccs1","ccs2","chademo","gbtdc"}
+              ORDER = ["CCS2","GB/T","CHAdeMO","Type 2","NACS","CCS1","Type 1"]
+              def sort_conns(cs):
+                  return sorted(cs, key=lambda c:(ORDER.index(c) if c in ORDER else len(ORDER), c))
+
+              stations = []
+              for s in rows:
+                  lat = s.get("Latitude"); lng = s.get("Longitude")
+                  if lat is None or lng is None or not in_region(lat, lng):
+                      continue
+                  if str(s.get("City", "")).strip().lower() in RU_CITIES:
+                      continue
+                  # avail / total count PORTS (connectors) at the station.
+                  conns, avail, total, any_dc = set(), 0, 0, False
+                  for c in (s.get("Connectors") or []):
+                      total += 1
+                      raw = str(c.get("Type") or "").lower().replace(" ","").replace("-","").replace("_","").replace("/","")
+                      nm = norm_conn(c.get("Type"))
+                      if nm: conns.add(nm)
+                      if raw in DC_RAW: any_dc = True
+                      if str(c.get("StatusForUser", "")).upper() == "AVAILABLE":
+                          avail += 1
+                  if str(s.get("SpeedType", "")).upper() == "HIGH_SPEED_DC":
+                      any_dc = True
+                  try: kw = round(float(s.get("MaxPower") or 0))
+                  except: kw = 0
+                  name = s.get("Address") or s.get("Name") or "Charger Plus"
+                  stations.append({
+                      "id": f"cplus_{s.get('ChargePointId')}",
+                      "name": name,
+                      "lat": lat,
+                      "lng": lng,
+                      "power": (f"{int(kw)} kW" if kw else "—"),
+                      "type": "Fast DC" if any_dc else "AC",
+                      "price": "",
+                      "available_spots": f"{avail} available",
+                      "total_spots": total,
+                      "city": s.get("City") or "",
+                      "provider": "Charger Plus",
+                      "connectors": sort_conns(conns),
+                      "last_updated": "Just now",
+                  })
+              print(f"Charger Plus: {len(stations)} stations")
+              return stations
+
           # ── Load station data from the committed asset file ────────────────
           # The bundled asset ships with snapshots of the live AMPECO providers
           # for offline use, so for each live provider we drop its bundled rows
@@ -559,7 +649,8 @@ jobs:
                             (fetch_evpower, "EV Power GE"),
                             (fetch_datene, "Da-Tene"),
                             (fetch_gadatene, "Gadatene"),
-                            (fetch_ecocars, "EcoCars")]:
+                            (fetch_ecocars, "EcoCars"),
+                            (fetch_cplus, "Charger Plus")]:
               fresh = []
               try:
                   fresh = fn()
