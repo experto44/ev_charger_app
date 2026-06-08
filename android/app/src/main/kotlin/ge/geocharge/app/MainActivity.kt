@@ -1,4 +1,4 @@
-package com.example.ev_charger_app
+package ge.geocharge.app
 
 import io.flutter.embedding.android.FlutterActivity
 

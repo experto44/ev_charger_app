@@ -559,7 +559,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 key: ValueKey(_darkMap),
                 urlTemplate: _darkMap ? _kTileDark : _kTileLight,
                 subdomains: const ['a', 'b', 'c', 'd'],
-                userAgentPackageName: 'com.example.ev_charger_app',
+                userAgentPackageName: 'ge.geocharge.app',
                 retinaMode: RetinaMode.isHighDensity(context),
                 maxNativeZoom: 20,
                 keepBuffer: 0,
