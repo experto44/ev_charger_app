@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -637,14 +638,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                     height: 40,
                     child:  GestureDetector(
                       onTap: () => _showStationSheet(s),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: s.available > 0 ? _emerald : Colors.orangeAccent,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withOpacity(0.25), width: 2),
-                          boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 6)],
-                        ),
-                        child: const Icon(Icons.bolt, color: Colors.black, size: 20),
+                      child: _AvailabilityPin(
+                        available: s.available,
+                        total:     s.total,
                       ),
                     ),
                   )).toList(),
@@ -1357,7 +1353,11 @@ class _StationCard extends StatelessWidget {
                 decoration: BoxDecoration(color: _statusColor, shape: BoxShape.circle)),
             const SizedBox(width: 6),
             Text(
-              avail ? '${s.available} available' : 'Unavailable',
+              avail
+                  ? (s.total > s.available
+                      ? '${s.available} of ${s.total} available'
+                      : '${s.available} available')
+                  : 'Unavailable',
               style: TextStyle(color: _statusColor, fontSize: 11, fontWeight: FontWeight.w600),
             ),
           ]),
@@ -1454,6 +1454,82 @@ class _StationCard extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Availability pin ──────────────────────────────────────────────────────────
+// Map marker whose circle is split proportionally: a green slice sized to the
+// free fraction (available / total) with the rest in orange. So a location with
+// 1 of 2 plugs free shows half green / half orange; 1 of 4 shows a quarter
+// green. Falls back to all-green (any free) or all-orange (none free) when a
+// total isn't known. The bolt icon and white ring match the old pin styling.
+class _AvailabilityPin extends StatelessWidget {
+  const _AvailabilityPin({required this.available, required this.total});
+  final int available;
+  final int total;
+
+  @override
+  Widget build(BuildContext context) {
+    // Fraction of plugs free. With no usable total, treat "any available" as
+    // fully free so the pin still reads green rather than a misleading split.
+    final double freeFraction = total > 0
+        ? (available / total).clamp(0.0, 1.0)
+        : (available > 0 ? 1.0 : 0.0);
+    return Container(
+      width: 40, height: 40,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 6)],
+      ),
+      child: CustomPaint(
+        painter: _AvailabilityPainter(freeFraction),
+        child: const Center(child: Icon(Icons.bolt, color: Colors.black, size: 20)),
+      ),
+    );
+  }
+}
+
+class _AvailabilityPainter extends CustomPainter {
+  const _AvailabilityPainter(this.freeFraction);
+  final double freeFraction; // 0..1 portion of the circle drawn green
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = size.width / 2;
+    final green  = Paint()..color = _emerald..style = PaintingStyle.fill;
+    final orange = Paint()..color = Colors.orangeAccent..style = PaintingStyle.fill;
+
+    if (freeFraction >= 1.0) {
+      canvas.drawCircle(center, radius, green);
+    } else if (freeFraction <= 0.0) {
+      canvas.drawCircle(center, radius, orange);
+    } else {
+      // Orange base, then a green sector swept from the top (12 o'clock)
+      // clockwise, proportional to the free fraction.
+      canvas.drawCircle(center, radius, orange);
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        -math.pi / 2,                 // start at top
+        freeFraction * 2 * math.pi,   // sweep = free fraction
+        true,                         // wedge (include centre)
+        green,
+      );
+    }
+
+    // White ring to match the previous marker border.
+    canvas.drawCircle(
+      center,
+      radius - 1,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.25)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_AvailabilityPainter old) =>
+      old.freeFraction != freeFraction;
 }
 
 // ── Zoom +/- button ───────────────────────────────────────────────────────────
