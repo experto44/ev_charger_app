@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'app_constants.dart';
 import 'services/auth_service.dart';
@@ -322,6 +323,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(_phoneError,
                     style: const TextStyle(color: _errorRed, fontSize: 12)),
               ],
+              const SizedBox(height: 8),
+              // Privacy notice
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const Text(
+                    'By saving your number you agree to receive service updates from GeoCharge. ',
+                    style: TextStyle(color: _textSec, fontSize: 12),
+                  ),
+                  GestureDetector(
+                    onTap: () => launchUrl(
+                      Uri.parse('https://experto44.github.io/ev_charger_app/privacy-policy.html'),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                    child: const Text(
+                      'Privacy Policy',
+                      style: TextStyle(
+                        color: _emerald,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                        decorationColor: _emerald,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 12),
               GestureDetector(
                 onTap: (_phoneSaving || _phoneSaved || _phoneLoading)
