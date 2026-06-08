@@ -62,7 +62,8 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() { _loading = true; _error = ''; });
     try {
       await AuthService.signInWithEmail(_emailCtrl.text, _passCtrl.text);
-      // Navigation handled by the authStateChanges listener in initState.
+      // Stop the spinner before the authStateChanges listener pops the screen.
+      if (mounted) { setState(() => _loading = false); }
     } on FirebaseAuthException catch (e) {
       _setError(_authMessage(e.code));
     } catch (_) {
@@ -73,10 +74,10 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _googleSignIn() async {
     setState(() { _loading = true; _error = ''; });
     try {
-      final cred = await AuthService.signInWithGoogle();
-      // User cancelled the picker — reset the spinner.
-      if (cred == null && mounted) { setState(() => _loading = false); }
-      // On success, authStateChanges listener pops the screen.
+      await AuthService.signInWithGoogle();
+      // Stop the spinner whether the user cancelled or signed in successfully —
+      // on success the authStateChanges listener pops the screen.
+      if (mounted) { setState(() => _loading = false); }
     } on FirebaseAuthException catch (e) {
       _setError(_authMessage(e.code));
     } catch (_) {

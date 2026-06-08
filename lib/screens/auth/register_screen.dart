@@ -48,6 +48,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       await AuthService.registerWithEmail(_emailCtrl.text, _passCtrl.text);
       if (!mounted) { return; }
+      // Stop the spinner before navigating to the verify-email screen.
+      setState(() => _loading = false);
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const VerifyEmailScreen()),

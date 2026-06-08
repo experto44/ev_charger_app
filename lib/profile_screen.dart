@@ -124,11 +124,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     debugPrint('[ProfileScreen] _savePhone saving "+995$digits" for ${_user?.uid}');
     setState(() { _phoneSaving = true; _phoneSaved = false; _phoneError = ''; });
+    var success = false;
     try {
-      await AuthService.savePhoneNumber(digits);
+      // Timeout guards against a Firestore write that never acks (e.g. offline),
+      // which would otherwise leave the spinner running forever.
+      await AuthService.savePhoneNumber(digits)
+          .timeout(const Duration(seconds: 15));
+      success = true;
       debugPrint('[ProfileScreen] _savePhone success');
-      if (!mounted) { return; }
-      setState(() { _phoneSaving = false; _phoneSaved = true; });
+    } catch (e) {
+      debugPrint('[ProfileScreen] _savePhone ERROR: $e');
+    } finally {
+      // Always stop the spinner, whatever happened above.
+      if (mounted) { setState(() => _phoneSaving = false); }
+    }
+    if (!mounted) { return; }
+    if (success) {
+      setState(() => _phoneSaved = true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Phone number saved!'),
@@ -138,10 +150,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       await Future.delayed(const Duration(seconds: 2));
       if (mounted) { setState(() => _phoneSaved = false); }
-    } catch (e) {
-      debugPrint('[ProfileScreen] _savePhone ERROR: $e');
-      if (!mounted) { return; }
-      setState(() { _phoneSaving = false; _phoneError = ''; });
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error saving phone number'),
