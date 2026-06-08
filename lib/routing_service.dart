@@ -20,6 +20,7 @@ class Station {
     required this.isDC,
     required this.kw,
     required this.price,
+    this.id          = '',
     this.total       = 0,
     this.distance    = '',
     this.provider    = '',
@@ -48,6 +49,7 @@ class Station {
           : (isDC ? const ['CCS2', 'CHAdeMO'] : const ['Type 2']);
       final available = int.tryParse(spots.split(' ').first) ?? 0;
       return Station(
+        id:          j['id']           as String? ?? '',
         name:        j['name']         as String,
         location:    j['city']         as String,
         available:   available,
@@ -67,6 +69,7 @@ class Station {
     }
     // Legacy schema
     return Station(
+      id:          j['id']           as String? ?? '',
       name:        j['name']         as String,
       location:    j['location']     as String,
       available:   j['available']    as int,
@@ -80,6 +83,7 @@ class Station {
     );
   }
 
+  final String id;             // stable unique id, e.g. "martev_98" ('' if absent)
   final String name, location, price;
   final String distance;       // empty for production-schema entries
   final String provider;

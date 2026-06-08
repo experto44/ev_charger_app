@@ -146,12 +146,22 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   int           _ocmGen = 0;   // guards against stale / superseded responses
   bool          _centerInGeorgia = true; // carousel only shows over Georgia
 
+  // Periodic background refresh of the station feed. The Gist itself is updated
+  // server-side, so the app must re-poll to surface new availability while it
+  // stays open — otherwise data is frozen at whatever was fetched on launch.
+  Timer? _refreshTimer;
+  static const _kRefreshInterval = Duration(minutes: 3);
+
   @override
   void initState() {
     super.initState();
     _loadPrefs();
     // Station data can load independently of the map controller.
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadStations());
+    // Re-poll the live feed every few minutes so availability stays current
+    // without requiring an app restart. Uses the non-clobbering refresh so a
+    // transient network failure never wipes the stations already on screen.
+    _refreshTimer = Timer.periodic(_kRefreshInterval, (_) => _refreshStations());
     // _initLocation() is called from MapOptions.onMapReady, which fires only
     // after FlutterMap has mounted and the MapController is fully attached.
   }
@@ -242,25 +252,25 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       .map((e) => Station.fromJson(e as Map<String, dynamic>))
       .toList();
 
-  Future<void> _loadStations() async {
-    // Capture the asset bundle NOW (synchronously, before any await gap)
-    // so we don't access BuildContext after an async suspension.
-    final bundle = DefaultAssetBundle.of(context);
-
-    // ── Bundled asset ─────────────────────────────────────────────────────────
-    // Always loaded (instant, offline). Doubles as a supplement for the live
-    // feed: any provider bundled with the app but not yet published to the Gist
-    // (e.g. a newly added network the cron hasn't refreshed) is added in, so the
-    // app never hides a provider it ships with. Self-heals once the Gist catches
-    // up (the provider then appears in the live feed and the supplement is empty).
-    List<Station> assetStations = const [];
+  // Load the bundled asset (instant, offline). Doubles as a supplement for the
+  // live feed: any provider bundled with the app but not yet published to the
+  // Gist is added in, so the app never hides a provider it ships with.
+  Future<List<Station>> _loadBundled() async {
     try {
-      assetStations = _parseStations(await bundle.loadString('assets/data/chargers.json'));
+      // Capture the bundle synchronously (before the await) so we never touch
+      // BuildContext after an async suspension.
+      final bundle = DefaultAssetBundle.of(context);
+      return _parseStations(await bundle.loadString('assets/data/chargers.json'));
     } catch (_) {
-      // No bundled asset — supplement simply stays empty.
+      return const [];
     }
+  }
 
-    // ── Live cloud data (Gist) ────────────────────────────────────────────────
+  // Fetch the live Gist and merge in any bundled-only providers as a supplement.
+  // Returns null on any network/parse failure so callers can decide whether to
+  // fall back (initial load) or keep existing data (background refresh).
+  Future<List<Station>?> _fetchLiveStations() async {
+    final assetStations = await _loadBundled();
     try {
       final res = await http
           .get(Uri.parse(_kGistUrl))
@@ -271,17 +281,53 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         final supplement = assetStations
             .where((s) => !liveProviders.contains(s.provider))
             .toList();
-        if (!mounted) { return; }
-        setState(() { _stations = [...live, ...supplement]; _loading = false; });
-        return; // success
+        return [...live, ...supplement];
       }
     } catch (_) {
-      // Network unavailable, timeout, or parse error — fall through to offline.
+      // Network unavailable, timeout, or parse error.
     }
+    return null;
+  }
 
-    // ── Offline fallback: bundled asset only ──────────────────────────────────
+  // Initial load: show live data, or fall back to the bundled asset offline.
+  Future<void> _loadStations() async {
+    final fresh = await _fetchLiveStations();
     if (!mounted) { return; }
-    setState(() { _stations = assetStations; _loading = false; });
+    if (fresh != null) {
+      setState(() { _stations = fresh; _loading = false; });
+    } else {
+      // Offline / first launch with no network — bundled snapshot only.
+      final bundled = await _loadBundled();
+      if (!mounted) { return; }
+      setState(() { _stations = bundled; _loading = false; });
+    }
+  }
+
+  // Background / on-demand refresh. Re-fetches live data and swaps it in.
+  // Crucially, on failure it KEEPS the existing data (never clobbers good live
+  // stations with a stale bundled snapshot on a transient blip). Returns the
+  // fresh list on success, or null if the fetch failed.
+  Future<List<Station>?> _refreshStations() async {
+    final fresh = await _fetchLiveStations();
+    if (fresh == null || !mounted) { return null; }
+    setState(() => _stations = fresh);
+    return fresh;
+  }
+
+  // Re-fetch and return the latest data for a single station (matched by stable
+  // id, falling back to coordinates for any legacy row without an id). Powers
+  // the station sheet's manual Refresh button. Returns null if the refresh
+  // failed or the station is no longer present in the feed.
+  Future<Station?> _refreshStation(Station target) async {
+    final fresh = await _refreshStations();
+    if (fresh == null) { return null; }
+    for (final s in fresh) {
+      final sameId = target.id.isNotEmpty && s.id == target.id;
+      final sameCoords = target.id.isEmpty &&
+          s.lat == target.lat && s.lng == target.lng;
+      if (sameId || sameCoords) { return s; }
+    }
+    return null;
   }
 
   Future<void> _initLocation() async {
@@ -324,6 +370,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     _searchFocus.dispose();
     _debounce?.cancel();
     _mapEventSub?.cancel();
+    _refreshTimer?.cancel();
     super.dispose();
   }
 
@@ -393,6 +440,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       builder: (_) => _StationSheet(
         station: s,
         onGetDirections: () => _openRoutePlannerTo(s),
+        onRefresh: _refreshStation,
       ),
     );
   }
@@ -1485,29 +1533,50 @@ class _MapCtrlButton extends StatelessWidget {
 
 // ── Station popup bottom sheet ────────────────────────────────────────────────
 class _StationSheet extends StatefulWidget {
-  const _StationSheet({required this.station, required this.onGetDirections});
+  const _StationSheet({
+    required this.station,
+    required this.onGetDirections,
+    required this.onRefresh,
+  });
   final Station      station;
   final VoidCallback onGetDirections;
+  // Re-fetches live data for this station; returns the updated row or null on
+  // failure / removal. Supplied by _MapScreenState so the button hits the feed.
+  final Future<Station?> Function(Station) onRefresh;
 
   @override
   State<_StationSheet> createState() => _StationSheetState();
 }
 
 class _StationSheetState extends State<_StationSheet> {
-  bool _refreshing = false;
+  late Station _station = widget.station; // mutable copy, swapped in on refresh
+  bool _refreshing   = false;
   bool _justRefreshed = false;
+  bool _refreshFailed = false;
 
   Future<void> _refresh() async {
-    setState(() { _refreshing = true; _justRefreshed = false; });
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) {
-      setState(() { _refreshing = false; _justRefreshed = true; });
-    }
+    if (_refreshing) { return; }
+    setState(() {
+      _refreshing    = true;
+      _justRefreshed = false;
+      _refreshFailed = false;
+    });
+    final updated = await widget.onRefresh(_station);
+    if (!mounted) { return; }
+    setState(() {
+      _refreshing = false;
+      if (updated != null) {
+        _station       = updated; // live availability/price/etc. now reflected
+        _justRefreshed = true;
+      } else {
+        _refreshFailed = true;    // network failed or station no longer listed
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final s = widget.station;
+    final s = _station;
     final avail = s.available > 0;
     final statusColor = avail ? _emerald : Colors.orangeAccent;
 
@@ -1618,11 +1687,18 @@ class _StationSheetState extends State<_StationSheet> {
                       child: CircularProgressIndicator(strokeWidth: 2, color: _textSec),
                     )
                   : Icon(Icons.refresh_rounded,
-                      color: _justRefreshed ? _emerald : _textSec, size: 19),
+                      color: _justRefreshed
+                          ? _emerald
+                          : (_refreshFailed ? Colors.orangeAccent : _textSec),
+                      size: 19),
             ),
             if (_justRefreshed) ...[
               const SizedBox(width: 6),
               const Text('Updated', style: TextStyle(color: _emerald, fontSize: 11)),
+            ] else if (_refreshFailed) ...[
+              const SizedBox(width: 6),
+              const Text('Update failed',
+                  style: TextStyle(color: Colors.orangeAccent, fontSize: 11)),
             ],
           ]),
           const SizedBox(height: 22),
