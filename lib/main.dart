@@ -1608,6 +1608,29 @@ class _MapCtrlButton extends StatelessWidget {
   }
 }
 
+// ── "Last verified" formatting ────────────────────────────────────────────────
+// Providers publish their last server check as "YYYY-MM-DD HH:MM UTC". Convert
+// that to Georgia local time (UTC+4, no DST) and render as "08 Jun, 18:10".
+// Any other value (e.g. "Just now") is passed through unchanged.
+String _formatVerified(String raw) {
+  final m = RegExp(
+    r'^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})\s*UTC$',
+    caseSensitive: false,
+  ).firstMatch(raw.trim());
+  if (m == null) { return raw; }
+  final utc = DateTime.utc(
+    int.parse(m[1]!), int.parse(m[2]!), int.parse(m[3]!),
+    int.parse(m[4]!), int.parse(m[5]!),
+  );
+  final local = utc.add(const Duration(hours: 4)); // Georgia = UTC+4
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  final dd = local.day.toString().padLeft(2, '0');
+  final hh = local.hour.toString().padLeft(2, '0');
+  final mm = local.minute.toString().padLeft(2, '0');
+  return '$dd ${months[local.month - 1]}, $hh:$mm';
+}
+
 // ── Station popup bottom sheet ────────────────────────────────────────────────
 class _StationSheet extends StatefulWidget {
   const _StationSheet({
@@ -1729,10 +1752,17 @@ class _StationSheetState extends State<_StationSheet> {
               const Icon(Icons.history_rounded, color: _textSec, size: 13),
               const SizedBox(width: 5),
               Text(
-                'Last verified: ${s.lastUpdated}',
+                'Last verified: ${_formatVerified(s.lastUpdated)}',
                 style: const TextStyle(color: _textSec, fontSize: 11),
               ),
             ]),
+            const Padding(
+              padding: EdgeInsets.only(left: 18, top: 2),
+              child: Text(
+                "Provider's last server check — not real-time",
+                style: TextStyle(color: _textSec, fontSize: 9.5),
+              ),
+            ),
           ],
           const SizedBox(height: 10),
 
