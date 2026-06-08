@@ -1304,7 +1304,7 @@ class _StationCarousel extends StatelessWidget {
       ),
       padding: EdgeInsets.only(top: 32, bottom: 24 + navBarHeight),
       child: SizedBox(
-        height: 254, // taller for stacked Navigate + Plan & Go buttons (+ provider line)
+        height: 264, // taller for stacked Navigate + Plan & Go buttons (+ provider line); +10 to clear a 9px bottom overflow
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1340,6 +1340,7 @@ class _StationCard extends StatelessWidget {
     return Container(
       width: 170,
       padding: const EdgeInsets.all(14),
+      clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
         color: _bgCard,
         borderRadius: BorderRadius.circular(16),
