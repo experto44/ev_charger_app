@@ -143,6 +143,12 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
   }
 
   // ── Find N charging-station waypoints evenly spaced along origin→dest ──────
+  // DEAD CODE: superseded by RoutingService.planRoute, which snaps chargers to
+  // the real Directions road polyline instead of a straight line. Kept only as
+  // an offline fallback for when the Directions API call fails. The old
+  // straight-line approach mis-picked chargers whenever the geodesic line
+  // diverged from the actual highway (e.g. Tbilisi→Batumi cutting across the
+  // Borjomi/Goderdzi mountains instead of following the E60 via Kutaisi).
   // Interpolates N intermediate positions along the straight-line route and
   // picks the nearest *available* station to each position (each station can
   // only be picked once).  Returns them in geographic order (already sorted
@@ -216,15 +222,30 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
   // ── Open complete multi-stop route in native Google Maps ─────────────────
   // Waypoint build order:
   //   1. Manual intermediate stops the user added (RouteStop entries 1..n-2)
-  //   2. EV charging stops derived from _evPreview (nearest available station
-  //      to each evenly-spaced position along the route)
-  // All waypoints are sorted by their linear progress from origin→destination
-  // so Google Maps always receives them in the correct geographic visit order.
+  //   2. EV charging stops from RoutingService.planRoute, which routes through
+  //      Google Directions and snaps chargers to the real road polyline (so a
+  //      Tbilisi→Batumi route picks E60/Kutaisi chargers, not ones along the
+  //      straight geodesic across the Borjomi mountains).
+  // All waypoints are sorted by their progress from origin→destination so
+  // Google Maps always receives them in the correct geographic visit order.
   Future<void> _planRoute() async {
     setState(() => _isPlanning = true);
     try {
       final origin      = _stops.first.coords!;
       final destination = _stops.last.coords!;
+
+      // Every resolved stop in UI order — passed to the routing service so the
+      // Directions request (and therefore the road polyline chargers snap to)
+      // runs through any manual intermediate stops too.
+      final resolvedStops =
+          _stops.map((s) => s.coords).whereType<LatLng>().toList();
+
+      // Ask the routing service for charging stops along the *actual* road.
+      final routeResult = await RoutingService.planRoute(
+        waypoints:         resolvedStops,
+        currentBatteryPct: _batteryPct,
+        stations:          widget.stations,
+      );
 
       String urlStr =
           'https://www.google.com/maps/dir/?api=1'
@@ -247,14 +268,26 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
         }
       }
 
-      // 2. EV charging-station waypoints from the route preview
-      final chargingStops = _chargingStationWaypoints(_evPreview.stopsNeeded);
-      for (final s in chargingStops) {
-        final ll = LatLng(s.lat, s.lng);
-        wps.add((
-          _linearProgress(ll, origin, destination),
-          '${s.lat},${s.lng}',
-        ));
+      // 2. EV charging-station waypoints, snapped to the real road polyline.
+      //    Their progress fraction comes from the true along-route distance, so
+      //    ordering stays correct even where the highway curves away from the
+      //    straight line. Falls back to the old straight-line estimate only if
+      //    the Directions call failed (no network / API error).
+      if (routeResult != null) {
+        final totalKm = routeResult.totalDistanceKm;
+        for (final c in routeResult.chargingStops) {
+          final progress = totalKm > 0
+              ? (c.distanceFromStartKm / totalKm).clamp(0.0, 1.0)
+              : 0.0;
+          wps.add((progress, '${c.station.lat},${c.station.lng}'));
+        }
+      } else {
+        for (final s in _chargingStationWaypoints(_evPreview.stopsNeeded)) {
+          wps.add((
+            _linearProgress(LatLng(s.lat, s.lng), origin, destination),
+            '${s.lat},${s.lng}',
+          ));
+        }
       }
 
       // Sort by progress so the order is always origin→…→destination
