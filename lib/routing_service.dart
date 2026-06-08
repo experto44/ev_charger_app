@@ -9,6 +9,25 @@ import 'profile_screen.dart';
 
 const _kApiKey = 'AIzaSyAF1rz6kk4MpMaHwzCmdmepSJlg8GwcS78';
 
+// ── Road side ───────────────────────────────────────────────────────────────
+// Which carriageway a charger sits on, encoded in the station name. Georgian
+// highway chargers are named per direction: "…Right"/"…მარჯვენა" for one side
+// and "…Left"/"…მარცხენა" for the other. `unknown` = the name carries no side
+// suffix, so the charger is treated normally (no side preference, no warning).
+enum RoadSide { left, right, unknown }
+
+/// Parses the carriageway side from a station name. Matches a trailing
+/// "left"/"right" (English, case-insensitive) or "მარცხენა"/"მარჯვენა"
+/// (Georgian: left/right) at the end of the name.
+RoadSide parseSideFromName(String name) {
+  final n = name.trim().toLowerCase();
+  if (n.endsWith('მარჯვენა')) { return RoadSide.right; } // right
+  if (n.endsWith('მარცხენა')) { return RoadSide.left;  } // left
+  if (n.endsWith('right'))    { return RoadSide.right; }
+  if (n.endsWith('left'))     { return RoadSide.left;  }
+  return RoadSide.unknown;
+}
+
 // ── Station (public model shared across screens) ──────────────────────────────
 class Station {
   const Station({
@@ -103,11 +122,15 @@ class ChargingStop {
     required this.batteryOnArrivalPct,
     required this.distanceFromStartKm,
     this.chargeHours,
+    this.side          = RoadSide.unknown,
+    this.requiresUTurn = false,
   });
   final Station station;
   final double  batteryOnArrivalPct;
   final double  distanceFromStartKm;
   final double? chargeHours; // null = DC fast charge
+  final RoadSide side;       // carriageway parsed from the station name
+  final bool requiresUTurn;  // chosen charger sits on the opposite carriageway
 }
 
 class EVRouteResult {
@@ -240,21 +263,52 @@ class RoutingService {
             .compareTo(a.alongKm - 3.0 * a.detourKm));
         final pick = cands.first;
 
-        final arriveKm = currentKm - (pick.alongKm - coveredKm); // range left on arrival
+        // ── Road-side awareness ────────────────────────────────────────────
+        // Prefer the charger on the carriageway that matches the travel
+        // direction here. If the greedy pick is on the wrong side, swap to the
+        // nearest same-side charger within 200 m (a true co-located pair sits
+        // ≤50 m apart). If none exists, keep it but flag a required U-turn.
+        // Chargers with no side suffix in their name are left untouched.
+        final travelBearing = _bearingAlong(pts, cum, pick.alongKm);
+        final preferred     = _preferredSide(travelBearing);
+        var   chosen        = pick;
+        var   requiresUTurn = false;
+        final pickSide      = parseSideFromName(pick.station.name);
+        if (pickSide != RoadSide.unknown && pickSide != preferred) {
+          final loc = LatLng(pick.station.lat, pick.station.lng);
+          _StationProjection? alt;
+          double altM = double.infinity;
+          for (final p in projected) {
+            if (parseSideFromName(p.station.name) != preferred) { continue; }
+            final m =
+                _haversine(loc, LatLng(p.station.lat, p.station.lng)) * 1000.0;
+            if (m <= 200.0 && m < altM) { altM = m; alt = p; }
+          }
+          if (alt != null) {
+            chosen = alt;          // swap onto the correct carriageway
+          } else {
+            requiresUTurn = true;  // only the opposite-side charger is available
+          }
+        }
+        final chosenSide = parseSideFromName(chosen.station.name);
+
+        final arriveKm = currentKm - (chosen.alongKm - coveredKm); // range left on arrival
         final batPct   = (arriveKm / effectiveKm * 100).clamp(0.0, 100.0);
         double? chargeH;
-        if (!pick.station.isDC) {
+        if (!chosen.station.isDC) {
           final capKwh    = maxRangeKm / 6.0; // rough kWh estimate
           final neededKwh = capKwh * ((effectiveKm - arriveKm) / effectiveKm);
-          chargeH = neededKwh / (pick.station.kw == 0 ? 1 : pick.station.kw);
+          chargeH = neededKwh / (chosen.station.kw == 0 ? 1 : chosen.station.kw);
         }
         stops.add(ChargingStop(
-          station:             pick.station,
+          station:             chosen.station,
           batteryOnArrivalPct: batPct,
-          distanceFromStartKm: pick.alongKm,
+          distanceFromStartKm: chosen.alongKm,
           chargeHours:         chargeH,
+          side:                chosenSide,
+          requiresUTurn:       requiresUTurn,
         ));
-        coveredKm = pick.alongKm;
+        coveredKm = chosen.alongKm;
         currentKm = effectiveKm; // assume full recharge
       }
 
@@ -326,6 +380,36 @@ class RoutingService {
     final cx = t * bx, cy = t * by;
     final dist = sqrt((qx - cx) * (qx - cx) + (qy - cy) * (qy - cy));
     return [dist, t];
+  }
+
+  // ── Travel bearing (0–360°) of the route at a given along-route distance ──
+  static double _bearingAlong(List<LatLng> pts, List<double> cum, double alongKm) {
+    if (pts.length < 2) { return 0.0; }
+    int seg = pts.length - 2;
+    for (int i = 0; i < cum.length - 1; i++) {
+      if (alongKm <= cum[i + 1]) { seg = i; break; }
+    }
+    return _bearing(pts[seg], pts[seg + 1]);
+  }
+
+  // ── Initial bearing from a→b in degrees clockwise from north (0–360) ──────
+  static double _bearing(LatLng a, LatLng b) {
+    final lat1 = _rad(a.latitude), lat2 = _rad(b.latitude);
+    final dLon = _rad(b.longitude - a.longitude);
+    final y    = sin(dLon) * cos(lat2);
+    final x    = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon);
+    return (atan2(y, x) * 180 / pi + 360) % 360;
+  }
+
+  // ── Carriageway preferred for a travel bearing ────────────────────────────
+  // Georgia's main inter-city corridors (E60/E70) run roughly east–west. A
+  // westward heading (bearing 180–360) travels the carriageway whose chargers
+  // are named "Right/მარჯვენა" — anchored on Tbilisi→Batumi (≈270°), where the
+  // "Right" stations are the correct-side ones. An eastward heading (0–180)
+  // therefore prefers "Left/მარცხენა".
+  static RoadSide _preferredSide(double bearing) {
+    final b = (bearing % 360 + 360) % 360;
+    return (b > 180.0 && b < 360.0) ? RoadSide.right : RoadSide.left;
   }
 }
 

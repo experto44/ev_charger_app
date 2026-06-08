@@ -53,6 +53,12 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
   double _maxRangeKm = 300.0;
   bool   _isPlanning = false;
 
+  // Real-road route result from RoutingService.planRoute, recomputed (debounced)
+  // whenever the stops or battery change. Drives the preview stats and the
+  // charging-stops list (including any U-turn warnings).
+  EVRouteResult? _routeResult;
+  Timer?         _routeDebounce;
+
   @override
   void initState() {
     super.initState();
@@ -68,6 +74,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
       _stops.last.controller.text = d.name;
     }
     _loadMaxRange();
+    _scheduleRouteCompute();
   }
 
   Future<void> _loadMaxRange() async {
@@ -78,13 +85,38 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
 
   @override
   void dispose() {
+    _routeDebounce?.cancel();
     for (final s in _stops) { s.dispose(); }
     super.dispose();
+  }
+
+  // ── Debounced real-road route computation ─────────────────────────────────
+  // Coalesces rapid changes (typing, slider drags) into a single Directions
+  // call. Clears the result when the route is incomplete.
+  void _scheduleRouteCompute() {
+    _routeDebounce?.cancel();
+    if (!_canPreview) {
+      if (_routeResult != null) { setState(() => _routeResult = null); }
+      return;
+    }
+    _routeDebounce = Timer(const Duration(milliseconds: 500), _computeRoute);
+  }
+
+  Future<void> _computeRoute() async {
+    if (!_canPreview) { return; }
+    final stops = _stops.map((s) => s.coords).whereType<LatLng>().toList();
+    final res = await RoutingService.planRoute(
+      waypoints:         stops,
+      currentBatteryPct: _batteryPct,
+      stations:          widget.stations,
+    );
+    if (mounted) { setState(() => _routeResult = res); }
   }
 
   void _addStop() {
     if (_stops.length >= 5) { return; }
     setState(() => _stops.insert(_stops.length - 1, RouteStop()));
+    _scheduleRouteCompute();
   }
 
   void _removeStop(int i) {
@@ -92,6 +124,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
       _stops[i].dispose();
       _stops.removeAt(i);
     });
+    _scheduleRouteCompute();
   }
 
   int get _resolvedCount => _stops.where((s) => s.coords != null).length;
@@ -119,6 +152,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
         _stops.first.coords = LatLng(pos.latitude, pos.longitude);
         _stops.first.controller.text = 'My Current Location';
       });
+      _scheduleRouteCompute();
     } catch (_) {}
   }
 
@@ -240,12 +274,15 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
       final resolvedStops =
           _stops.map((s) => s.coords).whereType<LatLng>().toList();
 
-      // Ask the routing service for charging stops along the *actual* road.
-      final routeResult = await RoutingService.planRoute(
-        waypoints:         resolvedStops,
-        currentBatteryPct: _batteryPct,
-        stations:          widget.stations,
-      );
+      // Reuse the result already computed for the preview if available;
+      // otherwise ask the routing service for charging stops along the *actual*
+      // road right now.
+      final routeResult = _routeResult ??
+          await RoutingService.planRoute(
+            waypoints:         resolvedStops,
+            currentBatteryPct: _batteryPct,
+            stations:          widget.stations,
+          );
 
       String urlStr =
           'https://www.google.com/maps/dir/?api=1'
@@ -353,10 +390,13 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                       stop:         _stops[i],
                       onRemove:     _stops.length > 2 ? () => _removeStop(i) : null,
                       onMyLocation: i == 0 ? _fillMyLocation : null,
-                      onPlaceSelected: (pred, coords) => setState(() {
-                        _stops[i].coords = coords;
-                        _stops[i].controller.text = pred.description;
-                      }),
+                      onPlaceSelected: (pred, coords) {
+                        setState(() {
+                          _stops[i].coords = coords;
+                          _stops[i].controller.text = pred.description;
+                        });
+                        _scheduleRouteCompute();
+                      },
                     ),
                     if (i < _stops.length - 1)
                       _StopConnector(
@@ -368,16 +408,29 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                   // Battery slider
                   _BatterySlider(
                     value:     _batteryPct,
-                    onChanged: (v) => setState(() => _batteryPct = v),
+                    onChanged: (v) {
+                      setState(() => _batteryPct = v);
+                      _scheduleRouteCompute();
+                    },
                   ),
                   const SizedBox(height: 12),
-                  // Live EV route preview — reactive to slider changes
+                  // Live EV route preview — uses the real-road result when ready,
+                  // otherwise the instant straight-line estimate.
                   _RoutePreviewStats(
-                    distanceKm:          _totalDistanceKm,
-                    batteryAtArrivalPct: preview.batteryAtArrivalPct,
-                    stopsNeeded:         preview.stopsNeeded,
+                    distanceKm:          _routeResult?.totalDistanceKm
+                                            ?? _totalDistanceKm,
+                    batteryAtArrivalPct: _routeResult?.batteryAtArrivalPct
+                                            ?? preview.batteryAtArrivalPct,
+                    stopsNeeded:         _routeResult?.chargingStops.length
+                                            ?? preview.stopsNeeded,
                     hasRoute:            _canPreview,
                   ),
+                  // Charging stops with road-side (U-turn) warnings
+                  if (_routeResult != null &&
+                      _routeResult!.chargingStops.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _ChargingStopsList(stops: _routeResult!.chargingStops),
+                  ],
                   const SizedBox(height: 24),
                 ],
               ),
@@ -684,6 +737,120 @@ class _StatChip extends StatelessWidget {
         Text(label,
             style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
       ]),
+    );
+  }
+}
+
+// ── Charging stops list (with road-side U-turn warnings) ──────────────────────
+class _ChargingStopsList extends StatelessWidget {
+  const _ChargingStopsList({required this.stops});
+  final List<ChargingStop> stops;
+
+  String _sideLabel(RoadSide s) {
+    switch (s) {
+      case RoadSide.right: return 'Right side';
+      case RoadSide.left:  return 'Left side';
+      case RoadSide.unknown: return '';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _bgCard,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _bgSurface),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'CHARGING STOPS',
+            style: TextStyle(color: _textSec, fontSize: 11,
+                fontWeight: FontWeight.w600, letterSpacing: 0.6),
+          ),
+          const SizedBox(height: 12),
+          for (int i = 0; i < stops.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            _StopTile(index: i + 1, stop: stops[i], sideLabel: _sideLabel(stops[i].side)),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _StopTile extends StatelessWidget {
+  const _StopTile({required this.index, required this.stop, required this.sideLabel});
+  final int          index;
+  final ChargingStop stop;
+  final String       sideLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(children: [
+          Container(
+            width: 22, height: 22,
+            decoration: BoxDecoration(
+              color: _bgSurface,
+              borderRadius: BorderRadius.circular(7),
+            ),
+            alignment: Alignment.center,
+            child: Text('$index',
+                style: const TextStyle(
+                    color: _emerald, fontSize: 11, fontWeight: FontWeight.w700)),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(stop.station.name,
+                    style: const TextStyle(
+                        color: _textPri, fontSize: 13, fontWeight: FontWeight.w500),
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(
+                  sideLabel.isEmpty
+                      ? '${stop.batteryOnArrivalPct.toStringAsFixed(0)}% on arrival'
+                      : '$sideLabel · ${stop.batteryOnArrivalPct.toStringAsFixed(0)}% on arrival',
+                  style: const TextStyle(color: _textSec, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          Icon(stop.station.isDC ? Icons.bolt : Icons.battery_charging_full_rounded,
+              color: _emerald, size: 16),
+        ]),
+        if (stop.requiresUTurn) ...[
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.amber.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.amber.withOpacity(0.5)),
+            ),
+            child: const Row(children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 15),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'U-turn required — charger is on opposite side',
+                  style: TextStyle(
+                      color: Colors.amber, fontSize: 11, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ]),
+          ),
+        ],
+      ],
     );
   }
 }
