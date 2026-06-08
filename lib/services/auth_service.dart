@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
@@ -65,12 +66,17 @@ class AuthService {
   // Accepts 9 raw digits; stores as "+995XXXXXXXXX" alongside email + timestamp.
   static Future<void> savePhoneNumber(String nineDigits) async {
     final user = _auth.currentUser;
-    if (user == null) { return; }
+    if (user == null) {
+      debugPrint('[AuthService] savePhoneNumber aborted — no signed-in user');
+      throw StateError('No signed-in user');
+    }
+    debugPrint('[AuthService] savePhoneNumber writing users/${user.uid}');
     await _firestore.collection('users').doc(user.uid).set({
       'phoneNumber': '+995${nineDigits.trim()}',
       'email':       user.email ?? '',
       'updatedAt':   FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+    debugPrint('[AuthService] savePhoneNumber write complete');
   }
 
   // ── Fetch phone number from Firestore ─────────────────────────────────────────
@@ -79,8 +85,10 @@ class AuthService {
   static Future<String?> fetchPhoneNumber() async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) { return null; }
+    debugPrint('[AuthService] fetchPhoneNumber reading users/$uid');
     final doc = await _firestore.collection('users').doc(uid).get();
     final raw = doc.data()?['phoneNumber'] as String?;
+    debugPrint('[AuthService] fetchPhoneNumber raw="$raw"');
     if (raw == null) { return null; }
     return raw.startsWith('+995') ? raw.substring(4) : raw;
   }

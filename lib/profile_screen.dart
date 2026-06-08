@@ -37,7 +37,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── Auth / phone ──────────────────────────────────────────────────────────
   final _phoneCtrl  = TextEditingController();
-  bool  _phoneLoading = true;
   bool  _phoneSaving  = false;
   bool  _phoneSaved   = false;
   String _phoneError  = '';
@@ -87,16 +86,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── Phone number ──────────────────────────────────────────────────────────
   Future<void> _loadPhone() async {
-    if (_user == null) {
-      if (mounted) { setState(() => _phoneLoading = false); }
-      return;
+    debugPrint('[ProfileScreen] _loadPhone start, user=${_user?.uid}');
+    if (_user == null) { return; }
+    try {
+      final digits = await AuthService.fetchPhoneNumber(); // already stripped of +995
+      debugPrint('[ProfileScreen] _loadPhone fetched: "$digits"');
+      if (!mounted) { return; }
+      setState(() => _phoneCtrl.text = digits ?? '');
+    } catch (e) {
+      // A fetch failure must NOT block saving — log it and leave the field empty.
+      debugPrint('[ProfileScreen] _loadPhone ERROR: $e');
     }
-    final digits = await AuthService.fetchPhoneNumber(); // already stripped of +995
-    if (!mounted) { return; }
-    setState(() {
-      _phoneCtrl.text = digits ?? '';
-      _phoneLoading   = false;
-    });
   }
 
   // Returns null if valid, error string if not.
@@ -110,16 +110,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _savePhone() async {
-    if (_phoneSaving) { return; }
+    debugPrint('[ProfileScreen] _savePhone tapped, raw="${_phoneCtrl.text}"');
+    if (_phoneSaving) {
+      debugPrint('[ProfileScreen] _savePhone ignored — already saving');
+      return;
+    }
     final digits = _phoneCtrl.text.trim();
     final validationError = _validatePhone(digits);
     if (validationError != null) {
+      debugPrint('[ProfileScreen] _savePhone validation failed: $validationError');
       setState(() => _phoneError = validationError);
       return;
     }
+    debugPrint('[ProfileScreen] _savePhone saving "+995$digits" for ${_user?.uid}');
     setState(() { _phoneSaving = true; _phoneSaved = false; _phoneError = ''; });
     try {
       await AuthService.savePhoneNumber(digits);
+      debugPrint('[ProfileScreen] _savePhone success');
       if (!mounted) { return; }
       setState(() { _phoneSaving = false; _phoneSaved = true; });
       ScaffoldMessenger.of(context).showSnackBar(
@@ -131,12 +138,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       await Future.delayed(const Duration(seconds: 2));
       if (mounted) { setState(() => _phoneSaved = false); }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[ProfileScreen] _savePhone ERROR: $e');
       if (!mounted) { return; }
       setState(() { _phoneSaving = false; _phoneError = ''; });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Failed to save. Please try again.'),
+          content: Text('Error saving phone number'),
           backgroundColor: Color(0xFFCF6679),
           behavior: SnackBarBehavior.floating,
         ),
@@ -352,9 +360,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 12),
               GestureDetector(
-                onTap: (_phoneSaving || _phoneSaved || _phoneLoading)
-                    ? null
-                    : _savePhone,
+                // Only block taps while an actual save is in flight. Gating on
+                // _phoneLoading/_phoneSaved previously left the button dead if
+                // the initial Firestore load ever failed or hung.
+                onTap: _phoneSaving ? null : _savePhone,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 250),
                   height: 44,
