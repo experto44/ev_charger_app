@@ -3,8 +3,14 @@ name: Update Chargers Gist
 # ── Triggers ──────────────────────────────────────────────────────────────────
 on:
   schedule:
-    # Every 10 minutes (GitHub's minimum reliable interval is 5 min)
-    - cron: '*/10 * * * *'
+    # Request a run every 5 minutes (GitHub's documented minimum). NOTE: the
+    # `schedule` event is best-effort — GitHub throttles/drops it under load, so
+    # in practice it fires anywhere from every few minutes to once an hour. We
+    # do NOT rely on this cadence alone; each run loops internally (see the
+    # "Push chargers.json to Gist" step) to keep data fresh between fires, and
+    # an external pinger can hit workflow_dispatch for true 5-min reliability
+    # (see README / the note at the bottom of this file).
+    - cron: '*/5 * * * *'
 
   # Also fire immediately whenever chargers.json is committed to main
   push:
@@ -12,13 +18,24 @@ on:
     paths:
       - 'assets/data/chargers.json'
 
-  # Allow a manual run from the Actions tab
+  # Allow a manual run from the Actions tab, or an external scheduler hitting
+  # the REST API: POST /repos/{owner}/{repo}/actions/workflows/update_gist.yml/dispatches
   workflow_dispatch:
+
+# Whenever a new run starts (scheduled fire, push, or dispatch), cancel any
+# still-looping previous run so the newest one takes over cleanly. This makes
+# the internal loop self-adapting: frequent fires => short runs; rare fires =>
+# the loop fills the gap. Only one updater touches the gist at a time.
+concurrency:
+  group: update-gist
+  cancel-in-progress: true
 
 # ── Job ───────────────────────────────────────────────────────────────────────
 jobs:
   update-gist:
     runs-on: ubuntu-latest
+    # Safety ceiling well under GitHub's 6h hard limit; the loop targets ~50 min.
+    timeout-minutes: 55
 
     steps:
       - name: Checkout repo
@@ -43,6 +60,16 @@ jobs:
           ECOCARS_USERNAME:    ${{ secrets.ECOCARS_USERNAME }}
           ECOCARS_PASSWORD:    ${{ secrets.ECOCARS_PASSWORD }}
         run: |
+          # ── Internal refresh loop ──────────────────────────────────────────
+          # GitHub's `schedule` event is unreliable (throttled to as little as
+          # once/hour). Rather than update once and exit, one run loops for
+          # ~50 min, updating every 5 min, so data stays fresh between fires.
+          # cancel-in-progress (see top of file) lets a newer fire preempt this.
+          ITERATIONS=10          # ~50 min of coverage at 5-min spacing
+          SLEEP_SECONDS=300
+          i=1
+          while [ "$i" -le "$ITERATIONS" ]; do
+          echo "::group::Update iteration $i of $ITERATIONS"
           python3 << 'PYEOF'
           import json, os, requests
           from datetime import datetime, timezone
@@ -607,3 +634,7 @@ jobs:
 
           print(f"✅  Updated {len(stations)} stations — last_updated = {now}")
           PYEOF
+          echo "::endgroup::"
+          if [ "$i" -lt "$ITERATIONS" ]; then echo "Sleeping ${SLEEP_SECONDS}s before next update…"; sleep "$SLEEP_SECONDS"; fi
+          i=$((i + 1))
+          done
