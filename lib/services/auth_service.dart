@@ -62,20 +62,26 @@ class AuthService {
   }
 
   // ── Save phone number to Firestore users/{uid} ────────────────────────────────
-  static Future<void> savePhoneNumber(String phone) async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) { return; }
-    await _firestore
-        .collection('users')
-        .doc(uid)
-        .set({'phoneNumber': phone.trim()}, SetOptions(merge: true));
+  // Accepts 9 raw digits; stores as "+995XXXXXXXXX" alongside email + timestamp.
+  static Future<void> savePhoneNumber(String nineDigits) async {
+    final user = _auth.currentUser;
+    if (user == null) { return; }
+    await _firestore.collection('users').doc(user.uid).set({
+      'phoneNumber': '+995${nineDigits.trim()}',
+      'email':       user.email ?? '',
+      'updatedAt':   FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   // ── Fetch phone number from Firestore ─────────────────────────────────────────
+  // Returns only the 9-digit local part (strips +995 prefix) so the UI field
+  // shows digits the user can edit without the country code.
   static Future<String?> fetchPhoneNumber() async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) { return null; }
     final doc = await _firestore.collection('users').doc(uid).get();
-    return doc.data()?['phoneNumber'] as String?;
+    final raw = doc.data()?['phoneNumber'] as String?;
+    if (raw == null) { return null; }
+    return raw.startsWith('+995') ? raw.substring(4) : raw;
   }
 }

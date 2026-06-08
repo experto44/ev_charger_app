@@ -90,27 +90,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) { setState(() => _phoneLoading = false); }
       return;
     }
-    final phone = await AuthService.fetchPhoneNumber();
+    final digits = await AuthService.fetchPhoneNumber(); // already stripped of +995
     if (!mounted) { return; }
     setState(() {
-      _phoneCtrl.text = phone ?? '';
+      _phoneCtrl.text = digits ?? '';
       _phoneLoading   = false;
     });
   }
 
+  // Returns null if valid, error string if not.
+  String? _validatePhone(String value) {
+    final digits = value.trim();
+    if (digits.isEmpty) { return null; } // optional field — allow empty
+    if (!RegExp(r'^5\d{8}$').hasMatch(digits)) {
+      return 'Please enter a valid Georgian mobile number (9 digits)';
+    }
+    return null;
+  }
+
   Future<void> _savePhone() async {
     if (_phoneSaving) { return; }
+    final digits = _phoneCtrl.text.trim();
+    final validationError = _validatePhone(digits);
+    if (validationError != null) {
+      setState(() => _phoneError = validationError);
+      return;
+    }
     setState(() { _phoneSaving = true; _phoneSaved = false; _phoneError = ''; });
     try {
-      await AuthService.savePhoneNumber(_phoneCtrl.text);
+      await AuthService.savePhoneNumber(digits);
       if (!mounted) { return; }
       setState(() { _phoneSaving = false; _phoneSaved = true; });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Phone number saved!'),
+          backgroundColor: Color(0xFF00C896),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
       await Future.delayed(const Duration(seconds: 2));
       if (mounted) { setState(() => _phoneSaved = false); }
     } catch (_) {
-      if (mounted) {
-        setState(() { _phoneSaving = false; _phoneError = 'Failed to save. Please try again.'; });
-      }
+      if (!mounted) { return; }
+      setState(() { _phoneSaving = false; _phoneError = ''; });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to save. Please try again.'),
+          backgroundColor: Color(0xFFCF6679),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -246,21 +275,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // Phone number field
               const _Label('PHONE NUMBER'),
               const SizedBox(height: 8),
-              _Field(
-                controller: _phoneCtrl,
-                hint: '+995 5XX XXX XXX',
-                icon: Icons.phone_outlined,
-                type: TextInputType.phone,
-                formatters: [
-                  FilteringTextInputFormatter.allow(
-                      RegExp(r'[0-9+\-\s()]')),
-                ],
+              Container(
+                decoration: BoxDecoration(
+                  color: _bgCard,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _phoneError.isNotEmpty ? _errorRed : _bgSurface,
+                  ),
+                ),
+                child: Row(children: [
+                  const SizedBox(width: 14),
+                  const Icon(Icons.phone_outlined, color: _textSec, size: 18),
+                  const SizedBox(width: 8),
+                  // Static +995 prefix
+                  const Text('+995',
+                      style: TextStyle(color: _textSec, fontSize: 15)),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: TextField(
+                      controller: _phoneCtrl,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(9),
+                      ],
+                      style: const TextStyle(color: _textPri, fontSize: 15),
+                      onChanged: (_) {
+                        if (_phoneError.isNotEmpty) {
+                          setState(() => _phoneError = '');
+                        }
+                      },
+                      decoration: const InputDecoration(
+                        hintText: '5XXXXXXXX',
+                        hintStyle: TextStyle(color: _textSec, fontSize: 15),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                ]),
               ),
               if (_phoneError.isNotEmpty) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(_phoneError,
-                    style: const TextStyle(
-                        color: _errorRed, fontSize: 12)),
+                    style: const TextStyle(color: _errorRed, fontSize: 12)),
               ],
               const SizedBox(height: 12),
               GestureDetector(
