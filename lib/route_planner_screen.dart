@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'l10n/app_strings.dart';
 import 'places_service.dart';
 import 'profile_screen.dart';
 import 'routing_service.dart';
@@ -370,12 +371,17 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: _textPri, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Route Planner',
-          style: TextStyle(color: _textPri, fontSize: 17, fontWeight: FontWeight.w600),
+          style: AppStrings.font(const TextStyle(
+              color: _textPri, fontSize: 17, fontWeight: FontWeight.w600)),
         ),
       ),
-      body: Column(
+      // Rebuild on language change — this screen may sit beneath the profile
+      // screen (where the toggle lives) in the navigation stack.
+      body: ValueListenableBuilder<bool>(
+        valueListenable: AppStrings.notifier,
+        builder: (context, _, __) => AppStrings.wrap(Column(
         children: [
           Expanded(
             child: SingleChildScrollView(
@@ -443,6 +449,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
             onPlanRoute:   allResolved ? _planRoute : null,
           ),
         ],
+      )),
       ),
     );
   }
@@ -465,9 +472,9 @@ class _StopRow extends StatelessWidget {
   final VoidCallback? onMyLocation; // shown only for index == 0
 
   String get _label {
-    if (index == 0)         { return 'Start'; }
-    if (index == total - 1) { return 'End'; }
-    return 'Stop $index';
+    if (index == 0)         { return AppStrings.from; }
+    if (index == total - 1) { return AppStrings.to; }
+    return '${AppStrings.stopN} $index';
   }
 
   Color get _dotColor {
@@ -555,10 +562,11 @@ class _StopConnector extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: _bgSurface),
                 ),
-                child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.add_rounded, color: _textSec, size: 14),
-                  SizedBox(width: 4),
-                  Text('Add stop', style: TextStyle(color: _textSec, fontSize: 12)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  const Icon(Icons.add_rounded, color: _textSec, size: 14),
+                  const SizedBox(width: 4),
+                  Text(AppStrings.addStop,
+                      style: const TextStyle(color: _textSec, fontSize: 12)),
                 ]),
               ),
             ),
@@ -593,9 +601,9 @@ class _BatterySlider extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            const Text(
-              'CURRENT BATTERY',
-              style: TextStyle(color: _textSec, fontSize: 11,
+            Text(
+              AppStrings.currentBattery,
+              style: const TextStyle(color: _textSec, fontSize: 11,
                   fontWeight: FontWeight.w600, letterSpacing: 0.6),
             ),
             const Spacer(),
@@ -686,15 +694,15 @@ class _RoutePreviewStats extends StatelessWidget {
                 _StatChip(
                   icon:  Icons.battery_charging_full_rounded,
                   label: hasRoute
-                      ? '${batteryAtArrivalPct.toStringAsFixed(0)}% arrival'
-                      : '–% arrival',
+                      ? '${batteryAtArrivalPct.toStringAsFixed(0)}% ${AppStrings.arrival}'
+                      : '–% ${AppStrings.arrival}',
                   color: hasRoute ? _batColor(batteryAtArrivalPct) : _textSec,
                 ),
                 _StatChip(
                   icon:  Icons.bolt,
                   label: hasRoute
-                      ? '$stopsNeeded stop${stopsNeeded == 1 ? '' : 's'}'
-                      : '– stops',
+                      ? '$stopsNeeded ${AppStrings.stops}'
+                      : '– ${AppStrings.stops}',
                   color: hasRoute
                       ? (stopsNeeded == 0 ? _emerald : Colors.orangeAccent)
                       : _textSec,
@@ -837,13 +845,13 @@ class _StopTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.amber.withOpacity(0.5)),
             ),
-            child: const Row(children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 15),
-              SizedBox(width: 8),
+            child: Row(children: [
+              const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 15),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'U-turn required — charger is on opposite side',
-                  style: TextStyle(
+                  AppStrings.uTurnRequired,
+                  style: const TextStyle(
                       color: Colors.amber, fontSize: 11, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -1051,7 +1059,7 @@ class _BottomBar extends StatelessWidget {
                   )
                 : Text(
                     resolvedCount == total
-                        ? 'Open in Google Maps  →'
+                        ? '${AppStrings.openInGoogleMaps}  →'
                         : 'Set all stops  ($resolvedCount / $total)',
                     style: TextStyle(
                       color: ready ? Colors.black : _textSec,

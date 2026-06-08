@@ -7,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
+import 'l10n/app_strings.dart';
 import 'profile_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -28,6 +29,7 @@ import 'settings_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await AppStrings.load(); // restore saved language (English/Georgian)
   PaintingBinding.instance.imageCache.maximumSize = 30;
   PaintingBinding.instance.imageCache.maximumSizeBytes = 10 * 1024 * 1024;
   runApp(const EVChargerApp());
@@ -1756,11 +1758,12 @@ class _StationSheetState extends State<_StationSheet> {
                 style: const TextStyle(color: _textSec, fontSize: 11),
               ),
             ]),
-            const Padding(
-              padding: EdgeInsets.only(left: 18, top: 2),
+            Padding(
+              padding: const EdgeInsets.only(left: 18, top: 2),
               child: Text(
-                "Provider's last server check — not real-time",
-                style: TextStyle(color: _textSec, fontSize: 9.5),
+                AppStrings.providerLastCheck,
+                style: AppStrings.font(
+                    const TextStyle(color: _textSec, fontSize: 9.5)),
               ),
             ),
           ],

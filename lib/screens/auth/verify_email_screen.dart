@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_strings.dart';
 import '../../services/auth_service.dart';
 
 const _bgDark    = Color(0xFF1A1A1A);
@@ -165,14 +166,15 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                     border:
                         Border.all(color: _emerald.withValues(alpha: 0.4)),
                   ),
-                  child: const Row(children: [
-                    Icon(Icons.check_circle_outline_rounded,
+                  child: Row(children: [
+                    const Icon(Icons.check_circle_outline_rounded,
                         color: _emerald, size: 17),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'A new link has been sent.',
-                        style: TextStyle(color: _emerald, fontSize: 13),
+                        AppStrings.verificationEmailSent,
+                        style: AppStrings.font(
+                            const TextStyle(color: _emerald, fontSize: 13)),
                       ),
                     ),
                   ]),

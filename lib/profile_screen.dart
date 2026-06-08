@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'app_constants.dart';
+import 'l10n/app_strings.dart';
 import 'services/auth_service.dart';
 
 // ── Palette (mirrors main.dart) ───────────────────────────────────────────────
@@ -104,7 +105,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final digits = value.trim();
     if (digits.isEmpty) { return null; } // optional field — allow empty
     if (!RegExp(r'^5\d{8}$').hasMatch(digits)) {
-      return 'Please enter a valid Georgian mobile number (9 digits)';
+      return AppStrings.invalidPhone;
     }
     return null;
   }
@@ -142,9 +143,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (success) {
       setState(() => _phoneSaved = true);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Phone number saved!'),
-          backgroundColor: Color(0xFF00C896),
+        SnackBar(
+          content: Text(AppStrings.phoneSaved, style: AppStrings.font()),
+          backgroundColor: const Color(0xFF00C896),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -152,9 +153,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) { setState(() => _phoneSaved = false); }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error saving phone number'),
-          backgroundColor: Color(0xFFCF6679),
+        SnackBar(
+          content: Text(AppStrings.phoneSaveError, style: AppStrings.font()),
+          backgroundColor: const Color(0xFFCF6679),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -179,17 +180,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: _textPri, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'My Profile',
-          style: TextStyle(
-              color: _textPri, fontSize: 17, fontWeight: FontWeight.w600),
+        title: Text(
+          AppStrings.myProfile,
+          style: AppStrings.font(const TextStyle(
+              color: _textPri, fontSize: 17, fontWeight: FontWeight.w600)),
         ),
       ),
-      body: SingleChildScrollView(
+      body: AppStrings.wrap(SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 28, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
+            // ── Language toggle (ENG | GEO) ───────────────────────────────────
+            _LanguageToggle(
+              isGeorgian: AppStrings.isGeorgian,
+              onChanged: (geo) async {
+                await AppStrings.setGeorgian(geo);
+                if (mounted) { setState(() {}); }
+              },
+            ),
+            const SizedBox(height: 24),
 
             // ══ AUTH SECTION (only when signed in) ═══════════════════════════
             if (_user != null) ...[
@@ -259,7 +270,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 24),
 
               // Email tile
-              const _Label('EMAIL'),
+              _Label(AppStrings.email),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -282,8 +293,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   _StatusBadge(
                     label: _user!.emailVerified
-                        ? 'Verified'
-                        : 'Unverified',
+                        ? AppStrings.verified
+                        : AppStrings.unverified,
                     color: _user!.emailVerified ? _emerald : _errorRed,
                   ),
                 ]),
@@ -291,7 +302,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 16),
 
               // Phone number field
-              const _Label('PHONE NUMBER'),
+              _Label(AppStrings.phoneNumber),
               const SizedBox(height: 8),
               Container(
                 decoration: BoxDecoration(
@@ -345,18 +356,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  const Text(
-                    'By saving your number you agree to receive service updates from GeoCharge. ',
-                    style: TextStyle(color: _textSec, fontSize: 12),
+                  Text(
+                    AppStrings.privacyNotice,
+                    style: const TextStyle(color: _textSec, fontSize: 12),
                   ),
                   GestureDetector(
                     onTap: () => launchUrl(
                       Uri.parse('https://experto44.github.io/ev_charger_app/privacy-policy.html'),
                       mode: LaunchMode.externalApplication,
                     ),
-                    child: const Text(
-                      'Privacy Policy',
-                      style: TextStyle(
+                    child: Text(
+                      AppStrings.privacyPolicy,
+                      style: const TextStyle(
                         color: _emerald,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -402,7 +413,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                _phoneSaved ? 'Saved!' : 'Save',
+                                _phoneSaved
+                                    ? AppStrings.savedExclaim
+                                    : AppStrings.save,
                                 style: TextStyle(
                                   color: _phoneSaved
                                       ? _emerald
@@ -440,20 +453,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Center(
+              Center(
                 child: Text(
-                  'Vehicle & Driver Info',
-                  style: TextStyle(color: _textSec, fontSize: 13),
+                  AppStrings.vehicleDriverInfo,
+                  style: const TextStyle(color: _textSec, fontSize: 13),
                 ),
               ),
               const SizedBox(height: 32),
             ] else ...[
-              const _Label('VEHICLE & DRIVER INFO'),
+              _Label(AppStrings.vehicleDriverInfo),
               const SizedBox(height: 16),
             ],
 
             // Car model
-            const _Label('Car Model'),
+            _Label(AppStrings.carModel),
             const SizedBox(height: 8),
             _Field(
               controller: _carCtrl,
@@ -464,11 +477,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 20),
 
             // Connector selector
-            const _Label('My Connector'),
+            _Label(AppStrings.myConnector),
             const SizedBox(height: 4),
-            const Text(
-              'Used as your default filter on the map',
-              style: TextStyle(color: _textSec, fontSize: 12),
+            Text(
+              AppStrings.connectorHint,
+              style: const TextStyle(color: _textSec, fontSize: 12),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -504,7 +517,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 20),
 
             // Max range
-            const _Label('Max Range at 100% Battery'),
+            _Label(AppStrings.maxRangeFull),
             const SizedBox(height: 8),
             _Field(
               controller: _rangeCtrl,
@@ -547,7 +560,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      _saved ? 'Saved!' : 'Save',
+                      _saved ? AppStrings.savedExclaim : AppStrings.save,
                       style: TextStyle(
                         color: _saved ? _emerald : Colors.black,
                         fontSize: 15,
@@ -572,15 +585,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     border: Border.all(
                         color: _errorRed.withValues(alpha: 0.5)),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.logout_rounded,
+                      const Icon(Icons.logout_rounded,
                           color: _errorRed, size: 20),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
-                        'Sign Out',
-                        style: TextStyle(
+                        AppStrings.signOut,
+                        style: const TextStyle(
                           color: _errorRed,
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
@@ -592,6 +605,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ],
+        ),
+      )),
+    );
+  }
+}
+
+// ── Language toggle (ENG | GEO segmented control) ─────────────────────────────
+class _LanguageToggle extends StatelessWidget {
+  const _LanguageToggle({required this.isGeorgian, required this.onChanged});
+  final bool isGeorgian;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: _bgCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _bgSurface),
+      ),
+      child: Row(
+        children: [
+          _seg(label: 'ENG', selected: !isGeorgian, onTap: () => onChanged(false)),
+          _seg(label: 'GEO', selected: isGeorgian, onTap: () => onChanged(true)),
+        ],
+      ),
+    );
+  }
+
+  Widget _seg({required String label, required bool selected, required VoidCallback onTap}) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          height: 38,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? _emerald : Colors.transparent,
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? Colors.black : _textSec,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            ),
+          ),
         ),
       ),
     );
