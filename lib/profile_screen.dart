@@ -1,8 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app_constants.dart';
+import 'services/auth_service.dart';
 
 // ── Palette (mirrors main.dart) ───────────────────────────────────────────────
 const _bgDark    = Color(0xFF1A1A1A);
@@ -11,10 +13,11 @@ const _bgSurface = Color(0xFF2E2E2E);
 const _emerald   = Color(0xFF00C896);
 const _textPri   = Color(0xFFFFFFFF);
 const _textSec   = Color(0xFF9E9E9E);
+const _errorRed  = Color(0xFFCF6679);
 
 // ── Prefs keys ────────────────────────────────────────────────────────────────
-const kCarModel  = 'car_model';
-const kMaxRange  = 'max_range_km';
+const kCarModel = 'car_model';
+const kMaxRange = 'max_range_km';
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 class ProfileScreen extends StatefulWidget {
@@ -25,25 +28,38 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  // ── Vehicle prefs ─────────────────────────────────────────────────────────
   final _carCtrl   = TextEditingController();
   final _rangeCtrl = TextEditingController();
-  String? _connector;            // default connector (single-select, nullable)
+  String? _connector;
   bool _saved = false;
+
+  // ── Auth / phone ──────────────────────────────────────────────────────────
+  final _phoneCtrl  = TextEditingController();
+  bool  _phoneLoading = true;
+  bool  _phoneSaving  = false;
+  bool  _phoneSaved   = false;
+  String _phoneError  = '';
+
+  User? get _user => FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _loadVehiclePrefs();
+    _loadPhone();
   }
 
   @override
   void dispose() {
     _carCtrl.dispose();
     _rangeCtrl.dispose();
+    _phoneCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _load() async {
+  // ── Vehicle prefs ─────────────────────────────────────────────────────────
+  Future<void> _loadVehiclePrefs() async {
     final p = await SharedPreferences.getInstance();
     if (!mounted) { return; }
     setState(() {
@@ -53,7 +69,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  Future<void> _save() async {
+  Future<void> _saveVehiclePrefs() async {
     final p = await SharedPreferences.getInstance();
     await p.setString(kCarModel, _carCtrl.text.trim());
     await p.setString(kMaxRange, _rangeCtrl.text.trim());
@@ -68,6 +84,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) { setState(() => _saved = false); }
   }
 
+  // ── Phone number ──────────────────────────────────────────────────────────
+  Future<void> _loadPhone() async {
+    if (_user == null) {
+      if (mounted) { setState(() => _phoneLoading = false); }
+      return;
+    }
+    final phone = await AuthService.fetchPhoneNumber();
+    if (!mounted) { return; }
+    setState(() {
+      _phoneCtrl.text = phone ?? '';
+      _phoneLoading   = false;
+    });
+  }
+
+  Future<void> _savePhone() async {
+    if (_phoneSaving) { return; }
+    setState(() { _phoneSaving = true; _phoneSaved = false; _phoneError = ''; });
+    try {
+      await AuthService.savePhoneNumber(_phoneCtrl.text);
+      if (!mounted) { return; }
+      setState(() { _phoneSaving = false; _phoneSaved = true; });
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted) { setState(() => _phoneSaved = false); }
+    } catch (_) {
+      if (mounted) {
+        setState(() { _phoneSaving = false; _phoneError = 'Failed to save. Please try again.'; });
+      }
+    }
+  }
+
+  Future<void> _signOut() async {
+    await AuthService.signOut();
+    if (mounted) { Navigator.pop(context); }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,12 +128,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: _textPri, size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: _textPri, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'My Profile',
-          style: TextStyle(color: _textPri, fontSize: 17, fontWeight: FontWeight.w600),
+          style: TextStyle(
+              color: _textPri, fontSize: 17, fontWeight: FontWeight.w600),
         ),
       ),
       body: SingleChildScrollView(
@@ -90,29 +143,210 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Avatar ───────────────────────────────────────────────────────
-            Center(
-              child: Container(
-                width: 80, height: 80,
+
+            // ══ AUTH SECTION (only when signed in) ═══════════════════════════
+            if (_user != null) ...[
+              // Avatar + name/email
+              Center(
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 80, height: 80,
+                      decoration: BoxDecoration(
+                        color: _bgCard,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: _emerald, width: 2),
+                        boxShadow: const [
+                          BoxShadow(color: Colors.black38, blurRadius: 12)
+                        ],
+                      ),
+                      child: _user!.photoURL != null
+                          ? ClipOval(
+                              child: Image.network(
+                                _user!.photoURL!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.person_rounded,
+                                    color: _emerald, size: 38),
+                              ),
+                            )
+                          : const Icon(Icons.person_rounded,
+                              color: _emerald, size: 38),
+                    ),
+                    if (_user!.emailVerified)
+                      Positioned(
+                        right: 0, bottom: 0,
+                        child: Container(
+                          width: 22, height: 22,
+                          decoration: BoxDecoration(
+                            color: _emerald,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: _bgDark, width: 2),
+                          ),
+                          child: const Icon(Icons.check_rounded,
+                              color: Colors.black, size: 13),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (_user!.displayName != null) ...[
+                const SizedBox(height: 8),
+                Center(
+                  child: Text(
+                    _user!.displayName!,
+                    style: const TextStyle(
+                        color: _textPri,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 4),
+              Center(
+                child: Text(
+                  _user!.email ?? '',
+                  style: const TextStyle(color: _textSec, fontSize: 13),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Email tile
+              const _Label('EMAIL'),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 14),
                 decoration: BoxDecoration(
                   color: _bgCard,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: _emerald, width: 2),
-                  boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 12)],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _bgSurface),
                 ),
-                child: const Icon(Icons.directions_car_rounded, color: _emerald, size: 38),
+                child: Row(children: [
+                  const Icon(Icons.email_outlined,
+                      color: _textSec, size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _user!.email ?? '—',
+                      style: const TextStyle(
+                          color: _textPri, fontSize: 15),
+                    ),
+                  ),
+                  _StatusBadge(
+                    label: _user!.emailVerified
+                        ? 'Verified'
+                        : 'Unverified',
+                    color: _user!.emailVerified ? _emerald : _errorRed,
+                  ),
+                ]),
               ),
-            ),
-            const SizedBox(height: 8),
-            const Center(
-              child: Text(
-                'Vehicle & Driver Info',
-                style: TextStyle(color: _textSec, fontSize: 13),
-              ),
-            ),
-            const SizedBox(height: 32),
+              const SizedBox(height: 16),
 
-            // ── Car model ─────────────────────────────────────────────────────
+              // Phone number field
+              const _Label('PHONE NUMBER'),
+              const SizedBox(height: 8),
+              _Field(
+                controller: _phoneCtrl,
+                hint: '+995 5XX XXX XXX',
+                icon: Icons.phone_outlined,
+                type: TextInputType.phone,
+                formatters: [
+                  FilteringTextInputFormatter.allow(
+                      RegExp(r'[0-9+\-\s()]')),
+                ],
+              ),
+              if (_phoneError.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(_phoneError,
+                    style: const TextStyle(
+                        color: _errorRed, fontSize: 12)),
+              ],
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: (_phoneSaving || _phoneSaved || _phoneLoading)
+                    ? null
+                    : _savePhone,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: _phoneSaved ? _bgCard : _emerald,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _emerald),
+                  ),
+                  child: Center(
+                    child: _phoneSaving
+                        ? const SizedBox(
+                            width: 20, height: 20,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2.5, color: Colors.black),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _phoneSaved
+                                    ? Icons.check_circle_rounded
+                                    : Icons.save_rounded,
+                                color: _phoneSaved
+                                    ? _emerald
+                                    : Colors.black,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                _phoneSaved ? 'Saved!' : 'Save',
+                                style: TextStyle(
+                                  color: _phoneSaved
+                                      ? _emerald
+                                      : Colors.black,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 28),
+              const Divider(color: _bgSurface, thickness: 1),
+              const SizedBox(height: 20),
+            ],
+
+            // ══ VEHICLE SECTION ═══════════════════════════════════════════════
+            // Avatar icon (shown when NOT signed in, replaced by user photo above)
+            if (_user == null) ...[
+              Center(
+                child: Container(
+                  width: 80, height: 80,
+                  decoration: BoxDecoration(
+                    color: _bgCard,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: _emerald, width: 2),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black38, blurRadius: 12)
+                    ],
+                  ),
+                  child: const Icon(Icons.directions_car_rounded,
+                      color: _emerald, size: 38),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Center(
+                child: Text(
+                  'Vehicle & Driver Info',
+                  style: TextStyle(color: _textSec, fontSize: 13),
+                ),
+              ),
+              const SizedBox(height: 32),
+            ] else ...[
+              const _Label('VEHICLE & DRIVER INFO'),
+              const SizedBox(height: 16),
+            ],
+
+            // Car model
             const _Label('Car Model'),
             const SizedBox(height: 8),
             _Field(
@@ -123,7 +357,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 20),
 
-            // ── My Connector (single-select default) ──────────────────────────
+            // Connector selector
             const _Label('My Connector'),
             const SizedBox(height: 4),
             const Text(
@@ -137,20 +371,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: kConnectorOrder.map((c) {
                 final on = _connector == c;
                 return GestureDetector(
-                  onTap: () => setState(() => _connector = on ? null : c),
+                  onTap: () =>
+                      setState(() => _connector = on ? null : c),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 9),
                     decoration: BoxDecoration(
                       color: on ? _emerald : _bgCard,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: on ? _emerald : _bgSurface),
+                      border: Border.all(
+                          color: on ? _emerald : _bgSurface),
                     ),
                     child: Text(
                       c,
                       style: TextStyle(
                         color: on ? Colors.black : _textSec,
-                        fontSize: 13, fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -159,7 +397,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 20),
 
-            // ── Max range ─────────────────────────────────────────────────────
+            // Max range
             const _Label('Max Range at 100% Battery'),
             const SizedBox(height: 8),
             _Field(
@@ -172,9 +410,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 36),
 
-            // ── Save button ───────────────────────────────────────────────────
+            // Save vehicle prefs
             GestureDetector(
-              onTap: _save,
+              onTap: _saveVehiclePrefs,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
                 height: 52,
@@ -184,13 +422,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   border: Border.all(color: _emerald),
                   boxShadow: _saved
                       ? []
-                      : const [BoxShadow(color: Colors.black38, blurRadius: 10, offset: Offset(0, 4))],
+                      : const [
+                          BoxShadow(
+                              color: Colors.black38,
+                              blurRadius: 10,
+                              offset: Offset(0, 4))
+                        ],
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      _saved ? Icons.check_circle_rounded : Icons.save_rounded,
+                      _saved
+                          ? Icons.check_circle_rounded
+                          : Icons.save_rounded,
                       color: _saved ? _emerald : Colors.black,
                       size: 20,
                     ),
@@ -207,6 +452,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
+
+            // Sign out (only when signed in, below the save button)
+            if (_user != null) ...[
+              const SizedBox(height: 20),
+              GestureDetector(
+                onTap: _signOut,
+                child: Container(
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: _bgCard,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                        color: _errorRed.withValues(alpha: 0.5)),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.logout_rounded,
+                          color: _errorRed, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'Sign Out',
+                        style: TextStyle(
+                          color: _errorRed,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -221,12 +499,14 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-    text,
-    style: const TextStyle(
-      color: _textSec, fontSize: 12,
-      fontWeight: FontWeight.w600, letterSpacing: 0.6,
-    ),
-  );
+        text,
+        style: const TextStyle(
+          color: _textSec,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.6,
+        ),
+      );
 }
 
 class _Field extends StatelessWidget {
@@ -238,12 +518,12 @@ class _Field extends StatelessWidget {
     this.suffix,
     this.formatters,
   });
-  final TextEditingController controller;
-  final String hint;
-  final IconData icon;
-  final TextInputType type;
-  final String? suffix;
-  final List<TextInputFormatter>? formatters;
+  final TextEditingController         controller;
+  final String                        hint;
+  final IconData                      icon;
+  final TextInputType                 type;
+  final String?                       suffix;
+  final List<TextInputFormatter>?     formatters;
 
   @override
   Widget build(BuildContext context) {
@@ -260,24 +540,51 @@ class _Field extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
-              controller: controller,
-              keyboardType: type,
+              controller:      controller,
+              keyboardType:    type,
               inputFormatters: formatters,
               style: const TextStyle(color: _textPri, fontSize: 15),
               decoration: InputDecoration(
-                hintText: hint,
-                hintStyle: const TextStyle(color: _textSec, fontSize: 15),
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                hintText:        hint,
+                hintStyle:       const TextStyle(
+                    color: _textSec, fontSize: 15),
+                border:          InputBorder.none,
+                isDense:         true,
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
           ),
           if (suffix != null) ...[
-            Text(suffix!, style: const TextStyle(color: _textSec, fontSize: 13)),
+            Text(suffix!,
+                style: const TextStyle(
+                    color: _textSec, fontSize: 13)),
             const SizedBox(width: 14),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.label, required this.color});
+  final String label;
+  final Color  color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+            color: color, fontSize: 11, fontWeight: FontWeight.w700),
       ),
     );
   }

@@ -1,7 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+
+import 'firebase_options.dart';
+import 'profile_screen.dart';
+import 'screens/auth/login_screen.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:geolocator/geolocator.dart';
@@ -14,13 +20,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app_constants.dart';
 import 'ocm_service.dart';
 import 'places_service.dart';
-import 'profile_screen.dart';
 import 'route_planner_screen.dart';
 import 'routing_service.dart';
 import 'settings_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   PaintingBinding.instance.imageCache.maximumSize = 30;
   PaintingBinding.instance.imageCache.maximumSizeBytes = 10 * 1024 * 1024;
   runApp(const EVChargerApp());
@@ -70,11 +76,12 @@ class EVChargerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'EV Charger Georgia',
+    title: 'GeoCharge',
     debugShowCheckedModeBanner: false,
     theme: ThemeData.dark().copyWith(
       scaffoldBackgroundColor: _bgDark,
       colorScheme: const ColorScheme.dark(primary: _emerald, surface: _bgCard),
+      textTheme: ThemeData.dark().textTheme.apply(fontFamily: 'Noto Sans Georgian'),
     ),
     home: const MapScreen(),
   );
@@ -851,9 +858,17 @@ class _SearchBarWidget extends StatelessWidget {
           const SizedBox(width: 8),
           _IconBtn(
             icon:  Icons.account_circle_outlined,
-            onTap: () => Navigator.push(
-              context, MaterialPageRoute(builder: (_) => const ProfileScreen()),
-            ),
+            onTap: () {
+              final user = FirebaseAuth.instance.currentUser;
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => user == null
+                      ? const LoginScreen()
+                      : const ProfileScreen(),
+                ),
+              );
+            },
           ),
           const SizedBox(width: 8),
         ],
