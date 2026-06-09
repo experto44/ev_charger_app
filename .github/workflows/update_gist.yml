@@ -34,8 +34,9 @@ concurrency:
 jobs:
   update-gist:
     runs-on: ubuntu-latest
-    # Safety ceiling well under GitHub's 6h hard limit; the loop targets ~50 min.
-    timeout-minutes: 55
+    # Safety ceiling under GitHub's 6h hard limit; the loop targets ~5.5h so a
+    # single fire keeps the gist fresh for hours (see the refresh loop below).
+    timeout-minutes: 350
 
     steps:
       - name: Checkout repo
@@ -61,15 +62,19 @@ jobs:
           ECOCARS_PASSWORD:    ${{ secrets.ECOCARS_PASSWORD }}
         run: |
           # ── Internal refresh loop ──────────────────────────────────────────
-          # GitHub's `schedule` event is unreliable (throttled to as little as
-          # once/hour). Rather than update once and exit, one run loops for
-          # ~50 min, updating every 5 min, so data stays fresh between fires.
-          # cancel-in-progress (see top of file) lets a newer fire preempt this.
-          ITERATIONS=10          # ~50 min of coverage at 5-min spacing
-          SLEEP_SECONDS=300
+          # GitHub's `schedule` event is unreliable: throttled to as little as
+          # once/hour, and disabled entirely after 60 days of repo inactivity.
+          # So we do NOT depend on frequent fires — one run loops for ~5.5h
+          # (nearly the full 6h job budget), updating every 3 min, so a single
+          # fire (scheduled OR manual workflow_dispatch) keeps the gist fresh
+          # for hours. cancel-in-progress (top of file) lets a newer fire
+          # preempt this run cleanly, so frequent fires still take over fast.
+          SLEEP_SECONDS=180      # update cadence — matches the app's 3-min poll
+          RUN_SECONDS=19800      # ~5.5h of coverage per fire (well under 6h limit)
+          START=$(date +%s)
           i=1
-          while [ "$i" -le "$ITERATIONS" ]; do
-          echo "::group::Update iteration $i of $ITERATIONS"
+          while :; do
+          echo "::group::Update iteration $i (elapsed $(( $(date +%s) - START ))s)"
           python3 << 'PYEOF'
           import json, os, requests
           from datetime import datetime, timezone
@@ -635,6 +640,10 @@ jobs:
           print(f"✅  Updated {len(stations)} stations — last_updated = {now}")
           PYEOF
           echo "::endgroup::"
-          if [ "$i" -lt "$ITERATIONS" ]; then echo "Sleeping ${SLEEP_SECONDS}s before next update…"; sleep "$SLEEP_SECONDS"; fi
+          if [ "$(( $(date +%s) - START ))" -ge "$RUN_SECONDS" ]; then
+            echo "Reached ${RUN_SECONDS}s of coverage — exiting so the next fire takes over."
+            break
+          fi
+          echo "Sleeping ${SLEEP_SECONDS}s before next update…"; sleep "$SLEEP_SECONDS"
           i=$((i + 1))
           done
