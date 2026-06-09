@@ -98,7 +98,8 @@ class MapScreen extends StatefulWidget {
   State<MapScreen> createState() => _MapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
+class _MapScreenState extends State<MapScreen>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   final _searchCtrl  = TextEditingController();
   final _searchFocus = FocusNode();
   final _mapCtrl     = MapController();
@@ -128,6 +129,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       _selectedProviders.length != _kAllProviders.length;
 
   LatLng?               _userPos;
+  // Live GPS subscription so the location pin follows the device as it moves;
+  // updates _userPos (but never moves the camera — the recenter button does
+  // that on demand). Cancelled in dispose.
+  StreamSubscription<Position>? _posSub;
   LatLng?               _searchDest;          // dropped pin from Places search
   String                _searchDestLabel = '';
   List<Station>         _stations    = const [];
@@ -158,6 +163,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    // Observe app lifecycle so we can refresh the GPS fix on resume — the
+    // device may have moved while the app was backgrounded.
+    WidgetsBinding.instance.addObserver(this);
     _loadPrefs();
     // Station data can load independently of the map controller.
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadStations());
@@ -165,7 +173,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     // without requiring an app restart. Uses the non-clobbering refresh so a
     // transient network failure never wipes the stations already on screen.
     _refreshTimer = Timer.periodic(_kRefreshInterval, (_) => _refreshStations());
-    // _initLocation() is called from MapOptions.onMapReady, which fires only
+    // _locateMe() is called from MapOptions.onMapReady, which fires only
     // after FlutterMap has mounted and the MapController is fully attached.
   }
 
@@ -333,7 +341,17 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     return null;
   }
 
-  Future<void> _initLocation() async {
+  // Acquire (or refresh) the device location and update the user pin. Called on
+  // cold start (onMapReady), on app resume, and by the recenter button — so the
+  // pin and the button always reflect the current position, not a stale fix
+  // from launch. Also starts the live position stream the first time it runs.
+  //
+  //  • recenter — move the camera onto the fix (button + cold start). When false
+  //               (resume) we update the pin only, so we don't yank the user's
+  //               view away from wherever they were looking.
+  //  • animate  — animate the camera move (button) vs. an instant jump (cold
+  //               start, before the map has settled).
+  Future<void> _locateMe({bool recenter = false, bool animate = false}) async {
     try {
       LocationPermission perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
@@ -342,12 +360,20 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       if (perm == LocationPermission.denied ||
           perm == LocationPermission.deniedForever) { return; }
 
-      // ── Step 1: instant center using cached last-known position ───────────
+      void center(LatLng p) {
+        if (!recenter) { return; }
+        if (animate) { _animatedMove(p, 14); } else { _mapCtrl.move(p, 14); }
+      }
+
+      // Keep the live stream running so the pin tracks the device as it moves.
+      _startLocationStream();
+
+      // ── Step 1: instant feedback using the cached last-known position ─────
       final last = await Geolocator.getLastKnownPosition();
       if (last != null && mounted) {
         final latlng = LatLng(last.latitude, last.longitude);
         setState(() => _userPos = latlng);
-        _mapCtrl.move(latlng, 14);
+        center(latlng);
       }
 
       // ── Step 2: refine with a fresh high-accuracy fix ─────────────────────
@@ -360,14 +386,45 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       if (!mounted) { return; }
       final latlng = LatLng(pos.latitude, pos.longitude);
       setState(() => _userPos = latlng);
-      _mapCtrl.move(latlng, 14);
+      center(latlng);
     } catch (_) {
-      // Permission denied or GPS timeout — Tbilisi fallback stays in place.
+      // Permission denied or GPS timeout — keep whatever fix we already have.
+    }
+  }
+
+  // Subscribe once to the OS location stream so the pin follows the device as
+  // it moves while the app is open. distanceFilter throttles updates to every
+  // ~25 m to limit battery use and rebuilds. The camera is left alone — only
+  // the pin moves; the recenter button re-centers on demand.
+  void _startLocationStream() {
+    _posSub ??= Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 25,
+      ),
+    ).listen(
+      (pos) {
+        if (!mounted) { return; }
+        setState(() => _userPos = LatLng(pos.latitude, pos.longitude));
+      },
+      onError: (_) {/* transient GPS error — keep the last fix */},
+    );
+  }
+
+  // Refresh the location fix when the app returns to the foreground; the user
+  // may have physically moved while it was backgrounded. We update the pin but
+  // don't yank the camera — the recenter button handles that on demand.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _locateMe();
     }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _posSub?.cancel();
     _moveAnim?.dispose();
     _searchCtrl.dispose();
     _searchFocus.dispose();
@@ -605,7 +662,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 _mapEventSub ??= _mapCtrl.mapEventStream.listen((_) {
                   _updateCenterInGeorgia();
                 });
-                _initLocation();
+                _locateMe(recenter: true);
                 _loadOcmCountries();
               },
             ),
@@ -818,7 +875,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 const SizedBox(height: 8),
                 // Recenter GPS
                 _MapCtrlButton(
-                  onTap: _userPos == null ? null : () => _animatedMove(_userPos!, 14),
+                  onTap: () => _locateMe(recenter: true, animate: true),
                   icon: Icons.my_location_rounded,
                   iconColor:   _userPos == null ? _textSec : _emerald,
                   borderColor: _userPos == null ? _bgSurface : _emerald,
