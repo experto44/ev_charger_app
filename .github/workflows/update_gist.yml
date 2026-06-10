@@ -40,10 +40,10 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -73,9 +73,16 @@ jobs:
           RUN_SECONDS=19800      # ~5.5h of coverage per fire (well under 6h limit)
           START=$(date +%s)
           i=1
+          FAILS=0                 # consecutive failed iterations
+          MAX_FAILS=5             # fail the whole run only after this many in a row
           while :; do
           echo "::group::Update iteration $i (elapsed $(( $(date +%s) - START ))s)"
-          python3 << 'PYEOF'
+          # One update attempt. A *transient* failure (a slow/blip gist API call,
+          # a network hiccup) must NOT kill this multi-hour run — log it and retry
+          # on the next tick. A *persistent* failure (e.g. a dead token/secret:
+          # MAX_FAILS iterations in a row) still exits non-zero so the run turns
+          # red and notifies us, instead of staying silently green forever.
+          if python3 << 'PYEOF'
           import json, os, requests
           from datetime import datetime, timezone
 
@@ -611,7 +618,7 @@ jobs:
           resp = requests.get(
               f"https://api.github.com/gists/{GIST_ID}",
               headers=headers,
-              timeout=15,
+              timeout=30,
           )
           resp.raise_for_status()
           gist_data = resp.json()
@@ -633,12 +640,24 @@ jobs:
               f"https://api.github.com/gists/{GIST_ID}",
               headers=headers,
               json={"files": files},
-              timeout=15,
+              timeout=30,
           )
           patch.raise_for_status()
 
           print(f"✅  Updated {len(stations)} stations — last_updated = {now}")
           PYEOF
+          then
+            FAILS=0
+          else
+            rc=$?
+            FAILS=$((FAILS + 1))
+            echo "::warning::update iteration $i failed (exit $rc; $FAILS in a row)"
+            if [ "$FAILS" -ge "$MAX_FAILS" ]; then
+              echo "::error::$FAILS consecutive failures (exit $rc) — aborting so it is visible"
+              echo "::endgroup::"
+              exit "$rc"
+            fi
+          fi
           echo "::endgroup::"
           if [ "$(( $(date +%s) - START ))" -ge "$RUN_SECONDS" ]; then
             echo "Reached ${RUN_SECONDS}s of coverage — exiting so the next fire takes over."
