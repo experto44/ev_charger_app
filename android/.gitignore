@@ -11,3 +11,9 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Signing upload certificate (public cert, but keep it out of the repo).
+**/geocharge-upload-cert.pem
+
+# Firebase config — contains project API keys.
+**/google-services.json
