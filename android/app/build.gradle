@@ -26,6 +26,14 @@ if (flutterVersionName == null) {
     flutterVersionName = "1.0"
 }
 
+def keyProperties = new Properties()
+def keyPropertiesFile = rootProject.file("key.properties")
+if (keyPropertiesFile.exists()) {
+    keyPropertiesFile.withReader("UTF-8") { reader ->
+        keyProperties.load(reader)
+    }
+}
+
 android {
     namespace = "ge.geocharge.app"
     compileSdk = flutter.compileSdkVersion
@@ -45,17 +53,26 @@ android {
         applicationId = "ge.geocharge.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdk = flutter.minSdkVersion
+        // google_mobile_ads 5.x requires API 23+; raise the floor above
+        // Flutter's default (21) so the Mobile Ads SDK links correctly.
+        minSdkVersion = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
     }
 
+    signingConfigs {
+        release {
+            keyAlias = keyProperties["keyAlias"]
+            keyPassword = keyProperties["keyPassword"]
+            storeFile = keyProperties["storeFile"] ? file(keyProperties["storeFile"]) : null
+            storePassword = keyProperties["storePassword"]
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            signingConfig = signingConfigs.release
         }
     }
 }

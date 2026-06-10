@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'app_constants.dart';
 import 'l10n/app_strings.dart';
+import 'screens/paywall_screen.dart';
 import 'services/auth_service.dart';
 import 'utils/responsive.dart';
 
@@ -201,6 +202,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 if (mounted) { setState(() {}); }
               },
             ),
+            const SizedBox(height: 24),
+
+            // ── Premium upsell / status ───────────────────────────────────────
+            const PremiumEntryTile(),
             const SizedBox(height: 24),
 
             // ══ AUTH SECTION (only when signed in) ═══════════════════════════

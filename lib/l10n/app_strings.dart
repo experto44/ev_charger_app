@@ -107,6 +107,14 @@ class AppStrings {
   static String get addStop =>
       isGeorgian ? 'გაჩერების დამატება' : 'Add stop';
 
+  // ── Premium / subscriptions ──────────────────────────────────────────────
+  static String get getPremium =>
+      isGeorgian ? 'გახდი Premium' : 'Get Premium';
+  static String get premiumActive => 'Premium ✓';
+  static String get premiumSubtitle => isGeorgian
+      ? 'რეკლამების გარეშე — 7 დღე უფასოდ'
+      : 'Remove ads — 7-day free trial';
+
   // ── Station detail ─────────────────────────────────────────────────────────
   static String get providerLastCheck => isGeorgian
       ? 'პროვაიდერის ბოლო შემოწმება — არა რეალურ დროში'
