@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/auth_service.dart';
+import '../../utils/responsive.dart';
 import 'verify_email_screen.dart';
 
 const _bgDark    = Color(0xFF1A1A1A);
@@ -85,7 +86,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: CenteredConstrained(
+          maxWidth: 400,
+          child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 28),
           child: Form(
             key: _formKey,
@@ -238,6 +241,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ],
             ),
           ),
+        ),
         ),
       ),
     );

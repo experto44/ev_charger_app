@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'app_constants.dart';
 import 'l10n/app_strings.dart';
 import 'services/auth_service.dart';
+import 'utils/responsive.dart';
 
 // ── Palette (mirrors main.dart) ───────────────────────────────────────────────
 const _bgDark    = Color(0xFF1A1A1A);
@@ -186,7 +187,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: _textPri, fontSize: 17, fontWeight: FontWeight.w600)),
         ),
       ),
-      body: AppStrings.wrap(SingleChildScrollView(
+      body: AppStrings.wrap(CenteredConstrained(child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 28, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -606,7 +607,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ],
         ),
-      )),
+      ))),
     );
   }
 }

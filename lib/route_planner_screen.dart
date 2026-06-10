@@ -11,6 +11,7 @@ import 'l10n/app_strings.dart';
 import 'places_service.dart';
 import 'profile_screen.dart';
 import 'routing_service.dart';
+import 'utils/responsive.dart';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 const _bgDark    = Color(0xFF1A1A1A);
@@ -381,7 +382,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
       // screen (where the toggle lives) in the navigation stack.
       body: ValueListenableBuilder<bool>(
         valueListenable: AppStrings.notifier,
-        builder: (context, _, __) => AppStrings.wrap(Column(
+        builder: (context, _, __) => AppStrings.wrap(CenteredConstrained(child: Column(
         children: [
           Expanded(
             child: SingleChildScrollView(
@@ -449,7 +450,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
             onPlanRoute:   allResolved ? _planRoute : null,
           ),
         ],
-      )),
+      ))),
       ),
     );
   }

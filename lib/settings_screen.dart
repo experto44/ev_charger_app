@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app_constants.dart';
+import 'utils/responsive.dart';
 
 // ── Palette (mirrors main.dart) ───────────────────────────────────────────────
 const _bgDark    = Color(0xFF1A1A1A);
@@ -69,7 +70,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const Text('Settings',
             style: TextStyle(color: _textPri, fontSize: 17, fontWeight: FontWeight.w600)),
       ),
-      body: SingleChildScrollView(
+      body: CenteredConstrained(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,6 +116,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             }),
           ],
         ),
+      ),
       ),
     );
   }

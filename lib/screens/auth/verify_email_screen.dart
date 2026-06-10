@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/app_strings.dart';
 import '../../services/auth_service.dart';
+import '../../utils/responsive.dart';
 
 const _bgDark    = Color(0xFF1A1A1A);
 const _bgCard    = Color(0xFF252525);
@@ -103,7 +104,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     return Scaffold(
       backgroundColor: _bgDark,
       body: SafeArea(
-        child: Padding(
+        child: CenteredConstrained(
+          maxWidth: 400,
+          child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -270,6 +273,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               const SizedBox(height: 40),
             ],
           ),
+        ),
         ),
       ),
     );

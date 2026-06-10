@@ -25,6 +25,7 @@ import 'places_service.dart';
 import 'route_planner_screen.dart';
 import 'routing_service.dart';
 import 'settings_screen.dart';
+import 'utils/responsive.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -641,10 +642,16 @@ class _MapScreenState extends State<MapScreen>
     final carouselVisible  = !_loading && _centerInGeorgia && localStations.isNotEmpty;
     final controlsBottom   = (carouselVisible ? 300.0 : 130.0) + navBottom;
     return Scaffold(
-      body: Stack(
-        children: [
-          // ── Map ──────────────────────────────────────────────────────────────
-          FlutterMap(
+      body: Responsive.isWide(context)
+          ? _buildWideBody(stations, localStations, navBottom)
+          : _buildPhoneBody(
+              stations, localStations, controlsBottom, carouselVisible),
+    );
+  }
+
+  // ── Map layer (shared by both layouts) ────────────────────────────────────
+  Widget _buildMap(List<Station> stations) {
+    return FlutterMap(
             mapController: _mapCtrl,
             options: MapOptions(
               initialCenter: _tbilisi,
@@ -759,13 +766,12 @@ class _MapScreenState extends State<MapScreen>
                   ),
                 ]),
             ],
-          ),
+    );
+  }
 
-          // ── Search bar + suggestions + filter chips ───────────────────────
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Column(
+  // ── Search bar + suggestions + filter chips (shared by both layouts) ──────
+  Widget _buildSearchColumn() {
+    return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _SearchBarWidget(
@@ -825,19 +831,15 @@ class _MapScreenState extends State<MapScreen>
                     ),
                   ],
                 ],
-              ),
-            ),
-          ),
+    );
+  }
 
-          // ── Right control column (bottom-anchored, grouped) ───────────────
-          // A single bottom-anchored Column keeps the map-style toggle, provider
-          // filter, zoom, route and GPS buttons perfectly grouped at uniform
-          // spacing on ANY screen height — no fragile hardcoded offsets. The
-          // group is anchored just above the station carousel; it grows upward.
-          Positioned(
-            right:  16,
-            bottom: controlsBottom,
-            child: Column(
+  // ── Right-side map control buttons (shared by both layouts) ───────────────
+  // A single bottom-anchored Column keeps the map-style toggle, provider
+  // filter, zoom, route and GPS buttons perfectly grouped at uniform spacing
+  // on ANY screen height — no fragile hardcoded offsets.
+  Widget _buildControlsColumn() {
+    return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Map style toggle (Light ↔ Dark)
@@ -882,34 +884,137 @@ class _MapScreenState extends State<MapScreen>
                   bgColor:     _userPos == null ? _bgSurface : _bgCard,
                 ),
               ],
-            ),
-          ),
+    );
+  }
 
-          // ── Bottom panel: local station carousel ──────────────────────────
-          // Only shown while loading or while centred on Georgia with local
-          // stations to list — hidden entirely on international/away views.
-          if (_loading)
-            const Positioned(
-              left: 0, right: 0, bottom: 0,
-              child: SizedBox(
-                height: 120,
-                child: Center(
-                  child: SizedBox(
-                    width: 24, height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: _emerald),
-                  ),
+  // ── Phone layout: full-screen map with floating overlays (unchanged) ──────
+  Widget _buildPhoneBody(
+    List<Station> stations,
+    List<Station> localStations,
+    double controlsBottom,
+    bool carouselVisible,
+  ) {
+    return Stack(
+      children: [
+        _buildMap(stations),
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: _buildSearchColumn(),
+          ),
+        ),
+        Positioned(
+          right: 16,
+          bottom: controlsBottom,
+          child: _buildControlsColumn(),
+        ),
+        // ── Bottom panel: local station carousel ──────────────────────────
+        // Only shown while loading or while centred on Georgia with local
+        // stations to list — hidden entirely on international/away views.
+        if (_loading)
+          const Positioned(
+            left: 0, right: 0, bottom: 0,
+            child: SizedBox(
+              height: 120,
+              child: Center(
+                child: SizedBox(
+                  width: 24, height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: _emerald),
                 ),
               ),
-            )
-          else if (carouselVisible)
-            Positioned(
-              left: 0, right: 0, bottom: 0,
-              child: _StationCarousel(
-                stations:    localStations,
-                onPlanAndGo: _pushRoutePlannerTo,
-              ),
             ),
+          )
+        else if (carouselVisible)
+          Positioned(
+            left: 0, right: 0, bottom: 0,
+            child: _StationCarousel(
+              stations:    localStations,
+              onPlanAndGo: _pushRoutePlannerTo,
+            ),
+          ),
+      ],
+    );
+  }
+
+  // ── Tablet / landscape layout: left list panel + map on the right ─────────
+  Widget _buildWideBody(
+    List<Station> stations,
+    List<Station> localStations,
+    double navBottom,
+  ) {
+    final panelW = Responsive.sidePanelWidth(context);
+    return SafeArea(
+      child: Row(
+        children: [
+          // LEFT — search bar, filter chips, vertical station list
+          Container(
+            width: panelW,
+            color: _bgDark,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                  child: _buildSearchColumn(),
+                ),
+                const SizedBox(height: 10),
+                Expanded(child: _buildSidePanelList(localStations, navBottom)),
+              ],
+            ),
+          ),
+          const VerticalDivider(width: 1, thickness: 1, color: _bgSurface),
+          // RIGHT — map fills the rest, controls float over it
+          Expanded(
+            child: Stack(
+              children: [
+                _buildMap(stations),
+                Positioned(
+                  right: 16,
+                  bottom: 24 + navBottom,
+                  child: _buildControlsColumn(),
+                ),
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  // Vertical station list shown in the left panel on wide screens. Each card
+  // is full-panel-width with a fixed height so the stacked action buttons
+  // never overlap and the inner Spacer has a bounded extent.
+  Widget _buildSidePanelList(List<Station> localStations, double navBottom) {
+    if (_loading) {
+      return const Center(
+        child: SizedBox(
+          width: 24, height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2, color: _emerald),
+        ),
+      );
+    }
+    if (localStations.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'No local stations in view.\nPan the map over Georgia to see them here.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: _textSec, fontSize: 13, height: 1.5),
+          ),
+        ),
+      );
+    }
+    return ListView.separated(
+      padding: EdgeInsets.fromLTRB(12, 4, 12, 16 + navBottom),
+      itemCount: localStations.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (_, i) => SizedBox(
+        height: 256,
+        child: _StationCard(
+          localStations[i],
+          width: double.infinity,
+          onPlanAndGo: () => _pushRoutePlannerTo(localStations[i]),
+        ),
       ),
     );
   }
@@ -1383,9 +1488,12 @@ class _StationCarousel extends StatelessWidget {
 
 // ── Station card ──────────────────────────────────────────────────────────────
 class _StationCard extends StatelessWidget {
-  const _StationCard(this.s, {this.onPlanAndGo});
+  const _StationCard(this.s, {this.onPlanAndGo, this.width = 170});
   final Station      s;
   final VoidCallback? onPlanAndGo;
+  /// Fixed card width in the horizontal carousel; `double.infinity` lets the
+  /// card fill the left panel in the wide (tablet/landscape) layout.
+  final double width;
 
   Color get _statusColor {
     if (s.available == 0) { return _textSec; }
@@ -1397,7 +1505,7 @@ class _StationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final avail = s.available > 0;
     return Container(
-      width: 170,
+      width: width,
       padding: const EdgeInsets.all(14),
       clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(

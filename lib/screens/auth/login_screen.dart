@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/auth_service.dart';
+import '../../utils/responsive.dart';
 import 'register_screen.dart';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
@@ -102,7 +103,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: _bgDark,
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: CenteredConstrained(
+          maxWidth: 400,
+          child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 28),
           child: Form(
             key: _formKey,
@@ -236,6 +239,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
           ),
+        ),
         ),
       ),
     );

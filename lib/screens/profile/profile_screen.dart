@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../services/auth_service.dart';
+import '../../utils/responsive.dart';
 
 const _bgDark    = Color(0xFF1A1A1A);
 const _bgCard    = Color(0xFF252525);
@@ -103,7 +104,8 @@ class _AuthProfileScreenState extends State<AuthProfileScreen> {
           ? const Center(
               child: CircularProgressIndicator(color: _emerald, strokeWidth: 2),
             )
-          : SingleChildScrollView(
+          : CenteredConstrained(
+              child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 32, 20, 40),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,6 +336,7 @@ class _AuthProfileScreenState extends State<AuthProfileScreen> {
                   ),
                 ],
               ),
+            ),
             ),
     );
   }
