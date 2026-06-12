@@ -30,6 +30,11 @@ class PurchaseService {
   final InAppPurchase _iap = InAppPurchase.instance;
   StreamSubscription<List<PurchaseDetails>>? _sub;
 
+  /// Set true the moment the store replays/confirms an owned subscription for
+  /// this session. Used by [_reconcileEntitlement] to tell "really owns premium"
+  /// apart from "stale cached flag".
+  bool _ownedSeen = false;
+
   /// True while the user holds an active premium subscription. Listened to by
   /// the ad layer, settings and profile screens, and the paywall.
   final ValueNotifier<bool> isPremium = ValueNotifier<bool>(false);
@@ -82,6 +87,39 @@ class PurchaseService {
 
     // 4. Load product details for the paywall.
     await loadProducts();
+
+    // 5. Reconcile the cached entitlement against the store. The cached flag is
+    //    only an instant-UI hint, NOT proof of an active subscription: a trial
+    //    or sub that was later canceled/expired would otherwise keep premium
+    //    (and suppress ads) forever. If we still think we're premium, ask the
+    //    store to replay owned purchases and revoke if none come back.
+    if (isPremium.value) {
+      unawaited(_reconcileEntitlement());
+    }
+  }
+
+  /// Confirm a cached `premium=true` really reflects an owned subscription.
+  /// Triggers a silent restore and, if the store replays no owned purchase
+  /// within a short window, downgrades to free and clears the cache. Conservative
+  /// by design: only ever downgrades when the store is reachable and the restore
+  /// request itself succeeds, so a paying user is never flipped to free on a
+  /// transient/offline blip (they keep the cached premium until a clean check).
+  Future<void> _reconcileEntitlement() async {
+    if (!storeAvailable.value) return;
+    _ownedSeen = false;
+    try {
+      await _iap.restorePurchases();
+    } catch (_) {
+      return; // store hiccup — keep the cached flag, re-check next launch
+    }
+    // Owned purchases replay on the purchase stream right after the request;
+    // give them time to arrive before concluding nothing is owned.
+    await Future<void>.delayed(const Duration(seconds: 8));
+    if (!_ownedSeen) {
+      isPremium.value = false;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_prefsKey, false);
+    }
   }
 
   /// Query (or re-query) the two subscription products from the store.
@@ -119,13 +157,18 @@ class PurchaseService {
     for (final purchase in purchases) {
       switch (purchase.status) {
         case PurchaseStatus.pending:
-          // Payment in progress — nothing to grant yet.
+          // Payment in progress (e.g. the Play sheet is open). NOT a completed
+          // transaction — never grant premium here. Dismissing the sheet without
+          // paying resolves to canceled/error below, which also grants nothing.
           break;
 
         case PurchaseStatus.purchased:
         case PurchaseStatus.restored:
+          // The only paths that confer entitlement: a completed new purchase or
+          // a store-confirmed owned subscription, and only after validation.
           if (_productIds.contains(purchase.productID) &&
               await _isValid(purchase)) {
+            _ownedSeen = true; // store confirms an active owned subscription
             await _grantPremium();
           }
           await _finish(purchase);
@@ -133,8 +176,8 @@ class PurchaseService {
 
         case PurchaseStatus.error:
         case PurchaseStatus.canceled:
-          // Don't change premium state; just acknowledge so the platform
-          // doesn't keep re-delivering the pending transaction.
+          // User dismissed the sheet or the flow failed. Do NOT touch premium;
+          // just acknowledge so the platform stops re-delivering the transaction.
           await _finish(purchase);
           break;
       }

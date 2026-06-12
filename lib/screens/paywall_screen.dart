@@ -14,9 +14,23 @@ const _teal      = Color(0xFF1DE9B6);
 const _textPri   = Color(0xFFFFFFFF);
 const _textSec   = Color(0xFF9E9E9E);
 
-/// Fallback prices shown until the real store prices load.
-const _kMonthlyFallback = '₾1';
-const _kYearlyFallback  = '₾9.99';
+/// Fallback prices shown until the real store prices load (Play Console base
+/// plan amounts). Live prices come from the store product details, so these are
+/// only seen briefly offline / before the query returns.
+const _kMonthlyFallback = '1 ₾';
+const _kYearlyFallback  = '9.99 ₾';
+
+/// Formats a store [ProductDetails] into "<amount> ₾" using the live `rawPrice`
+/// (so it tracks any future price change in Play Console). Whole amounts drop
+/// the decimals: 1.0 → "1 ₾", 9.99 → "9.99 ₾". Falls back to [fallback] when the
+/// product hasn't loaded yet.
+String _storePrice(ProductDetails? p, String fallback) {
+  if (p == null) return fallback;
+  final v = p.rawPrice;
+  final amount =
+      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
+  return '$amount ₾';
+}
 
 class PaywallScreen extends StatefulWidget {
   const PaywallScreen({super.key});
@@ -185,16 +199,20 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 children: [
                   _PlanCard(
                     title: 'წლიური',
-                    price: _svc.yearlyProduct?.price ?? _kYearlyFallback,
+                    price: _storePrice(_svc.yearlyProduct, _kYearlyFallback),
                     period: '/წელი',
-                    highlighted: true,
+                    // Both plans use the same neutral/dark style: tapping either
+                    // opens the Play purchase sheet immediately, so a "selected"
+                    // highlight on yearly would be misleading. The -17% ribbon
+                    // stays — it's a value cue, not a selection indicator.
+                    highlighted: false,
                     ribbon: '-17%',
                     onTap: () => _buy(_svc.yearlyProduct),
                   ),
                   const SizedBox(height: 14),
                   _PlanCard(
                     title: 'ყოველთვიური',
-                    price: _svc.monthlyProduct?.price ?? _kMonthlyFallback,
+                    price: _storePrice(_svc.monthlyProduct, _kMonthlyFallback),
                     period: '/თვე',
                     highlighted: false,
                     onTap: () => _buy(_svc.monthlyProduct),
