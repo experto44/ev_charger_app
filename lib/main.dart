@@ -798,6 +798,21 @@ class _MapScreenState extends State<MapScreen>
                     const SizedBox(height: 4),
                     _SuggestionsList(suggestions: _suggestions, onTap: _onSuggestionSelected),
                   ],
+                  // Free-tier top banner, just below the search bar. Hidden for
+                  // premium users (and before the SDK loads); rebuilds when
+                  // premium changes, mirroring the bottom banner.
+                  ValueListenableBuilder<bool>(
+                    valueListenable: PurchaseService.I.isPremium,
+                    builder: (_, __, ___) {
+                      final banner = AdService.I.topBanner();
+                      return banner == null
+                          ? const SizedBox.shrink()
+                          : Padding(
+                              padding: const EdgeInsets.only(top: 10),
+                              child: banner,
+                            );
+                    },
+                  ),
                   const SizedBox(height: 10),
                   _FilterChips(
                     filterDC:         _filterDC,

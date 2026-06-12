@@ -59,6 +59,16 @@ class AdService {
     return const _AdBanner(adUnitId: _kBannerAdUnitId);
   }
 
+  /// A banner for the top of the free-tier map screen (placed below the search
+  /// bar). Same gating as [bottomBanner] — returns `null` for premium users, an
+  /// unconfigured unit, or before the SDK is initialised — so it disappears the
+  /// moment premium is granted. Loads its own [BannerAd] independently of the
+  /// bottom banner.
+  Widget? topBanner() {
+    if (!_adsAllowed || !bannerConfigured || !_initialized) return null;
+    return const _AdBanner(adUnitId: _kBannerAdUnitId);
+  }
+
   // ── Interstitial ─────────────────────────────────────────────────────────
   void _preloadInterstitial() {
     if (!interstitialConfigured || !_adsAllowed) return;

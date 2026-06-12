@@ -119,4 +119,34 @@ class AppStrings {
   static String get providerLastCheck => isGeorgian
       ? 'პროვაიდერის ბოლო შემოწმება — არა რეალურ დროში'
       : "Provider's last server check — not real-time";
+
+  // ── Paywall ──────────────────────────────────────────────────────────────
+  static String get paywallSubtitle => isGeorgian
+      ? 'უფასო 7 დღე, შემდეგ აირჩიე გეგმა'
+      : '7 days free, then choose a plan';
+  static String get benefitNoAds =>
+      isGeorgian ? 'რეკლამების გარეშე' : 'Ad-free';
+  static String get benefitFullAccess => isGeorgian
+      ? 'სრული წვდომა ყველა ფუნქციაზე'
+      : 'Full access to all features';
+  static String get benefitSupport =>
+      isGeorgian ? 'მხარდაჭერა გუნდისთვის' : 'Support the team';
+  static String get planYearly => isGeorgian ? 'წლიური' : 'Yearly';
+  static String get planMonthly => isGeorgian ? 'ყოველთვიური' : 'Monthly';
+  static String get perYear => isGeorgian ? '/წელი' : '/yr';
+  static String get perMonth => isGeorgian ? '/თვე' : '/mo';
+  static String get freeTrialBadge => isGeorgian ? '7 დღე უფასოდ' : '7 days free';
+  static String get continueFree => isGeorgian
+      ? 'გააგრძელე რეკლამებით უფასოდ'
+      : 'Continue free with ads';
+  static String get restorePurchases =>
+      isGeorgian ? 'შესყიდვების აღდგენა' : 'Restore purchases';
+  static String get storeUnavailable => isGeorgian
+      ? 'მაღაზია მიუწვდომელია — სცადეთ მოგვიანებით'
+      : 'Store unavailable — please try again later';
+  static String get purchaseFailed =>
+      isGeorgian ? 'შესყიდვა ვერ მოხერხდა' : 'Purchase failed';
+  static String get noActiveSubscription => isGeorgian
+      ? 'აქტიური გამოწერა ვერ მოიძებნა'
+      : 'No active subscription found';
 }

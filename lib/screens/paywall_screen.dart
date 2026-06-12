@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../l10n/app_strings.dart';
@@ -71,14 +70,14 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   Future<void> _buy(ProductDetails? product) async {
     if (product == null || _busy) {
-      if (product == null) _snack('მაღაზია მიუწვდომელია — სცადეთ მოგვიანებით');
+      if (product == null) _snack(AppStrings.storeUnavailable);
       return;
     }
     setState(() => _busy = true);
     try {
       await _svc.buy(product);
     } catch (_) {
-      _snack('შესყიდვა ვერ მოხერხდა');
+      _snack(AppStrings.purchaseFailed);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -91,14 +90,14 @@ class _PaywallScreenState extends State<PaywallScreen> {
     if (mounted) {
       setState(() => _busy = false);
       if (!_svc.isPremium.value) {
-        _snack('აქტიური გამოწერა ვერ მოიძებნა');
+        _snack(AppStrings.noActiveSubscription);
       }
     }
   }
 
   void _snack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: GoogleFonts.notoSansGeorgian()),
+      content: Text(msg, style: AppStrings.font()),
       backgroundColor: _bgCard,
     ));
   }
@@ -107,9 +106,11 @@ class _PaywallScreenState extends State<PaywallScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bgDark,
-      // Force the Georgian face for the whole paywall (Georgian-only screen).
+      // Respect the app language: Noto Sans Georgian face when Georgian is
+      // active, the default face otherwise. The white default colour is kept in
+      // both cases so descendant Text without an explicit colour stays readable.
       body: DefaultTextStyle.merge(
-        style: GoogleFonts.notoSansGeorgian(color: _textPri),
+        style: AppStrings.font(const TextStyle(color: _textPri)),
         child: SafeArea(
           child: CenteredConstrained(
             maxWidth: 500,
@@ -174,18 +175,18 @@ class _PaywallScreenState extends State<PaywallScreen> {
           ),
           const SizedBox(height: 8),
 
-          // Georgian subtitle
-          const Text(
-            'უფასო 7 დღე, შემდეგ აირჩიე გეგმა',
+          // Subtitle
+          Text(
+            AppStrings.paywallSubtitle,
             textAlign: TextAlign.center,
-            style: TextStyle(color: _textSec, fontSize: 14, height: 1.5),
+            style: const TextStyle(color: _textSec, fontSize: 14, height: 1.5),
           ),
           const SizedBox(height: 22),
 
           // Benefits
-          const _Benefit('რეკლამების გარეშე'),
-          const _Benefit('სრული წვდომა ყველა ფუნქციაზე'),
-          const _Benefit('მხარდაჭერა გუნდისთვის'),
+          _Benefit(AppStrings.benefitNoAds),
+          _Benefit(AppStrings.benefitFullAccess),
+          _Benefit(AppStrings.benefitSupport),
           const SizedBox(height: 22),
 
           // Plan cards — rebuild as store prices arrive.
@@ -201,9 +202,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
               return Column(
                 children: [
                   _PlanCard(
-                    title: 'წლიური',
+                    title: AppStrings.planYearly,
                     price: _storePrice(_svc.yearlyProduct, _kYearlyFallback),
-                    period: '/წელი',
+                    period: AppStrings.perYear,
                     // Both plans use the same neutral/dark style: tapping either
                     // opens the Play purchase sheet immediately, so a "selected"
                     // highlight on yearly would be misleading. The -17% ribbon
@@ -214,9 +215,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   ),
                   const SizedBox(height: 14),
                   _PlanCard(
-                    title: 'ყოველთვიური',
+                    title: AppStrings.planMonthly,
                     price: _storePrice(_svc.monthlyProduct, _kMonthlyFallback),
-                    period: '/თვე',
+                    period: AppStrings.perMonth,
                     highlighted: false,
                     onTap: () => _buy(_svc.monthlyProduct),
                   ),
@@ -229,9 +230,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
           // Continue free (with ads) — just dismiss.
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(
-              'გააგრძელე რეკლამებით უფასოდ',
-              style: TextStyle(
+            child: Text(
+              AppStrings.continueFree,
+              style: const TextStyle(
                 color: _textSec, fontSize: 14, fontWeight: FontWeight.w600),
             ),
           ),
@@ -239,9 +240,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
           // Restore purchases
           TextButton(
             onPressed: _restore,
-            child: const Text(
-              'შესყიდვების აღდგენა',
-              style: TextStyle(color: _teal, fontSize: 13),
+            child: Text(
+              AppStrings.restorePurchases,
+              style: const TextStyle(color: _teal, fontSize: 13),
             ),
           ),
         ],
@@ -410,8 +411,8 @@ class _PlanCard extends StatelessWidget {
                       color: _teal.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text('7 დღე უფასოდ',
-                        style: TextStyle(
+                    child: Text(AppStrings.freeTrialBadge,
+                        style: const TextStyle(
                             color: _teal,
                             fontSize: 11,
                             fontWeight: FontWeight.w700)),
