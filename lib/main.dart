@@ -10,6 +10,7 @@ import 'firebase_options.dart';
 import 'l10n/app_strings.dart';
 import 'profile_screen.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/support_popup.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:geolocator/geolocator.dart';
@@ -53,11 +54,6 @@ const _textSec   = Color(0xFF9E9E9E);
 // Fallback centre used only when GPS is unavailable
 const _tbilisi = LatLng(41.7151, 44.8271);
 
-// Approx vertical space the top banner ad occupies (AdSize.banner 50dp + the
-// 10dp gap above it). Used to push the right control column down so its top
-// buttons never overlap the filter chips when the ad is shown.
-const double _kTopBannerHeight = 60;
-
 // Known providers, in display order. "All selected" is the default (no filter).
 // Local Georgian providers + a single "International" group for all Open Charge
 // Map networks (so international chargers never clutter the local provider list).
@@ -79,6 +75,11 @@ const _kGistUrl =
 
 // ── Navigate to coordinates in Google Maps ────────────────────────────────────
 Future<void> _navigate(double lat, double lng) async {
+  // Free tier sees an interstitial right before the navigation flow begins;
+  // premium users are never shown one (respects the existing premium logic).
+  if (!PurchaseService.I.isPremium.value) {
+    AdService.I.maybeShowInterstitial();
+  }
   final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
   if (await canLaunchUrl(uri)) {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -202,14 +203,35 @@ class _MapScreenState extends State<MapScreen>
     // device may have moved while the app was backgrounded.
     WidgetsBinding.instance.addObserver(this);
     _loadPrefs();
-    // Station data can load independently of the map controller.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadStations());
+    // Station data can load independently of the map controller. The daily
+    // support/premium popup is also kicked off here, once the first frame is up.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadStations();
+      _maybeShowSupportPopup();
+    });
     // Re-poll the live feed every few minutes so availability stays current
     // without requiring an app restart. Uses the non-clobbering refresh so a
     // transient network failure never wipes the stations already on screen.
     _refreshTimer = Timer.periodic(_kRefreshInterval, (_) => _refreshStations());
     // _locateMe() is called from MapOptions.onMapReady, which fires only
     // after FlutterMap has mounted and the MapController is fully attached.
+  }
+
+  // Friendly daily Support/Premium prompt. Shown ONLY to non-premium users, and
+  // at most once every 24h (the last-shown epoch ms is persisted in
+  // SharedPreferences). The timestamp is written when we decide to show, so a
+  // quick dismiss still suppresses it for the next 24h.
+  Future<void> _maybeShowSupportPopup() async {
+    // Eligibility: never for premium users.
+    if (PurchaseService.I.isPremium.value) { return; }
+    final p      = await SharedPreferences.getInstance();
+    final lastMs = p.getInt(kSupportPopupLastShown) ?? 0;
+    final nowMs  = DateTime.now().millisecondsSinceEpoch;
+    if (nowMs - lastMs < const Duration(hours: 24).inMilliseconds) { return; }
+    if (!mounted) { return; }
+    await p.setInt(kSupportPopupLastShown, nowMs);
+    if (!mounted) { return; }
+    await showSupportPopup(context);
   }
 
   // Apply the profile's default connector + the saved country selection. The
@@ -693,9 +715,7 @@ class _MapScreenState extends State<MapScreen>
     // Bound the right control column below the search-bar/chips block (plus the
     // top banner ad when it's shown) so its top buttons never overlap the chips.
     // The column stays bottom-anchored and scrolls if vertical space is tight.
-    final topAdShown       = AdService.I.topBanner() != null;
-    final topControlsBound = MediaQuery.of(context).padding.top +
-        140 + (topAdShown ? _kTopBannerHeight : 0);
+    final topControlsBound = MediaQuery.of(context).padding.top + 140;
     return Scaffold(
       // Free-tier banner — rebuilds (and disappears) when premium is granted.
       // Returns an empty box when premium or no ad unit is configured.
@@ -847,21 +867,7 @@ class _MapScreenState extends State<MapScreen>
                     const SizedBox(height: 4),
                     _SuggestionsList(suggestions: _suggestions, onTap: _onSuggestionSelected),
                   ],
-                  // Free-tier top banner, just below the search bar. Hidden for
-                  // premium users (and before the SDK loads); rebuilds when
-                  // premium changes, mirroring the bottom banner.
-                  ValueListenableBuilder<bool>(
-                    valueListenable: PurchaseService.I.isPremium,
-                    builder: (_, __, ___) {
-                      final banner = AdService.I.topBanner();
-                      return banner == null
-                          ? const SizedBox.shrink()
-                          : Padding(
-                              padding: const EdgeInsets.only(top: 10),
-                              child: banner,
-                            );
-                    },
-                  ),
+                  // Top banner ad removed — only the bottom banner remains.
                   const SizedBox(height: 10),
                   _FilterChips(
                     filterDC:         _filterDC,

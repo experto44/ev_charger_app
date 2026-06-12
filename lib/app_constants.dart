@@ -3,6 +3,7 @@
 // ── SharedPreferences keys ────────────────────────────────────────────────────
 const kDefaultConnector = 'default_connector';   // String: one connector label
 const kActiveCountries  = 'active_countries';     // JSON list of country names
+const kSupportPopupLastShown = 'support_popup_last_shown'; // int: epoch ms of last show
 
 // ── Connector display order ───────────────────────────────────────────────────
 // Canonical order used EVERYWHERE connectors are shown (filter chips, profile

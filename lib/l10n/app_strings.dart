@@ -115,6 +115,20 @@ class AppStrings {
       ? 'რეკლამების გარეშე — 7 დღე უფასოდ'
       : 'Remove ads — 7-day free trial';
 
+  // ── Support / daily premium popup ────────────────────────────────────────
+  static String get supportTitle => isGeorgian
+      ? '⚡ დაუდექი პროექტს გვერდში!'
+      : '⚡ Support the Project!';
+  static String get supportBody => isGeorgian
+      ? 'გინდა გამოიყენო აპლიკაცია სრულიად უფასოდ? პრობლემა არ არის! უბრალოდ, ხანდახან რეკლამებით შეგახსენებთ თავს. :)\n\nმაგრამ, თუ გსურს დამტენები სუპერ-სუფთა ეკრანზე, ყოველგვარი რეკლამების გარეშე ნახო, გახდი პრემიუმი თვეში სულ რაღაც 1 ლარად და დაგვეხმარე პროექტის განვითარებაში.'
+      : "Want to use the app completely free? No problem at all! We'll just pop up a few ads here and there to keep the lights on. :)\n\nBut if you prefer looking at chargers on a super-clean screen with zero ads, go Premium for just 1 GEL/month and help us grow!";
+  static String get supportGoAdFree => isGeorgian
+      ? '🚀 რეკლამების გათიშვა (1 ₾)'
+      : '🚀 Go Ad-Free (1 GEL)';
+  static String get supportWatchAds => isGeorgian
+      ? '☕ არაუშავს, ვუყურებ რეკლამებს'
+      : "☕ It's fine, I'll watch ads";
+
   // ── Station detail ─────────────────────────────────────────────────────────
   static String get providerLastCheck => isGeorgian
       ? 'პროვაიდერის ბოლო შემოწმება — არა რეალურ დროში'
