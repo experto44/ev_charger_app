@@ -14,19 +14,22 @@ const _teal      = Color(0xFF1DE9B6);
 const _textPri   = Color(0xFFFFFFFF);
 const _textSec   = Color(0xFF9E9E9E);
 
-/// Fallback prices shown until the real store prices load (Play Console base
-/// plan amounts). Live prices come from the store product details, so these are
-/// only seen briefly offline / before the query returns.
+/// Hardcoded fallback prices, used whenever the live store price is unavailable
+/// (product not loaded, offline, or the store returns 0 / an invalid amount).
+/// These are amount-only; the plan card appends the period, so the rendered
+/// fallback reads "1 ₾/თვე" (monthly) and "9.99 ₾/წელი" (yearly).
 const _kMonthlyFallback = '1 ₾';
 const _kYearlyFallback  = '9.99 ₾';
 
 /// Formats a store [ProductDetails] into "<amount> ₾" using the live `rawPrice`
 /// (so it tracks any future price change in Play Console). Whole amounts drop
 /// the decimals: 1.0 → "1 ₾", 9.99 → "9.99 ₾". Falls back to [fallback] when the
-/// product hasn't loaded yet.
+/// product hasn't loaded (null) or the store reports an unusable price (≤ 0 or
+/// non-finite), so the paywall never shows "0 ₾".
 String _storePrice(ProductDetails? p, String fallback) {
   if (p == null) return fallback;
   final v = p.rawPrice;
+  if (v <= 0 || !v.isFinite) return fallback;
   final amount =
       v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
   return '$amount ₾';
