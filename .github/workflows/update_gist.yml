@@ -580,6 +580,84 @@ jobs:
               print(f"EcoCars: {len(stations)} stations")
               return stations
 
+          # ── Solar Station (custom OCPP backend — public, no auth needed) ───
+          # Solar Station runs its own NestJS backend. GET /chargers returns the
+          # full charger list (public, no token required). Each record is one
+          # physical charger (not a multi-charger location), so we map 1:1.
+          # `connectors[].type` is already a chip label ("GB/T"/"CCS2"/"Type 2").
+          # DC vs AC: CCS2 is always DC; GB/T ships in slow-AC (≤11 kW) and fast-DC
+          # variants, so we key off power — ≥20 kW ⇒ DC, which cleanly separates
+          # the 7/11 kW AC units from the 40–160 kW DC ones.
+          def fetch_solarstation():
+              base = "https://charger.solarauto.ge"
+              r = requests.get(f"{base}/chargers", timeout=60)
+              r.raise_for_status()
+              raw = r.json()
+
+              CONN_MAP = {
+                  "ccs": "CCS2", "ccs2": "CCS2", "combo2": "CCS2",
+                  "ccs1": "CCS1", "combo1": "CCS1",
+                  "chademo": "CHAdeMO",
+                  "type2": "Type 2", "mennekes": "Type 2",
+                  "type1": "Type 1", "j1772": "Type 1",
+                  "gbt": "GB/T", "gb_t": "GB/T", "gbtdc": "GB/T", "gbtac": "GB/T",
+                  "nacs": "NACS", "tesla": "NACS",
+              }
+              def norm_conn(t):
+                  if not t: return None
+                  k = str(t).lower().replace(" ", "").replace("-", "").replace("_", "").replace("/", "")
+                  return CONN_MAP.get(k)
+              ORDER = ["CCS2","GB/T","CHAdeMO","Type 2","NACS","CCS1","Type 1"]
+              def sort_conns(cs):
+                  return sorted(cs, key=lambda c:(ORDER.index(c) if c in ORDER else len(ORDER), c))
+
+              stations = []
+              for c in raw:
+                  if c.get("is_hidden"):
+                      continue
+                  lat = c.get("latitude"); lng = c.get("longitude")
+                  if lat is None or lng is None:
+                      continue
+                  try:
+                      power = float(c.get("outputPower") or 0)
+                  except Exception:
+                      power = 0.0
+                  conns = set()
+                  for cc in (c.get("connectors") or []):
+                      nm = norm_conn(cc.get("type"))
+                      if nm: conns.add(nm)
+                  any_dc = power >= 20 or "CCS2" in conns
+                  total  = len(c.get("connectors") or [])
+                  # A charger is "online" only when both top-level flags are set;
+                  # each operative connector on an online charger counts as free.
+                  online = bool(c.get("charger_status")) and bool(c.get("status"))
+                  avail  = sum(1 for cc in (c.get("connectors") or [])
+                               if cc.get("isOperative")) if online else 0
+                  try:
+                      pk = float(c.get("kilowattPrice") or 0)
+                  except Exception:
+                      pk = 0.0
+                  price = f"{pk:.2f} ₾/kWh" if pk > 0 else ""
+                  addr = (c.get("address") or "Solar Station").strip()
+                  kw = round(power)
+                  stations.append({
+                      "id": f"solar_{c.get('id')}",
+                      "name": addr,
+                      "lat": lat,
+                      "lng": lng,
+                      "power": (f"{int(kw)} kW" if kw else "—"),
+                      "type": "Fast DC" if any_dc else "AC",
+                      "price": price,
+                      "available_spots": f"{avail} available",
+                      "total_spots": total,
+                      "city": addr,
+                      "provider": "Solar Station",
+                      "connectors": sort_conns(conns),
+                      "last_updated": "Just now",
+                  })
+              print(f"Solar Station: {len(stations)} stations")
+              return stations
+
           # ── Load station data from the committed asset file ────────────────
           # The bundled asset ships with snapshots of the live AMPECO providers
           # for offline use, so for each live provider we drop its bundled rows
@@ -598,7 +676,8 @@ jobs:
                             (fetch_evpower, "EV Power GE"),
                             (fetch_datene, "Da-Tene"),
                             (fetch_gadatene, "Gadatene"),
-                            (fetch_ecocars, "EcoCars")]:
+                            (fetch_ecocars, "EcoCars"),
+                            (fetch_solarstation, "Solar Station")]:
               fresh = []
               try:
                   fresh = fn()
