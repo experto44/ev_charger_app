@@ -27,6 +27,7 @@ import 'routing_service.dart';
 import 'services/ad_service.dart';
 import 'services/purchase_service.dart';
 import 'settings_screen.dart';
+import 'utils/responsive.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -170,6 +171,29 @@ class _MapScreenState extends State<MapScreen>
   // stays open — otherwise data is frozen at whatever was fetched on launch.
   Timer? _refreshTimer;
   static const _kRefreshInterval = Duration(minutes: 3);
+
+  // Rapid multi-tap detection for the recenter (GPS) button. A single tap
+  // re-centres at the normal overview zoom; tapping 2–3 times in quick
+  // succession zooms in close (~150 m radius) so nearby chargers are easy to
+  // see. Taps within _kMultiTapWindow of each other count as one burst.
+  DateTime? _lastLocateTap;
+  int       _locateTapCount = 0;
+  static const _kMultiTapWindow = Duration(milliseconds: 600);
+  static const double _kOverviewZoom = 14.0; // single-tap recenter
+  static const double _kCloseZoom    = 17.0; // 2+ taps → ~150 m radius
+
+  // Recenter button handler: counts rapid taps and zooms in close on the
+  // second (and further) tap of a burst, otherwise recenters at overview zoom.
+  void _onLocateTap() {
+    final now = DateTime.now();
+    _locateTapCount =
+        (_lastLocateTap != null && now.difference(_lastLocateTap!) < _kMultiTapWindow)
+            ? _locateTapCount + 1
+            : 1;
+    _lastLocateTap = now;
+    final zoom = _locateTapCount >= 2 ? _kCloseZoom : _kOverviewZoom;
+    _locateMe(recenter: true, animate: true, zoom: zoom);
+  }
 
   @override
   void initState() {
@@ -362,7 +386,11 @@ class _MapScreenState extends State<MapScreen>
   //               view away from wherever they were looking.
   //  • animate  — animate the camera move (button) vs. an instant jump (cold
   //               start, before the map has settled).
-  Future<void> _locateMe({bool recenter = false, bool animate = false}) async {
+  Future<void> _locateMe({
+    bool recenter = false,
+    bool animate = false,
+    double zoom = _kOverviewZoom,
+  }) async {
     try {
       LocationPermission perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
@@ -373,7 +401,7 @@ class _MapScreenState extends State<MapScreen>
 
       void center(LatLng p) {
         if (!recenter) { return; }
-        if (animate) { _animatedMove(p, 14); } else { _mapCtrl.move(p, 14); }
+        if (animate) { _animatedMove(p, zoom); } else { _mapCtrl.move(p, zoom); }
       }
 
       // Keep the live stream running so the pin tracks the device as it moves.
@@ -656,7 +684,12 @@ class _MapScreenState extends State<MapScreen>
     // shown than when it's loading / empty, so adjust dynamically.
     final navBottom        = MediaQuery.of(context).padding.bottom;
     final carouselVisible  = !_loading && _centerInGeorgia && localStations.isNotEmpty;
-    final controlsBottom   = (carouselVisible ? 300.0 : 130.0) + navBottom;
+    // The carousel is far shorter in landscape (compact cards, side-by-side
+    // buttons), so the control column docks lower there to stay just above it.
+    final landscape        = Responsive.isLandscape(context);
+    final controlsBottom   = (carouselVisible
+            ? (landscape ? 200.0 : 300.0)
+            : 130.0) + navBottom;
     // Bound the right control column below the search-bar/chips block (plus the
     // top banner ad when it's shown) so its top buttons never overlap the chips.
     // The column stays bottom-anchored and scrolls if vertical space is tight.
@@ -926,9 +959,9 @@ class _MapScreenState extends State<MapScreen>
                   iconColor: _textSec,
                 ),
                 const SizedBox(height: 8),
-                // Recenter GPS
+                // Recenter GPS — single tap recenters; double/triple tap zooms in close.
                 _MapCtrlButton(
-                  onTap: () => _locateMe(recenter: true, animate: true),
+                  onTap: _onLocateTap,
                   icon: Icons.my_location_rounded,
                   iconColor:   _userPos == null ? _textSec : _emerald,
                   borderColor: _userPos == null ? _bgSurface : _emerald,
@@ -1428,6 +1461,12 @@ class _StationCarousel extends StatelessWidget {
     }
     // Extra bottom inset so "Plan & Go" clears the Android gesture / button nav bar.
     final navBarHeight = MediaQuery.of(context).padding.bottom;
+    // Landscape (tablets, car head-units) has little vertical room: use shorter
+    // cards with side-by-side action buttons and tighter padding so the cards
+    // are never clipped and the map stays visible. Portrait is unchanged.
+    final landscape = Responsive.isLandscape(context);
+    final listHeight = landscape ? 196.0 : 264.0;
+    final cardWidth  = landscape ? 200.0 : 170.0;
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -1437,9 +1476,12 @@ class _StationCarousel extends StatelessWidget {
           stops:  [0.6, 1.0],
         ),
       ),
-      padding: EdgeInsets.only(top: 32, bottom: 24 + navBarHeight),
+      padding: EdgeInsets.only(
+        top: landscape ? 12 : 32,
+        bottom: (landscape ? 12 : 24) + navBarHeight,
+      ),
       child: SizedBox(
-        height: 264, // taller for stacked Navigate + Plan & Go buttons (+ provider line); +10 to clear a 9px bottom overflow
+        height: listHeight,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1447,6 +1489,8 @@ class _StationCarousel extends StatelessWidget {
           separatorBuilder: (_, __) => const SizedBox(width: 12),
           itemBuilder: (_, i) => _StationCard(
             stations[i],
+            width:     cardWidth,
+            landscape: landscape,
             onPlanAndGo: onPlanAndGo != null
                 ? () => onPlanAndGo!(stations[i])
                 : null,
@@ -1459,9 +1503,11 @@ class _StationCarousel extends StatelessWidget {
 
 // ── Station card ──────────────────────────────────────────────────────────────
 class _StationCard extends StatelessWidget {
-  const _StationCard(this.s, {this.onPlanAndGo});
+  const _StationCard(this.s, {this.onPlanAndGo, this.width = 170, this.landscape = false});
   final Station      s;
   final VoidCallback? onPlanAndGo;
+  final double       width;
+  final bool         landscape;
 
   Color get _statusColor {
     if (s.available == 0) { return _textSec; }
@@ -1473,7 +1519,7 @@ class _StationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final avail = s.available > 0;
     return Container(
-      width: 170,
+      width: width,
       padding: const EdgeInsets.all(14),
       clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
@@ -1535,59 +1581,84 @@ class _StationCard extends StatelessWidget {
             const Icon(Icons.bolt, color: _emerald, size: 16),
           ]),
           const SizedBox(height: 10),
-          // ── Stacked full-width action buttons ─────────────────────────────
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Primary — Navigate (direct Google Maps launch)
-              GestureDetector(
-                onTap: () => _navigate(s.lat, s.lng),
-                child: Container(
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: _emerald,
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.navigation_rounded, color: Colors.black, size: 14),
-                      SizedBox(width: 5),
-                      Text('Navigate',
-                          style: TextStyle(
-                              color: Colors.black, fontSize: 12,
-                              fontWeight: FontWeight.w700)),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              // Secondary — Plan & Go (Route Planner pre-filled)
-              GestureDetector(
-                onTap: onPlanAndGo,
-                child: Container(
-                  height: 34,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(9),
-                    border: Border.all(color: _emerald, width: 1.5),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.alt_route_rounded, color: _emerald, size: 14),
-                      SizedBox(width: 5),
-                      Text('Plan & Go',
-                          style: TextStyle(
-                              color: _emerald, fontSize: 12,
-                              fontWeight: FontWeight.w700)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+          // ── Action buttons ────────────────────────────────────────────────
+          // Stacked in portrait; side-by-side in landscape so the card stays
+          // short enough to fit on tablets / car displays without clipping.
+          _ActionButtons(
+            landscape:   landscape,
+            onNavigate:  () => _navigate(s.lat, s.lng),
+            onPlanAndGo: onPlanAndGo,
           ),
         ],
       ),
+    );
+  }
+}
+
+// Navigate + Plan & Go buttons for a station card. Laid out stacked (portrait)
+// or in a single row (landscape) to keep the card compact on wide screens.
+class _ActionButtons extends StatelessWidget {
+  const _ActionButtons({
+    required this.landscape,
+    required this.onNavigate,
+    required this.onPlanAndGo,
+  });
+  final bool          landscape;
+  final VoidCallback  onNavigate;
+  final VoidCallback? onPlanAndGo;
+
+  @override
+  Widget build(BuildContext context) {
+    final navBtn = GestureDetector(
+      onTap: onNavigate,
+      child: Container(
+        height: 34,
+        decoration: BoxDecoration(
+          color: _emerald,
+          borderRadius: BorderRadius.circular(9),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.navigation_rounded, color: Colors.black, size: 14),
+            SizedBox(width: 5),
+            Text('Navigate',
+                style: TextStyle(
+                    color: Colors.black, fontSize: 12, fontWeight: FontWeight.w700)),
+          ],
+        ),
+      ),
+    );
+    final planBtn = GestureDetector(
+      onTap: onPlanAndGo,
+      child: Container(
+        height: 34,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(9),
+          border: Border.all(color: _emerald, width: 1.5),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.alt_route_rounded, color: _emerald, size: 14),
+            SizedBox(width: 5),
+            Text('Plan & Go',
+                style: TextStyle(
+                    color: _emerald, fontSize: 12, fontWeight: FontWeight.w700)),
+          ],
+        ),
+      ),
+    );
+    if (landscape) {
+      return Row(children: [
+        Expanded(child: navBtn),
+        const SizedBox(width: 8),
+        Expanded(child: planBtn),
+      ]);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [navBtn, const SizedBox(height: 8), planBtn],
     );
   }
 }
