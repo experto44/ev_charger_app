@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import 'purchase_service.dart';
+
 class AuthService {
   static final _auth      = FirebaseAuth.instance;
   static final _firestore = FirebaseFirestore.instance;
@@ -14,10 +16,13 @@ class AuthService {
   // ── Email / password sign-in ─────────────────────────────────────────────────
   static Future<UserCredential> signInWithEmail(
       String email, String password) async {
-    return _auth.signInWithEmailAndPassword(
+    final cred = await _auth.signInWithEmailAndPassword(
       email: email.trim(),
       password: password,
     );
+    // Pull this account's premium status from Firestore into local state.
+    await PurchaseService.I.syncPremiumFromFirestore();
+    return cred;
   }
 
   // ── Email / password registration + verification email ───────────────────────
@@ -28,6 +33,9 @@ class AuthService {
       password: password,
     );
     await cred.user?.sendEmailVerification();
+    // New account starts with no premium; sync clears any premium the previous
+    // user left cached on this device.
+    await PurchaseService.I.syncPremiumFromFirestore();
     return cred;
   }
 
@@ -51,7 +59,10 @@ class AuthService {
       accessToken: googleAuth.accessToken,
       idToken:     googleAuth.idToken,
     );
-    return _auth.signInWithCredential(credential);
+    final cred = await _auth.signInWithCredential(credential);
+    // Pull this account's premium status from Firestore into local state.
+    await PurchaseService.I.syncPremiumFromFirestore();
+    return cred;
   }
 
   // ── Sign out ──────────────────────────────────────────────────────────────────
@@ -60,6 +71,9 @@ class AuthService {
       _auth.signOut(),
       _google.signOut(),
     ]);
+    // Premium is per-account: drop the local cache so the next user on this
+    // device doesn't inherit it. The account's Firestore record is untouched.
+    await PurchaseService.I.clearLocalPremium();
   }
 
   // ── Save phone number to Firestore users/{uid} ────────────────────────────────

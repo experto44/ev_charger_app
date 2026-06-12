@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -28,6 +30,7 @@ class PurchaseService {
   static const String _prefsKey = 'is_premium';
 
   final InAppPurchase _iap = InAppPurchase.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   StreamSubscription<List<PurchaseDetails>>? _sub;
 
   /// Set true the moment the store replays/confirms an owned subscription for
@@ -88,12 +91,17 @@ class PurchaseService {
     // 4. Load product details for the paywall.
     await loadProducts();
 
-    // 5. Reconcile the cached entitlement against the store. The cached flag is
-    //    only an instant-UI hint, NOT proof of an active subscription: a trial
-    //    or sub that was later canceled/expired would otherwise keep premium
-    //    (and suppress ads) forever. If we still think we're premium, ask the
-    //    store to replay owned purchases and revoke if none come back.
-    if (isPremium.value) {
+    // 5. Establish the authoritative premium state.
+    //    • Signed in  → the user's Firestore document is the source of truth, so
+    //      premium follows the account across devices (read it, don't trust the
+    //      device cache or the local Play account).
+    //    • Anonymous  → no account to consult; fall back to the store-based
+    //      reconciliation that clears a stale cached flag.
+    //    Both run unawaited so they never block startup; the cached flag drives
+    //    the UI instantly and is corrected a moment later.
+    if (FirebaseAuth.instance.currentUser != null) {
+      unawaited(syncPremiumFromFirestore());
+    } else if (isPremium.value) {
       unawaited(_reconcileEntitlement());
     }
   }
@@ -170,6 +178,9 @@ class PurchaseService {
               await _isValid(purchase)) {
             _ownedSeen = true; // store confirms an active owned subscription
             await _grantPremium();
+            // Persist to the signed-in user's account so premium follows the
+            // user, not the device.
+            await _persistPremiumToFirestore(purchase);
           }
           await _finish(purchase);
           break;
@@ -204,6 +215,58 @@ class PurchaseService {
     isPremium.value = true;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_prefsKey, true);
+  }
+
+  // ── Per-account persistence (Firestore) ────────────────────────────────────
+  /// Save the entitlement to the signed-in user's Firestore document
+  /// (`users/{uid}.isPremium` + `purchaseToken`) so premium is tied to the
+  /// account, not the device. No-op when signed out — the purchase still grants
+  /// locally and will be persisted on the next login sync / stream replay.
+  Future<void> _persistPremiumToFirestore(PurchaseDetails purchase) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      await _firestore.collection('users').doc(uid).set({
+        'isPremium':        true,
+        'purchaseToken':    purchase.verificationData.serverVerificationData,
+        'premiumUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (_) {
+      // Offline / Firestore error — premium is still granted locally and will
+      // re-persist on the next purchase-stream replay or login sync.
+    }
+  }
+
+  /// Read the signed-in user's premium flag from Firestore and apply it locally.
+  /// Firestore is the per-account source of truth, so this runs on login (and at
+  /// startup for an already-signed-in user). Sets premium true OR false to match
+  /// the account — clearing any premium the previous user left cached on this
+  /// device. No-op when signed out.
+  Future<void> syncPremiumFromFirestore() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final doc = await _firestore.collection('users').doc(uid).get();
+      final premium = doc.data()?['isPremium'] == true;
+      // Account premium must not be revoked by the store-based reconcile (the
+      // purchase may live on a different Play account / device).
+      if (premium) _ownedSeen = true;
+      isPremium.value = premium;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_prefsKey, premium);
+    } catch (_) {
+      // Firestore unreachable — keep whatever local state we already have.
+    }
+  }
+
+  /// Clear the locally cached premium flag. Called on logout so the next user on
+  /// this device never inherits the previous account's premium state. The
+  /// account's Firestore record is left untouched (premium belongs to that user).
+  Future<void> clearLocalPremium() async {
+    _ownedSeen = false;
+    isPremium.value = false;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefsKey, false);
   }
 
   /// Cancel the purchase-stream subscription. Call from the app root's dispose.

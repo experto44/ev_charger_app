@@ -7,7 +7,7 @@
 - `key.properties` and `upload-keystore.jks` are gitignored — they stay local only
 
 ## Version Management
-- Current versionCode: 11, versionName: "1.0.9"
+- Current versionCode: 12, versionName: "1.1.0"
 - Always increment versionCode by 1 and bump versionName patch digit for every new release build
 - After every release build, update this file with the new versionCode and versionName
 - Required permissions: `com.google.android.gms.permission.AD_ID` must always be present in AndroidManifest.xml (AdMob requirement)

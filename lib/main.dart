@@ -52,6 +52,11 @@ const _textSec   = Color(0xFF9E9E9E);
 // Fallback centre used only when GPS is unavailable
 const _tbilisi = LatLng(41.7151, 44.8271);
 
+// Approx vertical space the top banner ad occupies (AdSize.banner 50dp + the
+// 10dp gap above it). Used to push the right control column down so its top
+// buttons never overlap the filter chips when the ad is shown.
+const double _kTopBannerHeight = 60;
+
 // Known providers, in display order. "All selected" is the default (no filter).
 // Local Georgian providers + a single "International" group for all Open Charge
 // Map networks (so international chargers never clutter the local provider list).
@@ -474,6 +479,11 @@ class _MapScreenState extends State<MapScreen>
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
+      // Allow the sheet to grow past the default ~half-screen cap and to respect
+      // the status bar / system insets, so a long provider list is fully
+      // scrollable and reachable (incl. one-handed mode). See _ProviderFilterSheet.
+      isScrollControlled: true,
+      useSafeArea: true,
       builder: (_) => StatefulBuilder(
         // setSheet rebuilds the checkbox rows; setState rebuilds the map + badge.
         builder: (_, setSheet) => _ProviderFilterSheet(
@@ -647,6 +657,12 @@ class _MapScreenState extends State<MapScreen>
     final navBottom        = MediaQuery.of(context).padding.bottom;
     final carouselVisible  = !_loading && _centerInGeorgia && localStations.isNotEmpty;
     final controlsBottom   = (carouselVisible ? 300.0 : 130.0) + navBottom;
+    // Bound the right control column below the search-bar/chips block (plus the
+    // top banner ad when it's shown) so its top buttons never overlap the chips.
+    // The column stays bottom-anchored and scrolls if vertical space is tight.
+    final topAdShown       = AdService.I.topBanner() != null;
+    final topControlsBound = MediaQuery.of(context).padding.top +
+        140 + (topAdShown ? _kTopBannerHeight : 0);
     return Scaffold(
       // Free-tier banner — rebuilds (and disappears) when premium is granted.
       // Returns an empty box when premium or no ad unit is configured.
@@ -865,8 +881,13 @@ class _MapScreenState extends State<MapScreen>
           // group is anchored just above the station carousel; it grows upward.
           Positioned(
             right:  16,
+            top:    topControlsBound,
             bottom: controlsBottom,
-            child: Column(
+            // reverse keeps the group pinned to the bottom; it only scrolls when
+            // the screen is too short to fit every button (so none are clipped).
+            child: SingleChildScrollView(
+              reverse: true,
+              child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Map style toggle (Light ↔ Dark)
@@ -914,6 +935,7 @@ class _MapScreenState extends State<MapScreen>
                   bgColor:     _userPos == null ? _bgSurface : _bgCard,
                 ),
               ],
+              ),
             ),
           ),
 
@@ -1195,73 +1217,95 @@ class _ProviderFilterSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: _bgCard,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              margin: const EdgeInsets.only(top: 10),
-              width: 40, height: 4,
-              decoration: BoxDecoration(
-                color: _bgSurface, borderRadius: BorderRadius.circular(2)),
-            ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 18, 20, 4),
-              child: Row(children: [
-                Icon(Icons.layers_rounded, color: _emerald, size: 20),
-                SizedBox(width: 8),
-                Text('Providers',
-                    style: TextStyle(color: _textPri, fontSize: 16, fontWeight: FontWeight.bold)),
-              ]),
-            ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 0, 20, 6),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text('Show stations from',
-                    style: TextStyle(color: _textSec, fontSize: 12)),
+    final mq = MediaQuery.of(context);
+    // Cap the sheet to the visible window so it never runs off-screen and stays
+    // fully interactive even when system insets shrink the usable area (nav bar,
+    // keyboard, or Android one-handed mode). The provider list scrolls within
+    // this cap, so every row stays reachable on any screen size.
+    final maxHeight = mq.size.height - mq.padding.top - mq.viewInsets.bottom - 24;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: _bgCard,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Fixed header (drag handle + titles).
+              Container(
+                margin: const EdgeInsets.only(top: 10),
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: _bgSurface, borderRadius: BorderRadius.circular(2)),
               ),
-            ),
-            // One checkbox row per known provider — toggles apply immediately.
-            ...all.map((p) {
-              final on = selected.contains(p);
-              return InkWell(
-                onTap: () => onToggle(p),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
-                  child: Row(children: [
-                    Icon(
-                      on ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
-                      color: on ? _emerald : _textSec, size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(p,
-                        style: const TextStyle(
-                            color: _textPri, fontSize: 15, fontWeight: FontWeight.w500)),
-                  ]),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 18, 20, 4),
+                child: Row(children: [
+                  Icon(Icons.layers_rounded, color: _emerald, size: 20),
+                  SizedBox(width: 8),
+                  Text('Providers',
+                      style: TextStyle(color: _textPri, fontSize: 16, fontWeight: FontWeight.bold)),
+                ]),
+              ),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 0, 20, 6),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Show stations from',
+                      style: TextStyle(color: _textSec, fontSize: 12)),
                 ),
-              );
-            }),
-            // Disabled placeholder for providers added in the future.
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 13),
-              child: Row(children: [
-                Icon(Icons.check_box_outline_blank_rounded,
-                    color: Color(0xFF555555), size: 24),
-                SizedBox(width: 12),
-                Text('More providers coming soon…',
-                    style: TextStyle(
-                        color: Color(0xFF666666), fontSize: 13, fontStyle: FontStyle.italic)),
-              ]),
-            ),
-            const SizedBox(height: 10),
-          ],
+              ),
+              // Scrollable provider list — every item (incl. International and
+              // the "more coming soon" row) is reachable however short the sheet.
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(bottom: mq.viewInsets.bottom),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // One checkbox row per known provider — toggles apply immediately.
+                      ...all.map((p) {
+                        final on = selected.contains(p);
+                        return InkWell(
+                          onTap: () => onToggle(p),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+                            child: Row(children: [
+                              Icon(
+                                on ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
+                                color: on ? _emerald : _textSec, size: 24,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(p,
+                                  style: const TextStyle(
+                                      color: _textPri, fontSize: 15, fontWeight: FontWeight.w500)),
+                            ]),
+                          ),
+                        );
+                      }),
+                      // Disabled placeholder for providers added in the future.
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+                        child: Row(children: [
+                          Icon(Icons.check_box_outline_blank_rounded,
+                              color: Color(0xFF555555), size: 24),
+                          SizedBox(width: 12),
+                          Text('More providers coming soon…',
+                              style: TextStyle(
+                                  color: Color(0xFF666666), fontSize: 13, fontStyle: FontStyle.italic)),
+                        ]),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
