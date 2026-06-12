@@ -24,12 +24,18 @@ import 'ocm_service.dart';
 import 'places_service.dart';
 import 'route_planner_screen.dart';
 import 'routing_service.dart';
+import 'services/ad_service.dart';
+import 'services/purchase_service.dart';
 import 'settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppStrings.load(); // restore saved language (English/Georgian)
+  // Subscriptions first (sets isPremium from cache), then ads — the ad layer
+  // reads isPremium to decide whether to load anything at all.
+  await PurchaseService.I.init();
+  await AdService.I.init();
   PaintingBinding.instance.imageCache.maximumSize = 30;
   PaintingBinding.instance.imageCache.maximumSizeBytes = 10 * 1024 * 1024;
   runApp(const EVChargerApp());
@@ -507,6 +513,7 @@ class _MapScreenState extends State<MapScreen>
 
   // Shared push — no sheet-pop side-effect (used by carousel "Plan & Go").
   Future<void> _pushRoutePlannerTo(Station destination) async {
+    AdService.I.maybeShowInterstitial(); // free-tier only; no-op for premium
     await Navigator.push<void>(
       context,
       MaterialPageRoute(
@@ -641,6 +648,13 @@ class _MapScreenState extends State<MapScreen>
     final carouselVisible  = !_loading && _centerInGeorgia && localStations.isNotEmpty;
     final controlsBottom   = (carouselVisible ? 300.0 : 130.0) + navBottom;
     return Scaffold(
+      // Free-tier banner — rebuilds (and disappears) when premium is granted.
+      // Returns an empty box when premium or no ad unit is configured.
+      bottomNavigationBar: ValueListenableBuilder<bool>(
+        valueListenable: PurchaseService.I.isPremium,
+        builder: (_, __, ___) =>
+            AdService.I.bottomBanner() ?? const SizedBox.shrink(),
+      ),
       body: Stack(
         children: [
           // ── Map ──────────────────────────────────────────────────────────────
@@ -863,12 +877,15 @@ class _MapScreenState extends State<MapScreen>
                 const SizedBox(height: 8),
                 // Route planner
                 _MapCtrlButton(
-                  onTap: () => Navigator.push<void>(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => RoutePlannerScreen(stations: _stations),
-                    ),
-                  ),
+                  onTap: () {
+                    AdService.I.maybeShowInterstitial(); // free-tier only
+                    Navigator.push<void>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RoutePlannerScreen(stations: _stations),
+                      ),
+                    );
+                  },
                   icon: Icons.alt_route_rounded,
                   iconColor: _textSec,
                 ),
