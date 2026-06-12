@@ -26,6 +26,17 @@ if (flutterVersionName == null) {
     flutterVersionName = "1.0"
 }
 
+// Load the release signing config from android/key.properties (gitignored, holds
+// the upload keystore path + alias + passwords). Falls back to debug signing when
+// the file is absent so a fresh checkout still builds without the secrets.
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withReader("UTF-8") { reader ->
+        keystoreProperties.load(reader)
+    }
+}
+
 android {
     namespace = "ge.geocharge.app"
     compileSdk = flutter.compileSdkVersion
@@ -47,15 +58,26 @@ android {
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutterVersionCode.toInteger()
-        versionName = flutterVersionName
+        versionCode = 6
+        versionName = "1.0.4"
+    }
+
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias = keystoreProperties["keyAlias"]
+                keyPassword = keystoreProperties["keyPassword"]
+                storeFile = keystoreProperties["storeFile"] ? file(keystoreProperties["storeFile"]) : null
+                storePassword = keystoreProperties["storePassword"]
+            }
+        }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            // Use the upload keystore when key.properties is present; otherwise
+            // fall back to debug signing so a keyless checkout still builds.
+            signingConfig = keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
         }
     }
 }
