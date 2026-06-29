@@ -11391,7 +11391,9 @@
     "total_spots": 1,
     "city": "Bakuriani Inn",
     "provider": "Solar Station",
-    "connectors": ["GB/T"],
+    "connectors": [
+      "GB/T"
+    ],
     "last_updated": "2026-06-12 05:19 UTC"
   },
   {
@@ -11406,7 +11408,10 @@
     "total_spots": 2,
     "city": "Rustavi Highway",
     "provider": "Solar Station",
-    "connectors": ["CCS2", "GB/T"],
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
     "last_updated": "2026-06-12 05:19 UTC"
   },
   {
@@ -11421,7 +11426,10 @@
     "total_spots": 2,
     "city": "Batonishvili 120 KW",
     "provider": "Solar Station",
-    "connectors": ["CCS2", "GB/T"],
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
     "last_updated": "2026-06-12 05:19 UTC"
   },
   {
@@ -11436,7 +11444,10 @@
     "total_spots": 2,
     "city": "Samtredia",
     "provider": "Solar Station",
-    "connectors": ["CCS2", "GB/T"],
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
     "last_updated": "2026-06-12 05:19 UTC"
   },
   {
@@ -11451,7 +11462,10 @@
     "total_spots": 2,
     "city": "Gudauri",
     "provider": "Solar Station",
-    "connectors": ["CCS2", "GB/T"],
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
     "last_updated": "2026-06-12 05:19 UTC"
   },
   {
@@ -11466,7 +11480,10 @@
     "total_spots": 2,
     "city": "Zugdidi",
     "provider": "Solar Station",
-    "connectors": ["CCS2", "GB/T"],
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
     "last_updated": "2026-06-12 05:19 UTC"
   },
   {
@@ -11481,7 +11498,9 @@
     "total_spots": 2,
     "city": "Batonishvili 60 KW",
     "provider": "Solar Station",
-    "connectors": ["GB/T"],
+    "connectors": [
+      "GB/T"
+    ],
     "last_updated": "2026-06-12 05:19 UTC"
   },
   {
@@ -11496,7 +11515,10 @@
     "total_spots": 2,
     "city": "Koda",
     "provider": "Solar Station",
-    "connectors": ["CCS2", "GB/T"],
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
     "last_updated": "2026-06-12 05:19 UTC"
   },
   {
@@ -11511,7 +11533,9 @@
     "total_spots": 2,
     "city": "DedoplisTskaro",
     "provider": "Solar Station",
-    "connectors": ["GB/T"],
+    "connectors": [
+      "GB/T"
+    ],
     "last_updated": "2026-06-12 05:19 UTC"
   },
   {
@@ -11526,7 +11550,10 @@
     "total_spots": 2,
     "city": "Guramishvili",
     "provider": "Solar Station",
-    "connectors": ["CCS2", "GB/T"],
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
     "last_updated": "2026-06-12 05:19 UTC"
   },
   {
@@ -11541,7 +11568,10 @@
     "total_spots": 2,
     "city": "Gori",
     "provider": "Solar Station",
-    "connectors": ["CCS2", "GB/T"],
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
     "last_updated": "2026-06-12 05:19 UTC"
   },
   {
@@ -11556,7 +11586,9 @@
     "total_spots": 1,
     "city": "Bakuriani Appartments",
     "provider": "Solar Station",
-    "connectors": ["GB/T"],
+    "connectors": [
+      "GB/T"
+    ],
     "last_updated": "2026-06-12 05:19 UTC"
   },
   {
@@ -11571,7 +11603,10 @@
     "total_spots": 2,
     "city": "Restaurant antre batono ubisa",
     "provider": "Solar Station",
-    "connectors": ["CCS2", "GB/T"],
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
     "last_updated": "2026-06-12 05:19 UTC"
   },
   {
@@ -11586,7 +11621,9 @@
     "total_spots": 2,
     "city": "Racha",
     "provider": "Solar Station",
-    "connectors": ["GB/T"],
+    "connectors": [
+      "GB/T"
+    ],
     "last_updated": "2026-06-12 05:19 UTC"
   },
   {
@@ -11601,7 +11638,9 @@
     "total_spots": 1,
     "city": "Bakuriani Inn",
     "provider": "Solar Station",
-    "connectors": ["Type 2"],
+    "connectors": [
+      "Type 2"
+    ],
     "last_updated": "2026-06-12 05:19 UTC"
   },
   {
@@ -11616,7 +11655,153 @@
     "total_spots": 1,
     "city": "Bakuriani Appartments",
     "provider": "Solar Station",
-    "connectors": ["Type 2"],
+    "connectors": [
+      "Type 2"
+    ],
     "last_updated": "2026-06-12 05:19 UTC"
+  },
+  {
+    "id": "moveo_11",
+    "name": "ისთ ფოინთი",
+    "lat": 41.6896521,
+    "lng": 44.9009614,
+    "power": "60 kW",
+    "type": "Fast DC",
+    "price": "0.8 ₾/kWh",
+    "available_spots": "4 available",
+    "total_spots": 4,
+    "city": "Tbilisi",
+    "provider": "MOVEO",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "last_updated": "Just now"
+  },
+  {
+    "id": "moveo_6",
+    "name": "E60 ქარელის გზაჯვარედინი",
+    "lat": 42.0534555,
+    "lng": 43.9091059,
+    "power": "240 kW",
+    "type": "Fast DC",
+    "price": "1.2 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 4,
+    "city": "Kareli",
+    "provider": "MOVEO",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "last_updated": "Just now"
+  },
+  {
+    "id": "moveo_8",
+    "name": "მეტროსითი ბათუმი",
+    "lat": 41.6281849,
+    "lng": 41.6013274,
+    "power": "180 kW",
+    "type": "Fast DC",
+    "price": "1 ₾/kWh",
+    "available_spots": "4 available",
+    "total_spots": 4,
+    "city": "Batumi",
+    "provider": "MOVEO",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "last_updated": "Just now"
+  },
+  {
+    "id": "moveo_26",
+    "name": "გორგია (ლილო)",
+    "lat": 41.6915204,
+    "lng": 44.9863307,
+    "power": "180 kW",
+    "type": "Fast DC",
+    "price": "1 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Tbilisi",
+    "provider": "MOVEO",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "last_updated": "Just now"
+  },
+  {
+    "id": "moveo_5",
+    "name": "სითი მოლი (საბურთალო)",
+    "lat": 41.7245203,
+    "lng": 44.7366676,
+    "power": "60 kW",
+    "type": "Fast DC",
+    "price": "0.8 ₾/kWh",
+    "available_spots": "8 available",
+    "total_spots": 8,
+    "city": "Tbilisi",
+    "provider": "MOVEO",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "last_updated": "Just now"
+  },
+  {
+    "id": "moveo_23",
+    "name": "აქსის თაუერსი",
+    "lat": 41.7117567,
+    "lng": 44.7560103,
+    "power": "60 kW",
+    "type": "Fast DC",
+    "price": "0.8 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Tbilisi",
+    "provider": "MOVEO",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "last_updated": "Just now"
+  },
+  {
+    "id": "moveo_27",
+    "name": "თელავი მოლი",
+    "lat": 41.9271036,
+    "lng": 45.473293,
+    "power": "180 kW",
+    "type": "Fast DC",
+    "price": "1 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Telavi",
+    "provider": "MOVEO",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "last_updated": "Just now"
+  },
+  {
+    "id": "moveo_28",
+    "name": "გორგია (ზუგდიდი)",
+    "lat": 42.5192915,
+    "lng": 41.8302578,
+    "power": "60 kW",
+    "type": "Fast DC",
+    "price": "0.8 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Zugdidi",
+    "provider": "MOVEO",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "last_updated": "Just now"
   }
 ]
