@@ -1,0 +1,73 @@
+# Codemagic CI/CD — automated iOS build & TestFlight delivery.
+# Mirrors the Android release flow: a push to `main` builds a signed iOS app
+# and ships it to TestFlight (and optionally App Store review).
+#
+# One-time setup in the Codemagic UI (see docs/IOS_SETUP.md for the full guide):
+#   1. Connect this GitHub repo.
+#   2. Add the App Store Connect API key as an integration named exactly
+#      "GeoCharge ASC Key"  (Apple → App Store Connect → Users & Access → Keys).
+#   3. Add a secure (encrypted) variable group "geocharge_ios" containing:
+#        - APP_STORE_APPLE_ID        the app's numeric Apple ID from App Store Connect
+#        - APP_VERSION               marketing version, e.g. 1.1.5 (bump per release)
+#        - GOOGLE_SERVICE_INFO_PLIST base64 of ios/Runner/GoogleService-Info.plist
+#   4. Register the bundle id `ge.geocharge.app` in App Store Connect first.
+
+workflows:
+  ios-release:
+    name: iOS Release (TestFlight)
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+    integrations:
+      app_store_connect: GeoCharge ASC Key
+
+    environment:
+      groups:
+        - geocharge_ios
+      ios_signing:
+        distribution_type: app_store        # automatic, App Store distribution profile
+        bundle_identifier: ge.geocharge.app
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+      # Skip CI for commits that only touch Android/docs to save build minutes.
+      # (Remove this block if you want every push to build iOS.)
+
+    scripts:
+      - name: Restore Firebase iOS config
+        script: |
+          echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > "$CM_BUILD_DIR/ios/Runner/GoogleService-Info.plist"
+      - name: Flutter packages
+        script: flutter pub get
+      - name: Install CocoaPods
+        script: find . -name "Podfile" -execdir pod install \;
+      - name: Apply automatic signing to the Xcode project
+        script: xcode-project use-profiles
+      - name: Compute next build number from TestFlight
+        script: |
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo 0)
+          echo "BUILD_NUMBER=$(($LATEST + 1))" >> "$CM_ENV"
+      - name: Build signed IPA
+        script: |
+          flutter build ipa --release \
+            --build-name="$APP_VERSION" \
+            --build-number="$BUILD_NUMBER" \
+            --export-options-plist=/Users/builder/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true     # auto-distribute to your internal testers
+        submit_to_app_store: false     # flip to true once you're ready for review

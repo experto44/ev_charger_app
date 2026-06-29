@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Required because the app offers Google sign-in (App Store Guideline 4.8).
+	     Enable "Sign in with Apple" on the App ID in the Apple Developer portal,
+	     and add this file under Runner target → Build Settings →
+	     Code Signing Entitlements (CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements). -->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
+</dict>
+</plist>
