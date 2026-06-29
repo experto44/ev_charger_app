@@ -107,6 +107,34 @@ class AppStrings {
   static String get addStop =>
       isGeorgian ? 'გაჩერების დამატება' : 'Add stop';
 
+  // ── Charger options list (Plan & Go) ─────────────────────────────────────────
+  static String get chargersOnRoute =>
+      isGeorgian ? 'დამტენები მარშრუტზე' : 'CHARGERS ON ROUTE';
+  static String get selectStopsHint => isGeorgian
+      ? 'მონიშნე სად გსურს გაჩერება — გადავა Google Maps-ში'
+      : 'Tick where you want to stop — they go to Google Maps';
+  static String get recommendedBadge =>
+      isGeorgian ? 'რეკომენდ.' : 'Recommended';
+  static String get oppositeSideInfo => isGeorgian
+      ? 'დამტენი არის გზის საპირისპირო მხარეს, დაგჭირდებათ მობრუნება'
+      : 'The charger is on the opposite side of the road — you will need to turn around';
+  static String get gotIt => isGeorgian ? 'გასაგებია' : 'Got it';
+  static String get noChargersOnRoute => isGeorgian
+      ? 'მარშრუტზე დამტენი ვერ მოიძებნა'
+      : 'No chargers found along this route';
+
+  /// "N chargers" badge under a block (counts every plug across providers).
+  static String chargersCount(int n) =>
+      isGeorgian ? '$n დამტენი' : '$n chargers';
+
+  /// "X% on arrival" line for a charger block / the destination.
+  static String onArrivalPct(int pct) =>
+      isGeorgian ? 'ჩასვლისას $pct%' : '$pct% on arrival';
+
+  /// Distance label between two blocks, e.g. "47 km".
+  static String kmLabel(num v) =>
+      isGeorgian ? '${v.toStringAsFixed(0)} კმ' : '${v.toStringAsFixed(0)} km';
+
   // ── Premium / subscriptions ──────────────────────────────────────────────
   static String get getPremium =>
       isGeorgian ? 'გახდი Premium' : 'Get Premium';

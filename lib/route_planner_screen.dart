@@ -56,9 +56,15 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
 
   // Real-road route result from RoutingService.planRoute, recomputed (debounced)
   // whenever the stops or battery change. Drives the preview stats and the
-  // charging-stops list (including any U-turn warnings).
+  // charging-options list (including any U-turn warnings).
   EVRouteResult? _routeResult;
   Timer?         _routeDebounce;
+
+  // Which charger blocks the driver has ticked, by RouteChargerOption.locationKey.
+  // Seeded from the recommended plan on a fresh route, then preserved while only
+  // the battery slider changes (same _routeSignature) so manual ticks survive.
+  Set<String> _selectedKeys = <String>{};
+  String?     _routeSignature;
 
   @override
   void initState() {
@@ -111,7 +117,55 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
       currentBatteryPct: _batteryPct,
       stations:          widget.stations,
     );
-    if (mounted) { setState(() => _routeResult = res); }
+    if (!mounted) { return; }
+    setState(() {
+      _routeResult = res;
+      // Signature = the waypoint coords only (battery excluded). A change means a
+      // genuinely different route → reseed ticks from the recommendation; an
+      // unchanged signature (battery nudge) keeps the driver's manual ticks.
+      final sig = _stops
+          .map((s) => s.coords == null
+              ? '-'
+              : '${s.coords!.latitude},${s.coords!.longitude}')
+          .join('|');
+      final valid = res?.options.map((o) => o.locationKey).toSet() ?? <String>{};
+      if (sig != _routeSignature) {
+        _routeSignature = sig;
+        _selectedKeys = res?.options
+                .where((o) => o.recommended)
+                .map((o) => o.locationKey)
+                .toSet() ??
+            <String>{};
+      } else {
+        _selectedKeys = _selectedKeys.intersection(valid);
+      }
+    });
+  }
+
+  void _toggleOption(String key) {
+    setState(() {
+      if (!_selectedKeys.remove(key)) { _selectedKeys.add(key); }
+    });
+  }
+
+  // ── Dynamic battery % at a point [alongKm] along the route ────────────────
+  // Drains from the current battery, resetting to a full charge at every ticked
+  // charger passed so far. This is why arrival %s jump up as the driver ticks
+  // more stops.
+  double _arrivalPctAt(double alongKm, EVRouteResult r) {
+    final eff = r.effectiveRangeKm;
+    if (eff <= 0) { return 0; }
+    double anchorAlong = 0;
+    double anchorRange = (_batteryPct / 100.0) * eff;
+    for (final o in r.options) {
+      if (o.alongKm >= alongKm) { break; }
+      if (_selectedKeys.contains(o.locationKey)) {
+        anchorAlong = o.alongKm;
+        anchorRange = eff; // assume a full charge here
+      }
+    }
+    final range = anchorRange - (alongKm - anchorAlong);
+    return (range / eff * 100).clamp(0.0, 100.0);
   }
 
   void _addStop() {
@@ -306,18 +360,19 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
         }
       }
 
-      // 2. EV charging-station waypoints, snapped to the real road polyline.
-      //    Their progress fraction comes from the true along-route distance, so
-      //    ordering stays correct even where the highway curves away from the
-      //    straight line. Falls back to the old straight-line estimate only if
-      //    the Directions call failed (no network / API error).
+      // 2. EV charging waypoints — only the blocks the driver ticked, snapped to
+      //    the real road polyline. Their progress fraction comes from the true
+      //    along-route distance, so ordering stays correct even where the highway
+      //    curves away from the straight line. Falls back to the old straight-line
+      //    estimate only if the Directions call failed (no network / API error).
       if (routeResult != null) {
         final totalKm = routeResult.totalDistanceKm;
-        for (final c in routeResult.chargingStops) {
+        for (final o in routeResult.options) {
+          if (!_selectedKeys.contains(o.locationKey)) { continue; }
           final progress = totalKm > 0
-              ? (c.distanceFromStartKm / totalKm).clamp(0.0, 1.0)
+              ? (o.alongKm / totalKm).clamp(0.0, 1.0)
               : 0.0;
-          wps.add((progress, '${c.station.lat},${c.station.lng}'));
+          wps.add((progress, '${o.location.latitude},${o.location.longitude}'));
         }
       } else {
         for (final s in _chargingStationWaypoints(_evPreview.stopsNeeded)) {
@@ -421,21 +476,32 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                   ),
                   const SizedBox(height: 12),
                   // Live EV route preview — uses the real-road result when ready,
-                  // otherwise the instant straight-line estimate.
+                  // otherwise the instant straight-line estimate. Stops count and
+                  // arrival % follow the driver's current ticks (dynamic).
                   _RoutePreviewStats(
                     distanceKm:          _routeResult?.totalDistanceKm
                                             ?? _totalDistanceKm,
-                    batteryAtArrivalPct: _routeResult?.batteryAtArrivalPct
-                                            ?? preview.batteryAtArrivalPct,
-                    stopsNeeded:         _routeResult?.chargingStops.length
-                                            ?? preview.stopsNeeded,
+                    batteryAtArrivalPct: _routeResult != null
+                        ? _arrivalPctAt(_routeResult!.totalDistanceKm, _routeResult!)
+                        : preview.batteryAtArrivalPct,
+                    stopsNeeded:         _routeResult != null
+                        ? _routeResult!.options
+                            .where((o) => _selectedKeys.contains(o.locationKey))
+                            .length
+                        : preview.stopsNeeded,
                     hasRoute:            _canPreview,
                   ),
-                  // Charging stops with road-side (U-turn) warnings
-                  if (_routeResult != null &&
-                      _routeResult!.chargingStops.isNotEmpty) ...[
+                  // Selectable charger blocks along the route (~one per 50 km),
+                  // with dynamic arrival %, inter-stop distances and U-turn info.
+                  if (_routeResult != null) ...[
                     const SizedBox(height: 12),
-                    _ChargingStopsList(stops: _routeResult!.chargingStops),
+                    _ChargingOptionsList(
+                      options:       _routeResult!.options,
+                      selectedKeys:  _selectedKeys,
+                      arrivalPctFor: (o) =>
+                          _arrivalPctAt(o.alongKm, _routeResult!).round(),
+                      onToggle:      _toggleOption,
+                    ),
                   ],
                   const SizedBox(height: 24),
                 ],
@@ -749,18 +815,21 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-// ── Charging stops list (with road-side U-turn warnings) ──────────────────────
-class _ChargingStopsList extends StatelessWidget {
-  const _ChargingStopsList({required this.stops});
-  final List<ChargingStop> stops;
-
-  String _sideLabel(RoadSide s) {
-    switch (s) {
-      case RoadSide.right: return 'Right side';
-      case RoadSide.left:  return 'Left side';
-      case RoadSide.unknown: return '';
-    }
-  }
+// ── Charging options list (selectable blocks, ~one per 50 km) ─────────────────
+// Each block is a place along the route the driver can tick as a stop. Co-located
+// providers are merged upstream into one option. Shows distance from the previous
+// block, dynamic arrival %, and an info button for opposite-carriageway chargers.
+class _ChargingOptionsList extends StatelessWidget {
+  const _ChargingOptionsList({
+    required this.options,
+    required this.selectedKeys,
+    required this.arrivalPctFor,
+    required this.onToggle,
+  });
+  final List<RouteChargerOption> options;
+  final Set<String>              selectedKeys;
+  final int Function(RouteChargerOption) arrivalPctFor;
+  final void Function(String)            onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -775,15 +844,32 @@ class _ChargingStopsList extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'CHARGING STOPS',
-            style: TextStyle(color: _textSec, fontSize: 11,
+          Text(
+            AppStrings.chargersOnRoute,
+            style: const TextStyle(color: _textSec, fontSize: 11,
                 fontWeight: FontWeight.w600, letterSpacing: 0.6),
           ),
-          const SizedBox(height: 12),
-          for (int i = 0; i < stops.length; i++) ...[
-            if (i > 0) const SizedBox(height: 12),
-            _StopTile(index: i + 1, stop: stops[i], sideLabel: _sideLabel(stops[i].side)),
+          if (options.isEmpty) ...[
+            const SizedBox(height: 12),
+            Text(AppStrings.noChargersOnRoute,
+                style: const TextStyle(color: _textSec, fontSize: 12)),
+          ] else ...[
+            const SizedBox(height: 4),
+            Text(AppStrings.selectStopsHint,
+                style: const TextStyle(color: _textSec, fontSize: 11)),
+            const SizedBox(height: 14),
+            for (int i = 0; i < options.length; i++) ...[
+              if (i > 0)
+                _DistanceDivider(
+                    km: options[i].alongKm - options[i - 1].alongKm),
+              _OptionBlock(
+                index:      i + 1,
+                option:     options[i],
+                selected:   selectedKeys.contains(options[i].locationKey),
+                arrivalPct: arrivalPctFor(options[i]),
+                onToggle:   () => onToggle(options[i].locationKey),
+              ),
+            ],
           ],
         ],
       ),
@@ -791,74 +877,187 @@ class _ChargingStopsList extends StatelessWidget {
   }
 }
 
-class _StopTile extends StatelessWidget {
-  const _StopTile({required this.index, required this.stop, required this.sideLabel});
-  final int          index;
-  final ChargingStop stop;
-  final String       sideLabel;
+// Centered "↓ NN km" gap label drawn between two consecutive blocks.
+class _DistanceDivider extends StatelessWidget {
+  const _DistanceDivider({required this.km});
+  final double km;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(children: [
-          Container(
-            width: 22, height: 22,
-            decoration: BoxDecoration(
-              color: _bgSurface,
-              borderRadius: BorderRadius.circular(7),
-            ),
-            alignment: Alignment.center,
-            child: Text('$index',
-                style: const TextStyle(
-                    color: _emerald, fontSize: 11, fontWeight: FontWeight.w700)),
-          ),
-          const SizedBox(width: 10),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(children: [
+        const SizedBox(width: 10),
+        Container(width: 1, height: 16, color: _bgSurface),
+        const SizedBox(width: 12),
+        const Icon(Icons.south_rounded, color: _textSec, size: 13),
+        const SizedBox(width: 4),
+        Text(AppStrings.kmLabel(km),
+            style: const TextStyle(color: _textSec, fontSize: 11)),
+      ]),
+    );
+  }
+}
+
+class _OptionBlock extends StatelessWidget {
+  const _OptionBlock({
+    required this.index,
+    required this.option,
+    required this.selected,
+    required this.arrivalPct,
+    required this.onToggle,
+  });
+  final int                index;
+  final RouteChargerOption option;
+  final bool               selected;
+  final int                arrivalPct;
+  final VoidCallback       onToggle;
+
+  Color _batColor(int pct) {
+    if (pct >= 50) { return _emerald; }
+    if (pct >= 20) { return Colors.orangeAccent; }
+    return Colors.redAccent;
+  }
+
+  void _showOppositeInfo(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AppStrings.wrap(AlertDialog(
+        backgroundColor: _bgCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        content: Row(children: [
+          const Icon(Icons.u_turn_left_rounded, color: Colors.amber, size: 22),
+          const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(stop.station.name,
-                    style: const TextStyle(
-                        color: _textPri, fontSize: 13, fontWeight: FontWeight.w500),
-                    maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(
-                  sideLabel.isEmpty
-                      ? '${stop.batteryOnArrivalPct.toStringAsFixed(0)}% on arrival'
-                      : '$sideLabel · ${stop.batteryOnArrivalPct.toStringAsFixed(0)}% on arrival',
-                  style: const TextStyle(color: _textSec, fontSize: 11),
-                ),
-              ],
-            ),
+            child: Text(AppStrings.oppositeSideInfo,
+                style: const TextStyle(color: _textPri, fontSize: 13, height: 1.35)),
           ),
-          Icon(stop.station.isDC ? Icons.bolt : Icons.battery_charging_full_rounded,
-              color: _emerald, size: 16),
         ]),
-        if (stop.requiresUTurn) ...[
-          const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.amber.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.amber.withOpacity(0.5)),
-            ),
-            child: Row(children: [
-              const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 15),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  AppStrings.uTurnRequired,
-                  style: const TextStyle(
-                      color: Colors.amber, fontSize: 11, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ]),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(AppStrings.gotIt,
+                style: const TextStyle(color: _emerald, fontWeight: FontWeight.w600)),
           ),
         ],
-      ],
+      )),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final providers  = option.providers.join(' · ');
+    final connectors = option.connectorTypes.join(', ');
+    return GestureDetector(
+      onTap: onToggle,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: selected ? _emerald.withOpacity(0.08) : _bgSurface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? _emerald.withOpacity(0.55) : Colors.transparent,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Tick box
+            Container(
+              width: 22, height: 22,
+              margin: const EdgeInsets.only(top: 1),
+              decoration: BoxDecoration(
+                color: selected ? _emerald : Colors.transparent,
+                borderRadius: BorderRadius.circular(7),
+                border: Border.all(
+                  color: selected ? _emerald : _textSec.withOpacity(0.6),
+                  width: 1.5,
+                ),
+              ),
+              child: selected
+                  ? const Icon(Icons.check_rounded, color: Colors.black, size: 15)
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title row: city + recommended badge + info + DC/AC icon
+                  Row(children: [
+                    Flexible(
+                      child: Text(option.title,
+                          style: const TextStyle(
+                              color: _textPri, fontSize: 14, fontWeight: FontWeight.w600),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ),
+                    if (option.recommended) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: _emerald.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(AppStrings.recommendedBadge,
+                            style: const TextStyle(
+                                color: _emerald, fontSize: 9, fontWeight: FontWeight.w700)),
+                      ),
+                    ],
+                    const Spacer(),
+                    if (option.requiresUTurn)
+                      GestureDetector(
+                        onTap: () => _showOppositeInfo(context),
+                        behavior: HitTestBehavior.opaque,
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4),
+                          child: Icon(Icons.info_outline_rounded,
+                              color: Colors.amber, size: 17),
+                        ),
+                      ),
+                    const SizedBox(width: 2),
+                    Icon(option.isDC ? Icons.bolt : Icons.battery_charging_full_rounded,
+                        color: _emerald, size: 16),
+                  ]),
+                  if (providers.isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Text(providers,
+                        style: const TextStyle(color: _textPri, fontSize: 12),
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ],
+                  const SizedBox(height: 4),
+                  // Meta row: connectors · charger count · arrival %
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      if (connectors.isNotEmpty)
+                        Text(connectors,
+                            style: const TextStyle(color: _textSec, fontSize: 11)),
+                      Text('·', style: TextStyle(color: _textSec.withOpacity(0.6), fontSize: 11)),
+                      Text(AppStrings.chargersCount(option.chargerCount),
+                          style: const TextStyle(color: _textSec, fontSize: 11)),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(children: [
+                    Icon(Icons.battery_charging_full_rounded,
+                        color: _batColor(arrivalPct), size: 13),
+                    const SizedBox(width: 4),
+                    Text(AppStrings.onArrivalPct(arrivalPct),
+                        style: TextStyle(
+                            color: _batColor(arrivalPct),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600)),
+                  ]),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

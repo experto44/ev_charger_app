@@ -171,19 +171,85 @@ class ChargingStop {
   final bool requiresUTurn;  // chosen charger sits on the opposite carriageway
 }
 
+// ── Selectable charger option (one block in the planner list) ─────────────────
+// A place along the route where the driver may stop. Co-located chargers (within
+// 200 m, possibly different providers) are merged into a single option so the
+// list shows one block per place. Battery-on-arrival is NOT stored here: it
+// depends on which options the driver has ticked, so the UI computes it live.
+class RouteChargerOption {
+  const RouteChargerOption({
+    required this.location,
+    required this.stations,
+    required this.alongKm,
+    required this.detourKm,
+    required this.side,
+    required this.requiresUTurn,
+    this.recommended = false,
+  });
+
+  final LatLng        location;   // representative coordinate (first charger)
+  final List<Station> stations;   // every charger merged into this block (≥1)
+  final double        alongKm;    // distance along the route to this block
+  final double        detourKm;   // how far off the road the block sits
+  final RoadSide      side;       // carriageway the block sits on
+  final bool          requiresUTurn; // all chargers are on the opposite side
+  final bool          recommended;   // part of the minimal recommended plan
+
+  /// Heading shown in bold — the city/area, falling back to the charger name.
+  String get title => stations.first.location.trim().isNotEmpty
+      ? stations.first.location.trim()
+      : stations.first.name;
+
+  /// Distinct provider labels present at this block (in first-seen order).
+  List<String> get providers {
+    final seen = <String>{};
+    final out  = <String>[];
+    for (final s in stations) {
+      final p = s.provider.trim();
+      if (p.isEmpty || !seen.add(p.toLowerCase())) { continue; }
+      out.add(p);
+    }
+    return out;
+  }
+
+  /// Distinct connector types across every charger in the block.
+  List<String> get connectorTypes {
+    final seen = <String>{};
+    final out  = <String>[];
+    for (final s in stations) {
+      for (final c in s.connectors) {
+        final t = c.trim();
+        if (t.isEmpty || !seen.add(t.toLowerCase())) { continue; }
+        out.add(t);
+      }
+    }
+    return out;
+  }
+
+  int  get chargerCount   => stations.fold(0, (n, s) => n + (s.total > 0 ? s.total : 1));
+  int  get availableCount => stations.fold(0, (n, s) => n + s.available);
+  bool get isDC           => stations.any((s) => s.isDC);
+
+  /// Stable key used by the UI to track which options are ticked across rebuilds.
+  String get locationKey =>
+      '${location.latitude.toStringAsFixed(5)},${location.longitude.toStringAsFixed(5)}';
+}
+
 class EVRouteResult {
   const EVRouteResult({
     required this.polylinePoints,
     required this.totalDistanceKm,
     required this.batteryAtArrivalPct,
     required this.chargingStops,
+    required this.options,
     required this.effectiveRangeKm,
     required this.maxRangeKm,
   });
   final List<LatLng>       polylinePoints;
   final double             totalDistanceKm;
   final double             batteryAtArrivalPct;
-  final List<ChargingStop> chargingStops;
+  final List<ChargingStop> chargingStops;          // minimal greedy plan
+  final List<RouteChargerOption> options;          // every selectable block
   final double             effectiveRangeKm;
   final double             maxRangeKm;
 }
@@ -352,11 +418,110 @@ class RoutingService {
 
       final remainAtDestKm = currentKm - (routeKm - coveredKm);
 
+      // ── Build the selectable charger options (~one block per 50 km) ─────────
+      // 1. Keep only chargers inside the highway corridor, ordered along the road.
+      final onRoute = projected
+          .where((p) => p.detourKm <= corridorKm)
+          .toList()
+        ..sort((a, b) => a.alongKm.compareTo(b.alongKm));
+
+      // 2. Cluster co-located chargers (≤200 m apart) into single blocks so a
+      //    place served by several providers shows as one option.
+      final clusters = <List<_StationProjection>>[];
+      for (final p in onRoute) {
+        if (clusters.isNotEmpty) {
+          final anchor = clusters.last.first.station;
+          final m = _haversine(LatLng(anchor.lat, anchor.lng),
+                  LatLng(p.station.lat, p.station.lng)) *
+              1000.0;
+          if (m <= 200.0) { clusters.last.add(p); continue; }
+        }
+        clusters.add([p]);
+      }
+
+      // Turns one cluster into an option, resolving carriageway / U-turn from
+      // the travel bearing at that point. A block needs a U-turn only when every
+      // charger in it carries a side suffix on the *wrong* carriageway.
+      RouteChargerOption toOption(List<_StationProjection> cl, bool recommended) {
+        final along  = cl.map((e) => e.alongKm).reduce((a, b) => a + b) / cl.length;
+        final detour = cl.map((e) => e.detourKm).reduce(min);
+        final preferred = _preferredSide(_bearingAlong(pts, cum, along));
+        var hasGoodSide = false;
+        for (final e in cl) {
+          final s = parseSideFromName(e.station.name);
+          if (s == RoadSide.unknown || s == preferred) { hasGoodSide = true; break; }
+        }
+        final requiresUTurn = !hasGoodSide;
+        final blockSide = requiresUTurn
+            ? (preferred == RoadSide.right ? RoadSide.left : RoadSide.right)
+            : preferred;
+        return RouteChargerOption(
+          location:      LatLng(cl.first.station.lat, cl.first.station.lng),
+          stations:      cl.map((e) => e.station).toList(),
+          alongKm:       along,
+          detourKm:      detour,
+          side:          blockSide,
+          requiresUTurn: requiresUTurn,
+          recommended:   recommended,
+        );
+      }
+
+      // 3. Mark clusters that contain a greedy-recommended charger (these are
+      //    always shown and pre-ticked). A recommended charger outside the
+      //    corridor gets its own cluster appended so it is never dropped.
+      bool sameStation(Station a, Station b) =>
+          a.name == b.name && a.lat == b.lat && a.lng == b.lng;
+      final recommendedIdx = <int>{};
+      for (final stop in stops) {
+        var found = -1;
+        for (int i = 0; i < clusters.length; i++) {
+          if (clusters[i].any((e) => sameStation(e.station, stop.station))) {
+            found = i; break;
+          }
+        }
+        if (found == -1) {
+          final proj = projected.firstWhere(
+              (p) => sameStation(p.station, stop.station),
+              orElse: () => _StationProjection(stop.station, 0, stop.distanceFromStartKm));
+          clusters.add([proj]);
+          recommendedIdx.add(clusters.length - 1);
+        } else {
+          recommendedIdx.add(found);
+        }
+      }
+
+      // 4. Sample ~one cluster per 50 km, always moving forward. Empty windows
+      //    naturally roll over to the next reachable cluster ahead.
+      const sampleStepKm = 50.0;
+      final pickedIdx = <int>{};
+      double lastAlong = -1;
+      for (double cp = sampleStepKm; cp < routeKm + sampleStepKm; cp += sampleStepKm) {
+        var best = -1;
+        var bestDelta = double.infinity;
+        for (int i = 0; i < clusters.length; i++) {
+          if (pickedIdx.contains(i)) { continue; }
+          final a = clusters[i].first.alongKm;
+          if (a <= lastAlong) { continue; }
+          final d = (a - cp).abs();
+          if (d < bestDelta) { bestDelta = d; best = i; }
+        }
+        if (best == -1) { continue; }
+        pickedIdx.add(best);
+        lastAlong = clusters[best].first.alongKm;
+      }
+      pickedIdx.addAll(recommendedIdx); // recommended blocks are always present
+
+      final options = pickedIdx
+          .map((i) => toOption(clusters[i], recommendedIdx.contains(i)))
+          .toList()
+        ..sort((a, b) => a.alongKm.compareTo(b.alongKm));
+
       return EVRouteResult(
         polylinePoints:      pts,
         totalDistanceKm:     totalDistKm,
         batteryAtArrivalPct: (remainAtDestKm / effectiveKm * 100).clamp(0.0, 100.0),
         chargingStops:       stops,
+        options:             options,
         effectiveRangeKm:    effectiveKm,
         maxRangeKm:          maxRangeKm,
       );
