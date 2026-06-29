@@ -51,8 +51,12 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 
-	<!-- Location: shown when the app asks to find nearby chargers / plan routes. -->
+	<!-- Location: shown when the app asks to find nearby chargers / plan routes.
+	     The geolocator plugin references the "Always" API too, so Apple requires
+	     the Always-and-when-in-use string even though we only request when-in-use. -->
 	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>GeoCharge uses your location to show nearby EV charging stations and plan routes to them.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>GeoCharge uses your location to show nearby EV charging stations and plan routes to them.</string>
 
 	<!-- App Tracking Transparency: shown before AdMob may use the IDFA for ads. -->
