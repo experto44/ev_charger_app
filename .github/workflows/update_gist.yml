@@ -99,7 +99,7 @@ jobs:
           # location's evses, connectors and the referenced tariffs/currencies.
           # Multiple Georgian networks run identical AMPECO instances — only the
           # host differs — so one parameterized fetcher serves all of them.
-          def fetch_ampeco(host, provider_name, id_prefix):
+          def fetch_ampeco(host, provider_name, id_prefix, city_fn=None):
               base = f"https://{host}/api/v1"
               common = {
                   "Accept": "application/json",
@@ -197,7 +197,20 @@ jobs:
                               cs = e.get("connectors") or []
                               ports = max(len(cs), 1)        # an EVSE has >=1 plug
                               total += ports
-                              if e.get("isAvailable"):
+                              # A spot is free if the platform says isAvailable,
+                              # OR its status is exactly "unavailable". On a
+                              # dual-connector DC cabinet (CCS2 + GB/T sharing one
+                              # power module) AMPECO marks the idle sibling
+                              # status=unavailable / isAvailable=false while the
+                              # other charges, which made a station with ONE car
+                              # charging read "0 of 2". Verified on the live API
+                              # that status=unavailable never appears without a
+                              # concurrent charging session at the same location,
+                              # so it always means "sibling busy", never a broken
+                              # unit (those report "out of order"). Counting it
+                              # back fixes the bug without masking broken plugs.
+                              st = str(e.get("status") or "").strip().lower()
+                              if e.get("isAvailable") or st == "unavailable":
                                   avail += ports
                               try: max_power = max(max_power, float(e.get("maxPower") or 0))
                               except: pass
@@ -225,7 +238,7 @@ jobs:
                           "price": price,
                           "available_spots": f"{avail} available",
                           "total_spots": total,
-                          "city": derive_city(addr) or name.split(",")[0],
+                          "city": (city_fn(addr) if city_fn else derive_city(addr)) or name.split(",")[0],
                           "provider": provider_name,
                           "connectors": sorted(conns),
                           "last_updated": "Just now",
@@ -241,6 +254,48 @@ jobs:
 
           def fetch_evpower():
               return fetch_ampeco("cp.evpower.ge", "EV Power GE", "evpower")
+
+          # MOVEO (cp.moveo.ge) is AMPECO too, but its addresses are Georgian and
+          # "|"-separated (e.g. "ვაჟა-ფშაველას გამზ. 70 | თბილისი 0186, საქართველო"),
+          # which the comma-only derive_city mangles. Pull the city from the 4-digit
+          # postal-code segment and map the common GE city names (and declined
+          # roots like "ქარელის") to English so it matches the app's data style.
+          def fetch_moveo():
+              GE_CITY = {
+                  "თბილისი": "Tbilisi", "ბათუმი": "Batumi", "ქუთაისი": "Kutaisi",
+                  "რუსთავი": "Rustavi", "გორი": "Gori", "თელავი": "Telavi",
+                  "ზუგდიდი": "Zugdidi", "ფოთი": "Poti", "ოზურგეთი": "Ozurgeti",
+                  "ახალციხე": "Akhaltsikhe", "მცხეთა": "Mtskheta", "ბორჯომი": "Borjomi",
+                  "ბაკურიანი": "Bakuriani", "გუდაური": "Gudauri", "მარნეული": "Marneuli",
+                  "ხაშური": "Khashuri", "ზესტაფონი": "Zestaponi", "სენაკი": "Senaki",
+              }
+              GE_ROOT = {
+                  "ქარელ": "Kareli", "თბილის": "Tbilisi", "ბათუმ": "Batumi",
+                  "ქუთაის": "Kutaisi", "რუსთავ": "Rustavi", "თელავ": "Telavi",
+                  "ზუგდიდ": "Zugdidi", "გორ": "Gori", "გუდაურ": "Gudauri",
+                  "ბაკურიან": "Bakuriani", "ბორჯომ": "Borjomi",
+              }
+              def clean(seg):
+                  toks = [w for w in seg.split()
+                          if not any(ch.isdigit() for ch in w) and not w.startswith("#")]
+                  name = " ".join(toks).strip()
+                  if name in GE_CITY:
+                      return GE_CITY[name]
+                  for w in toks:
+                      for root, en in GE_ROOT.items():
+                          if w.startswith(root):
+                              return en
+                  return name
+              def moveo_city(addr):
+                  parts = [p.strip() for p in (addr or "").replace("|", ",").split(",") if p.strip()]
+                  if not parts:
+                      return ""
+                  for p in parts:                       # segment carrying the postal code = city
+                      if any(len(w) == 4 and w.isdigit() for w in p.split()):
+                          return clean(p)
+                  named = [p for p in parts if p not in ("საქართველო", "Georgia", "georgia")]
+                  return clean(named[-1]) if named else ""
+              return fetch_ampeco("cp.moveo.ge", "MOVEO", "moveo", city_fn=moveo_city)
 
           # ── Da-Tene (PlugsHub platform — NOT AMPECO) ───────────────────────
           # Multi-tenant API: every request needs an X-Tenant-ID header. We log
@@ -672,6 +727,7 @@ jobs:
           # last-known bundled snapshot instead of dropping the provider.
           stations = list(bundled)
           for fn, pname in [(fetch_martev, "mart EV"),
+                            (fetch_moveo, "MOVEO"),
                             (fetch_electrify, "Electrify Georgia"),
                             (fetch_evpower, "EV Power GE"),
                             (fetch_datene, "Da-Tene"),
