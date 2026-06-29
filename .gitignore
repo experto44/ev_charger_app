@@ -31,6 +31,9 @@ migrate_working_dir/
 .pub/
 /build/
 
+# Firebase iOS config — kept local, supplied to CI as a secure base64 var.
+ios/Runner/GoogleService-Info.plist
+
 # Symbolication related
 app.*.symbols
 
