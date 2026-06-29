@@ -26,18 +26,17 @@ const _textSec   = Color(0xFF9E9E9E);
 const _kMonthlyFallback = '1 ₾';
 const _kYearlyFallback  = '9.99 ₾';
 
-/// Formats a store [ProductDetails] into "<amount> ₾" using the live `rawPrice`
-/// (so it tracks any future price change in Play Console). Whole amounts drop
-/// the decimals: 1.0 → "1 ₾", 9.99 → "9.99 ₾". Falls back to [fallback] when the
-/// product hasn't loaded (null) or the store reports an unusable price (≤ 0 or
-/// non-finite), so the paywall never shows "0 ₾".
+/// Returns the store's own localized, correctly-formatted price string for the
+/// user's storefront — e.g. "₾1.00" on the Georgian Play Store, "$0.49" on the
+/// iOS App Store (Georgia is billed in USD). Using the store string instead of a
+/// hand-built "₾"-suffixed number keeps the currency symbol right on every
+/// platform and territory. Falls back to [fallback] only when the product hasn't
+/// loaded (null) or the store reports an unusable price (≤ 0 / non-finite).
 String _storePrice(ProductDetails? p, String fallback) {
   if (p == null) return fallback;
-  final v = p.rawPrice;
-  if (v <= 0 || !v.isFinite) return fallback;
-  final amount =
-      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
-  return '$amount ₾';
+  final s = p.price.trim(); // localized, e.g. "$0.49" or "₾1.00"
+  if (s.isEmpty || p.rawPrice <= 0 || !p.rawPrice.isFinite) return fallback;
+  return s;
 }
 
 class PaywallScreen extends StatefulWidget {
