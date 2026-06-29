@@ -191,7 +191,14 @@ jobs:
 
                       # avail / total count PORTS (connectors), not chargers, so
                       # a location with 4 plugs reports "x of 4" correctly.
+                      # port_details holds one {type,status,since?} per connector
+                      # so the app can colour each plug (free/busy/out) and show
+                      # how long a busy one has been charging.
                       conns, max_power, avail, total, any_dc, price = set(), 0.0, 0, 0, False, ""
+                      port_details = []
+                      SESSION = ("charging", "preparing", "finishing", "occupied",
+                                 "reserved", "suspendedev", "suspendedevse",
+                                 "inuse", "intransaction")
                       for zone in (loc.get("zones") or []):
                           for e in (zone.get("evses") or []):
                               cs = e.get("connectors") or []
@@ -210,8 +217,18 @@ jobs:
                               # unit (those report "out of order"). Counting it
                               # back fixes the bug without masking broken plugs.
                               st = str(e.get("status") or "").strip().lower()
-                              if e.get("isAvailable") or st == "unavailable":
+                              is_free = bool(e.get("isAvailable")) or st == "unavailable"
+                              if is_free:
                                   avail += ports
+                              # Per-plug status for the detail sheet. "unavailable"
+                              # (sibling busy) shows as free, matching the count.
+                              if is_free:
+                                  pstatus = "free"
+                              elif st in SESSION:
+                                  pstatus = "busy"
+                              else:
+                                  pstatus = "out"
+                              since = e.get("startedAt") if pstatus == "busy" else None
                               try: max_power = max(max_power, float(e.get("maxPower") or 0))
                               except: pass
                               if str(e.get("currentType", "")).lower() == "dc":
@@ -222,6 +239,10 @@ jobs:
                                   if ct: conns.add(ct)
                                   if "ccs" in ic or "chademo" in ic or "gb-t-dc" in ic:
                                       any_dc = True
+                                  port = {"type": ct or (c.get("name") or "?"), "status": pstatus}
+                                  if since:
+                                      port["since"] = since
+                                  port_details.append(port)
                               if not price:
                                   price = tariff_price(e.get("tariffId"), tariffs, currencies)
 
@@ -241,6 +262,7 @@ jobs:
                           "city": (city_fn(addr) if city_fn else derive_city(addr)) or name.split(",")[0],
                           "provider": provider_name,
                           "connectors": sorted(conns),
+                          "ports": port_details,
                           "last_updated": "Just now",
                       })
               print(f"{provider_name}: {len(stations)} stations")
