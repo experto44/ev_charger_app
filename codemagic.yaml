@@ -24,9 +24,6 @@ workflows:
     environment:
       groups:
         - geocharge_ios
-      ios_signing:
-        distribution_type: app_store        # automatic, App Store distribution profile
-        bundle_identifier: ge.geocharge.app
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -41,6 +38,16 @@ workflows:
       # (Remove this block if you want every push to build iOS.)
 
     scripts:
+      - name: Fetch / create signing files
+        script: |
+          # Creates the App Store distribution certificate (reusing one if it
+          # already exists in the account) and the provisioning profile for this
+          # bundle id if it doesn't exist yet — fixes "No matching profiles found".
+          keychain initialize
+          app-store-connect fetch-signing-files "ge.geocharge.app" \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
       - name: Restore Firebase iOS config
         script: |
           echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > "$CM_BUILD_DIR/ios/Runner/GoogleService-Info.plist"
@@ -48,7 +55,7 @@ workflows:
         script: flutter pub get
       - name: Install CocoaPods
         script: find . -name "Podfile" -execdir pod install \;
-      - name: Apply automatic signing to the Xcode project
+      - name: Apply provisioning profiles to the Xcode project
         script: xcode-project use-profiles
       - name: Compute next build number from TestFlight
         script: |
