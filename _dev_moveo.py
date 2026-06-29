@@ -172,6 +172,29 @@ def derive_city(addr):
     return _clean_city(named[-1]) if named else ""
 
 
+def evse_free(e):
+    """Whether an EVSE counts as a free charging spot.
+
+    The bug this fixes (a station with ONE car charging showing "0 of 2"): on a
+    dual-connector DC cabinet (e.g. CCS2 + GB/T sharing one power module) AMPECO
+    marks the idle sibling `status=unavailable` / isAvailable=False while the
+    other connector charges, so counting raw isAvailable drops the station to
+    zero free even though the second cable can still be plugged in.
+
+    Fix is surgical: trust the platform's `isAvailable` everywhere, and ALSO
+    count a connector whose status is exactly `unavailable` as free. Verified
+    against the live API that `status=unavailable` never appears without a
+    concurrent charging session at the same location — it always means
+    "sibling busy", never a genuinely broken unit (those report `out of order`,
+    which stays excluded). So this only ever ADDS the sibling-busy connector
+    back; it never reclassifies broken units or charging/preparing connectors.
+    """
+    if e.get("isAvailable"):
+        return True
+    s = (e.get("status") or "").strip().lower().replace(" ", "").replace("_", "").replace("-", "")
+    return s == "unavailable"
+
+
 def fetch_moveo():
     r = requests.get(f"{BASE}/app/pins", headers=HEADERS, timeout=TIMEOUT)
     r.raise_for_status()
@@ -212,7 +235,7 @@ def fetch_moveo():
             mw = e.get("maxPower") or 0
             if mw > max_w:
                 max_w = mw
-            if e.get("isAvailable"):
+            if evse_free(e):
                 available += 1
             for c in e.get("connectors", []):
                 n = norm_conn(c.get("icon") or c.get("name"))
