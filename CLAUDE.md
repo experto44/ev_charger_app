@@ -7,7 +7,8 @@
 - `key.properties` and `upload-keystore.jks` are gitignored — they stay local only
 
 ## Version Management
-- Current versionCode: 17, versionName: "1.1.5"
-- Always increment versionCode by 1 and bump versionName patch digit for every new release build
-- After every release build, update this file with the new versionCode and versionName
+- Single source of truth: `pubspec.yaml` → `version: <name>+<code>` (currently `1.1.5+17`)
+- Android `build.gradle` reads it via `flutterVersionCode/Name`; iOS reads it too — bump pubspec ONLY
+- For every release: bump the build number (+N) by 1 and the patch digit of the name; both platforms stay in sync
+- Codemagic uses the same pubspec version for iOS (build name); iOS build number auto-increments from TestFlight
 - Required permissions: `com.google.android.gms.permission.AD_ID` must always be present in AndroidManifest.xml (AdMob requirement)

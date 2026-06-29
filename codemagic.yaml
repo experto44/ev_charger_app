@@ -8,8 +8,8 @@
 #      "GeoCharge ASC Key"  (Apple → App Store Connect → Users & Access → Keys).
 #   3. Add a secure (encrypted) variable group "geocharge_ios" containing:
 #        - APP_STORE_APPLE_ID        the app's numeric Apple ID from App Store Connect
-#        - APP_VERSION               marketing version, e.g. 1.1.5 (bump per release)
 #        - GOOGLE_SERVICE_INFO_PLIST base64 of ios/Runner/GoogleService-Info.plist
+#      (Marketing version comes from pubspec.yaml — no APP_VERSION needed.)
 #   4. Register the bundle id `ge.geocharge.app` in App Store Connect first.
 
 workflows:
@@ -56,8 +56,9 @@ workflows:
           echo "BUILD_NUMBER=$(($LATEST + 1))" >> "$CM_ENV"
       - name: Build signed IPA
         script: |
+          # Marketing version (build name) comes from pubspec.yaml; only the
+          # build number is overridden so it always increments on TestFlight.
           flutter build ipa --release \
-            --build-name="$APP_VERSION" \
             --build-number="$BUILD_NUMBER" \
             --export-options-plist=/Users/builder/export_options.plist
 

@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../services/auth_service.dart';
 import 'register_screen.dart';
@@ -82,6 +84,26 @@ class _LoginScreenState extends State<LoginScreen> {
       _setError(_authMessage(e.code));
     } catch (_) {
       _setError('Google sign-in failed. Please try again.');
+    }
+  }
+
+  Future<void> _appleSignIn() async {
+    setState(() { _loading = true; _error = ''; });
+    try {
+      await AuthService.signInWithApple();
+      // On success the authStateChanges listener pops the screen.
+      if (mounted) { setState(() => _loading = false); }
+    } on SignInWithAppleAuthorizationException catch (e) {
+      // Treat a user-cancelled sheet as a no-op, not an error.
+      if (e.code == AuthorizationErrorCode.canceled) {
+        if (mounted) { setState(() => _loading = false); }
+      } else {
+        _setError('Apple sign-in failed. Please try again.');
+      }
+    } on FirebaseAuthException catch (e) {
+      _setError(_authMessage(e.code));
+    } catch (_) {
+      _setError('Apple sign-in failed. Please try again.');
     }
   }
 
@@ -210,6 +232,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // ── Google Sign-In ────────────────────────────────────────────
                 _GoogleButton(loading: _loading, onTap: _googleSignIn),
+
+                // ── Sign in with Apple (iOS only — App Store Guideline 4.8) ────
+                if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+                  const SizedBox(height: 12),
+                  Opacity(
+                    opacity: _loading ? 0.6 : 1,
+                    child: IgnorePointer(
+                      ignoring: _loading,
+                      child: SignInWithAppleButton(
+                        onPressed: _appleSignIn,
+                        height: 52,
+                        borderRadius: BorderRadius.circular(14),
+                        style: SignInWithAppleButtonStyle.white,
+                        text: 'Continue with Apple',
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 36),
 
                 // ── Register link ─────────────────────────────────────────────

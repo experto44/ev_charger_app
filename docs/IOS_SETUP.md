@@ -89,8 +89,8 @@ Android-ს აქვს `google-services.json`; iOS-ს სჭირდებ�
    | ცვლადი | მნიშვნელობა |
    |---|---|
    | `APP_STORE_APPLE_ID` | აპის numeric Apple ID (ნაბიჯი 2) |
-   | `APP_VERSION` | marketing ვერსია, მაგ. `1.1.5` |
    | `GOOGLE_SERVICE_INFO_PLIST` | base64 (ნაბიჯი 3) |
+   > marketing ვერსია `pubspec.yaml`-იდან მოდის — `APP_VERSION` აღარ გჭირდება.
 4. დაამატე **App Store Connect integration** `GeoCharge ASC Key` (ნაბიჯი 4).
 
 ამის შემდეგ: **main-ში ყოველი push ავტომატურად ააწყობს iOS build-ს და ატვირთავს
@@ -151,14 +151,13 @@ TestFlight-ში.** build number ავტომატურად იზრდ
 
 ---
 
-## 9. ვერსიების სინქრონი (რეკომენდაცია)
+## 9. ვერსიების სინქრონი ✅ (გაკეთებულია)
 
-ახლა Android-ის ვერსია `android/app/build.gradle`-შია ხელით ჩაწერილი
-(`versionCode`/`versionName`), iOS კი `APP_VERSION`-ს იღებს Codemagic-იდან.
+ვერსია ახლა **ერთ წყაროშია** — `pubspec.yaml`-ის `version: <name>+<build>` (მაგ. `1.1.5+17`).
+- Android: `build.gradle` კითხულობს `flutterVersionCode/Name`-იდან.
+- iOS: Codemagic იყენებს იმავე pubspec ვერსიას (build number ავტომატურად იზრდება TestFlight-დან).
 
-**რეკომენდაცია:** გადავიყვანოთ ორივე ერთ წყაროზე — `pubspec.yaml`-ის `version:`-ზე
-(მაგ. `1.1.5+17`). მაშინ ერთ ადგილას bump = ორივე პლატფორმა განახლდება. ეს ცალკე
-პატარა refactor-ია; თუ მინდა, გავაკეთებ.
+**ანუ ყოველ რელიზზე მხოლოდ `pubspec.yaml`-ის `version:` ცვალე** — ორივე პლატფორმა განახლდება.
 
 ---
 

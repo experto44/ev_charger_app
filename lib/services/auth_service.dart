@@ -1,7 +1,12 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import 'purchase_service.dart';
 
@@ -63,6 +68,50 @@ class AuthService {
     // Pull this account's premium status from Firestore into local state.
     await PurchaseService.I.syncPremiumFromFirestore();
     return cred;
+  }
+
+  // ── Sign in with Apple ────────────────────────────────────────────────────────
+  // iOS-only (required by App Store Guideline 4.8 since Google sign-in is offered).
+  // Uses a SHA-256-hashed nonce: the hash is sent to Apple, the raw nonce to
+  // Firebase, which lets Firebase verify the credential wasn't replayed.
+  static Future<UserCredential?> signInWithApple() async {
+    final rawNonce = _generateNonce();
+    final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+
+    final appleCred = await SignInWithApple.getAppleIDCredential(
+      scopes: const [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ],
+      nonce: hashedNonce,
+    );
+
+    final oauthCred = OAuthProvider('apple.com').credential(
+      idToken:  appleCred.identityToken,
+      rawNonce: rawNonce,
+    );
+    final cred = await _auth.signInWithCredential(oauthCred);
+
+    // Apple returns the user's name only on the very first authorization. Persist
+    // it to the Firebase profile while we have it, if not already set.
+    final fullName = [appleCred.givenName, appleCred.familyName]
+        .whereType<String>()
+        .join(' ')
+        .trim();
+    if (fullName.isNotEmpty && (cred.user?.displayName?.isEmpty ?? true)) {
+      await cred.user?.updateDisplayName(fullName);
+    }
+
+    await PurchaseService.I.syncPremiumFromFirestore();
+    return cred;
+  }
+
+  // Cryptographically-secure random string for the Apple sign-in nonce.
+  static String _generateNonce([int length = 32]) {
+    const chars =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._';
+    final rnd = Random.secure();
+    return List.generate(length, (_) => chars[rnd.nextInt(chars.length)]).join();
   }
 
   // ── Sign out ──────────────────────────────────────────────────────────────────
