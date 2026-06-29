@@ -11,3 +11,7 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Firebase config & certificates — kept local, supplied to CI as secure files.
+app/google-services.json
+**/*.pem
