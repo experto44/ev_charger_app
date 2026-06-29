@@ -40,12 +40,14 @@ workflows:
     scripts:
       - name: Fetch / create signing files
         script: |
-          # Creates the App Store distribution certificate (reusing one if it
-          # already exists in the account) and the provisioning profile for this
-          # bundle id if it doesn't exist yet — fixes "No matching profiles found".
+          # Creates (or reuses) the App Store distribution certificate using our
+          # own private key in CERTIFICATE_PRIVATE_KEY, plus the provisioning
+          # profile for this bundle id — the private key is required because Apple
+          # never stores it, so the CI must supply one to own a certificate.
           keychain initialize
           app-store-connect fetch-signing-files "ge.geocharge.app" \
             --type IOS_APP_STORE \
+            --certificate-key=@env:CERTIFICATE_PRIVATE_KEY \
             --create
           keychain add-certificates
       - name: Restore Firebase iOS config
