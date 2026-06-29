@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
@@ -33,23 +31,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool   _loading = false;
   String _error   = '';
 
-  StreamSubscription<User?>? _authSub;
-
-  @override
-  void initState() {
-    super.initState();
-    // Pop as soon as Firebase confirms a signed-in user — covers both
-    // email/password and Google sign-in without any per-method navigation.
-    _authSub = FirebaseAuth.instance.authStateChanges().listen((user) {
-      if (user != null && mounted) {
-        Navigator.of(context).pop();
-      }
-    });
-  }
-
   @override
   void dispose() {
-    _authSub?.cancel();
     _emailCtrl.dispose();
     _passCtrl.dispose();
     super.dispose();
@@ -64,8 +47,11 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() { _loading = true; _error = ''; });
     try {
       await AuthService.signInWithEmail(_emailCtrl.text, _passCtrl.text);
-      // Stop the spinner before the authStateChanges listener pops the screen.
-      if (mounted) { setState(() => _loading = false); }
+      // Success → close the auth screens and return to the app. We pop
+      // explicitly rather than waiting on authStateChanges, which does NOT
+      // re-fire when this account is already the current user (that was the
+      // "stuck on the login screen" bug).
+      if (mounted) { Navigator.pop(context); }
     } on FirebaseAuthException catch (e) {
       _setError(_authMessage(e.code));
     } catch (_) {
@@ -76,10 +62,13 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _googleSignIn() async {
     setState(() { _loading = true; _error = ''; });
     try {
-      await AuthService.signInWithGoogle();
-      // Stop the spinner whether the user cancelled or signed in successfully —
-      // on success the authStateChanges listener pops the screen.
-      if (mounted) { setState(() => _loading = false); }
+      final cred = await AuthService.signInWithGoogle();
+      if (!mounted) { return; }
+      if (cred == null) {
+        setState(() => _loading = false); // user cancelled the Google sheet
+      } else {
+        Navigator.pop(context);            // signed in → return to the app
+      }
     } on FirebaseAuthException catch (e) {
       _setError(_authMessage(e.code));
     } catch (_) {
@@ -91,8 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() { _loading = true; _error = ''; });
     try {
       await AuthService.signInWithApple();
-      // On success the authStateChanges listener pops the screen.
-      if (mounted) { setState(() => _loading = false); }
+      if (mounted) { Navigator.pop(context); } // signed in → return to the app
     } on SignInWithAppleAuthorizationException catch (e) {
       // Treat a user-cancelled sheet as a no-op, not an error.
       if (e.code == AuthorizationErrorCode.canceled) {

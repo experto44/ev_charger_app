@@ -77,13 +77,15 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       final verified =
           FirebaseAuth.instance.currentUser?.emailVerified ?? false;
       if (!mounted) { return; }
-      if (!verified) {
+      if (verified) {
+        // Verified → leave the auth flow and return to the app.
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      } else {
         setState(() {
           _checking = false;
           _error = "Email not verified yet. Please check your inbox and click the link.";
         });
       }
-      // If verified, the FirebaseAuth stream fires → AuthWrapper navigates to the app.
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -96,6 +98,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   Future<void> _signOut() async {
     await AuthService.signOut();
+    if (mounted) { Navigator.of(context).popUntil((route) => route.isFirst); }
   }
 
   @override
