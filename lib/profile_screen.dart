@@ -168,6 +168,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) { Navigator.pop(context); }
   }
 
+  void _snack(String msg, {bool error = false}) {
+    if (!mounted) { return; }
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg, style: AppStrings.font()),
+      backgroundColor: error ? _errorRed : _bgCard,
+      behavior: SnackBarBehavior.floating,
+    ));
+  }
+
+  // In-app account deletion (App Store Guideline 5.1.1(v)).
+  Future<void> _deleteAccount() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AppStrings.wrap(AlertDialog(
+        backgroundColor: _bgCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: Text(AppStrings.deleteAccountTitle,
+            style: const TextStyle(
+                color: _textPri, fontSize: 17, fontWeight: FontWeight.w700)),
+        content: Text(AppStrings.deleteAccountBody,
+            style: const TextStyle(color: _textSec, fontSize: 13, height: 1.4)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(AppStrings.cancel,
+                style: const TextStyle(color: _textSec)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(AppStrings.delete,
+                style: const TextStyle(
+                    color: _errorRed, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      )),
+    );
+    if (confirmed != true) { return; }
+    try {
+      await AuthService.deleteAccount();
+      _snack(AppStrings.accountDeleted);
+      if (mounted) { Navigator.pop(context); }
+    } on FirebaseAuthException catch (e) {
+      _snack(
+        (e.code == 'requires-recent-login' || e.code == 'reauth-cancelled')
+            ? AppStrings.reloginToDelete
+            : AppStrings.deleteFailed,
+        error: true,
+      );
+    } catch (_) {
+      _snack(AppStrings.deleteFailed, error: true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -605,6 +658,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // In-app account deletion — required by App Store Guideline 5.1.1(v).
+              Center(
+                child: TextButton(
+                  onPressed: _deleteAccount,
+                  child: Text(
+                    AppStrings.deleteAccount,
+                    style: const TextStyle(
+                      color: _errorRed,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      decoration: TextDecoration.underline,
+                      decorationColor: _errorRed,
+                    ),
                   ),
                 ),
               ),

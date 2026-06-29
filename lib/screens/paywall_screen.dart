@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n/app_strings.dart';
 import '../services/purchase_service.dart';
 import '../utils/responsive.dart';
+
+// Apple's standard auto-renewable subscription EULA (used as Terms of Use) and
+// the app's privacy policy — both must be reachable from the paywall.
+const _kTermsUrl   = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
+const _kPrivacyUrl = 'https://experto44.github.io/ev_charger_app/privacy-policy.html';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 const _bgDark    = Color(0xFF1A1A1A);
@@ -245,7 +251,51 @@ class _PaywallScreenState extends State<PaywallScreen> {
               style: const TextStyle(color: _teal, fontSize: 13),
             ),
           ),
+
+          const SizedBox(height: 8),
+          // Auto-renewable subscription disclosure + legal links (Guideline 3.1.2).
+          Text(
+            AppStrings.autoRenewDisclosure,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: _textSec, fontSize: 11, height: 1.45),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const _LegalLink(label: 'termsOfUse', url: _kTermsUrl),
+              Text('   ·   ',
+                  style: TextStyle(
+                      color: _textSec.withValues(alpha: 0.6), fontSize: 11)),
+              const _LegalLink(label: 'privacyPolicy', url: _kPrivacyUrl),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Legal link (Terms of Use / Privacy Policy) ────────────────────────────────
+class _LegalLink extends StatelessWidget {
+  const _LegalLink({required this.label, required this.url});
+  final String label; // 'termsOfUse' | 'privacyPolicy'
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    final text =
+        label == 'termsOfUse' ? AppStrings.termsOfUse : AppStrings.privacyPolicy;
+    return GestureDetector(
+      onTap: () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: _textSec,
+          fontSize: 11,
+          decoration: TextDecoration.underline,
+          decorationColor: _textSec,
+        ),
       ),
     );
   }

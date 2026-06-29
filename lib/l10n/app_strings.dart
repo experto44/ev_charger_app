@@ -61,6 +61,22 @@ class AppStrings {
   static String get save => isGeorgian ? 'შენახვა' : 'Save';
   static String get savedExclaim => isGeorgian ? 'შენახულია!' : 'Saved!';
   static String get signOut => isGeorgian ? 'გამოსვლა' : 'Sign Out';
+  static String get deleteAccount =>
+      isGeorgian ? 'ანგარიშის წაშლა' : 'Delete Account';
+  static String get deleteAccountTitle =>
+      isGeorgian ? 'ანგარიშის წაშლა?' : 'Delete account?';
+  static String get deleteAccountBody => isGeorgian
+      ? 'ეს სამუდამოდ წაშლის თქვენს ანგარიშს და ყველა მონაცემს. ქმედება შეუქცევადია.'
+      : 'This permanently deletes your account and all of your data. This cannot be undone.';
+  static String get cancel => isGeorgian ? 'გაუქმება' : 'Cancel';
+  static String get delete => isGeorgian ? 'წაშლა' : 'Delete';
+  static String get accountDeleted =>
+      isGeorgian ? 'ანგარიში წაიშალა' : 'Account deleted';
+  static String get reloginToDelete => isGeorgian
+      ? 'უსაფრთხოებისთვის თავიდან შედით სისტემაში და სცადეთ წაშლა ხელახლა'
+      : 'For security, please sign in again, then retry deleting your account';
+  static String get deleteFailed =>
+      isGeorgian ? 'წაშლა ვერ მოხერხდა' : 'Could not delete account';
   static String get carModel => isGeorgian ? 'მანქანის მოდელი' : 'Car Model';
   static String get myConnector => isGeorgian ? 'ჩემი კონექტორი' : 'My Connector';
   static String get maxRange => isGeorgian ? 'მაქს. გარბენი' : 'Max Range';
@@ -212,4 +228,11 @@ class AppStrings {
   static String get noActiveSubscription => isGeorgian
       ? 'აქტიური გამოწერა ვერ მოიძებნა'
       : 'No active subscription found';
+
+  // Required auto-renewable subscription disclosure (App Store Guideline 3.1.2).
+  static String get autoRenewDisclosure => isGeorgian
+      ? 'გამოწერა ავტომატურად განახლდება, თუ მიმდინარე პერიოდის დასრულებამდე მინიმუმ 24 საათით ადრე არ გააუქმებთ. გადახდა ჩამოიჭრება თქვენი Apple ID-დან ყიდვის დადასტურებისას. გამოწერის მართვა და გაუქმება შესაძლებელია App Store-ის პარამეტრებში ყიდვის შემდეგ.'
+      : 'Subscription automatically renews unless cancelled at least 24 hours before the end of the current period. Payment is charged to your Apple ID at confirmation of purchase. You can manage or cancel anytime in your App Store account settings.';
+  static String get termsOfUse =>
+      isGeorgian ? 'მოხმარების წესები' : 'Terms of Use';
 }

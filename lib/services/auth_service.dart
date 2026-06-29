@@ -114,6 +114,61 @@ class AuthService {
     return List.generate(length, (_) => chars[rnd.nextInt(chars.length)]).join();
   }
 
+  // ── Delete account (App Store Guideline 5.1.1(v): in-app deletion) ────────────
+  // Removes the user's Firestore data and the Firebase Auth account. If the
+  // session is too old Firebase requires a fresh re-authentication first, which
+  // we do transparently for Google/Apple; email accounts surface a re-login hint.
+  static Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) { return; }
+
+    Future<void> wipeAndDelete() async {
+      try {
+        await _firestore.collection('users').doc(user.uid).delete();
+      } catch (_) {/* no data / offline — proceed to auth deletion anyway */}
+      await user.delete();
+    }
+
+    try {
+      await wipeAndDelete();
+    } on FirebaseAuthException catch (e) {
+      if (e.code != 'requires-recent-login') { rethrow; }
+      await _reauthenticate(user); // fresh credential, then retry
+      await wipeAndDelete();
+    }
+
+    await PurchaseService.I.clearLocalPremium();
+    try { await _google.signOut(); } catch (_) {}
+  }
+
+  // Re-authenticates [user] with whichever provider they signed in with, so a
+  // sensitive op (deletion) can proceed. Email/password can't be re-auth'd
+  // silently, so we ask the caller to have the user sign in again.
+  static Future<void> _reauthenticate(User user) async {
+    final providers = user.providerData.map((p) => p.providerId).toSet();
+    if (providers.contains('google.com')) {
+      final g = await _google.signIn();
+      if (g == null) { throw FirebaseAuthException(code: 'reauth-cancelled'); }
+      final ga = await g.authentication;
+      await user.reauthenticateWithCredential(GoogleAuthProvider.credential(
+        accessToken: ga.accessToken, idToken: ga.idToken,
+      ));
+    } else if (providers.contains('apple.com')) {
+      final rawNonce   = _generateNonce();
+      final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+      final apple = await SignInWithApple.getAppleIDCredential(
+        scopes: const [AppleIDAuthorizationScopes.email],
+        nonce: hashedNonce,
+      );
+      await user.reauthenticateWithCredential(OAuthProvider('apple.com').credential(
+        idToken: apple.identityToken, rawNonce: rawNonce,
+      ));
+    } else {
+      // Email/password or unknown — needs a manual fresh sign-in.
+      throw FirebaseAuthException(code: 'requires-recent-login');
+    }
+  }
+
   // ── Sign out ──────────────────────────────────────────────────────────────────
   static Future<void> signOut() async {
     await Future.wait([

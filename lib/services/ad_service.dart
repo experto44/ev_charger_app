@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -16,8 +18,16 @@ import 'purchase_service.dart';
 /// │  While these unit IDs are empty, ad loading is disabled app-wide, so    │
 /// │  the free tier simply shows no ads until the IDs are filled in.         │
 /// └──────────────────────────────────────────────────────────────────────┘
-const String _kBannerAdUnitId       = 'ca-app-pub-2323581212631140/6735366094';
-const String _kInterstitialAdUnitId = 'ca-app-pub-2323581212631140/4959249997';
+// Android uses the production ad units. iOS uses Google's official TEST units
+// for now so TestFlight builds show (test) ads without policy risk. TODO(admob):
+// create the AdMob iOS app + ad units and replace the two iOS ids below, plus
+// GADApplicationIdentifier in ios/Runner/Info.plist.
+final String _kBannerAdUnitId = Platform.isIOS
+    ? 'ca-app-pub-3940256099942544/2934735716'   // iOS TEST banner — replace
+    : 'ca-app-pub-2323581212631140/6735366094';
+final String _kInterstitialAdUnitId = Platform.isIOS
+    ? 'ca-app-pub-3940256099942544/4411468910'   // iOS TEST interstitial — replace
+    : 'ca-app-pub-2323581212631140/4959249997';
 
 /// How often an interstitial may be shown, at most.
 const Duration _kInterstitialMinGap = Duration(minutes: 2);
@@ -56,7 +66,7 @@ class AdService {
   /// `Scaffold.bottomNavigationBar`.
   Widget? bottomBanner() {
     if (!_adsAllowed || !bannerConfigured || !_initialized) return null;
-    return const _AdBanner(adUnitId: _kBannerAdUnitId);
+    return _AdBanner(adUnitId: _kBannerAdUnitId);
   }
 
   /// A banner for the top of the free-tier map screen (placed below the search
@@ -66,7 +76,7 @@ class AdService {
   /// bottom banner.
   Widget? topBanner() {
     if (!_adsAllowed || !bannerConfigured || !_initialized) return null;
-    return const _AdBanner(adUnitId: _kBannerAdUnitId);
+    return _AdBanner(adUnitId: _kBannerAdUnitId);
   }
 
   // ── Interstitial ─────────────────────────────────────────────────────────

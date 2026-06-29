@@ -45,5 +45,41 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<!-- Location: shown when the app asks to find nearby chargers / plan routes. -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>GeoCharge uses your location to show nearby EV charging stations and plan routes to them.</string>
+
+	<!-- App Tracking Transparency: shown before AdMob may use the IDFA for ads. -->
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Your data will be used to show you more relevant ads.</string>
+
+	<!-- AdMob application id. TODO: replace with the REAL iOS app id from AdMob
+	     (Apps → Add app → iOS) before shipping live ads. This is Google's public
+	     SAMPLE id, which serves test ads and prevents a launch crash. -->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-3940256099942544~1458002511</string>
+
+	<!-- SKAdNetwork ids for ad attribution (AdMob-recommended core set). -->
+	<key>SKAdNetworkItems</key>
+	<array>
+		<dict><key>SKAdNetworkIdentifier</key><string>cstr6suwn9.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>4fzdc2evr5.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>2fnua5tdw4.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>ydx93a7ass.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>p78axxw29g.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>v72qych5uu.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>c6k4g5qg8m.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>s39g8k73mm.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>3qy4746246.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>3sh42y64q3.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>f38h382jlk.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>hs6bdukanm.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>v4nxqhlyqp.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>wzmmz9fp6w.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>yclnxrl5pm.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>t38b2kh725.skadnetwork</string></dict>
+		<dict><key>SKAdNetworkIdentifier</key><string>prcb7njmu6.skadnetwork</string></dict>
+	</array>
 </dict>
 </plist>

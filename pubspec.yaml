@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # Single source of truth for BOTH platforms: <marketing>+<build>.
 # Android reads it as versionName+versionCode; iOS as CFBundleShortVersionString
 # +CFBundleVersion. Bump this for every release — no per-platform edits needed.
-version: 1.1.5+17
+version: 1.1.6+18
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -54,6 +54,7 @@ dependencies:
   google_mobile_ads: ^5.2.0
   sign_in_with_apple: ^6.1.0   # iOS Sign in with Apple (required by Guideline 4.8)
   crypto: ^3.0.3               # SHA-256 nonce hashing for the Apple credential
+  app_tracking_transparency: ^2.0.6  # iOS ATT prompt for AdMob (Guideline 5.1.2)
 
 dev_dependencies:
   flutter_test:

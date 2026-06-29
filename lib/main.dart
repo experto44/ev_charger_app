@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'dart:math' as math;
 
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
@@ -40,6 +43,17 @@ void main() async {
   await AdService.I.init();
   PaintingBinding.instance.imageCache.maximumSize = 30;
   PaintingBinding.instance.imageCache.maximumSizeBytes = 10 * 1024 * 1024;
+  // iOS only: after the first frame (app active), ask for tracking permission so
+  // AdMob may use the IDFA for higher-value personalized ads. A denied/undetermined
+  // status simply yields non-personalized ads — nothing else changes.
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    if (kIsWeb || !Platform.isIOS) { return; }
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    final status = await AppTrackingTransparency.trackingAuthorizationStatus;
+    if (status == TrackingStatus.notDetermined) {
+      await AppTrackingTransparency.requestTrackingAuthorization();
+    }
+  });
   runApp(const EVChargerApp());
 }
 
