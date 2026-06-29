@@ -70,8 +70,12 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pop(context);            // signed in → return to the app
       }
     } on FirebaseAuthException catch (e) {
-      _setError(_authMessage(e.code));
-    } catch (_) {
+      // OAuth failures are NOT email/password errors — surface the real Firebase
+      // code/message instead of the misleading "incorrect email or password".
+      debugPrint('[GoogleSignIn] ${e.code}: ${e.message}');
+      _setError('Google sign-in failed: ${e.code}');
+    } catch (e) {
+      debugPrint('[GoogleSignIn] $e');
       _setError('Google sign-in failed. Please try again.');
     }
   }
@@ -86,11 +90,16 @@ class _LoginScreenState extends State<LoginScreen> {
       if (e.code == AuthorizationErrorCode.canceled) {
         if (mounted) { setState(() => _loading = false); }
       } else {
-        _setError('Apple sign-in failed. Please try again.');
+        debugPrint('[AppleSignIn] authz ${e.code}: ${e.message}');
+        _setError('Apple sign-in failed: ${e.code}');
       }
     } on FirebaseAuthException catch (e) {
-      _setError(_authMessage(e.code));
-    } catch (_) {
+      // OAuth failures are NOT email/password errors — surface the real Firebase
+      // code/message instead of the misleading "incorrect email or password".
+      debugPrint('[AppleSignIn] ${e.code}: ${e.message}');
+      _setError('Apple sign-in failed: ${e.code} — ${e.message ?? ''}');
+    } catch (e) {
+      debugPrint('[AppleSignIn] $e');
       _setError('Apple sign-in failed. Please try again.');
     }
   }

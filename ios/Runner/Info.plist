@@ -46,6 +46,22 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 
+	<!-- Google Sign-In OAuth callback. iOS routes the sign-in result back to the
+	     app through this URL scheme; without it google_sign_in raises a fatal
+	     exception and the app crashes on launch of the Google sheet. The scheme is
+	     the REVERSED_CLIENT_ID from GoogleService-Info.plist. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.518875377655-b6j3cfc16oppo14g3s5otq60lm6bpk9i</string>
+			</array>
+		</dict>
+	</array>
+
 	<!-- Export compliance: the app only uses exempt encryption (HTTPS/TLS and
 	     standard hashing), so App Store Connect can skip the encryption question. -->
 	<key>ITSAppUsesNonExemptEncryption</key>
