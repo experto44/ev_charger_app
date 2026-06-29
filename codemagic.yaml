@@ -4,8 +4,8 @@
 #
 # One-time setup in the Codemagic UI (see docs/IOS_SETUP.md for the full guide):
 #   1. Connect this GitHub repo.
-#   2. Add the App Store Connect API key as an integration named exactly
-#      "GeoCharge ASC Key"  (Apple → App Store Connect → Users & Access → Keys).
+#   2. App Store Connect API key integration named "CodemagicASCKey"
+#      (Apple → App Store Connect → Users & Access → Keys). Reused across apps.
 #   3. Add a secure (encrypted) variable group "geocharge_ios" containing:
 #        - APP_STORE_APPLE_ID        the app's numeric Apple ID from App Store Connect
 #        - GOOGLE_SERVICE_INFO_PLIST base64 of ios/Runner/GoogleService-Info.plist
@@ -19,7 +19,7 @@ workflows:
     max_build_duration: 60
 
     integrations:
-      app_store_connect: GeoCharge ASC Key
+      app_store_connect: CodemagicASCKey
 
     environment:
       groups:

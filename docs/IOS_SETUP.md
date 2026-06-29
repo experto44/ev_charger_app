@@ -77,7 +77,7 @@ Android-ს აქვს `google-services.json`; iOS-ს სჭირდებ�
    - **Key ID**
 4. Codemagic → **Teams → Integrations → App Store Connect → Add key**:
    - ატვირთე `.p8`, ჩაწერე Issuer ID + Key ID
-   - დაარქვი ზუსტად: **`GeoCharge ASC Key`** (ეს სახელი `codemagic.yaml`-შია ჩაწერილი)
+   - დაარქვი ზუსტად: **`CodemagicASCKey`** (ეს სახელი `codemagic.yaml`-შია ჩაწერილი)
 
 ---
 
@@ -91,7 +91,7 @@ Android-ს აქვს `google-services.json`; iOS-ს სჭირდებ�
    | `APP_STORE_APPLE_ID` | აპის numeric Apple ID (ნაბიჯი 2) |
    | `GOOGLE_SERVICE_INFO_PLIST` | base64 (ნაბიჯი 3) |
    > marketing ვერსია `pubspec.yaml`-იდან მოდის — `APP_VERSION` აღარ გჭირდება.
-4. დაამატე **App Store Connect integration** `GeoCharge ASC Key` (ნაბიჯი 4).
+4. დაამატე **App Store Connect integration** `CodemagicASCKey` (ნაბიჯი 4).
 
 ამის შემდეგ: **main-ში ყოველი push ავტომატურად ააწყობს iOS build-ს და ატვირთავს
 TestFlight-ში.** build number ავტომატურად იზრდება (TestFlight-ის ბოლო +1).
@@ -167,7 +167,7 @@ TestFlight-ში.** build number ავტომატურად იზრდ
 - [ ] Bundle ID `ge.geocharge.app` + capabilities (Developer portal)
 - [ ] App record App Store Connect-ში → numeric Apple ID
 - [ ] `GoogleService-Info.plist` (Firebase iOS) ლოკალურად + base64 Codemagic-ში
-- [ ] App Store Connect API key (.p8) → Codemagic integration "GeoCharge ASC Key"
+- [ ] App Store Connect API key (.p8) → Codemagic integration "CodemagicASCKey"
 - [ ] Codemagic-ში repo + `geocharge_ios` ცვლადების group
 - [ ] Firebase Apple sign-in ჩართული
 - [ ] Subscription product + Paid Apps Agreement + Banking/Tax
