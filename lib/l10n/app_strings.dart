@@ -134,6 +134,27 @@ class AppStrings {
       ? 'პროვაიდერის ბოლო შემოწმება — არა რეალურ დროში'
       : "Provider's last server check — not real-time";
 
+  // ── Connector (per-plug) status ──────────────────────────────────────────────
+  static String get connectorsTitle =>
+      isGeorgian ? 'კონექტორების სტატუსი' : 'Connector status';
+  static String get portFree => isGeorgian ? 'თავისუფალია' : 'Free';
+  static String get portBusy => isGeorgian ? 'დაკავებულია' : 'Occupied';
+  static String get portOut  => isGeorgian ? 'მწყობრიდან გამოსულია' : 'Out of order';
+
+  /// Approximate "charging for ~N" line shown under a busy connector. Buckets to
+  /// 5-min steps (and to hours past 60 min) since the exact figure isn't known.
+  static String chargingFor(int minutes) {
+    if (minutes >= 60) {
+      final h = minutes ~/ 60;
+      return isGeorgian ? 'იტენება $h სთ+' : 'Charging $h h+';
+    }
+    final b = (minutes ~/ 5) * 5;
+    if (b <= 0) {
+      return isGeorgian ? 'ახლახ დაიწყო' : 'Just started';
+    }
+    return isGeorgian ? 'იტენება $b+ წთ' : 'Charging $b+ min';
+  }
+
   // ── Paywall ──────────────────────────────────────────────────────────────
   static String get paywallSubtitle => isGeorgian
       ? 'უფასო 7 დღე, შემდეგ აირჩიე გეგმა'

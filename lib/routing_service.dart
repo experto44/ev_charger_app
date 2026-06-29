@@ -28,6 +28,28 @@ RoadSide parseSideFromName(String name) {
   return RoadSide.unknown;
 }
 
+// ── Connector port (per-plug live status) ─────────────────────────────────────
+// One physical connector at a station, with its live status so the detail sheet
+// can colour each plug (free/busy/out) and show how long a busy one has charged.
+class ConnectorPort {
+  const ConnectorPort({required this.type, required this.status, this.since});
+
+  final String    type;    // canonical chip label, e.g. "CCS2", "GB/T", "Type 2"
+  final String    status;  // 'free' | 'busy' | 'out'
+  final DateTime? since;    // UTC session start (busy plugs only); null otherwise
+
+  bool get isFree => status == 'free';
+  bool get isBusy => status == 'busy';
+
+  factory ConnectorPort.fromJson(Map<String, dynamic> j) => ConnectorPort(
+        type:   (j['type'] as String?)?.trim().isNotEmpty == true
+            ? (j['type'] as String).trim()
+            : '—',
+        status: j['status'] as String? ?? 'free',
+        since:  j['since'] is String ? DateTime.tryParse(j['since'] as String) : null,
+      );
+}
+
 // ── Station (public model shared across screens) ──────────────────────────────
 class Station {
   const Station({
@@ -45,6 +67,7 @@ class Station {
     this.provider    = '',
     this.lastUpdated = '',
     this.connectors  = const [],
+    this.ports       = const [],
     this.country     = '',
   });
 
@@ -67,6 +90,10 @@ class Station {
           ? declared
           : (isDC ? const ['CCS2', 'CHAdeMO'] : const ['Type 2']);
       final available = int.tryParse(spots.split(' ').first) ?? 0;
+      final ports = (j['ports'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(ConnectorPort.fromJson)
+          .toList();
       return Station(
         id:          j['id']           as String? ?? '',
         name:        j['name']         as String,
@@ -83,6 +110,7 @@ class Station {
         provider:    j['provider']     as String? ?? '',
         lastUpdated: j['last_updated'] as String? ?? '',
         connectors:  connectors,
+        ports:       ports,
         country:     j['country']      as String? ?? '',
       );
     }
@@ -112,7 +140,17 @@ class Station {
   final double lat, lng;
   final bool   isDC;
   final List<String> connectors; // e.g. ["CCS2", "CHAdeMO"]
+  final List<ConnectorPort> ports; // per-plug live status (empty if not published)
   final String country;          // country name for OCM stations ('' = derive from coords)
+
+  /// Copy carrying a formatted [distance] label (e.g. "2.3 km"). Used by the
+  /// home carousel to stamp each station's distance from the user before display.
+  Station withDistance(String d) => Station(
+        name: name, location: location, available: available, lat: lat, lng: lng,
+        isDC: isDC, kw: kw, price: price, id: id, total: total, distance: d,
+        provider: provider, lastUpdated: lastUpdated, connectors: connectors,
+        ports: ports, country: country,
+      );
 }
 
 // ── Route models ──────────────────────────────────────────────────────────────

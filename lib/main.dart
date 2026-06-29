@@ -692,6 +692,26 @@ class _MapScreenState extends State<MapScreen>
     return out;
   }
 
+  // Local Georgian stations for the home carousel, sorted nearest-first by the
+  // user's GPS fix and stamped with a distance label, so the cards show the
+  // closest chargers around the user. Falls back to feed order before a fix is
+  // available. Capped so the carousel never has to render hundreds of cards.
+  List<Station> _nearestLocal(List<Station> stations) {
+    final base = stations.where((s) => s.provider != OcmService.kProvider).toList();
+    final up = _userPos;
+    if (up == null) { return base; }
+    const dist = Distance();
+    final ranked = base
+        .map((s) => MapEntry(
+            dist.as(LengthUnit.Kilometer, up, LatLng(s.lat, s.lng)), s))
+        .toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+    return [for (final e in ranked.take(30)) e.value.withDistance(_fmtKm(e.key))];
+  }
+
+  String _fmtKm(double km) =>
+      km < 1 ? '${(km * 1000).round()} m' : '${km.toStringAsFixed(1)} km';
+
   @override
   Widget build(BuildContext context) {
     final stations = _filtered;
@@ -699,7 +719,7 @@ class _MapScreenState extends State<MapScreen>
     // while the map is centred on Georgia. Panning to an international view hides
     // it entirely (the international pins live on the map, not the carousel).
     final localStations = _centerInGeorgia
-        ? stations.where((s) => s.provider != OcmService.kProvider).toList()
+        ? _nearestLocal(stations)
         : const <Station>[];
     // Lift the right control column above the bottom carousel so the GPS
     // button is never hidden. The carousel is taller when station cards are
@@ -1886,6 +1906,62 @@ class _StationSheetState extends State<_StationSheet> {
     });
   }
 
+  // One large, colour-coded row per physical connector: green = free, red =
+  // busy, grey = out of order. A busy plug also shows roughly how long it has
+  // been charging so the user can guess whether it'll free up soon.
+  Widget _portRow(ConnectorPort p) {
+    final Color color = p.isFree
+        ? _emerald
+        : (p.isBusy ? Colors.redAccent : _textSec);
+    final String label = p.isFree
+        ? AppStrings.portFree
+        : (p.isBusy ? AppStrings.portBusy : AppStrings.portOut);
+    final IconData icon = p.isFree
+        ? Icons.check_circle_rounded
+        : (p.isBusy ? Icons.bolt_rounded : Icons.block_rounded);
+    String? sub;
+    if (p.isBusy && p.since != null) {
+      final mins = DateTime.now().toUtc().difference(p.since!.toUtc()).inMinutes;
+      if (mins >= 0) { sub = AppStrings.chargingFor(mins); }
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.45)),
+        ),
+        child: Row(children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${p.type} — $label',
+                  style: AppStrings.font(TextStyle(
+                      color: color, fontSize: 15, fontWeight: FontWeight.w700)),
+                ),
+                if (sub != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      sub,
+                      style: AppStrings.font(TextStyle(
+                          color: color.withOpacity(0.85), fontSize: 12)),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = _station;
@@ -1949,11 +2025,14 @@ class _StationSheetState extends State<_StationSheet> {
                 label: s.provider,
                 color: _emerald,
               ),
-            ...sortConnectors(s.connectors).map((c) => _InfoChip(
-              icon:  Icons.power_outlined,
-              label: c,
-              color: Colors.blueAccent,
-            )),
+            // Plain connector chips only when there's no per-plug status data
+            // (the live status block below replaces them when available).
+            if (s.ports.isEmpty)
+              ...sortConnectors(s.connectors).map((c) => _InfoChip(
+                icon:  Icons.power_outlined,
+                label: c,
+                color: Colors.blueAccent,
+              )),
           ]),
           const SizedBox(height: 16),
 
@@ -2021,6 +2100,22 @@ class _StationSheetState extends State<_StationSheet> {
                   style: TextStyle(color: Colors.orangeAccent, fontSize: 11)),
             ],
           ]),
+
+          // ── Per-connector live status ─────────────────────────────────────
+          // Colours each plug green (free) / red (busy) / grey (out of order)
+          // so it's obvious which connector is taken, with an approximate
+          // "charging for ~N" under a busy one. Shown only when the feed carries
+          // per-plug data (AMPECO providers); others fall back to the chips above.
+          if (s.ports.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            Text(
+              AppStrings.connectorsTitle,
+              style: AppStrings.font(const TextStyle(
+                  color: _textSec, fontSize: 12, fontWeight: FontWeight.w600)),
+            ),
+            const SizedBox(height: 10),
+            ...s.ports.map(_portRow),
+          ],
           const SizedBox(height: 22),
 
           // Get Directions button
