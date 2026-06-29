@@ -46,6 +46,11 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 
+	<!-- Export compliance: the app only uses exempt encryption (HTTPS/TLS and
+	     standard hashing), so App Store Connect can skip the encryption question. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+
 	<!-- Location: shown when the app asks to find nearby chargers / plan routes. -->
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>GeoCharge uses your location to show nearby EV charging stations and plan routes to them.</string>
