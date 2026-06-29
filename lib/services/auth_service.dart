@@ -87,8 +87,12 @@ class AuthService {
     );
 
     final oauthCred = OAuthProvider('apple.com').credential(
-      idToken:  appleCred.identityToken,
-      rawNonce: rawNonce,
+      idToken:     appleCred.identityToken,
+      rawNonce:    rawNonce,
+      // firebase_auth 5.2.0+ rejects the Apple credential as "Invalid OAuth
+      // response from apple.com" (invalid-credential) unless the authorization
+      // code is also supplied as the access token.
+      accessToken: appleCred.authorizationCode,
     );
     final cred = await _auth.signInWithCredential(oauthCred);
 
@@ -162,6 +166,7 @@ class AuthService {
       );
       await user.reauthenticateWithCredential(OAuthProvider('apple.com').credential(
         idToken: apple.identityToken, rawNonce: rawNonce,
+        accessToken: apple.authorizationCode,
       ));
     } else {
       // Email/password or unknown — needs a manual fresh sign-in.

@@ -46,6 +46,13 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 
+	<!-- Google Sign-In client id. The GoogleSignIn 7.x SDK (used by
+	     google_sign_in 6.x) needs the OAuth client id explicitly here; without it
+	     it has "No active configuration" and crashes the moment sign-in starts.
+	     Value is CLIENT_ID from GoogleService-Info.plist (NOT reversed). -->
+	<key>GIDClientID</key>
+	<string>518875377655-b6j3cfc16oppo14g3s5otq60lm6bpk9i.apps.googleusercontent.com</string>
+
 	<!-- Google Sign-In OAuth callback. iOS routes the sign-in result back to the
 	     app through this URL scheme; without it google_sign_in raises a fatal
 	     exception and the app crashes on launch of the Google sheet. The scheme is

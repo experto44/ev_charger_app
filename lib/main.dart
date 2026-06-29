@@ -749,7 +749,7 @@ class _MapScreenState extends State<MapScreen>
     // Bound the right control column below the search-bar/chips block (plus the
     // top banner ad when it's shown) so its top buttons never overlap the chips.
     // The column stays bottom-anchored and scrolls if vertical space is tight.
-    final topControlsBound = MediaQuery.of(context).padding.top + 140;
+    final topControlsBound = MediaQuery.of(context).padding.top + 120;
     return Scaffold(
       // Free-tier banner — rebuilds (and disappears) when premium is granted.
       // Returns an empty box when premium or no ad unit is configured.
@@ -960,6 +960,9 @@ class _MapScreenState extends State<MapScreen>
             // the screen is too short to fit every button (so none are clipped).
             child: SingleChildScrollView(
               reverse: true,
+              // Clip.none so the buttons' drop shadows (and the filter badge)
+              // aren't sliced into hard stripes at the scroll viewport edges.
+              clipBehavior: Clip.none,
               child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -969,7 +972,7 @@ class _MapScreenState extends State<MapScreen>
                   icon:  _darkMap ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
                   iconColor: _darkMap ? _textPri : Colors.amber,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 // Provider filter (badge also lights when country filtering is on)
                 _MapCtrlButton(
                   onTap: _openProviderFilter,
@@ -978,12 +981,12 @@ class _MapScreenState extends State<MapScreen>
                   borderColor: _providerFilterActive ? _emerald : _bgSurface,
                   showBadge:   _providerFilterActive || _countryFilterActive,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 // Zoom in / out
                 _ZoomBtn(icon: Icons.add_rounded,    onTap: () => _zoom(1)),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 _ZoomBtn(icon: Icons.remove_rounded, onTap: () => _zoom(-1)),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 // Route planner
                 _MapCtrlButton(
                   onTap: () {
@@ -998,7 +1001,7 @@ class _MapScreenState extends State<MapScreen>
                   icon: Icons.alt_route_rounded,
                   iconColor: _textSec,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 // Recenter GPS — single tap recenters; double/triple tap zooms in close.
                 _MapCtrlButton(
                   onTap: _onLocateTap,
