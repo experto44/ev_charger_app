@@ -18,16 +18,15 @@ import 'purchase_service.dart';
 /// │  While these unit IDs are empty, ad loading is disabled app-wide, so    │
 /// │  the free tier simply shows no ads until the IDs are filled in.         │
 /// └──────────────────────────────────────────────────────────────────────┘
-// Android uses the production ad units. iOS uses Google's official TEST units
-// for now so TestFlight builds show (test) ads without policy risk. TODO(admob):
-// create the AdMob iOS app + ad units and replace the two iOS ids below, plus
-// GADApplicationIdentifier in ios/Runner/Info.plist.
+// Production AdMob ad units, per platform (separate AdMob app per platform).
+// iOS app id ca-app-pub-2323581212631140~3327603543 (GADApplicationIdentifier
+// in ios/Runner/Info.plist); Android app id ~2516919486 (AndroidManifest.xml).
 final String _kBannerAdUnitId = Platform.isIOS
-    ? 'ca-app-pub-3940256099942544/2934735716'   // iOS TEST banner — replace
-    : 'ca-app-pub-2323581212631140/6735366094';
+    ? 'ca-app-pub-2323581212631140/6197309466'   // iOS banner
+    : 'ca-app-pub-2323581212631140/6735366094';  // Android banner
 final String _kInterstitialAdUnitId = Platform.isIOS
-    ? 'ca-app-pub-3940256099942544/4411468910'   // iOS TEST interstitial — replace
-    : 'ca-app-pub-2323581212631140/4959249997';
+    ? 'ca-app-pub-2323581212631140/3758848388'   // iOS interstitial
+    : 'ca-app-pub-2323581212631140/4959249997';  // Android interstitial
 
 /// How often an interstitial may be shown, at most.
 const Duration _kInterstitialMinGap = Duration(minutes: 2);

@@ -54,11 +54,9 @@
 	<key>NSUserTrackingUsageDescription</key>
 	<string>Your data will be used to show you more relevant ads.</string>
 
-	<!-- AdMob application id. TODO: replace with the REAL iOS app id from AdMob
-	     (Apps → Add app → iOS) before shipping live ads. This is Google's public
-	     SAMPLE id, which serves test ads and prevents a launch crash. -->
+	<!-- AdMob iOS application id (GeoCharge iOS app in AdMob). -->
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<string>ca-app-pub-2323581212631140~3327603543</string>
 
 	<!-- SKAdNetwork ids for ad attribution (AdMob-recommended core set). -->
 	<key>SKAdNetworkItems</key>
