@@ -153,7 +153,7 @@
     </div>
 
     <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: June 2025</p>
+    <p class="updated">Last updated: June 2026</p>
 
     <!-- 1. Introduction -->
     <section>
@@ -189,6 +189,14 @@
             <td>Usage data</td>
             <td>Anonymous interaction data (screens visited, features used) to help us improve the app. No personally identifiable information is included.</td>
           </tr>
+          <tr>
+            <td>Advertising identifier</td>
+            <td>For free users, Google AdMob may use your device's advertising identifier (IDFA on iOS) and ad-interaction data to show and measure ads. On iOS this is only used if you allow it via the App Tracking Transparency prompt; otherwise ads are non-personalized.</td>
+          </tr>
+          <tr>
+            <td>Purchase history</td>
+            <td>If you subscribe to GeoCharge Premium, your subscription status is recorded to unlock ad-free access. Payments are processed by Apple and Google — we never receive or store your card details.</td>
+          </tr>
         </tbody>
       </table>
     </section>
@@ -208,11 +216,18 @@
     <section>
       <h2>Third-Party Services</h2>
       <ul>
-        <li><strong>Firebase (Google)</strong> — we use Firebase Authentication for sign-in, Cloud Firestore to store your profile data, and Firebase Analytics / Crashlytics for app diagnostics. Data is processed by Google under their <a href="https://policies.google.com/privacy" style="color:#00C896;">Privacy Policy</a>.</li>
+        <li><strong>Firebase (Google)</strong> — we use Firebase Authentication for sign-in (email, Google, and Apple) and Cloud Firestore to store your profile data. Data is processed by Google under their <a href="https://policies.google.com/privacy" style="color:#00C896;">Privacy Policy</a>.</li>
+        <li><strong>Google AdMob</strong> — free users are shown ads via Google AdMob, which may collect your advertising identifier, ad-interaction data, and diagnostic data to serve, measure, and (with your consent) personalize ads. This data may be used to track you across other companies' apps and websites. See Google's <a href="https://policies.google.com/technologies/ads" style="color:#00C896;">Advertising policies</a>. Premium subscribers see no ads.</li>
         <li><strong>Google Maps / Google Places API</strong> — used for the address search feature and navigation links. Queries are sent to Google's servers. See Google's <a href="https://policies.google.com/privacy" style="color:#00C896;">Privacy Policy</a>.</li>
         <li><strong>Open Charge Map</strong> — international charging station data is fetched from the Open Charge Map public API. No personal data is transmitted.</li>
         <li><strong>CartoDB</strong> — map tile images are served by CartoDB (CARTO). No personal data is transmitted in tile requests.</li>
       </ul>
+    </section>
+
+    <!-- 4b. Advertising & tracking -->
+    <section>
+      <h2>Advertising &amp; Tracking</h2>
+      <p>GeoCharge is free and supported by ads served through Google AdMob. On iOS, we ask for your permission through Apple's App Tracking Transparency before using your device's advertising identifier (IDFA). If you allow tracking, ads may be personalized and your advertising identifier and ad-interaction data may be used to track you across other companies' apps and websites; if you decline, you still see ads, but they are not personalized. You can change this choice at any time in <strong>iOS Settings → Privacy &amp; Security → Tracking</strong>. Subscribing to <strong>GeoCharge Premium</strong> removes all ads.</p>
     </section>
 
     <!-- 5. Data retention -->
@@ -224,10 +239,10 @@
     <!-- 6. Your rights & data deletion -->
     <section>
       <h2>Your Rights &amp; Data Deletion</h2>
-      <p>You have the right to access, correct, or delete your personal data at any time. To request data deletion or a copy of your data:</p>
+      <p>You have the right to access, correct, or delete your personal data at any time. To delete your account and data:</p>
       <ul style="margin-top:12px;">
-        <li>Delete your account directly within the app (Profile → Sign Out, then contact us to remove Firestore data).</li>
-        <li>Email us at <a class="contact-email" href="mailto:geocharge.app@gmail.com">geocharge.app@gmail.com</a> with the subject line <em>"Data Deletion Request"</em>. We will process your request within 30 days.</li>
+        <li>Delete your account and all associated data directly within the app: <strong>Profile → Delete Account</strong>. This removes your account and stored data immediately and is irreversible.</li>
+        <li>Alternatively, email us at <a class="contact-email" href="mailto:geocharge.app@gmail.com">geocharge.app@gmail.com</a> with the subject line <em>"Data Deletion Request"</em> and we will process it within 30 days.</li>
       </ul>
     </section>
 
