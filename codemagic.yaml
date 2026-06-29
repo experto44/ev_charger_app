@@ -54,7 +54,12 @@ workflows:
         script: |
           echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > "$CM_BUILD_DIR/ios/Runner/GoogleService-Info.plist"
       - name: Flutter packages
-        script: flutter pub get
+        script: |
+          # Disable Swift Package Manager: google_mobile_ads is CocoaPods-only,
+          # and mixing it with SPM-based plugins (webview_flutter_wkwebview) breaks
+          # pod install. Force everything onto CocoaPods.
+          flutter config --no-enable-swift-package-manager
+          flutter pub get
       - name: Install CocoaPods
         script: find . -name "Podfile" -execdir pod install \;
       - name: Apply provisioning profiles to the Xcode project
