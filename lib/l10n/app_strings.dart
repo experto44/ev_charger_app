@@ -83,8 +83,8 @@ class AppStrings {
   static String get vehicleDriverInfo =>
       isGeorgian ? 'მანქანის ინფო' : 'Vehicle & Driver Info';
   static String get connectorHint => isGeorgian
-      ? 'გამოიყენება როგორც ნაგულისხმევი ფილტრი რუკაზე'
-      : 'Used as your default filter on the map';
+      ? 'აირჩიეთ ერთი ან რამდენიმე — გამოიყენება როგორც ნაგულისხმევი ფილტრი რუკაზე'
+      : 'Select one or more — used as your default filter on the map';
   static String get maxRangeFull =>
       isGeorgian ? 'მაქს. გარბენი 100%-ზე' : 'Max Range at 100% Battery';
   static String get privacyPolicy =>

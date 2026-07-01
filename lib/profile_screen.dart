@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -34,7 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ── Vehicle prefs ─────────────────────────────────────────────────────────
   final _carCtrl   = TextEditingController();
   final _rangeCtrl = TextEditingController();
-  String? _connector;
+  final Set<String> _connectors = {};
   bool _saved = false;
 
   // ── Auth / phone ──────────────────────────────────────────────────────────
@@ -64,10 +66,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadVehiclePrefs() async {
     final p = await SharedPreferences.getInstance();
     if (!mounted) { return; }
+    // Back-compat: older versions stored a single connector as a plain string
+    // (not JSON). Try the new list format first, then fall back.
+    final raw = p.getString(kDefaultConnector);
+    var parsed = <String>[];
+    if (raw != null && raw.isNotEmpty) {
+      try {
+        parsed = (jsonDecode(raw) as List).map((e) => e as String).toList();
+      } catch (_) {
+        parsed = [raw];
+      }
+    }
     setState(() {
       _carCtrl.text   = p.getString(kCarModel) ?? '';
       _rangeCtrl.text = p.getString(kMaxRange) ?? '';
-      _connector      = p.getString(kDefaultConnector);
+      _connectors
+        ..clear()
+        ..addAll(parsed);
     });
   }
 
@@ -75,10 +90,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final p = await SharedPreferences.getInstance();
     await p.setString(kCarModel, _carCtrl.text.trim());
     await p.setString(kMaxRange, _rangeCtrl.text.trim());
-    if (_connector == null) {
+    if (_connectors.isEmpty) {
       await p.remove(kDefaultConnector);
     } else {
-      await p.setString(kDefaultConnector, _connector!);
+      await p.setString(kDefaultConnector, jsonEncode(_connectors.toList()));
     }
     if (!mounted) { return; }
     setState(() => _saved = true);
@@ -546,10 +561,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               spacing: 8,
               runSpacing: 8,
               children: kConnectorOrder.map((c) {
-                final on = _connector == c;
+                final on = _connectors.contains(c);
                 return GestureDetector(
-                  onTap: () =>
-                      setState(() => _connector = on ? null : c),
+                  onTap: () => setState(
+                      () => on ? _connectors.remove(c) : _connectors.add(c)),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
                     padding: const EdgeInsets.symmetric(

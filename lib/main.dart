@@ -31,7 +31,6 @@ import 'routing_service.dart';
 import 'services/ad_service.dart';
 import 'services/purchase_service.dart';
 import 'settings_screen.dart';
-import 'utils/responsive.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -253,13 +252,23 @@ class _MapScreenState extends State<MapScreen>
   // on the map are session-only and reset to this on next launch.
   Future<void> _loadPrefs() async {
     final p = await SharedPreferences.getInstance();
-    final defConn  = p.getString(kDefaultConnector);
+    final rawConn  = p.getString(kDefaultConnector);
     final rawCntry = p.getString(kActiveCountries);
     if (!mounted) { return; }
+    // Back-compat: older versions stored a single connector as a plain string
+    // (not JSON). Try the new list format first, then fall back.
+    var defConns = <String>[];
+    if (rawConn != null && rawConn.isNotEmpty) {
+      try {
+        defConns = (jsonDecode(rawConn) as List).map((e) => e as String).toList();
+      } catch (_) {
+        defConns = [rawConn];
+      }
+    }
     setState(() {
       _filterConnectors
         ..clear()
-        ..addAll(defConn != null && defConn.isNotEmpty ? [defConn] : const []);
+        ..addAll(defConns);
       if (rawCntry != null) {
         try {
           _activeCountries =
@@ -706,46 +715,11 @@ class _MapScreenState extends State<MapScreen>
     return out;
   }
 
-  // Local Georgian stations for the home carousel, sorted nearest-first by the
-  // user's GPS fix and stamped with a distance label, so the cards show the
-  // closest chargers around the user. Falls back to feed order before a fix is
-  // available. Capped so the carousel never has to render hundreds of cards.
-  List<Station> _nearestLocal(List<Station> stations) {
-    final base = stations.where((s) => s.provider != OcmService.kProvider).toList();
-    final up = _userPos;
-    if (up == null) { return base; }
-    const dist = Distance();
-    final ranked = base
-        .map((s) => MapEntry(
-            dist.as(LengthUnit.Kilometer, up, LatLng(s.lat, s.lng)), s))
-        .toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
-    return [for (final e in ranked.take(30)) e.value.withDistance(_fmtKm(e.key))];
-  }
-
-  String _fmtKm(double km) =>
-      km < 1 ? '${(km * 1000).round()} m' : '${km.toStringAsFixed(1)} km';
-
   @override
   Widget build(BuildContext context) {
     final stations = _filtered;
-    // The bottom carousel lists LOCAL Georgian stations, so it only makes sense
-    // while the map is centred on Georgia. Panning to an international view hides
-    // it entirely (the international pins live on the map, not the carousel).
-    final localStations = _centerInGeorgia
-        ? _nearestLocal(stations)
-        : const <Station>[];
-    // Lift the right control column above the bottom carousel so the GPS
-    // button is never hidden. The carousel is taller when station cards are
-    // shown than when it's loading / empty, so adjust dynamically.
     final navBottom        = MediaQuery.of(context).padding.bottom;
-    final carouselVisible  = !_loading && _centerInGeorgia && localStations.isNotEmpty;
-    // The carousel is far shorter in landscape (compact cards, side-by-side
-    // buttons), so the control column docks lower there to stay just above it.
-    final landscape        = Responsive.isLandscape(context);
-    final controlsBottom   = (carouselVisible
-            ? (landscape ? 200.0 : 300.0)
-            : 130.0) + navBottom;
+    final controlsBottom   = 130.0 + navBottom;
     // Bound the right control column below the search-bar/chips block (plus the
     // top banner ad when it's shown) so its top buttons never overlap the chips.
     // The column stays bottom-anchored and scrolls if vertical space is tight.
@@ -1015,9 +989,7 @@ class _MapScreenState extends State<MapScreen>
             ),
           ),
 
-          // ── Bottom panel: local station carousel ──────────────────────────
-          // Only shown while loading or while centred on Georgia with local
-          // stations to list — hidden entirely on international/away views.
+          // ── Bottom panel: initial-load indicator ────────────────────────────
           if (_loading)
             const Positioned(
               left: 0, right: 0, bottom: 0,
@@ -1029,14 +1001,6 @@ class _MapScreenState extends State<MapScreen>
                     child: CircularProgressIndicator(strokeWidth: 2, color: _emerald),
                   ),
                 ),
-              ),
-            )
-          else if (carouselVisible)
-            Positioned(
-              left: 0, right: 0, bottom: 0,
-              child: _StationCarousel(
-                stations:    localStations,
-                onPlanAndGo: _pushRoutePlannerTo,
               ),
             ),
         ],
@@ -1479,229 +1443,6 @@ class _SearchDestinationSheet extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-// ── Station carousel ──────────────────────────────────────────────────────────
-class _StationCarousel extends StatelessWidget {
-  const _StationCarousel({
-    required this.stations,
-    this.onPlanAndGo,
-  });
-  final List<Station>           stations;
-  final void Function(Station)? onPlanAndGo;
-
-  @override
-  Widget build(BuildContext context) {
-    if (stations.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 28),
-        alignment: Alignment.center,
-        child: const Text('No stations match your filters',
-            style: TextStyle(color: _textSec, fontSize: 13)),
-      );
-    }
-    // Extra bottom inset so "Plan & Go" clears the Android gesture / button nav bar.
-    final navBarHeight = MediaQuery.of(context).padding.bottom;
-    // Landscape (tablets, car head-units) has little vertical room: use shorter
-    // cards with side-by-side action buttons and tighter padding so the cards
-    // are never clipped and the map stays visible. Portrait is unchanged.
-    final landscape = Responsive.isLandscape(context);
-    final listHeight = landscape ? 196.0 : 264.0;
-    final cardWidth  = landscape ? 200.0 : 170.0;
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.bottomCenter,
-          end:   Alignment.topCenter,
-          colors: [_bgDark, Colors.transparent],
-          stops:  [0.6, 1.0],
-        ),
-      ),
-      padding: EdgeInsets.only(
-        top: landscape ? 12 : 32,
-        bottom: (landscape ? 12 : 24) + navBarHeight,
-      ),
-      child: SizedBox(
-        height: listHeight,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: stations.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 12),
-          itemBuilder: (_, i) => _StationCard(
-            stations[i],
-            width:     cardWidth,
-            landscape: landscape,
-            onPlanAndGo: onPlanAndGo != null
-                ? () => onPlanAndGo!(stations[i])
-                : null,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Station card ──────────────────────────────────────────────────────────────
-class _StationCard extends StatelessWidget {
-  const _StationCard(this.s, {this.onPlanAndGo, this.width = 170, this.landscape = false});
-  final Station      s;
-  final VoidCallback? onPlanAndGo;
-  final double       width;
-  final bool         landscape;
-
-  Color get _statusColor {
-    if (s.available == 0) { return _textSec; }
-    if (s.available == 1) { return Colors.orangeAccent; }
-    return _emerald;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final avail = s.available > 0;
-    return Container(
-      width: width,
-      padding: const EdgeInsets.all(14),
-      clipBehavior: Clip.hardEdge,
-      decoration: BoxDecoration(
-        color: _bgCard,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [
-            Container(width: 8, height: 8,
-                decoration: BoxDecoration(color: _statusColor, shape: BoxShape.circle)),
-            const SizedBox(width: 6),
-            Text(
-              avail
-                  ? (s.total > s.available
-                      ? '${s.available} of ${s.total} available'
-                      : '${s.available} available')
-                  : 'Unavailable',
-              style: TextStyle(color: _statusColor, fontSize: 11, fontWeight: FontWeight.w600),
-            ),
-          ]),
-          const SizedBox(height: 6),
-          Text(s.name,
-              style: const TextStyle(color: _textPri, fontSize: 14, fontWeight: FontWeight.bold),
-              maxLines: 1, overflow: TextOverflow.ellipsis),
-          Text(s.location, style: const TextStyle(color: _textSec, fontSize: 12)),
-          if (s.provider.isNotEmpty)
-            Text(s.provider,
-                style: const TextStyle(color: Color(0xFF666666), fontSize: 10),
-                maxLines: 1, overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 8),
-          Row(children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: s.isDC ? _emerald.withOpacity(0.15) : _bgSurface,
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Text('${s.kw} kW',
-                  style: TextStyle(
-                      color: s.isDC ? _emerald : _textSec,
-                      fontSize: 11, fontWeight: FontWeight.w700)),
-            ),
-            const SizedBox(width: 6),
-            Flexible(child: Text(s.price,
-                style: const TextStyle(color: _textSec, fontSize: 11),
-                overflow: TextOverflow.ellipsis)),
-          ]),
-          const Spacer(),
-          Row(children: [
-            if (s.distance.isNotEmpty) ...[
-              const Icon(Icons.near_me_outlined, color: _textSec, size: 13),
-              const SizedBox(width: 4),
-              Text(s.distance, style: const TextStyle(color: _textSec, fontSize: 12)),
-            ],
-            const Spacer(),
-            const Icon(Icons.bolt, color: _emerald, size: 16),
-          ]),
-          const SizedBox(height: 10),
-          // ── Action buttons ────────────────────────────────────────────────
-          // Stacked in portrait; side-by-side in landscape so the card stays
-          // short enough to fit on tablets / car displays without clipping.
-          _ActionButtons(
-            landscape:   landscape,
-            onNavigate:  () => _navigate(s.lat, s.lng),
-            onPlanAndGo: onPlanAndGo,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Navigate + Plan & Go buttons for a station card. Laid out stacked (portrait)
-// or in a single row (landscape) to keep the card compact on wide screens.
-class _ActionButtons extends StatelessWidget {
-  const _ActionButtons({
-    required this.landscape,
-    required this.onNavigate,
-    required this.onPlanAndGo,
-  });
-  final bool          landscape;
-  final VoidCallback  onNavigate;
-  final VoidCallback? onPlanAndGo;
-
-  @override
-  Widget build(BuildContext context) {
-    final navBtn = GestureDetector(
-      onTap: onNavigate,
-      child: Container(
-        height: 34,
-        decoration: BoxDecoration(
-          color: _emerald,
-          borderRadius: BorderRadius.circular(9),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.navigation_rounded, color: Colors.black, size: 14),
-            SizedBox(width: 5),
-            Text('Navigate',
-                style: TextStyle(
-                    color: Colors.black, fontSize: 12, fontWeight: FontWeight.w700)),
-          ],
-        ),
-      ),
-    );
-    final planBtn = GestureDetector(
-      onTap: onPlanAndGo,
-      child: Container(
-        height: 34,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: _emerald, width: 1.5),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.alt_route_rounded, color: _emerald, size: 14),
-            SizedBox(width: 5),
-            Text('Plan & Go',
-                style: TextStyle(
-                    color: _emerald, fontSize: 12, fontWeight: FontWeight.w700)),
-          ],
-        ),
-      ),
-    );
-    if (landscape) {
-      return Row(children: [
-        Expanded(child: navBtn),
-        const SizedBox(width: 8),
-        Expanded(child: planBtn),
-      ]);
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [navBtn, const SizedBox(height: 8), planBtn],
     );
   }
 }
