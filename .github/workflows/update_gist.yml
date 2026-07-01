@@ -870,6 +870,8 @@ jobs:
               ORDER = ["CCS2", "GB/T", "CHAdeMO", "Type 2", "NACS", "CCS1", "Type 1"]
               def sort_conns(cs):
                   return sorted(cs, key=lambda c: (ORDER.index(c) if c in ORDER else len(ORDER), c))
+              def fmt_amt(x):
+                  return f"{x:.2f}"   # 2 decimals, matching Tegeta's own app (0.60 / 1.00)
 
               stations = []
               for s in catalog:
@@ -883,35 +885,49 @@ jobs:
                   # Flatten every live (non-deactivated) connector in catalog
                   # order, capturing its chip type. Power isn't published, so DC
                   # is inferred from the "Fast" charge-point type or a DC plug.
-                  conns, any_dc, price = set(), False, ""
-                  rest_types = []
+                  conns, any_dc = set(), False
+                  rest_conns = []  # (chip_type, price_str, price_num) per connector, catalog order
                   for cp in s.get("chargePoints", []):
                       if cp.get("isDeactivated"):
                           continue
                       is_fast = (cp.get("type") or {}).get("id") == 1  # 1=Fast(DC) 2=Standard(AC)
                       for c in cp.get("connectors", []):
                           ct = norm_conn(en((c.get("connectorType") or {}).get("typeTranslations")))
-                          rest_types.append(ct)
                           if ct: conns.add(ct)
                           if is_fast or ct in ("CCS2", "CHAdeMO", "CCS1", "GB/T"):
                               any_dc = True
-                          if not price and c.get("price") is not None:
-                              a = f"{float(c['price']):.2f}".rstrip("0").rstrip(".")
-                              price = f"{a} ₾/kWh"
+                          pv = c.get("price")
+                          pnum = float(pv) if pv is not None else None
+                          pstr = f"{fmt_amt(pnum)} ₾/kWh" if pnum is not None else ""
+                          rest_conns.append((ct, pstr, pnum))
 
-                  # Overlay live status onto catalog connectors (zip by order). A
-                  # plug the catalog lists but Firestore omits reads as "out".
-                  # Firestore status vocabulary: Available / Unavailable / Undefined.
+                  # Overlay live status onto catalog connectors (zip by order) and
+                  # attach each connector's own price — Tegeta prices DC fast and
+                  # AC sockets differently. A plug the catalog lists but Firestore
+                  # omits reads as "out". Status vocab: Available/Unavailable/Undefined.
                   statuses = live.get(sid, [])
-                  port_details = []
-                  for i, ct in enumerate(rest_types):
+                  port_details, price_nums = [], []
+                  for i, (ct, pstr, pnum) in enumerate(rest_conns):
                       st = statuses[i] if i < len(statuses) else None
                       if   st == "available":   ps = "free"
                       elif st == "unavailable": ps = "busy"
                       else:                     ps = "out"
-                      port_details.append({"type": ct or "?", "status": ps})
-                  total = len(rest_types)
+                      port = {"type": ct or "?", "status": ps}
+                      if pstr:
+                          port["price"] = pstr
+                      port_details.append(port)
+                      if pnum is not None:
+                          price_nums.append(pnum)
+                  total = len(rest_conns)
                   avail = sum(1 for p in port_details if p["status"] == "free")
+
+                  # Station price: one value, or a lo–hi range when connectors differ.
+                  if price_nums:
+                      lo, hi = min(price_nums), max(price_nums)
+                      price = (f"{fmt_amt(lo)} ₾/kWh" if lo == hi
+                               else f"{fmt_amt(lo)}–{fmt_amt(hi)} ₾/kWh")
+                  else:
+                      price = ""
 
                   name = en(s.get("nameTranslations")) or en(s.get("addressTranslations")) or "Tegeta"
                   city = en((s.get("city") or {}).get("nameTranslations")) or name.split(",")[0]

@@ -1715,6 +1715,16 @@ class _StationSheetState extends State<_StationSheet> {
               ],
             ),
           ),
+          // Per-plug price (providers like Tegeta price each connector
+          // differently — DC fast vs AC socket). Empty when not published.
+          if (p.price.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            Text(
+              p.price,
+              style: AppStrings.font(TextStyle(
+                  color: color, fontSize: 13, fontWeight: FontWeight.w600)),
+            ),
+          ],
         ]),
       ),
     );
@@ -1764,7 +1774,11 @@ class _StationSheetState extends State<_StationSheet> {
           Wrap(spacing: 8, runSpacing: 8, children: [
             _InfoChip(
               icon:  s.isDC ? Icons.bolt : Icons.power_rounded,
-              label: '${s.kw} kW · ${s.isDC ? 'Fast DC' : 'AC'}',
+              // Some providers (e.g. Tegeta) don't publish a kW rating; show the
+              // connector-derived charge type alone instead of a bogus "0 kW".
+              label: s.kw > 0
+                  ? '${s.kw} kW · ${s.isDC ? 'Fast DC' : 'AC'}'
+                  : (s.isDC ? 'Fast DC' : 'AC'),
               color: s.isDC ? _emerald : Colors.blueAccent,
             ),
             _InfoChip(
