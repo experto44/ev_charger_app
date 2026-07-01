@@ -83,7 +83,7 @@ jobs:
           # MAX_FAILS iterations in a row) still exits non-zero so the run turns
           # red and notifies us, instead of staying silently green forever.
           if python3 << 'PYEOF'
-          import json, os, requests
+          import json, os, requests, time
           from datetime import datetime, timezone
 
           GIST_ID = "36f39392ce7a4abe14ab065aa8e846bd"
@@ -786,6 +786,154 @@ jobs:
               print(f"Solar Station: {len(stations)} stations")
               return stations
 
+          # ── Tegeta Motors (REST catalog + public Firestore live status) ────
+          # Two public, no-auth sources joined together:
+          #  1) REST catalog mobileapi.tegetamotors.ge/api/v1/EVs/ChargeStations —
+          #     locations, charge points, connector types, prices. It is behind
+          #     Cloudflare (403s a bare python-requests UA) and carries NO live
+          #     status and NO kW rating, so power is reported as "—".
+          #  2) Cloud Firestore (project tegeta-app-prod, collection `chargePoints`,
+          #     world-readable) — live per-connector status, joined to the catalog
+          #     by chargeStationId == station id, overlaid in catalog order.
+          def fetch_tegeta():
+              UA = {"User-Agent": "okhttp/4.12.0"}
+              # Cloudflare passes the real app's header signature (okhttp UA +
+              # JSON accept + ka locale + keep-alive); sparser requests get an
+              # intermittent 403, and a CI IP occasionally trips it, so retry.
+              H = {"Accept": "application/json", "Accept-Language": "ka",
+                   "Connection": "keep-alive", **UA}
+
+              def _get(u, headers, tries=5):
+                  last = None
+                  for _ in range(tries):
+                      try:
+                          resp = requests.get(u, headers=headers, timeout=60)
+                          if resp.status_code == 200:
+                              return resp
+                          last = requests.exceptions.HTTPError(f"{resp.status_code} for {u}")
+                      except Exception as e:
+                          last = e
+                      time.sleep(2)
+                  raise last
+
+              # 1) Static catalog (envelope: {data, errorCode, errorMessage, statusCode})
+              r = _get("https://mobileapi.tegetamotors.ge/api/v1/EVs/ChargeStations", H)
+              catalog = (r.json() or {}).get("data") or []
+
+              # 2) Live status from public Firestore REST.
+              fs = "https://firestore.googleapis.com/v1/projects/tegeta-app-prod/databases/(default)/documents"
+              docs, url, guard = [], f"{fs}/chargePoints?pageSize=300", 0
+              while url and guard < 20:
+                  guard += 1
+                  fj = _get(url, UA).json()
+                  docs += fj.get("documents", [])
+                  tok = fj.get("nextPageToken")
+                  url = f"{fs}/chargePoints?pageSize=300&pageToken={tok}" if tok else None
+
+              def gv(f):  # unwrap a Firestore typed value
+                  if "stringValue"  in f: return f["stringValue"]
+                  if "integerValue" in f: return int(f["integerValue"])
+                  if "doubleValue"  in f: return f["doubleValue"]
+                  return None
+
+              # station id -> ordered live connector statuses (lowercased),
+              # concatenated across that station's charge-point documents.
+              live = {}
+              for d in docs:
+                  fl  = d.get("fields", {})
+                  sid = gv(fl["chargeStationId"]) if "chargeStationId" in fl else None
+                  if sid is None:
+                      continue
+                  for c in fl.get("connectors", {}).get("arrayValue", {}).get("values", []):
+                      st = gv(c.get("mapValue", {}).get("fields", {}).get("status", {})) or ""
+                      live.setdefault(sid, []).append(str(st).lower())
+
+              def en(trs):  # pick the English translation (fall back to first)
+                  for t in trs or []:
+                      if t.get("language") == "EN":
+                          return t.get("translation")
+                  return (trs[0].get("translation") if trs else "") or ""
+
+              CONN_MAP = {
+                  "ccs": "CCS2", "ccs2": "CCS2", "combo2": "CCS2",
+                  "ccs1": "CCS1", "combo1": "CCS1",
+                  "chademo": "CHAdeMO",
+                  "type2": "Type 2", "mennekes": "Type 2", "iec62196t2": "Type 2",
+                  "type1": "Type 1", "j1772": "Type 1",
+                  "gbt": "GB/T", "gb_t": "GB/T",
+                  "nacs": "NACS", "tesla": "NACS",
+              }
+              def norm_conn(t):
+                  if not t: return None
+                  k = str(t).lower().replace(" ", "").replace("-", "").replace("_", "").replace("/", "")
+                  return CONN_MAP.get(k)
+              ORDER = ["CCS2", "GB/T", "CHAdeMO", "Type 2", "NACS", "CCS1", "Type 1"]
+              def sort_conns(cs):
+                  return sorted(cs, key=lambda c: (ORDER.index(c) if c in ORDER else len(ORDER), c))
+
+              stations = []
+              for s in catalog:
+                  if s.get("isDeactivated"):
+                      continue
+                  lat, lng = s.get("latitude"), s.get("longitude")
+                  if lat is None or lng is None:
+                      continue
+                  sid = s.get("id")
+
+                  # Flatten every live (non-deactivated) connector in catalog
+                  # order, capturing its chip type. Power isn't published, so DC
+                  # is inferred from the "Fast" charge-point type or a DC plug.
+                  conns, any_dc, price = set(), False, ""
+                  rest_types = []
+                  for cp in s.get("chargePoints", []):
+                      if cp.get("isDeactivated"):
+                          continue
+                      is_fast = (cp.get("type") or {}).get("id") == 1  # 1=Fast(DC) 2=Standard(AC)
+                      for c in cp.get("connectors", []):
+                          ct = norm_conn(en((c.get("connectorType") or {}).get("typeTranslations")))
+                          rest_types.append(ct)
+                          if ct: conns.add(ct)
+                          if is_fast or ct in ("CCS2", "CHAdeMO", "CCS1", "GB/T"):
+                              any_dc = True
+                          if not price and c.get("price") is not None:
+                              a = f"{float(c['price']):.2f}".rstrip("0").rstrip(".")
+                              price = f"{a} ₾/kWh"
+
+                  # Overlay live status onto catalog connectors (zip by order). A
+                  # plug the catalog lists but Firestore omits reads as "out".
+                  # Firestore status vocabulary: Available / Unavailable / Undefined.
+                  statuses = live.get(sid, [])
+                  port_details = []
+                  for i, ct in enumerate(rest_types):
+                      st = statuses[i] if i < len(statuses) else None
+                      if   st == "available":   ps = "free"
+                      elif st == "unavailable": ps = "busy"
+                      else:                     ps = "out"
+                      port_details.append({"type": ct or "?", "status": ps})
+                  total = len(rest_types)
+                  avail = sum(1 for p in port_details if p["status"] == "free")
+
+                  name = en(s.get("nameTranslations")) or en(s.get("addressTranslations")) or "Tegeta"
+                  city = en((s.get("city") or {}).get("nameTranslations")) or name.split(",")[0]
+                  stations.append({
+                      "id": f"tegeta_{sid}",
+                      "name": name,
+                      "lat": lat,
+                      "lng": lng,
+                      "power": "—",              # Tegeta doesn't publish kW
+                      "type": "Fast DC" if any_dc else "AC",
+                      "price": price,
+                      "available_spots": f"{avail} available",
+                      "total_spots": total,
+                      "city": city,
+                      "provider": "Tegeta",
+                      "connectors": sort_conns(conns),
+                      "ports": port_details,
+                      "last_updated": "Just now",
+                  })
+              print(f"Tegeta: {len(stations)} stations")
+              return stations
+
           # ── Load station data from the committed asset file ────────────────
           # The bundled asset ships with snapshots of the live AMPECO providers
           # for offline use, so for each live provider we drop its bundled rows
@@ -806,7 +954,8 @@ jobs:
                             (fetch_datene, "Da-Tene"),
                             (fetch_gadatene, "Gadatene"),
                             (fetch_ecocars, "EcoCars"),
-                            (fetch_solarstation, "Solar Station")]:
+                            (fetch_solarstation, "Solar Station"),
+                            (fetch_tegeta, "Tegeta")]:
               fresh = []
               try:
                   fresh = fn()

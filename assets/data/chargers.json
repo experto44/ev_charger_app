@@ -11803,5 +11803,980 @@
       "GB/T"
     ],
     "last_updated": "Just now"
+  },
+  {
+    "id": "tegeta_38",
+    "name": "Grand Garage",
+    "lat": 41.69866409999999,
+    "lng": 44.7018766,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_37",
+    "name": "Tegeta Gezi",
+    "lat": 41.67799846196724,
+    "lng": 45.02199469459471,
+    "power": "—",
+    "type": "Fast DC",
+    "price": "1 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Gardabani",
+    "provider": "Tegeta",
+    "connectors": [
+      "CCS2"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_36",
+    "name": "Hotel Posta Mestia",
+    "lat": 43.0434688,
+    "lng": 42.7252678,
+    "power": "—",
+    "type": "AC",
+    "price": "1 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Mestia",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_35",
+    "name": "Le Meridien Batumi",
+    "lat": 41.65467353420241,
+    "lng": 41.636590361595154,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Batumi",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_34",
+    "name": "M3 Marshal Gelovani",
+    "lat": 41.750740751352026,
+    "lng": 44.77190824461577,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Tbilisi",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_33",
+    "name": "M3 Marshal Gelovani",
+    "lat": 41.74996186223303,
+    "lng": 44.77207241297504,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Tbilisi",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_32",
+    "name": "Villa Manavi",
+    "lat": 41.72799980000001,
+    "lng": 45.4313254,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "Sagarejo",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_31",
+    "name": "Kass Land Diamond Project",
+    "lat": 41.593846,
+    "lng": 44.12045899999999,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Tsalka",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_30",
+    "name": "Hotel Ambassadori Goderdzi",
+    "lat": 41.6372689,
+    "lng": 42.4927031,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Khulo",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_27",
+    "name": "Vazisubani Estate",
+    "lat": 41.81306,
+    "lng": 45.69992999999999,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Vazisubani",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_26",
+    "name": "New Gudauri by REDCO",
+    "lat": 42.4699898,
+    "lng": 44.49244820000001,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "Gudauri",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_25",
+    "name": "Gudauri Loft Hotel Ski Resort",
+    "lat": 42.46723533982387,
+    "lng": 44.48082268631361,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "Gudauri",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_24",
+    "name": "Bakuriani Rooms Hotel",
+    "lat": 41.75209145005042,
+    "lng": 43.55088545013836,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Bakuriani",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_23",
+    "name": "Rooms Hotel Kazbegi",
+    "lat": 42.6589165,
+    "lng": 44.6507918,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Stepantsminda",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_22",
+    "name": "Magnika Resort",
+    "lat": 41.977709594475094,
+    "lng": 41.76347494125366,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Ozurgeti",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_21",
+    "name": "Porsche Center Tbilisi",
+    "lat": 41.7900568513745,
+    "lng": 44.77078914642334,
+    "power": "—",
+    "type": "Fast DC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "3 available",
+    "total_spots": 6,
+    "city": "Tbilisi",
+    "provider": "Tegeta",
+    "connectors": [
+      "CCS2",
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "out"
+      },
+      {
+        "type": "CCS2",
+        "status": "out"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_20",
+    "name": "Manino Utsera",
+    "lat": 42.643666551465444,
+    "lng": 43.54713320732117,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Oni",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_19",
+    "name": "Akhaltsikhe Inn",
+    "lat": 41.63981378952487,
+    "lng": 43.00406098365784,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Akhaltsikhe",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_18",
+    "name": "Bioli Wellness Resort",
+    "lat": 41.6644887,
+    "lng": 44.7226512,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Tbilisi",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_17",
+    "name": "Lopota Lake Resort & Spa",
+    "lat": 42.05002558924254,
+    "lng": 45.52788019180298,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Telavi",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_16",
+    "name": "Georgia Palace Hotel & Spa Kobuleti",
+    "lat": 41.84091240459898,
+    "lng": 41.77699327468872,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Kobuleti",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_15",
+    "name": "Hotel Ambassadori Kachreti",
+    "lat": 41.63432119024561,
+    "lng": 45.682268142700195,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Gurjaani",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_14",
+    "name": "Tsinandali Estate",
+    "lat": 41.894363106605034,
+    "lng": 45.56448698043823,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Telavi",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_13",
+    "name": "New Sairme",
+    "lat": 41.93880737162527,
+    "lng": 42.75458335876465,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Baghdati",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_12",
+    "name": "Rooms Hotel Tbilisi",
+    "lat": 41.7058031,
+    "lng": 44.7869268,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Tbilisi",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_11",
+    "name": "Radisson Blu Iveria Hotel",
+    "lat": 41.704030405666785,
+    "lng": 44.793373346328735,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Tbilisi",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_10",
+    "name": "Tegeta Telavi",
+    "lat": 41.92648391593553,
+    "lng": 45.45567512512207,
+    "power": "—",
+    "type": "Fast DC",
+    "price": "1 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Telavi",
+    "provider": "Tegeta",
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CHAdeMO",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_9",
+    "name": "Tegeta Motors Samgori (PEPELA)",
+    "lat": 41.68363966471867,
+    "lng": 44.880632986517135,
+    "power": "—",
+    "type": "Fast DC",
+    "price": "1 ₾/kWh",
+    "available_spots": "0 available",
+    "total_spots": 2,
+    "city": "Tbilisi",
+    "provider": "Tegeta",
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "busy"
+      },
+      {
+        "type": "CHAdeMO",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_8",
+    "name": "Tegeta Poti",
+    "lat": 42.17088635251356,
+    "lng": 41.67686104774475,
+    "power": "—",
+    "type": "Fast DC",
+    "price": "1 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Poti",
+    "provider": "Tegeta",
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CHAdeMO",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_7",
+    "name": "Tegeta Kutaisi",
+    "lat": 42.2275695896728,
+    "lng": 42.6914455087133,
+    "power": "—",
+    "type": "Fast DC",
+    "price": "1 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Kutaisi",
+    "provider": "Tegeta",
+    "connectors": [
+      "CCS2"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_6",
+    "name": "Tegeta Batumi",
+    "lat": 41.62071196092383,
+    "lng": 41.62646770477295,
+    "power": "—",
+    "type": "Fast DC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "4 available",
+    "total_spots": 4,
+    "city": "Batumi",
+    "provider": "Tegeta",
+    "connectors": [
+      "CCS2",
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_4",
+    "name": "Tegeta Vake",
+    "lat": 41.718349774139796,
+    "lng": 44.73705007486917,
+    "power": "—",
+    "type": "Fast DC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "3 available",
+    "total_spots": 8,
+    "city": "Tbilisi",
+    "provider": "Tegeta",
+    "connectors": [
+      "CCS2",
+      "CHAdeMO",
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "out"
+      },
+      {
+        "type": "Type 2",
+        "status": "out"
+      },
+      {
+        "type": "CCS2",
+        "status": "busy"
+      },
+      {
+        "type": "CCS2",
+        "status": "busy"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "busy"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CHAdeMO",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_3",
+    "name": "Auto Gallery",
+    "lat": 41.78067187337149,
+    "lng": 44.768527942159146,
+    "power": "—",
+    "type": "AC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "1 available",
+    "total_spots": 2,
+    "city": "Tbilisi",
+    "provider": "Tegeta",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
+  },
+  {
+    "id": "tegeta_2",
+    "name": "Tegeta Head Office",
+    "lat": 41.79071414936599,
+    "lng": 44.77057011360729,
+    "power": "—",
+    "type": "Fast DC",
+    "price": "0.6 ₾/kWh",
+    "available_spots": "5 available",
+    "total_spots": 6,
+    "city": "Tbilisi",
+    "provider": "Tegeta",
+    "connectors": [
+      "CCS2",
+      "CHAdeMO",
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CHAdeMO",
+        "status": "free"
+      },
+      {
+        "type": "Type 2",
+        "status": "busy"
+      },
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-01 22:20 UTC"
   }
 ]
