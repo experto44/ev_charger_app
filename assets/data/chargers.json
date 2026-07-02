@@ -1,5 +1,61 @@
 [
   {
+    "id": "espace_280",
+    "name": "Fast Charger, ''Neogas'', Argveta",
+    "lat": 42.14887179123016,
+    "lng": 42.963477634532296,
+    "power": "50 kW",
+    "type": "Fast DC",
+    "price": "0.75 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Argveta",
+    "provider": "E-Space",
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CHAdeMO",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
+  },
+  {
+    "id": "espace_278",
+    "name": "G. lortkipanidze str. #21, Samgori",
+    "lat": 41.677775,
+    "lng": 44.880617,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "0.65 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Gori",
+    "provider": "E-Space",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
+  },
+  {
     "id": "espace_277",
     "name": "Tbilisi, Fast Charger, ''Megobroba'', D.Sarajishvili St. 1, Left",
     "lat": 41.78713591291724,
@@ -8,9 +64,24 @@
     "type": "Fast DC",
     "price": "0.60 ₾/kWh",
     "available_spots": "2 available",
+    "total_spots": 2,
     "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_276",
@@ -21,9 +92,52 @@
     "type": "Fast DC",
     "price": "0.60 ₾/kWh",
     "available_spots": "2 available",
+    "total_spots": 2,
     "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
+  },
+  {
+    "id": "espace_275",
+    "name": "Fast charger, Anari, Rustavi, Shartava Avenue 23a",
+    "lat": 41.568509,
+    "lng": 44.967556,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "0.70 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Rustavi",
+    "provider": "E-Space",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_274",
@@ -34,9 +148,23 @@
     "type": "Fast DC",
     "price": "0.90 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Sinexcel Fast Charger",
+    "total_spots": 2,
+    "city": "Argveta",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_273",
@@ -47,9 +175,23 @@
     "type": "Fast DC",
     "price": "0.90 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Sinexcel Fast Charger",
+    "total_spots": 2,
+    "city": "Argveta",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_272",
@@ -60,9 +202,23 @@
     "type": "Fast DC",
     "price": "0.90 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Sinexcel Fast Charger",
+    "total_spots": 2,
+    "city": "Argveta",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_271",
@@ -73,22 +229,50 @@
     "type": "Fast DC",
     "price": "0.90 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Sinexcel Fast Charger",
+    "total_spots": 2,
+    "city": "Argveta",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_270",
     "name": "Sinexcel Fast Charger, ''Wissol'' Gas Station, Tbilisi, Marcxena Sanapiro",
     "lat": 41.686055,
     "lng": 44.823175,
-    "power": "120 kW",
+    "power": "160 kW",
     "type": "Fast DC",
     "price": "0.90 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Sinexcel Fast Charger",
+    "total_spots": 2,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_269",
@@ -98,10 +282,25 @@
     "power": "120 kW",
     "type": "Fast DC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "1 available",
+    "total_spots": 2,
     "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "busy"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_268",
@@ -112,113 +311,52 @@
     "type": "Fast DC",
     "price": "0.69 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Ts.Dadiani St. #7",
+    "total_spots": 2,
+    "city": "Ts.Dadiani St.",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
-  },
-  {
-    "id": "espace_267",
-    "name": "A.Beliashvili St. #145a",
-    "lat": 41.77894903455524,
-    "lng": 44.78350117252046,
-    "power": "120 kW",
-    "type": "Fast DC",
-    "price": "0.69 ₾/kWh",
-    "available_spots": "2 available",
-    "city": "A.Beliashvili St. #145a",
-    "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
-  },
-  {
-    "id": "espace_266",
-    "name": "I. Chavchavadze St. #72a, Vake-Plaza, parking lot -1st floor",
-    "lat": 41.71113572649457,
-    "lng": 44.75514527799157,
-    "power": "120 kW",
-    "type": "Fast DC",
-    "price": "0.69 ₾/kWh",
-    "available_spots": "2 available",
-    "city": "I. Chavchavadze St. #72a",
-    "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
-  },
-  {
-    "id": "espace_265",
-    "name": "I. Chavchavadze St. #72a, Vake-Plaza, parking lot -1st floor",
-    "lat": 41.71116173701271,
-    "lng": 44.75514465783733,
-    "power": "120 kW",
-    "type": "Fast DC",
-    "price": "0.69 ₾/kWh",
-    "available_spots": "2 available",
-    "city": "I. Chavchavadze St. #72a",
-    "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
-  },
-  {
-    "id": "espace_264",
-    "name": "University Street, 39, Agrohub, parking lot -1st floor",
-    "lat": 41.71754017662625,
-    "lng": 44.71874330678613,
-    "power": "120 kW",
-    "type": "Fast DC",
-    "price": "0.69 ₾/kWh",
-    "available_spots": "2 available",
-    "city": "University Street",
-    "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_263",
-    "name": "Ts. Dadiani St. # 7, Karvasla, Level -1 parking",
+    "name": "Ts. Dadiani St. # 7, Karvasla, Level -1 parking ",
     "lat": 41.71868096766155,
     "lng": 44.802901610067856,
     "power": "120 kW",
     "type": "Fast DC",
     "price": "0.69 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Ts. Dadiani St. # 7",
+    "total_spots": 2,
+    "city": "Ts. Dadiani St. #",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
-  },
-  {
-    "id": "espace_262",
-    "name": "Z. Gamsakhurdia embankment, Agrohub, Level 2 parking",
-    "lat": 41.70493147186828,
-    "lng": 44.79291385248904,
-    "power": "120 kW",
-    "type": "Fast DC",
-    "price": "0.69 ₾/kWh",
-    "available_spots": "2 available",
-    "city": "Z. Gamsakhurdia embankment",
-    "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
-  },
-  {
-    "id": "espace_261",
-    "name": "Z. Gamsakhurdia embankment, Agrohub, Level 1 parking",
-    "lat": 41.70500333404155,
-    "lng": 44.79295047311139,
-    "power": "120 kW",
-    "type": "Fast DC",
-    "price": "0.69 ₾/kWh",
-    "available_spots": "2 available",
-    "city": "Z. Gamsakhurdia embankment",
-    "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
-  },
-  {
-    "id": "espace_260",
-    "name": "O. Chiladze St. #9, Agrohub, Level 1 parking",
-    "lat": 41.728296320118936,
-    "lng": 44.761753135635516,
-    "power": "120 kW",
-    "type": "Fast DC",
-    "price": "0.69 ₾/kWh",
-    "available_spots": "2 available",
-    "city": "O. Chiladze St. #9",
-    "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_259",
@@ -229,9 +367,19 @@
     "type": "AC",
     "price": "0.60 ₾/kWh",
     "available_spots": "1 available",
-    "city": "EV Station ''Socar''",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_258",
@@ -241,10 +389,20 @@
     "power": "22 kW",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "1 available",
-    "city": "EV Station ''Socar''",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_256",
@@ -255,9 +413,24 @@
     "type": "Fast DC",
     "price": "0.60 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Teison Fast Charger",
+    "total_spots": 2,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_255",
@@ -268,9 +441,19 @@
     "type": "AC",
     "price": "0.60 ₾/kWh",
     "available_spots": "1 available",
-    "city": "Poti City",
+    "total_spots": 1,
+    "city": "Poti",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_254",
@@ -281,9 +464,19 @@
     "type": "AC",
     "price": "0.60 ₾/kWh",
     "available_spots": "1 available",
-    "city": "Poti City",
+    "total_spots": 1,
+    "city": "Poti",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_253",
@@ -293,10 +486,25 @@
     "power": "120 kW",
     "type": "Fast DC",
     "price": "0.75 ₾/kWh",
-    "available_spots": "0 available",
+    "available_spots": "2 available",
+    "total_spots": 2,
     "city": "Teison Fast Charger",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_252",
@@ -306,10 +514,25 @@
     "power": "120 kW",
     "type": "Fast DC",
     "price": "0.75 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
+    "total_spots": 2,
     "city": "Teison Fast Charger",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "out"
+      },
+      {
+        "type": "GB/T",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_251",
@@ -320,9 +543,24 @@
     "type": "Fast DC",
     "price": "0.90 ₾/kWh",
     "available_spots": "2 available",
+    "total_spots": 2,
     "city": "Sinexcel Fast Charger",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_250",
@@ -332,10 +570,25 @@
     "power": "120 kW",
     "type": "Fast DC",
     "price": "0.75 ₾/kWh",
-    "available_spots": "2 available",
-    "city": "Teison Fast Charger",
+    "available_spots": "1 available",
+    "total_spots": 2,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "busy"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_249",
@@ -346,9 +599,24 @@
     "type": "Fast DC",
     "price": "0.75 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Teison Fast Charger",
+    "total_spots": 2,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_248",
@@ -359,9 +627,24 @@
     "type": "Fast DC",
     "price": "0.75 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Teison Fast Charger",
+    "total_spots": 2,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_247",
@@ -372,9 +655,19 @@
     "type": "AC",
     "price": "1.25 ₾/kWh",
     "available_spots": "1 available",
-    "city": "Gudauri Lodge (Left Charger)",
+    "total_spots": 1,
+    "city": "Gudauri",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_246",
@@ -385,9 +678,19 @@
     "type": "AC",
     "price": "1.25 ₾/kWh",
     "available_spots": "1 available",
-    "city": "Gudauri Lodge (Right Charger)",
+    "total_spots": 1,
+    "city": "Gudauri",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_245",
@@ -398,9 +701,24 @@
     "type": "Fast DC",
     "price": "0.90 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Sinexcel Fast Charger",
+    "total_spots": 2,
+    "city": "Telavi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_244",
@@ -411,9 +729,24 @@
     "type": "Fast DC",
     "price": "0.90 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Sinexcel Fast Charger",
+    "total_spots": 2,
+    "city": "Zugdidi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_243",
@@ -424,9 +757,24 @@
     "type": "Fast DC",
     "price": "0.90 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Sinexcel Fast Charger",
+    "total_spots": 2,
+    "city": "Kutaisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_242",
@@ -437,9 +785,24 @@
     "type": "Fast DC",
     "price": "0.90 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Sinexcel Fast Charger",
+    "total_spots": 2,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_240",
@@ -449,10 +812,20 @@
     "power": "22 kW",
     "type": "AC",
     "price": "0.45 ₾/kWh",
-    "available_spots": "1 available",
+    "available_spots": "0 available",
+    "total_spots": 1,
     "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_239",
@@ -463,61 +836,156 @@
     "type": "Fast DC",
     "price": "0.75 ₾/kWh",
     "available_spots": "2 available",
-    "city": "A. Pirveltsodebuli Street 97A",
+    "total_spots": 2,
+    "city": "A. Pirveltsodebuli Street",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
+  },
+  {
+    "id": "espace_237",
+    "name": "Batumi , Garden Street N10",
+    "lat": 41.687776,
+    "lng": 41.707269,
+    "power": "22 kW",
+    "type": "AC",
+    "price": "0.65 ₾/kWh",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "Batumi",
+    "provider": "E-Space",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_236",
     "name": "4 Tinatin Virsaladze st., Tbilisi, Georgia",
     "lat": 41.769043022043796,
     "lng": 44.765753722880525,
-    "power": "? kW",
+    "power": "300 kW",
     "type": "Fast DC",
     "price": "0.65 ₾/kWh",
     "available_spots": "2 available",
-    "city": "4 Tinatin Virsaladze st.",
+    "total_spots": 2,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_235",
     "name": "4 Tinatin Virsaladze st., Tbilisi, Georgia",
     "lat": 41.769008888706615,
     "lng": 44.76576176950757,
-    "power": "? kW",
+    "power": "300 kW",
     "type": "Fast DC",
     "price": "0.65 ₾/kWh",
     "available_spots": "2 available",
-    "city": "4 Tinatin Virsaladze st.",
+    "total_spots": 2,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_234",
     "name": "4 Tinatin Virsaladze st., Tbilisi, Georgia",
     "lat": 41.76896862884967,
     "lng": 44.765785909388704,
-    "power": "50 kW",
+    "power": "300 kW",
     "type": "Fast DC",
     "price": "0.65 ₾/kWh",
-    "available_spots": "2 available",
-    "city": "4 Tinatin Virsaladze st.",
+    "available_spots": "1 available",
+    "total_spots": 2,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "busy"
+      },
+      {
+        "type": "CHAdeMO",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_233",
     "name": "4 Tinatin Virsaladze st., Tbilisi, Georgia",
     "lat": 41.76890648858608,
     "lng": 44.76582882473294,
-    "power": "? kW",
+    "power": "120 kW",
     "type": "Fast DC",
     "price": "0.65 ₾/kWh",
-    "available_spots": "2 available",
-    "city": "4 Tinatin Virsaladze st.",
+    "available_spots": "1 available",
+    "total_spots": 2,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS1"
+    ],
+    "ports": [
+      {
+        "type": "CCS1",
+        "status": "busy"
+      },
+      {
+        "type": "CCS1",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_232",
@@ -526,24 +994,49 @@
     "lng": 42.67687,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
     "city": "Qutaisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_231",
     "name": "4 Tinatin Virsaladze st., Tbilisi, Georgia",
     "lat": 41.76886035221463,
     "lng": 44.765874422286196,
-    "power": "120 kW",
+    "power": "300 kW",
     "type": "Fast DC",
     "price": "0.65 ₾/kWh",
-    "available_spots": "2 available",
-    "city": "4 Tinatin Virsaladze st.",
+    "available_spots": "0 available",
+    "total_spots": 2,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "out"
+      },
+      {
+        "type": "CHAdeMO",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_230",
@@ -554,9 +1047,19 @@
     "type": "AC",
     "price": "0.70 ₾/kWh",
     "available_spots": "1 available",
+    "total_spots": 1,
     "city": "Vardzia Resort",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_229",
@@ -567,35 +1070,80 @@
     "type": "Fast DC",
     "price": "0.72 ₾/kWh",
     "available_spots": "2 available",
+    "total_spots": 2,
     "city": "Gama Gas",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_228",
     "name": "Black Sea Right Charger",
-    "lat": 41.940196,
-    "lng": 41.776229,
+    "lat": 41.940018,
+    "lng": 41.775696,
     "power": "120 kW",
     "type": "Fast DC",
     "price": "0.75 ₾/kWh",
     "available_spots": "2 available",
+    "total_spots": 2,
     "city": "Black Sea Right Charger",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_227",
     "name": "Black Sea Left Charger",
-    "lat": 41.940242,
-    "lng": 41.776363,
+    "lat": 41.940261,
+    "lng": 41.776409,
     "power": "120 kW",
     "type": "Fast DC",
     "price": "0.75 ₾/kWh",
     "available_spots": "2 available",
+    "total_spots": 2,
     "city": "Black Sea Left Charger",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_226",
@@ -604,11 +1152,26 @@
     "lng": 44.815626,
     "power": "120 kW",
     "type": "Fast DC",
-    "price": "0.72 ₾/kWh",
+    "price": "0.70 ₾/kWh",
     "available_spots": "2 available",
+    "total_spots": 2,
     "city": "Gama Gas",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_225",
@@ -617,11 +1180,26 @@
     "lng": 44.73942441929782,
     "power": "120 kW",
     "type": "Fast DC",
-    "price": "0.72 ₾/kWh",
-    "available_spots": "1 available",
+    "price": "0.70 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
     "city": "Eco Gas",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_224",
@@ -630,11 +1208,26 @@
     "lng": 44.836723,
     "power": "120 kW",
     "type": "Fast DC",
-    "price": "0.72 ₾/kWh",
-    "available_spots": "2 available",
+    "price": "0.70 ₾/kWh",
+    "available_spots": "1 available",
+    "total_spots": 2,
     "city": "Gama Gas",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "busy"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_222",
@@ -644,23 +1237,43 @@
     "power": "22 kW",
     "type": "AC",
     "price": "0.65 ₾/kWh",
-    "available_spots": "1 available",
+    "available_spots": "0 available",
+    "total_spots": 1,
     "city": "Batumi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_220",
-    "name": "Batumi, Zhiuli Shartavas Gamziri 16, level 1 Parking",
+    "name": "Batumi, Zhiuli Shartavas Gamziri 16, level 1 Parking ",
     "lat": 41.636735,
     "lng": 41.620418,
     "power": "22 kW",
     "type": "AC",
     "price": "0.65 ₾/kWh",
     "available_spots": "1 available",
+    "total_spots": 1,
     "city": "Batumi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_218",
@@ -671,9 +1284,19 @@
     "type": "AC",
     "price": "0.60 ₾/kWh",
     "available_spots": "1 available",
+    "total_spots": 1,
     "city": "Rustavi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_217",
@@ -684,9 +1307,24 @@
     "type": "Fast DC",
     "price": "0.72 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Gama +",
+    "total_spots": 2,
+    "city": "Kutaisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_216",
@@ -695,11 +1333,26 @@
     "lng": 44.903883,
     "power": "120 kW",
     "type": "Fast DC",
-    "price": "0.72 ₾/kWh",
-    "available_spots": "1 available",
+    "price": "0.70 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
     "city": "Gama Gas",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_215",
@@ -710,9 +1363,24 @@
     "type": "Fast DC",
     "price": "0.62 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Total100/ EcoGas",
+    "total_spots": 2,
+    "city": "EcoGas",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_214",
@@ -722,10 +1390,30 @@
     "power": "90 kW",
     "type": "Fast DC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "1 available",
-    "city": "Beny Fast Charger",
+    "available_spots": "2 available",
+    "total_spots": 3,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "GB/T",
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "out"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_210",
@@ -736,9 +1424,19 @@
     "type": "AC",
     "price": "0.60 ₾/kWh",
     "available_spots": "1 available",
-    "city": "Tbilisi Hills Golf And Residences",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_209",
@@ -749,9 +1447,19 @@
     "type": "AC",
     "price": "0.60 ₾/kWh",
     "available_spots": "1 available",
-    "city": "Tbilisi Hills Golf And Residences",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_208",
@@ -762,9 +1470,19 @@
     "type": "AC",
     "price": "0.60 ₾/kWh",
     "available_spots": "1 available",
-    "city": "Tbilisi Hills Golf And Residences",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_207",
@@ -775,9 +1493,19 @@
     "type": "AC",
     "price": "0.60 ₾/kWh",
     "available_spots": "1 available",
-    "city": "Tbilisi Hills Golf And Residences",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_196",
@@ -787,10 +1515,20 @@
     "power": "22 kW",
     "type": "AC",
     "price": "0.50 ₾/kWh",
-    "available_spots": "1 available",
-    "city": "City Hall of Samtredia Municipality",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Samtredia",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_193",
@@ -800,10 +1538,25 @@
     "power": "100 kW",
     "type": "Fast DC",
     "price": "0.90 ₾/kWh",
-    "available_spots": "0 available",
-    "city": "Sinexcel Fast Charger",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Batumi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CHAdeMO",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_191",
@@ -812,11 +1565,21 @@
     "lng": 44.739242,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
+    "total_spots": 1,
     "city": "\"Aldagi\"",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_190",
@@ -825,11 +1588,21 @@
     "lng": 41.61766605214075,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
     "city": "Batumi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_188",
@@ -840,9 +1613,24 @@
     "type": "Fast DC",
     "price": "0.90 ₾/kWh",
     "available_spots": "2 available",
+    "total_spots": 2,
     "city": "Sinexcel Fast Charger",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CHAdeMO",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_185",
@@ -851,11 +1639,21 @@
     "lng": 44.76673,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "0 available",
-    "city": "Charger at Zhvania Street N65 II",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_183",
@@ -866,9 +1664,24 @@
     "type": "Fast DC",
     "price": "0.90 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Sinexcel Fast Charger Left",
+    "total_spots": 2,
+    "city": "Borjomi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CHAdeMO",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_182",
@@ -879,9 +1692,24 @@
     "type": "Fast DC",
     "price": "0.90 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Right Sinexcel Fast Charger",
+    "total_spots": 2,
+    "city": "Borjomi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CHAdeMO",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_181",
@@ -892,9 +1720,24 @@
     "type": "Fast DC",
     "price": "0.90 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Sinexcel Fast Charger",
+    "total_spots": 2,
+    "city": "Argveta",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CHAdeMO",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_180",
@@ -905,9 +1748,24 @@
     "type": "Fast DC",
     "price": "0.90 ₾/kWh",
     "available_spots": "2 available",
-    "city": "Sinexcel Fast Charger",
+    "total_spots": 2,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CHAdeMO",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_179",
@@ -917,10 +1775,25 @@
     "power": "50 kW",
     "type": "Fast DC",
     "price": "0.75 ₾/min",
-    "available_spots": "0 available",
-    "city": "Fast charger",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CHAdeMO",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_173",
@@ -930,10 +1803,25 @@
     "power": "100 kW",
     "type": "Fast DC",
     "price": "0.90 ₾/kWh",
-    "available_spots": "1 available",
-    "city": "Sinexcel Fast Charger",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Gori",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "CHAdeMO",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_171",
@@ -942,11 +1830,21 @@
     "lng": 43.510592,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
     "city": "Restaurant Kevri",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_170",
@@ -955,11 +1853,21 @@
     "lng": 43.5105549,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
     "city": "Restaurant Kevri",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_169",
@@ -968,11 +1876,21 @@
     "lng": 44.823525,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Sheraton Grand Tbilisi Metechi Palace",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_168",
@@ -981,11 +1899,21 @@
     "lng": 44.743942,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "0 available",
-    "city": "Chavchavadze Avenue N49",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_163",
@@ -994,11 +1922,21 @@
     "lng": 43.387647,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Hotel",
+    "total_spots": 1,
+    "city": "Borjomi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_158",
@@ -1007,11 +1945,21 @@
     "lng": 44.765438,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
     "city": "Namai Vake",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_157",
@@ -1020,11 +1968,21 @@
     "lng": 44.7655236,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
     "city": "Namai Vake",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_152",
@@ -1033,11 +1991,21 @@
     "lng": 44.766819,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Charger at Zhvania Street N65 I",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_132",
@@ -1046,11 +2014,21 @@
     "lng": 44.858300911914284,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
-    "city": "Shota Nadirashvili N24",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Shota Nadirashvili",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_131",
@@ -1059,11 +2037,21 @@
     "lng": 44.858266711235046,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
-    "city": "Shota Nadirashvili N24",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Shota Nadirashvili",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_128",
@@ -1072,11 +2060,21 @@
     "lng": 44.771211,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
-    "city": "\"M3\" Saburtalo",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Saburtalo",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_126",
@@ -1085,11 +2083,21 @@
     "lng": 44.7793283,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
-    "city": "Business center on Beliashvili (I)",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_125",
@@ -1098,11 +2106,21 @@
     "lng": 44.7176985488378,
     "power": "11 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "0 available",
-    "city": "University Street N24",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_124",
@@ -1111,11 +2129,21 @@
     "lng": 44.802286676323185,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Kote Abkhaz Street",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_123",
@@ -1124,11 +2152,21 @@
     "lng": 44.754924357830184,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Chavchavadze Avenue 72a",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_122",
@@ -1137,11 +2175,21 @@
     "lng": 44.75492820063466,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
-    "city": "Chavchavadze Avenue 72a",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_121",
@@ -1150,11 +2198,21 @@
     "lng": 44.75494161167973,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
-    "city": "Chavchavadze Avenue 72a",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_120",
@@ -1163,11 +2221,21 @@
     "lng": 44.75498586812848,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Chavchavadze Avenue 72a",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_118",
@@ -1176,11 +2244,21 @@
     "lng": 44.800372,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
     "city": "Helios Energy",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_115",
@@ -1189,11 +2267,21 @@
     "lng": 44.77810021387666,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
     "city": "''M2'' Gallery",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_113",
@@ -1202,11 +2290,21 @@
     "lng": 44.77091549634597,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
-    "city": "Gas Station \"Neogas\"",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_112",
@@ -1215,11 +2313,21 @@
     "lng": 44.782393490509065,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
-    "city": "''Greenway''",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_109",
@@ -1228,11 +2336,21 @@
     "lng": 44.811206894587144,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "''Caucasus University''",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_107",
@@ -1241,11 +2359,21 @@
     "lng": 44.779286376064455,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Business center on Beliashvili (II)",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_106",
@@ -1254,11 +2382,21 @@
     "lng": 41.861215,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
-    "city": "Zugdidi Referral Hospital",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Zugdidi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_103",
@@ -1267,11 +2405,21 @@
     "lng": 44.781028,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Business center \"Mioni\" (II)",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_102",
@@ -1280,11 +2428,21 @@
     "lng": 44.787178,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Shopping center ''Saba''",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_101",
@@ -1293,11 +2451,21 @@
     "lng": 45.45231870254184,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
+    "total_spots": 1,
     "city": "Telavi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_94",
@@ -1308,9 +2476,19 @@
     "type": "AC",
     "price": "0.35 ₾/min",
     "available_spots": "1 available",
-    "city": "''Ten'' Business Center",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_91",
@@ -1319,11 +2497,21 @@
     "lng": 43.58726967145786,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
+    "total_spots": 1,
     "city": "Khashuri",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_90",
@@ -1332,11 +2520,21 @@
     "lng": 44.769444,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "0 available",
-    "city": "Hypermarket \"Agrohub\"",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_89",
@@ -1345,11 +2543,21 @@
     "lng": 44.6506014,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
+    "total_spots": 1,
     "city": "Kazbegi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_88",
@@ -1358,11 +2566,21 @@
     "lng": 44.94502852035396,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Gas Station \"Neogas\"",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_87",
@@ -1371,11 +2589,21 @@
     "lng": 44.871071577072144,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
-    "city": "Gas Station \"Neogas\"",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_86",
@@ -1384,11 +2612,21 @@
     "lng": 42.12742656469345,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
+    "total_spots": 1,
     "city": "Chkhorotsku",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_84",
@@ -1397,11 +2635,21 @@
     "lng": 44.8738753,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
-    "city": "''Greenway''",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_83",
@@ -1410,11 +2658,21 @@
     "lng": 44.830546,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "''Greenway''",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_82",
@@ -1423,11 +2681,21 @@
     "lng": 45.5078497,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
+    "total_spots": 1,
     "city": "Telavi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_81",
@@ -1436,11 +2704,21 @@
     "lng": 45.79484314833678,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
     "city": "Kakheti",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_79",
@@ -1449,11 +2727,21 @@
     "lng": 42.2025999,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
     "city": "Abasha",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_78",
@@ -1462,11 +2750,21 @@
     "lng": 44.768516,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
-    "city": "''Greenway''",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_77",
@@ -1475,11 +2773,21 @@
     "lng": 41.667192,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
+    "total_spots": 1,
     "city": "Batumi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_76",
@@ -1488,11 +2796,21 @@
     "lng": 42.3255854845047,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "0 available",
+    "total_spots": 1,
     "city": "Dafnar",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_75",
@@ -1501,24 +2819,49 @@
     "lng": 44.781675,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Business center \"Mioni\" (I)",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
-    "id": "espace_71",
-    "name": "Fast Charger, ''Neogas'', Argveta",
-    "lat": 42.14887179123016,
-    "lng": 42.963477634532296,
-    "power": "50 kW",
+    "id": "espace_69",
+    "name": "Fast Charger, ''Wissoli'' Complex, Gori",
+    "lat": 42.016185,
+    "lng": 44.064937,
+    "power": "30 kW",
     "type": "Fast DC",
-    "price": "0.00 ₾/min",
-    "available_spots": "0 available",
-    "city": "Fast Charger",
+    "price": "0.90 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Gori",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "CCS2",
+      "CHAdeMO"
+    ],
+    "ports": [
+      {
+        "type": "CHAdeMO",
+        "status": "free"
+      },
+      {
+        "type": "CCS2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_66",
@@ -1527,11 +2870,21 @@
     "lng": 45.756082,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
+    "total_spots": 1,
     "city": "Gurjaani Region",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_59",
@@ -1540,11 +2893,21 @@
     "lng": 44.960649,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
-    "city": "Gas Station ''Socar''",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_58",
@@ -1553,11 +2916,21 @@
     "lng": 43.018687,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
+    "total_spots": 1,
     "city": "Zestafoni",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_57",
@@ -1566,11 +2939,21 @@
     "lng": 44.95464250445366,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Gas Station \"Socar\"",
+    "total_spots": 1,
+    "city": "Rustavi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_55",
@@ -1579,11 +2962,21 @@
     "lng": 42.689384,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "0 available",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 1,
     "city": "Kutaisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_53",
@@ -1592,11 +2985,21 @@
     "lng": 44.776274,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "0 available",
-    "city": "''Iashvili'' Clinic",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_52",
@@ -1605,11 +3008,21 @@
     "lng": 44.064885,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
+    "total_spots": 1,
     "city": "Gori",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_51",
@@ -1618,11 +3031,21 @@
     "lng": 44.964387,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Airport Settlement",
+    "total_spots": 1,
+    "city": "Gori",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_48",
@@ -1631,11 +3054,21 @@
     "lng": 44.74437797089195,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
-    "city": "\"M2\" Tamarashvili",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tamarashvili",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_46",
@@ -1644,11 +3077,21 @@
     "lng": 44.771362,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
     "city": "Bank of Georgia (HQ)",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_44",
@@ -1657,11 +3100,21 @@
     "lng": 43.367999,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Hotel Borjomi Likani",
+    "total_spots": 1,
+    "city": "Borjomi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_42",
@@ -1670,11 +3123,21 @@
     "lng": 44.826348423957825,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
-    "city": "Gas Station \"Neogas\"",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_41",
@@ -1683,11 +3146,21 @@
     "lng": 42.96346204950396,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
     "city": "Argveta",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "busy"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_40",
@@ -1696,11 +3169,21 @@
     "lng": 44.839076,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Gas Station ''Socar\"",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_38",
@@ -1709,11 +3192,21 @@
     "lng": 44.02686870000002,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Urbnisi/Gori",
+    "total_spots": 1,
+    "city": "Gori",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_33",
@@ -1722,11 +3215,21 @@
     "lng": 44.78729350000003,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Hotel ''Rooms''",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_30",
@@ -1735,11 +3238,21 @@
     "lng": 44.896933,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "''East Point'' shopping center",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_23",
@@ -1748,11 +3261,21 @@
     "lng": 44.77161258,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Supermarket ''Nikora''",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_22",
@@ -1761,11 +3284,21 @@
     "lng": 44.768365,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
+    "total_spots": 1,
     "city": "''Free University''",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_20",
@@ -1774,11 +3307,21 @@
     "lng": 45.021833181381226,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Gas Station ''Socar''",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_17",
@@ -1787,11 +3330,21 @@
     "lng": 41.625854000000004,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
+    "total_spots": 1,
     "city": "Batumi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_12",
@@ -1800,11 +3353,21 @@
     "lng": 44.744389772677096,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "0 available",
-    "city": "''M2'' Tamarashvili",
+    "total_spots": 1,
+    "city": "Tamarashvili",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_9",
@@ -1813,11 +3376,21 @@
     "lng": 44.956,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
-    "available_spots": "1 available",
-    "city": "Autopapa automarket",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Rustavi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "out"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_8",
@@ -1826,11 +3399,21 @@
     "lng": 44.76917982,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
-    "city": "Supermarket ''Libre''",
+    "total_spots": 1,
+    "city": "Tbilisi",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "espace_4",
@@ -1839,11 +3422,21 @@
     "lng": 45.683114379644394,
     "power": "22 kW",
     "type": "AC",
-    "price": "0.00 ₾/min",
+    "price": "",
     "available_spots": "1 available",
+    "total_spots": 1,
     "city": "Kachreti",
     "provider": "E-Space",
-    "last_updated": "2026-06-04 05:43 UTC"
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-07-02 22:34 UTC"
   },
   {
     "id": "martev_98",

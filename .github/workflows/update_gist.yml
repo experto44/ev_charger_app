@@ -1077,11 +1077,176 @@ jobs:
               print(f"Charger Plus: {len(stations)} stations")
               return stations
 
+          # ── E-Space (own backend — public map API, no user login) ──────────
+          # E-Space (ge.e_space.app v8.0.7) serves its live map at
+          # prod.e-space.ge/api/v1/mobile/chargers. It needs a "public-key"
+          # header (an application key embedded in the app; NOT per-user) — with
+          # it the whole charger list, incl. live per-connector status, is public
+          # (no OAuth). Each row is one physical charger with 1–3 connectors.
+          # Live status is the `condition` field (station- and connector-level):
+          # Active→free, Charging→busy, Inactive→out. Connector `type` is already
+          # a chip label; `speed` is the kW rating. The feed carries NO session
+          # start time, so "since" (how long busy) is synthesized by carrying it
+          # forward from the previous gist snapshot.
+          def fetch_espace():
+              base = "https://prod.e-space.ge/api/v1"
+              # Public application key embedded in the E-Space app; unlocks the
+              # read-only public map API. Without it the API 401s "Missing or
+              # invalid public application key".
+              KEY = "d66b4c6c-2868-416a-8ab7-99ae63675c0a"
+              H = {"public-key": KEY, "Accept": "application/json"}
+
+              r = requests.get(f"{base}/mobile/chargers", headers=H, timeout=60)
+              r.raise_for_status()
+              raw = r.json()
+              if not isinstance(raw, list):
+                  raw = raw.get("data") or []
+
+              # E-Space exposes no session-start time, so we synthesize "since" by
+              # carrying forward when a plug FIRST read busy (keyed by station id +
+              # plug index) from the gist's previous snapshot; a newly-busy plug is
+              # stamped now. Best effort — if the previous gist can't be read we
+              # just stamp everything now.
+              prev_since = {}
+              try:
+                  g = requests.get(f"https://api.github.com/gists/{GIST_ID}",
+                                   headers=headers, timeout=30).json()
+                  fmeta = (g.get("files") or {}).get("chargers.json") or {}
+                  content = fmeta.get("content")
+                  if fmeta.get("truncated") and fmeta.get("raw_url"):
+                      content = requests.get(fmeta["raw_url"], timeout=30).text
+                  for st0 in json.loads(content or "[]"):
+                      if st0.get("provider") != "E-Space":
+                          continue
+                      for i, p in enumerate(st0.get("ports") or []):
+                          if p.get("since"):
+                              prev_since[f"{st0.get('id')}#{i}"] = p["since"]
+              except Exception as e:
+                  print("E-Space: prev-since lookup failed:", e)
+
+              CONN_MAP = {
+                  "ccs": "CCS2", "ccs2": "CCS2", "combo2": "CCS2", "iec62196t2combo": "CCS2",
+                  "ccs1": "CCS1", "combo1": "CCS1",
+                  "chademo": "CHAdeMO",
+                  "type2": "Type 2", "mennekes": "Type 2", "iec62196t2": "Type 2",
+                  "type1": "Type 1", "j1772": "Type 1",
+                  "gbt": "GB/T", "gb_t": "GB/T", "gbtdc": "GB/T", "gbtac": "GB/T",
+                  "nacs": "NACS", "tesla": "NACS",
+              }
+              def norm_conn(t):
+                  if not t: return None
+                  k = str(t).lower().replace(" ", "").replace("-", "").replace("_", "").replace("/", "")
+                  return CONN_MAP.get(k)
+              ORDER = ["CCS2", "GB/T", "CHAdeMO", "Type 2", "NACS", "CCS1", "Type 1"]
+              def sort_conns(cs):
+                  return sorted(cs, key=lambda c: (ORDER.index(c) if c in ORDER else len(ORDER), c))
+              def eng(v):
+                  return (v or {}).get("en") or (v or {}).get("ka") or ""
+
+              GE_CITIES = ["Tbilisi", "Batumi", "Kutaisi", "Rustavi", "Gori", "Telavi",
+                           "Zugdidi", "Poti", "Ozurgeti", "Akhaltsikhe", "Mtskheta",
+                           "Borjomi", "Bakuriani", "Gudauri", "Marneuli", "Khashuri",
+                           "Zestaponi", "Senaki", "Kobuleti", "Samtredia", "Kaspi",
+                           "Kareli", "Argveta", "Samgori"]
+              def derive_city(addr, fallback):
+                  low = (addr or "").lower()
+                  for c in GE_CITIES:
+                      if c.lower() in low:
+                          return c
+                  parts = [p.strip() for p in (addr or "").split(",") if p.strip()]
+                  if len(parts) >= 2:
+                      cand = parts[-2] if parts[-1].lower() in ("georgia", "საქართველო") else parts[0]
+                      toks = [t for t in cand.split() if not any(ch.isdigit() for ch in t)]
+                      if toks:
+                          return " ".join(toks)
+                  return fallback
+
+              now_iso = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+              stations = []
+              for s in raw:
+                  try:
+                      lat = float(s.get("latitude")); lng = float(s.get("longitude"))
+                  except Exception:
+                      continue
+                  if lat == 0 or lng == 0:
+                      continue  # a few rows carry placeholder 0/0 coords
+
+                  full_id = f"espace_{s.get('id')}"
+                  st = str(s.get("condition") or "").strip().lower()    # active|charging|inactive
+                  offline = (st == "inactive") or (str(s.get("is_available")).strip().lower() == "false")
+
+                  conns, max_kw, any_dc = set(), 0.0, (str(s.get("type") or "").upper() == "FAST")
+                  port_details = []
+                  for c in (s.get("connector_types") or []):
+                      ct = norm_conn(c.get("type"))
+                      if ct: conns.add(ct)
+                      if ct in ("CCS2", "CHAdeMO", "CCS1", "GB/T"):
+                          any_dc = True
+                      try: max_kw = max(max_kw, float(c.get("speed") or 0))
+                      except: pass
+                      cc = str(c.get("condition") or "").strip().lower()
+                      if offline or cc == "inactive":
+                          ps = "out"
+                      elif cc == "charging":
+                          ps = "busy"
+                      elif cc == "active":
+                          ps = "free"
+                      else:
+                          ps = "out"
+                      port_details.append({"type": ct or (c.get("type") or "?"), "status": ps})
+
+                  # Station flag can read "Charging" while every plug still says
+                  # "Active" (feed lag); E-Space multi-gun units share one power
+                  # module, so a live session occupies the whole charger. Flip the
+                  # first free plug to busy so availability never reads free while
+                  # a car is plugged in.
+                  if not offline and st == "charging" and not any(p["status"] == "busy" for p in port_details):
+                      for p in port_details:
+                          if p["status"] == "free":
+                              p["status"] = "busy"; break
+
+                  for i, p in enumerate(port_details):
+                      if p["status"] == "busy":
+                          p["since"] = prev_since.get(f"{full_id}#{i}") or now_iso
+
+                  total = len(port_details)
+                  av    = sum(1 for p in port_details if p["status"] == "free")
+                  kw    = round(max_kw)
+
+                  try: pnum = float(s.get("price"))
+                  except: pnum = None
+                  if pnum and pnum > 0:
+                      unit = "/min" if str(s.get("price_type") or "").lower() == "minute" else "/kWh"
+                      price = f"{pnum:.2f} ₾{unit}"
+                  else:
+                      price = ""
+
+                  name = eng(s.get("address")) or eng(s.get("title")) or "E-Space"
+                  stations.append({
+                      "id": full_id,
+                      "name": name,
+                      "lat": lat,
+                      "lng": lng,
+                      "power": (f"{int(kw)} kW" if kw else "—"),
+                      "type": "Fast DC" if any_dc else "AC",
+                      "price": price,
+                      "available_spots": f"{av} available",
+                      "total_spots": total,
+                      "city": derive_city(eng(s.get("address")), name.split(",")[0]),
+                      "provider": "E-Space",
+                      "connectors": sort_conns(conns),
+                      "ports": port_details,
+                      "last_updated": "Just now",
+                  })
+              print(f"E-Space: {len(stations)} stations")
+              return stations
+
           # ── Load station data from the committed asset file ────────────────
-          # The bundled asset ships with snapshots of the live AMPECO providers
-          # for offline use, so for each live provider we drop its bundled rows
-          # and re-add them fresh below. This keeps the merge idempotent and
-          # avoids duplicates on every run. E-Space is static (asset only).
+          # The bundled asset ships with snapshots of the live providers for
+          # offline use, so for each live provider we drop its bundled rows and
+          # re-add them fresh below. This keeps the merge idempotent and avoids
+          # duplicates on every run.
           with open("assets/data/chargers.json", encoding="utf-8-sig") as f:
               bundled = json.load(f)
 
@@ -1099,7 +1264,8 @@ jobs:
                             (fetch_ecocars, "EcoCars"),
                             (fetch_solarstation, "Solar Station"),
                             (fetch_tegeta, "Tegeta"),
-                            (fetch_chargerplus, "Charger Plus")]:
+                            (fetch_chargerplus, "Charger Plus"),
+                            (fetch_espace, "E-Space")]:
               fresh = []
               try:
                   fresh = fn()
