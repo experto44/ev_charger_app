@@ -950,6 +950,118 @@ jobs:
               print(f"Tegeta: {len(stations)} stations")
               return stations
 
+          # ── Charger Plus (public live status over WebSocket) ───────────────
+          #  Charger Plus (com.chargerplus.app, 3.0.6) serves its live map over a
+          #  public WebSocket: connect to wss://ws.chargerpl.us/ (no auth) and the
+          #  server pushes one {"action":"connection","data":[stations]} frame with
+          #  every station's location, power and *live* per-connector status, then
+          #  closes. See docs/chargerplus_api.md. Connector *types* are not in the
+          #  public feed, but Charger Plus runs a homogeneous fleet — validated
+          #  against live station cores (e.g. #9711, #9738): DC sites carry
+          #  GB/T(DC) + CCS/2, AC sites carry Type 2 — so we derive them by power.
+          def fetch_chargerplus():
+              import socket, ssl, struct, base64 as _b64
+
+              def ws_snapshot(timeout=20):
+                  host = "ws.chargerpl.us"
+                  sock = ssl.create_default_context().wrap_socket(
+                      socket.create_connection((host, 443), timeout=timeout),
+                      server_hostname=host)
+                  key = _b64.b64encode(os.urandom(16)).decode()
+                  sock.send((f"GET / HTTP/1.1\r\nHost: {host}\r\nUpgrade: websocket\r\n"
+                             f"Connection: Upgrade\r\nSec-WebSocket-Key: {key}\r\n"
+                             f"Sec-WebSocket-Version: 13\r\nOrigin: https://cplus.ge\r\n\r\n").encode())
+                  buf = b""
+                  while b"\r\n\r\n" not in buf:
+                      buf += sock.recv(4096)
+                  if b"101" not in buf.split(b"\r\n", 1)[0]:
+                      raise RuntimeError("ws upgrade failed")
+                  data = buf.split(b"\r\n\r\n", 1)[1]
+                  def readn(n, d):
+                      while len(d) < n:
+                          d += sock.recv(65536)
+                      return d
+                  payload = b""
+                  data = readn(2, data)
+                  while True:
+                      b0, b1 = data[0], data[1]
+                      ln = b1 & 0x7f; idx = 2
+                      if ln == 126:
+                          data = readn(4, data); ln = struct.unpack(">H", data[2:4])[0]; idx = 4
+                      elif ln == 127:
+                          data = readn(10, data); ln = struct.unpack(">Q", data[2:10])[0]; idx = 10
+                      data = readn(idx + ln, data)
+                      payload += data[idx:idx + ln]
+                      if (b0 & 0x0f) in (1, 2) and (b0 & 0x80):
+                          break
+                      data = readn(2, data[idx + ln:])
+                  sock.close()
+                  return json.loads(payload.decode("utf-8", "replace").split("\x1e")[0])
+
+              # station_id -> site name, from the authed getStationPools call
+              # (highway/multi-charger sites; captured once, they rarely change).
+              POOL_NAMES = {
+                  144: "Kakheti Hwy 147", 146: "Kakheti Hwy 147",
+                  115: "Rikoti", 151: "Rikoti", 152: "Rikoti",
+                  121: "Zugdidi", 148: "Zugdidi",
+                  114: "Autobahn, Gori", 153: "Autobahn, Gori", 154: "Autobahn, Gori",
+                  123: "Green Way, Kobuleti", 158: "Green Way, Kobuleti",
+                  116: "Argveta, Zestaponi", 156: "Argveta, Zestaponi", 157: "Argveta, Zestaponi",
+                  120: "Samtredia", 147: "Samtredia",
+              }
+              # snapshot connector status -> "free?" and display
+              FREE = {"Available", "NoError"}
+
+              obj = ws_snapshot()
+              rows = obj.get("data", []) if isinstance(obj, dict) else []
+              stations = []
+              for x in rows:
+                  try:
+                      lat = float(x["latitude"]); lng = float(x["longitude"])
+                  except Exception:
+                      continue
+                  # Georgia only (drop the lone test point in Saudi Arabia)
+                  if not (41.0 <= lat <= 43.6 and 40.0 <= lng <= 46.9):
+                      continue
+                  sid = x["id"]
+                  conns = x.get("connectors", []) or []
+                  watts = x.get("power") or 0
+                  is_dc = watts >= 50000
+                  n = len(conns)
+                  # derive connector types (homogeneous fleet, validated on live cores)
+                  if is_dc:
+                      type_seq = (["GB/T", "CCS2"] if n >= 2 else ["CCS2"])
+                  else:
+                      type_seq = ["Type 2"] * max(n, 1)
+                  avail = sum(1 for c in conns if c.get("status") in FREE)
+                  ports = []
+                  for i, c in enumerate(conns):
+                      st = c.get("status")
+                      ports.append({
+                          "type": type_seq[i] if i < len(type_seq) else type_seq[-1],
+                          "power": f"{round(watts/1000)} kW" if watts else "—",
+                          "status": "Available" if st in FREE else st,
+                      })
+                  name = POOL_NAMES.get(sid) or f"Charger Plus #{x.get('name') or sid}"
+                  stations.append({
+                      "id": f"chargerplus_{sid}",
+                      "name": name,
+                      "lat": lat,
+                      "lng": lng,
+                      "power": f"{round(watts/1000)} kW" if watts else "—",
+                      "type": "Fast DC" if is_dc else "AC",
+                      "price": "",
+                      "available_spots": f"{avail} available",
+                      "total_spots": n,
+                      "city": POOL_NAMES.get(sid, "").split(",")[-1].strip(),
+                      "provider": "Charger Plus",
+                      "connectors": sorted(set(type_seq)),
+                      "ports": ports,
+                      "last_updated": "Just now",
+                  })
+              print(f"Charger Plus: {len(stations)} stations")
+              return stations
+
           # ── Load station data from the committed asset file ────────────────
           # The bundled asset ships with snapshots of the live AMPECO providers
           # for offline use, so for each live provider we drop its bundled rows
@@ -971,7 +1083,8 @@ jobs:
                             (fetch_gadatene, "Gadatene"),
                             (fetch_ecocars, "EcoCars"),
                             (fetch_solarstation, "Solar Station"),
-                            (fetch_tegeta, "Tegeta")]:
+                            (fetch_tegeta, "Tegeta"),
+                            (fetch_chargerplus, "Charger Plus")]:
               fresh = []
               try:
                   fresh = fn()

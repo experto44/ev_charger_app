@@ -12858,5 +12858,1588 @@
       }
     ],
     "last_updated": "2026-07-01 22:49 UTC"
+  },
+  {
+    "id": "chargerplus_105",
+    "name": "Charger Plus #105",
+    "lat": 41.001987,
+    "lng": 41.009346,
+    "power": "7 kW",
+    "type": "AC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "power": "7 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_145",
+    "name": "Charger Plus #145",
+    "lat": 41.001987,
+    "lng": 41.009346,
+    "power": "14 kW",
+    "type": "AC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "power": "14 kW",
+        "status": "Available"
+      },
+      {
+        "type": "Type 2",
+        "power": "14 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_104",
+    "name": "Charger Plus #104",
+    "lat": 41.710873,
+    "lng": 44.758296,
+    "power": "22 kW",
+    "type": "AC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "power": "22 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_109",
+    "name": "Charger Plus #109",
+    "lat": 41.740894,
+    "lng": 44.777419,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_110",
+    "name": "Charger Plus #110",
+    "lat": 41.75129,
+    "lng": 44.787137,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_117",
+    "name": "Charger Plus #117",
+    "lat": 42.252234,
+    "lng": 42.70922,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_127",
+    "name": "Charger Plus #127",
+    "lat": 41.731487,
+    "lng": 45.198673,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_130",
+    "name": "Charger Plus #130",
+    "lat": 41.927294,
+    "lng": 45.830392,
+    "power": "22 kW",
+    "type": "AC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "power": "22 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_131",
+    "name": "Charger Plus #131",
+    "lat": 41.927166,
+    "lng": 45.830886,
+    "power": "22 kW",
+    "type": "AC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "power": "22 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_132",
+    "name": "Charger Plus #132",
+    "lat": 41.710882,
+    "lng": 44.758264,
+    "power": "22 kW",
+    "type": "AC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "power": "22 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_133",
+    "name": "Charger Plus #133",
+    "lat": 41.702534,
+    "lng": 44.794018,
+    "power": "7 kW",
+    "type": "AC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "power": "7 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_135",
+    "name": "Charger Plus #135",
+    "lat": 41.693415,
+    "lng": 44.800968,
+    "power": "22 kW",
+    "type": "AC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "power": "22 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_136",
+    "name": "Charger Plus #136",
+    "lat": 41.696522,
+    "lng": 44.818381,
+    "power": "22 kW",
+    "type": "AC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "power": "22 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_137",
+    "name": "Charger Plus #137",
+    "lat": 42.133809,
+    "lng": 42.733795,
+    "power": "22 kW",
+    "type": "AC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "power": "22 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_138",
+    "name": "Charger Plus #138",
+    "lat": 41.839972,
+    "lng": 41.778097,
+    "power": "22 kW",
+    "type": "AC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "power": "22 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_139",
+    "name": "Charger Plus #139",
+    "lat": 41.83982,
+    "lng": 41.778056,
+    "power": "22 kW",
+    "type": "AC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "power": "22 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_140",
+    "name": "Charger Plus #140",
+    "lat": 41.758051,
+    "lng": 41.742819,
+    "power": "7 kW",
+    "type": "AC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "power": "7 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_141",
+    "name": "Charger Plus #141",
+    "lat": 41.758072,
+    "lng": 41.742839,
+    "power": "7 kW",
+    "type": "AC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "power": "7 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_142",
+    "name": "Charger Plus #142",
+    "lat": 41.758031,
+    "lng": 41.742799,
+    "power": "7 kW",
+    "type": "AC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "power": "7 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_153",
+    "name": "Autobahn, Gori",
+    "lat": 42.026148,
+    "lng": 44.196996,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 2,
+    "city": "Gori",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Faulted"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Faulted"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_155",
+    "name": "Charger Plus #155",
+    "lat": 41.670147,
+    "lng": 44.873583,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_134",
+    "name": "Charger Plus #134",
+    "lat": 41.699657,
+    "lng": 44.798577,
+    "power": "22 kW",
+    "type": "AC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "power": "22 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_118",
+    "name": "Charger Plus #118",
+    "lat": 42.240638,
+    "lng": 42.688619,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_115",
+    "name": "Rikoti",
+    "lat": 42.111297,
+    "lng": 43.30192,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Rikoti",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_129",
+    "name": "Charger Plus #129",
+    "lat": 41.842247,
+    "lng": 46.281933,
+    "power": "22 kW",
+    "type": "AC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 1,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [
+      {
+        "type": "Type 2",
+        "power": "22 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_158",
+    "name": "Green Way, Kobuleti",
+    "lat": 41.806296,
+    "lng": 41.77749,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Kobuleti",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_103",
+    "name": "Charger Plus #103",
+    "lat": 41.711132,
+    "lng": 44.755429,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_150",
+    "name": "Charger Plus #150",
+    "lat": 41.893828,
+    "lng": 43.437755,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_123",
+    "name": "Green Way, Kobuleti",
+    "lat": 41.806319,
+    "lng": 41.777459,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Kobuleti",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_125",
+    "name": "Charger Plus #125",
+    "lat": 41.644036,
+    "lng": 41.620407,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_147",
+    "name": "Samtredia",
+    "lat": 42.163222,
+    "lng": 42.382766,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Samtredia",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_149",
+    "name": "Charger Plus #149",
+    "lat": 41.672441,
+    "lng": 44.837303,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_120",
+    "name": "Samtredia",
+    "lat": 42.163312,
+    "lng": 42.382777,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Samtredia",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_121",
+    "name": "Zugdidi",
+    "lat": 42.498111,
+    "lng": 41.839526,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Zugdidi",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_154",
+    "name": "Autobahn, Gori",
+    "lat": 42.02617,
+    "lng": 44.196899,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Gori",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_126",
+    "name": "Charger Plus #126",
+    "lat": 41.637215,
+    "lng": 41.608954,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_157",
+    "name": "Argveta, Zestaponi",
+    "lat": 42.137112,
+    "lng": 42.979027,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Zestaponi",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_102",
+    "name": "Charger Plus #102",
+    "lat": 41.737416,
+    "lng": 44.754535,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_116",
+    "name": "Argveta, Zestaponi",
+    "lat": 42.13708,
+    "lng": 42.978933,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Zestaponi",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_148",
+    "name": "Zugdidi",
+    "lat": 42.498147,
+    "lng": 41.839516,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Zugdidi",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_146",
+    "name": "Kakheti Hwy 147",
+    "lat": 41.692389,
+    "lng": 44.972962,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Kakheti Hwy 147",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_151",
+    "name": "Rikoti",
+    "lat": 42.111282,
+    "lng": 43.301965,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Rikoti",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_156",
+    "name": "Argveta, Zestaponi",
+    "lat": 42.13702,
+    "lng": 42.978828,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Zestaponi",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_143",
+    "name": "Charger Plus #143",
+    "lat": 42.013244,
+    "lng": 44.330691,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_152",
+    "name": "Rikoti",
+    "lat": 42.111269,
+    "lng": 43.302007,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Rikoti",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_108",
+    "name": "Charger Plus #108",
+    "lat": 41.722276,
+    "lng": 44.717017,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_112",
+    "name": "Charger Plus #112",
+    "lat": 41.803659,
+    "lng": 44.830292,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_124",
+    "name": "Charger Plus #124",
+    "lat": 41.650589,
+    "lng": 41.62986,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Finishing"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_107",
+    "name": "Charger Plus #107",
+    "lat": 41.727365,
+    "lng": 44.787537,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_113",
+    "name": "Charger Plus #113",
+    "lat": 42.470364,
+    "lng": 44.480807,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Charging"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_106",
+    "name": "Charger Plus #106",
+    "lat": 41.716572,
+    "lng": 44.784728,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Charging"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_114",
+    "name": "Autobahn, Gori",
+    "lat": 42.026139,
+    "lng": 44.197079,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 2,
+    "city": "Gori",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Charging"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_111",
+    "name": "Charger Plus #111",
+    "lat": 41.782216,
+    "lng": 44.768547,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Charging"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_119",
+    "name": "Charger Plus #119",
+    "lat": 42.230047,
+    "lng": 42.670923,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "0 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Charging"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Charging"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_122",
+    "name": "Charger Plus #122",
+    "lat": 42.169146,
+    "lng": 41.673985,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "1 available",
+    "total_spots": 2,
+    "city": "",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Charging"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
+  },
+  {
+    "id": "chargerplus_144",
+    "name": "Kakheti Hwy 147",
+    "lat": 41.692388,
+    "lng": 44.973073,
+    "power": "120 kW",
+    "type": "Fast DC",
+    "price": "",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Kakheti Hwy 147",
+    "provider": "Charger Plus",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "GB/T",
+        "power": "120 kW",
+        "status": "Available"
+      },
+      {
+        "type": "CCS2",
+        "power": "120 kW",
+        "status": "Available"
+      }
+    ],
+    "last_updated": "2026-07-02 17:30 UTC"
   }
 ]
