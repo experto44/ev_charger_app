@@ -1009,8 +1009,20 @@ jobs:
                   116: "Argveta, Zestaponi", 156: "Argveta, Zestaponi", 157: "Argveta, Zestaponi",
                   120: "Samtredia", 147: "Samtredia",
               }
-              # snapshot connector status -> "free?" and display
+              # snapshot connector status -> our app's canonical port status.
+              # The app (ConnectorPort) only understands 'free' | 'busy' | 'out';
+              # anything else renders as "out of order", so map explicitly.
               FREE = {"Available", "NoError"}
+              BUSY = {"Charging", "Preparing", "Finishing", "Reserved",
+                      "SuspendedEV", "SuspendedEVSE", "Occupied"}
+              def port_status(station_online, conn_status):
+                  if not station_online:
+                      return "out"          # whole charge-point offline
+                  if conn_status in FREE:
+                      return "free"
+                  if conn_status in BUSY:
+                      return "busy"
+                  return "out"              # Faulted / Unavailable / unknown
 
               obj = ws_snapshot()
               rows = obj.get("data", []) if isinstance(obj, dict) else []
@@ -1033,14 +1045,17 @@ jobs:
                       type_seq = (["GB/T", "CCS2"] if n >= 2 else ["CCS2"])
                   else:
                       type_seq = ["Type 2"] * max(n, 1)
-                  avail = sum(1 for c in conns if c.get("status") in FREE)
+                  online = (x.get("status") != "Offline")
                   ports = []
+                  avail = 0
                   for i, c in enumerate(conns):
-                      st = c.get("status")
+                      ps = port_status(online, c.get("status"))
+                      if ps == "free":
+                          avail += 1
                       ports.append({
                           "type": type_seq[i] if i < len(type_seq) else type_seq[-1],
                           "power": f"{round(watts/1000)} kW" if watts else "—",
-                          "status": "Available" if st in FREE else st,
+                          "status": ps,
                       })
                   name = POOL_NAMES.get(sid) or f"Charger Plus #{x.get('name') or sid}"
                   stations.append({

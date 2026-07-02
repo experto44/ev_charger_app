@@ -12878,7 +12878,7 @@
       {
         "type": "Type 2",
         "power": "7 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -12902,12 +12902,12 @@
       {
         "type": "Type 2",
         "power": "14 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "Type 2",
         "power": "14 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -12931,7 +12931,7 @@
       {
         "type": "Type 2",
         "power": "22 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -12956,12 +12956,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -12986,12 +12986,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13016,12 +13016,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13046,12 +13046,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13075,7 +13075,7 @@
       {
         "type": "Type 2",
         "power": "22 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13099,7 +13099,7 @@
       {
         "type": "Type 2",
         "power": "22 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13123,7 +13123,7 @@
       {
         "type": "Type 2",
         "power": "22 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13147,7 +13147,7 @@
       {
         "type": "Type 2",
         "power": "7 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13171,7 +13171,7 @@
       {
         "type": "Type 2",
         "power": "22 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13195,7 +13195,7 @@
       {
         "type": "Type 2",
         "power": "22 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13219,7 +13219,7 @@
       {
         "type": "Type 2",
         "power": "22 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13243,7 +13243,7 @@
       {
         "type": "Type 2",
         "power": "22 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13267,7 +13267,7 @@
       {
         "type": "Type 2",
         "power": "22 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13291,7 +13291,7 @@
       {
         "type": "Type 2",
         "power": "7 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13315,7 +13315,7 @@
       {
         "type": "Type 2",
         "power": "7 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13339,7 +13339,7 @@
       {
         "type": "Type 2",
         "power": "7 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13364,12 +13364,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Faulted"
+        "status": "out"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Faulted"
+        "status": "out"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13394,12 +13394,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13423,7 +13423,7 @@
       {
         "type": "Type 2",
         "power": "22 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13448,12 +13448,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13478,12 +13478,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13507,7 +13507,7 @@
       {
         "type": "Type 2",
         "power": "22 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13532,12 +13532,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13562,12 +13562,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13592,12 +13592,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13622,12 +13622,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13652,12 +13652,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13682,12 +13682,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13712,12 +13712,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13742,12 +13742,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13772,12 +13772,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13802,12 +13802,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13832,12 +13832,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13862,12 +13862,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13892,12 +13892,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13922,12 +13922,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13952,12 +13952,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -13982,12 +13982,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -14012,12 +14012,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -14042,12 +14042,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -14072,12 +14072,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -14102,12 +14102,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -14132,12 +14132,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -14162,12 +14162,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -14192,12 +14192,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Finishing"
+        "status": "busy"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -14222,12 +14222,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -14252,12 +14252,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Charging"
+        "status": "busy"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -14282,12 +14282,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Charging"
+        "status": "busy"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -14312,12 +14312,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Charging"
+        "status": "busy"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -14342,12 +14342,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Charging"
+        "status": "busy"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -14372,12 +14372,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Charging"
+        "status": "busy"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Charging"
+        "status": "busy"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -14402,12 +14402,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Charging"
+        "status": "busy"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
@@ -14432,12 +14432,12 @@
       {
         "type": "GB/T",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       },
       {
         "type": "CCS2",
         "power": "120 kW",
-        "status": "Available"
+        "status": "free"
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
