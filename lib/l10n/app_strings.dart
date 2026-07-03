@@ -87,6 +87,11 @@ class AppStrings {
       : 'Select one or more — used as your default filter on the map';
   static String get maxRangeFull =>
       isGeorgian ? 'მაქს. გარბენი 100%-ზე' : 'Max Range at 100% Battery';
+  static String get minPowerTitle =>
+      isGeorgian ? 'მინიმალური სიმძლავრე' : 'Minimum Charger Power';
+  static String get minPowerHint => isGeorgian
+      ? 'ჩართვისას რუკაზე გამოჩნდება მხოლოდ ის დამტენები, რომელთა სიმძლავრე არჩეულ მნიშვნელობას აღემატება ან უტოლდება. მასზე სუსტი დამტენები დაიმალება.'
+      : 'When on, the map only shows chargers rated at or above the selected power. Weaker chargers are hidden.';
   static String get privacyPolicy =>
       isGeorgian ? 'კონფიდენციალურობის პოლიტიკა' : 'Privacy Policy';
   static String get privacyNotice => isGeorgian
@@ -122,6 +127,18 @@ class AppStrings {
       isGeorgian ? 'Google Maps-ში გახსნა' : 'Open in Google Maps';
   static String get addStop =>
       isGeorgian ? 'გაჩერების დამატება' : 'Add stop';
+
+  // ── Route planner charger filters ────────────────────────────────────────────
+  static String get routeFiltersTitle =>
+      isGeorgian ? 'დამტენის ფილტრები' : 'CHARGER FILTERS';
+  static String get routeConnectorsLabel =>
+      isGeorgian ? 'კონექტორის ტიპი' : 'Connector type';
+  static String get routeMinPowerLabel =>
+      isGeorgian ? 'მინ. სიმძლავრე' : 'Min. power';
+  static String get routeFiltersHint => isGeorgian
+      ? 'მარშრუტი დაიგეგმება მხოლოდ არჩეული კონექტორისა და სიმძლავრის მქონე სადგურებით'
+      : 'The route is planned only through stations matching the selected connectors and power';
+  static String get anyLabel => isGeorgian ? 'ყველა' : 'Any';
 
   // ── Charger options list (Plan & Go) ─────────────────────────────────────────
   static String get chargersOnRoute =>

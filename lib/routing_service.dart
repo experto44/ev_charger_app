@@ -215,6 +215,34 @@ class RouteChargerOption {
     return out;
   }
 
+  /// One entry per distinct provider at this block: the provider name plus its
+  /// power label — a single value ("60 kW") or a range ("50–160 kW") when the
+  /// provider's chargers here have different ratings. Chargers with an unknown
+  /// rating (kw == 0) contribute no power label ('').
+  List<({String name, String power})> get providerPowers {
+    final byProvider = <String, List<int>>{}; // lowercase key → kW values
+    final names      = <String, String>{};    // lowercase key → display name
+    for (final s in stations) {
+      final p = s.provider.trim();
+      if (p.isEmpty) { continue; }
+      final key = p.toLowerCase();
+      names.putIfAbsent(key, () => p);
+      final list = byProvider.putIfAbsent(key, () => <int>[]);
+      if (s.kw > 0) { list.add(s.kw); }
+    }
+    return [
+      for (final key in names.keys)
+        (
+          name: names[key]!,
+          power: byProvider[key]!.isEmpty
+              ? ''
+              : (byProvider[key]!.reduce(min) == byProvider[key]!.reduce(max)
+                  ? '${byProvider[key]!.first} kW'
+                  : '${byProvider[key]!.reduce(min)}–${byProvider[key]!.reduce(max)} kW'),
+        ),
+    ];
+  }
+
   /// Distinct connector types across every charger in the block.
   List<String> get connectorTypes {
     final seen = <String>{};

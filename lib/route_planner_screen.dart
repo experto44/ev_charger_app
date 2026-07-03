@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'app_constants.dart';
 import 'l10n/app_strings.dart';
 import 'places_service.dart';
 import 'profile_screen.dart';
@@ -53,6 +54,12 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
   double _batteryPct = 80.0;
   double _maxRangeKm = 300.0;
   bool   _isPlanning = false;
+
+  // Per-planning charger filters. Deliberately NOT persisted: every time the
+  // planner opens they start clean (all connectors, any power), so a filter
+  // from a previous trip never silently hides chargers on the next one.
+  final Set<String> _routeConnectors = {}; // empty = any connector
+  int               _routeMinKw      = 0;  // 0 = any power
 
   // Real-road route result from RoutingService.planRoute, recomputed (debounced)
   // whenever the stops or battery change. Drives the preview stats and the
@@ -109,25 +116,41 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
     _routeDebounce = Timer(const Duration(milliseconds: 500), _computeRoute);
   }
 
+  // Stations eligible for THIS planning session, per the charger filters above.
+  // Connector match is case-insensitive (mirrors the map filter); a station
+  // with an unknown power rating (kw == 0) is never excluded by the kW filter.
+  List<Station> get _filteredStations => widget.stations.where((s) {
+        if (_routeConnectors.isNotEmpty &&
+            !s.connectors.any((c) => _routeConnectors
+                .any((f) => f.toLowerCase() == c.toLowerCase()))) {
+          return false;
+        }
+        if (_routeMinKw > 0 && s.kw > 0 && s.kw < _routeMinKw) { return false; }
+        return true;
+      }).toList();
+
   Future<void> _computeRoute() async {
     if (!_canPreview) { return; }
     final stops = _stops.map((s) => s.coords).whereType<LatLng>().toList();
     final res = await RoutingService.planRoute(
       waypoints:         stops,
       currentBatteryPct: _batteryPct,
-      stations:          widget.stations,
+      stations:          _filteredStations,
     );
     if (!mounted) { return; }
     setState(() {
       _routeResult = res;
-      // Signature = the waypoint coords only (battery excluded). A change means a
-      // genuinely different route → reseed ticks from the recommendation; an
-      // unchanged signature (battery nudge) keeps the driver's manual ticks.
-      final sig = _stops
+      // Signature = waypoint coords + charger filters (battery excluded). A
+      // change means a genuinely different set of options → reseed ticks from
+      // the recommendation; an unchanged signature (battery nudge) keeps the
+      // driver's manual ticks.
+      final wpSig = _stops
           .map((s) => s.coords == null
               ? '-'
               : '${s.coords!.latitude},${s.coords!.longitude}')
           .join('|');
+      final sig =
+          '$wpSig#${(_routeConnectors.toList()..sort()).join(',')}#$_routeMinKw';
       final valid = res?.options.map((o) => o.locationKey).toSet() ?? <String>{};
       if (sig != _routeSignature) {
         _routeSignature = sig;
@@ -180,6 +203,18 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
       _stops.removeAt(i);
     });
     _scheduleRouteCompute();
+  }
+
+  // Canonical connector types actually present in the supplied station data —
+  // keeps the filter chips honest (no dead chips), in the shared display order.
+  List<String> get _availableConnectors {
+    final present = <String>{};
+    for (final s in widget.stations) {
+      for (final c in s.connectors) { present.add(c.toLowerCase()); }
+    }
+    return kConnectorOrder
+        .where((c) => present.contains(c.toLowerCase()))
+        .toList();
   }
 
   int get _resolvedCount => _stops.where((s) => s.coords != null).length;
@@ -248,7 +283,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
     final dest   = _stops.last.coords;
     if (origin == null || dest == null) { return <Station>[]; }
 
-    final available = widget.stations
+    final available = _filteredStations
         .where((s) => s.available > 0)
         .toList();
     if (available.isEmpty) { return <Station>[]; }
@@ -336,7 +371,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
           await RoutingService.planRoute(
             waypoints:         resolvedStops,
             currentBatteryPct: _batteryPct,
-            stations:          widget.stations,
+            stations:          _filteredStations,
           );
 
       String urlStr =
@@ -465,7 +500,27 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                         onAdd:  _addStop,
                       ),
                   ],
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 20),
+                  // Charger filters for THIS trip — connector types + min power.
+                  // Reset to "any" every time the planner opens (not persisted).
+                  _RouteFilterCard(
+                    availableConnectors: _availableConnectors,
+                    selectedConnectors:  _routeConnectors,
+                    minKw:               _routeMinKw,
+                    onConnectorToggle: (c) {
+                      setState(() {
+                        if (!_routeConnectors.remove(c)) {
+                          _routeConnectors.add(c);
+                        }
+                      });
+                      _scheduleRouteCompute();
+                    },
+                    onMinKw: (kw) {
+                      setState(() => _routeMinKw = kw);
+                      _scheduleRouteCompute();
+                    },
+                  ),
+                  const SizedBox(height: 12),
                   // Battery slider
                   _BatterySlider(
                     value:     _batteryPct,
@@ -636,6 +691,119 @@ class _StopConnector extends StatelessWidget {
                 ]),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Charger filter card (per-trip connector types + minimum power) ───────────
+// Sits between the stop rows and the battery slider. Both filters reset every
+// time the planner opens; the hint line explains that the route is planned
+// only through stations matching the selection.
+class _RouteFilterCard extends StatelessWidget {
+  const _RouteFilterCard({
+    required this.availableConnectors,
+    required this.selectedConnectors,
+    required this.minKw,
+    required this.onConnectorToggle,
+    required this.onMinKw,
+  });
+  final List<String>         availableConnectors;
+  final Set<String>          selectedConnectors;
+  final int                  minKw;
+  final ValueChanged<String> onConnectorToggle;
+  final ValueChanged<int>    onMinKw;
+
+  Widget _chip({
+    required String label,
+    required bool on,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: on ? _emerald : _bgSurface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: on ? _emerald : Colors.transparent),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: on ? Colors.black : _textSec,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _bgCard,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _bgSurface),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            AppStrings.routeFiltersTitle,
+            style: const TextStyle(color: _textSec, fontSize: 11,
+                fontWeight: FontWeight.w600, letterSpacing: 0.6),
+          ),
+          const SizedBox(height: 12),
+          Text(AppStrings.routeConnectorsLabel,
+              style: const TextStyle(color: _textPri, fontSize: 12,
+                  fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final c in availableConnectors)
+                _chip(
+                  label: c,
+                  on:    selectedConnectors.contains(c),
+                  onTap: () => onConnectorToggle(c),
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(AppStrings.routeMinPowerLabel,
+              style: const TextStyle(color: _textPri, fontSize: 12,
+                  fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _chip(
+                label: AppStrings.anyLabel,
+                on:    minKw == 0,
+                onTap: () => onMinKw(0),
+              ),
+              for (final kw in kMinPowerSteps)
+                _chip(
+                  label: '$kw kW',
+                  on:    minKw == kw,
+                  onTap: () => onMinKw(kw),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            AppStrings.routeFiltersHint,
+            style: const TextStyle(color: _textSec, fontSize: 11, height: 1.35),
+          ),
         ],
       ),
     );
@@ -946,8 +1114,8 @@ class _OptionBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final providers  = option.providers.join(' · ');
-    final connectors = option.connectorTypes.join(', ');
+    final providerPowers = option.providerPowers;
+    final connectors     = option.connectorTypes.join(', ');
     return GestureDetector(
       onTap: onToggle,
       behavior: HitTestBehavior.opaque,
@@ -1020,11 +1188,30 @@ class _OptionBlock extends StatelessWidget {
                     Icon(option.isDC ? Icons.bolt : Icons.battery_charging_full_rounded,
                         color: _emerald, size: 16),
                   ]),
-                  if (providers.isNotEmpty) ...[
+                  // One line per provider at this block, with its power beside
+                  // it — a range (e.g. "50–160 kW") when ratings differ.
+                  if (providerPowers.isNotEmpty) ...[
                     const SizedBox(height: 3),
-                    Text(providers,
-                        style: const TextStyle(color: _textPri, fontSize: 12),
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                    for (final pp in providerPowers)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: Row(children: [
+                          Flexible(
+                            child: Text(pp.name,
+                                style: const TextStyle(
+                                    color: _textPri, fontSize: 12),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis),
+                          ),
+                          if (pp.power.isNotEmpty) ...[
+                            const SizedBox(width: 6),
+                            Text(pp.power,
+                                style: const TextStyle(
+                                    color: _emerald, fontSize: 12,
+                                    fontWeight: FontWeight.w600)),
+                          ],
+                        ]),
+                      ),
                   ],
                   const SizedBox(height: 4),
                   // Meta row: connectors · charger count · arrival %

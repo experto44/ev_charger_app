@@ -148,6 +148,12 @@ class _MapScreenState extends State<MapScreen>
   };
   final Set<String> _filterConnectors = {};  // empty = no connector filter
 
+  // Minimum-power filter, configured in the profile ("Minimum Charger Power").
+  // When on, stations with a KNOWN rating below the threshold are hidden;
+  // stations that don't publish a kW rating (kw == 0) stay visible.
+  bool _minPowerOn = false;
+  int  _minPowerKw = 0;
+
   // International (OCM) viewport loading is on only while the user has the
   // "International" provider chip checked.
   bool get _internationalOn => _selectedProviders.contains(OcmService.kProvider);
@@ -273,6 +279,8 @@ class _MapScreenState extends State<MapScreen>
       _filterConnectors
         ..clear()
         ..addAll(defConns);
+      _minPowerOn = p.getBool(kMinPowerEnabled) ?? false;
+      _minPowerKw = p.getInt(kMinPowerKw) ?? 0;
       if (rawCntry != null) {
         try {
           _activeCountries =
@@ -281,6 +289,17 @@ class _MapScreenState extends State<MapScreen>
       }
     });
     // OCM loads viewport-first; the map's onMapReady kicks off the initial load.
+  }
+
+  // Re-read the min-power filter after returning from the profile screen so a
+  // changed threshold applies to the map immediately (not just on next launch).
+  Future<void> _reloadMinPower() async {
+    final p = await SharedPreferences.getInstance();
+    if (!mounted) { return; }
+    setState(() {
+      _minPowerOn = p.getBool(kMinPowerEnabled) ?? false;
+      _minPowerKw = p.getInt(kMinPowerKw) ?? 0;
+    });
   }
 
   // Re-read the saved country selection after returning from Settings, then
@@ -569,6 +588,23 @@ class _MapScreenState extends State<MapScreen>
         builder: (_, setSheet) => _ProviderFilterSheet(
           all:      _kAllProviders,
           selected: _selectedProviders,
+          // Master checkbox: select/deselect every LOCAL provider at once.
+          // "International" is intentionally left out — it gates the OCM data
+          // load, so it only ever changes via its own row.
+          onToggleAll: () {
+            final locals = _kAllProviders
+                .where((p) => p != OcmService.kProvider)
+                .toList();
+            final allOn = locals.every(_selectedProviders.contains);
+            setState(() {
+              if (allOn) {
+                _selectedProviders.removeAll(locals);
+              } else {
+                _selectedProviders.addAll(locals);
+              }
+            });
+            setSheet(() {});
+          },
           onToggle: (p) {
             setState(() {
               if (_selectedProviders.contains(p)) {
@@ -704,6 +740,10 @@ class _MapScreenState extends State<MapScreen>
           !_selectedProviders.contains(s.provider)) { return false; }
       if (_filterDC    && !s.isDC)          { return false; }
       if (_filterAvail && s.available == 0) { return false; }
+      // Minimum-power filter (profile setting): hide stations with a known
+      // rating below the threshold; unknown ratings (kw == 0) stay visible.
+      if (_minPowerOn && _minPowerKw > 0 &&
+          s.kw > 0 && s.kw < _minPowerKw)   { return false; }
       // Connector filter — case-insensitive match so label/data casing never
       // hides a station (e.g. "CCS2" vs "ccs2").
       if (_filterConnectors.isNotEmpty &&
@@ -905,6 +945,18 @@ class _MapScreenState extends State<MapScreen>
                       );
                       await _reloadCountries(); // apply country changes immediately
                     },
+                    onProfile: () async {
+                      final user = FirebaseAuth.instance.currentUser;
+                      await Navigator.push<void>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => user == null
+                              ? const LoginScreen()
+                              : const ProfileScreen(),
+                        ),
+                      );
+                      await _reloadMinPower(); // apply min-power changes immediately
+                    },
                   ),
                   if (_suggestions.isNotEmpty) ...[
                     const SizedBox(height: 4),
@@ -1048,12 +1100,13 @@ class _MapScreenState extends State<MapScreen>
 class _SearchBarWidget extends StatelessWidget {
   const _SearchBarWidget({
     required this.controller, required this.focusNode, required this.onChanged,
-    required this.onSettings,
+    required this.onSettings, required this.onProfile,
   });
   final TextEditingController controller;
   final FocusNode             focusNode;
   final ValueChanged<String>  onChanged;
   final VoidCallback          onSettings;
+  final VoidCallback          onProfile;
 
   @override
   Widget build(BuildContext context) {
@@ -1090,17 +1143,7 @@ class _SearchBarWidget extends StatelessWidget {
           const SizedBox(width: 8),
           _IconBtn(
             icon:  Icons.account_circle_outlined,
-            onTap: () {
-              final user = FirebaseAuth.instance.currentUser;
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => user == null
-                      ? const LoginScreen()
-                      : const ProfileScreen(),
-                ),
-              );
-            },
+            onTap: onProfile,
           ),
           const SizedBox(width: 8),
         ],
@@ -1285,10 +1328,12 @@ class _ProviderFilterSheet extends StatelessWidget {
     required this.all,
     required this.selected,
     required this.onToggle,
+    required this.onToggleAll,
   });
   final List<String>       all;
   final Set<String>        selected;
   final ValueChanged<String> onToggle;
+  final VoidCallback       onToggleAll;
 
   @override
   Widget build(BuildContext context) {
@@ -1342,6 +1387,37 @@ class _ProviderFilterSheet extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Master select/deselect-all row (local providers only —
+                      // "International" keeps its own opt-in row below).
+                      Builder(builder: (_) {
+                        final locals = all
+                            .where((p) => p != OcmService.kProvider)
+                            .toList();
+                        final allOn = locals.every(selected.contains);
+                        return InkWell(
+                          onTap: onToggleAll,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 13),
+                            child: Row(children: [
+                              Icon(
+                                allOn
+                                    ? Icons.check_box_rounded
+                                    : Icons.check_box_outline_blank_rounded,
+                                color: allOn ? _emerald : _textSec, size: 24,
+                              ),
+                              const SizedBox(width: 12),
+                              const Text('Select all',
+                                  style: TextStyle(
+                                      color: _textPri, fontSize: 15,
+                                      fontWeight: FontWeight.w700)),
+                            ]),
+                          ),
+                        );
+                      }),
+                      const Divider(
+                          color: _bgSurface, height: 1, thickness: 1,
+                          indent: 20, endIndent: 20),
                       // One checkbox row per known provider — toggles apply immediately.
                       ...all.map((p) {
                         final on = selected.contains(p);

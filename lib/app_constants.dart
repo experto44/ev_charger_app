@@ -4,6 +4,13 @@
 const kDefaultConnector = 'default_connector';   // JSON list of connector labels
 const kActiveCountries  = 'active_countries';     // JSON list of country names
 const kSupportPopupLastShown = 'support_popup_last_shown'; // int: epoch ms of last show
+const kMinPowerEnabled  = 'min_power_enabled';    // bool: min-power map filter on/off
+const kMinPowerKw       = 'min_power_kw';         // int: minimum charger power in kW
+
+// ── Minimum-power presets (kW) ────────────────────────────────────────────────
+// Shared by the profile filter and the route planner. Values mirror the real
+// charger tiers found in the data (22 AC, 50/60 mid DC, 100+ fast DC).
+const kMinPowerSteps = <int>[22, 50, 60, 100, 150];
 
 // ── Connector display order ───────────────────────────────────────────────────
 // Canonical order used EVERYWHERE connectors are shown (filter chips, profile

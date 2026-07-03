@@ -37,6 +37,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _carCtrl   = TextEditingController();
   final _rangeCtrl = TextEditingController();
   final Set<String> _connectors = {};
+  bool _minPowerOn = false;
+  int  _minPowerKw = kMinPowerSteps.first;
   bool _saved = false;
 
   // ── Auth / phone ──────────────────────────────────────────────────────────
@@ -83,6 +85,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _connectors
         ..clear()
         ..addAll(parsed);
+      _minPowerOn = p.getBool(kMinPowerEnabled) ?? false;
+      _minPowerKw = p.getInt(kMinPowerKw) ?? kMinPowerSteps.first;
     });
   }
 
@@ -95,6 +99,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } else {
       await p.setString(kDefaultConnector, jsonEncode(_connectors.toList()));
     }
+    await p.setBool(kMinPowerEnabled, _minPowerOn);
+    await p.setInt(kMinPowerKw, _minPowerKw);
     if (!mounted) { return; }
     setState(() => _saved = true);
     await Future.delayed(const Duration(seconds: 2));
@@ -586,6 +592,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 );
               }).toList(),
+            ),
+            const SizedBox(height: 20),
+
+            // Minimum charger power — toggle + preset chips, filters the map
+            Row(
+              children: [
+                Expanded(child: _Label(AppStrings.minPowerTitle)),
+                Switch(
+                  value: _minPowerOn,
+                  activeThumbColor: _emerald,
+                  activeTrackColor: _emerald.withValues(alpha: 0.35),
+                  inactiveThumbColor: _textSec,
+                  inactiveTrackColor: _bgSurface,
+                  onChanged: (v) => setState(() => _minPowerOn = v),
+                ),
+              ],
+            ),
+            if (_minPowerOn) ...[
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: kMinPowerSteps.map((kw) {
+                  final on = _minPowerKw == kw;
+                  return GestureDetector(
+                    onTap: () => setState(() => _minPowerKw = kw),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 9),
+                      decoration: BoxDecoration(
+                        color: on ? _emerald : _bgCard,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                            color: on ? _emerald : _bgSurface),
+                      ),
+                      child: Text(
+                        '$kw kW',
+                        style: TextStyle(
+                          color: on ? Colors.black : _textSec,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 8),
+            ] else
+              const SizedBox(height: 4),
+            Text(
+              AppStrings.minPowerHint,
+              style: const TextStyle(color: _textSec, fontSize: 12, height: 1.35),
             ),
             const SizedBox(height: 20),
 
