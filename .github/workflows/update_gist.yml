@@ -615,9 +615,31 @@ jobs:
           # ── EcoCars (ChargerSystem platform — AWS Cognito SRP auth) ─────────
           # Global station list at /stations/cache (Bearer only). EcoCars is the
           # vendorId b534372b...; we filter to that vendor and to GE/AM/TR coords.
-          # Connector `type` is an int enum — mapping derived from a known EcoCars
-          # station (MIONI/GE503): 4=CCS2, 5=Type 1, 8=Type 2, 26=GB/T; other DC
-          # type ints -> CCS2, other AC type ints -> Type 2.
+          #
+          # Connector `type` is a platform-wide int enum (ChargerSystem, shared by
+          # every vendor). There is no public dictionary endpoint, so the map below
+          # was reverse-engineered from ground truth (not power-class guessing):
+          #   • Samtredia/BOG1, verified plug-for-plug against the EcoCars app:
+          #       1 = CHAdeMO (41kW), 2 = CCS1 "CCS Type 1" (61kW), 8 = Type 2
+          #   • MIONI/GE503:                       4 = CCS2, 5 = Type 1, 26 = GB/T
+          #   • Single-connector stations across the whole 4k-station platform whose
+          #     NAME states the plug: 3 = CCS2, 25 = GB/T(AC), 27/28 = NACS
+          #     ("624 NACS - конектор для тесла"), 5 = Type 1 (J1772).
+          #   • EcoCars GE fast-DC sites pair the primary gun (3/4/30) with GB/T(26)
+          #     + AC; 240kW sites carry NACS(27) *alongside* CCS2(4), so 27 is a
+          #     distinct plug, not another CCS2. 27 is the "missing NACS" chargers.
+          # Unknown ints -> None (counted as a port, just unlabelled). Several ints
+          # map to one chip because different charger firmware report the same
+          # physical plug under different codes. DC_TYPES drives the Fast-DC/AC
+          # split; a >=43kW port is a backup DC signal.
+          #
+          # Connector `status` is the OCPP-1.6 status enum as ints, validated on the
+          # Samtredia station against the EcoCars app (status 1 renders "Available",
+          # status 10 renders "Unknown"): 1 = Available (free); 2..7 = Preparing/
+          # Charging/SuspendedEVSE/SuspendedEV/Finishing/Reserved (busy); 8 =
+          # Unavailable, 9 = Faulted, 10 = Offline, 11 = EMO, anything else -> out.
+          # (The cache's station-level `online` flag is always false here, so the
+          # per-connector status is the live signal — matching the app.)
           def fetch_ecocars():
               user = os.environ.get("ECOCARS_USERNAME")
               pwd  = os.environ.get("ECOCARS_PASSWORD")
@@ -643,36 +665,85 @@ jobs:
               def in_region(lat, lng):
                   return any(a<=lat<=b and c<=lng<=d for _,a,b,c,d in BOXES)
 
-              # Connector int -> chip. Confirmed from MIONI; unknowns by power class.
-              CONN_INT = {4:"CCS2", 5:"Type 1", 8:"Type 2", 26:"GB/T"}
-              DC_TYPES = {1,2,3,27,29,30}
-              AC_TYPES = {9,15,25}
+              # Connector int -> chip (see header for the ground-truth derivation).
+              CONN_INT = {
+                  1:"CHAdeMO", 2:"CCS1", 3:"CCS2", 4:"CCS2", 30:"CCS2",
+                  5:"Type 1", 6:"Type 1", 8:"Type 2", 9:"Type 2",
+                  25:"GB/T", 26:"GB/T", 27:"NACS", 28:"NACS",
+              }
+              DC_TYPES = {1, 2, 3, 4, 26, 27, 28, 30}   # -> Fast DC classification
               def conn_name(t):
-                  if t in CONN_INT: return CONN_INT[t]
-                  if t in DC_TYPES: return "CCS2"
-                  if t in AC_TYPES: return "Type 2"
-                  return None
+                  return CONN_INT.get(t)
               ORDER = ["CCS2","GB/T","CHAdeMO","Type 2","NACS","CCS1","Type 1"]
               def sort_conns(cs):
                   return sorted(cs, key=lambda c:(ORDER.index(c) if c in ORDER else len(ORDER), c))
+
+              # OCPP status int -> our canonical port state.
+              BUSY_ST = {2, 3, 4, 5, 6, 7}
+              def port_state(st):
+                  if st == 1:        return "free"
+                  if st in BUSY_ST:  return "busy"
+                  return "out"       # 8/9/10/11 (Unavailable/Faulted/Offline/EMO) + unknown
+
               SIGN = {"GEL":"₾","AMD":"֏","USD":"$","EUR":"€","TRY":"₺","UAH":"₴"}
               def derive_city(addr):
                   parts = [p.strip() for p in (addr or "").split(",") if p.strip()]
                   cand = parts[-2] if len(parts)>=3 else (parts[0] if parts else "")
                   toks = [t for t in cand.split() if not any(ch.isdigit() for ch in t)]
                   return " ".join(toks).replace("T'bilisi","Tbilisi").strip()
+              def derive_name(s):
+                  nm = (s.get("name") or "").strip()
+                  if nm and nm.lower() not in ("name", "test", "old test", "tbd"):
+                      return nm
+                  # EcoCars occasionally ships a placeholder name — fall back to the
+                  # street (first address segment) so the app isn't titled "name".
+                  parts = [p.strip() for p in (s.get("address") or "").split(",") if p.strip()]
+                  return (parts[0] if parts else "") or "EcoCars"
+
+              # The bulk /stations/cache is a laggy snapshot: its per-connector
+              # status and the station `online` flag trail real time (measured:
+              # ~5% of connectors and ~2/3 of online flags disagree with the live
+              # view). So use the cache only to ENUMERATE our stations, then pull
+              # each one's LIVE status from /stations/{id} — the same per-station
+              # endpoint the EcoCars app itself uses. Detail rows share the cache
+              # schema (geo/connectors/conn[]), so on any failure we fall back to
+              # the cache row transparently. Threaded: ~150 calls in <10s.
+              targets = [s for s in cache
+                         if s.get("vendorId") == VENDOR
+                         and (s.get("geo") or {}).get("lat") is not None
+                         and in_region(s["geo"]["lat"], s["geo"]["lon"])]
+              import concurrent.futures as _cf
+              sess = requests.Session(); sess.headers.update(hdr)
+              def _detail(s):
+                  try:
+                      r = sess.get(f"https://api.chargersystem.com/api/v1/stations/{s['id']}", timeout=30)
+                      if r.status_code == 200:
+                          d = r.json()
+                          if isinstance(d, dict) and d.get("id") is not None:
+                              return d
+                  except Exception as e:
+                      print("EcoCars: detail", s.get("id"), "error:", e)
+                  return s   # fall back to the (stale) cache row on any failure
+              with _cf.ThreadPoolExecutor(max_workers=8) as _ex:
+                  detailed = list(_ex.map(_detail, targets))
 
               stations = []
-              for s in cache:
-                  if s.get("vendorId") != VENDOR:
-                      continue
+              for s in detailed:
                   g = s.get("geo") or {}
                   lat = g.get("lat"); lng = g.get("lon")
-                  if lat is None or lng is None or not in_region(lat, lng):
+                  if lat is None or lng is None:
                       continue
-                  # avail / total count PORTS (connectors) at the station.
-                  # ChargerSystem connector status is an int; only 1=available is
-                  # known, so ports are a 2-state free/busy (no charging-since).
+                  # lastStatusUpdateDate lives in the parallel `conn` array (keyed
+                  # by connector id) — use it as the charging-since for busy ports.
+                  since_by_id = {}
+                  for c in (s.get("conn") or []):
+                      d = c.get("lastStatusUpdateDate")
+                      if c.get("id") is not None and d:
+                          since_by_id[c.get("id")] = d
+
+                  # avail / total count PORTS (connectors) at the station; each port
+                  # carries its own free/busy/out state, per-plug price and (for busy
+                  # plugs) the charging-since so the app can colour and time them.
                   conns, maxkw, avail, total, any_dc, price = set(), 0.0, 0, 0, False, ""
                   port_details = []
                   for c in (s.get("connectors") or []):
@@ -681,25 +752,33 @@ jobs:
                       nm = conn_name(t)
                       if nm: conns.add(nm)
                       kw = c.get("maxOutputKw") or 0
-                      try: maxkw = max(maxkw, float(kw))
-                      except: pass
-                      if t in DC_TYPES or t in (4, 26) or (kw and kw >= 43):
+                      try: kwf = float(kw)
+                      except: kwf = 0.0
+                      maxkw = max(maxkw, kwf)
+                      if t in DC_TYPES or kwf >= 43:
                           any_dc = True
-                      free = c.get("status") == 1
-                      if free:
+                      ps = port_state(c.get("status"))
+                      if ps == "free":
                           avail += 1
-                      port_details.append({"type": nm or "?", "status": "free" if free else "busy"})
-                      if not price:
-                          en = (c.get("rates") or {}).get("energy") or {}
-                          p = en.get("price")
-                          if p:
-                              cur = en.get("currencyCode", "GEL")
-                              a = f"{float(p):.2f}".rstrip("0").rstrip(".")
-                              price = f"{a} {SIGN.get(cur, cur)}/kWh"
+                      port = {"type": nm or "?", "status": ps}
+                      if ps == "busy" and since_by_id.get(c.get("id")):
+                          port["since"] = since_by_id[c.get("id")]
+                      # Per-connector price (EcoCars prices each plug; 0 => free).
+                      en = (c.get("rates") or {}).get("energy") or {}
+                      try: pnum = float(en.get("price"))
+                      except: pnum = 0.0
+                      if pnum > 0:
+                          cur = en.get("currencyCode", "GEL")
+                          a = f"{pnum:.2f}".rstrip("0").rstrip(".")
+                          pstr = f"{a} {SIGN.get(cur, cur)}/kWh"
+                          port["price"] = pstr
+                          if not price:
+                              price = pstr
+                      port_details.append(port)
                   kw = round(maxkw)
                   stations.append({
                       "id": f"ecocars_{s.get('id')}",
-                      "name": s.get("name") or "EcoCars",
+                      "name": derive_name(s),
                       "lat": lat,
                       "lng": lng,
                       "power": (f"{int(kw)} kW" if kw else "—"),
