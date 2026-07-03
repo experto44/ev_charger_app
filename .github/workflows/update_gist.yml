@@ -404,7 +404,9 @@ jobs:
                   for ch in (loc.get("chargers") or []):
                       try: max_power = max(max_power, float(ch.get("max_output") or 0))
                       except: pass
-                      ch_online = str(ch.get("status", "")).lower() == "online"
+                      # A working charger reports status "available" (or
+                      # "online"); only "offline" means the whole unit is down.
+                      ch_offline = str(ch.get("status", "")).lower() == "offline"
                       cs = ch.get("connectors") or []
                       total += len(cs)
                       for c in cs:
@@ -413,20 +415,24 @@ jobs:
                           if ct: conns.add(ct)
                           if "DC" in ctype.upper(): any_dc = True
                           st = str(c.get("status", "")).lower()
-                          av = str(c.get("availability", "")).lower()
-                          is_free = ch_online and (st == "available" or av == "operative")
-                          if is_free:
-                              avail += 1
-                          # Offline charger -> out; online but in a charging-ish
-                          # state -> busy; otherwise out (faulted/unavailable).
-                          if is_free:
-                              ps = "free"
-                          elif not ch_online:
+                          # Status is driven by the CONNECTOR's own status, not
+                          # the charger's: a plug is free iff it reports
+                          # "available", busy while charging/preparing, and out
+                          # only when its charger is offline or the plug itself
+                          # is faulted/unavailable. (The old code gated free on
+                          # charger status == "online"; since working chargers
+                          # actually report "available", that marked ~90% of
+                          # live plugs "out of order".)
+                          if ch_offline:
                               ps = "out"
+                          elif st == "available":
+                              ps = "free"
                           elif any(k in st for k in BUSY):
                               ps = "busy"
                           else:
                               ps = "out"
+                          if ps == "free":
+                              avail += 1
                           port_details.append(
                               {"type": ct or (ctype.split("•")[0].strip() or "?"), "status": ps})
                           if not price:
@@ -544,7 +550,9 @@ jobs:
                   for ch in (loc.get("chargers") or []):
                       try: max_power = max(max_power, float(ch.get("max_output") or 0))
                       except: pass
-                      ch_online = str(ch.get("status", "")).lower() == "online"
+                      # A working charger reports status "available" (or
+                      # "online"); only "offline" means the whole unit is down.
+                      ch_offline = str(ch.get("status", "")).lower() == "offline"
                       cs = ch.get("connectors") or []
                       total += len(cs)
                       for c in cs:
@@ -553,20 +561,24 @@ jobs:
                           if ct: conns.add(ct)
                           if "DC" in ctype.upper(): any_dc = True
                           st = str(c.get("status", "")).lower()
-                          av = str(c.get("availability", "")).lower()
-                          is_free = ch_online and (st == "available" or av == "operative")
-                          if is_free:
-                              avail += 1
-                          # Offline charger -> out; online but in a charging-ish
-                          # state -> busy; otherwise out (faulted/unavailable).
-                          if is_free:
-                              ps = "free"
-                          elif not ch_online:
+                          # Status is driven by the CONNECTOR's own status, not
+                          # the charger's: a plug is free iff it reports
+                          # "available", busy while charging/preparing, and out
+                          # only when its charger is offline or the plug itself
+                          # is faulted/unavailable. (The old code gated free on
+                          # charger status == "online"; since working chargers
+                          # actually report "available", that marked ~90% of
+                          # live plugs "out of order".)
+                          if ch_offline:
                               ps = "out"
+                          elif st == "available":
+                              ps = "free"
                           elif any(k in st for k in BUSY):
                               ps = "busy"
                           else:
                               ps = "out"
+                          if ps == "free":
+                              avail += 1
                           port_details.append(
                               {"type": ct or (ctype.split("•")[0].strip() or "?"), "status": ps})
                           if not price:
