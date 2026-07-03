@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # Single source of truth for BOTH platforms: <marketing>+<build>.
 # Android reads it as versionName+versionCode; iOS as CFBundleShortVersionString
 # +CFBundleVersion. Bump this for every release — no per-platform edits needed.
-version: 1.1.15+27
+version: 1.1.16+28
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -47,6 +47,7 @@ dependencies:
   flutter_map_marker_cluster: 1.4.0
   firebase_core: ^3.0.0
   firebase_auth: ^5.0.0
+  firebase_messaging: ^15.1.0   # push alerts when a busy charger frees up
   google_sign_in: ^6.2.0
   cloud_firestore: ^5.0.0
   google_fonts: ^6.2.1

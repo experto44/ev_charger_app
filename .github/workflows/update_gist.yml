@@ -48,7 +48,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: pip install requests pycognito
+        run: pip install requests pycognito firebase-admin
 
       - name: Push chargers.json to Gist
         env:
@@ -60,6 +60,9 @@ jobs:
           GADATENE_PASSWORD:   ${{ secrets.GADATENE_PASSWORD }}
           ECOCARS_USERNAME:    ${{ secrets.ECOCARS_USERNAME }}
           ECOCARS_PASSWORD:    ${{ secrets.ECOCARS_PASSWORD }}
+          # Firebase Admin service-account JSON (single line). Enables the
+          # "charger freed up" push alerts; if unset, alerts are silently skipped.
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
           # ── Internal refresh loop ──────────────────────────────────────────
           # GitHub's `schedule` event is unreliable: throttled to as little as
@@ -1254,6 +1257,87 @@ jobs:
               print(f"E-Space: {len(stations)} stations")
               return stations
 
+          # ── Push "charger freed up" alerts ─────────────────────────────────
+          # Diffs the previous gist availability against the freshly built one:
+          # any station that went fully-busy → has-a-free-plug triggers an FCM
+          # push to every device that armed an alert for it, then the one-shot
+          # subscription is cleared. Only providers we actually re-fetched THIS
+          # cycle are eligible, so a provider that fell back to its bundled
+          # snapshot can never fire a false "it's free!" alert. Entirely
+          # best-effort — any failure here never affects the gist update.
+          def _avail(s):
+              try:
+                  return int(str(s.get("available_spots", "0")).split()[0])
+              except Exception:
+                  return 0
+
+          def notify_freed(old_stations, new_stations, fresh_providers):
+              sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT", "").strip()
+              if not sa_json:
+                  return  # push alerts not configured — skip silently
+              old_avail = {s.get("id"): _avail(s)
+                           for s in old_stations if s.get("id")}
+              freed = {}
+              for s in new_stations:
+                  sid = s.get("id")
+                  if not sid or s.get("provider") not in fresh_providers:
+                      continue
+                  if sid not in old_avail:
+                      continue  # unseen before → no reliable transition
+                  if old_avail[sid] == 0 and _avail(s) > 0:
+                      freed[sid] = s
+              if not freed:
+                  return
+              print(f"🔔 {len(freed)} station(s) freed up — checking alerts")
+
+              import firebase_admin
+              from firebase_admin import credentials, messaging, firestore
+              if not firebase_admin._apps:
+                  firebase_admin.initialize_app(
+                      credentials.Certificate(json.loads(sa_json)))
+              db = firestore.client()
+
+              sent = 0
+              for doc in db.collection("charger_alerts").stream():
+                  data  = doc.to_dict() or {}
+                  token = data.get("token")
+                  subs  = data.get("subs") or {}
+                  if not token or not subs:
+                      continue
+                  lang = data.get("lang", "ka")
+                  hits = [sid for sid in subs if sid in freed]
+                  if not hits:
+                      continue
+                  dead = False
+                  for sid in hits:
+                      s    = freed[sid]
+                      name = (subs.get(sid) or {}).get("name") or s.get("name") or "დამტენი"
+                      body = (f"{name} is now free! Grab it before someone beats you to it 🙂"
+                              if lang == "en"
+                              else f"{name} გათავისუფლდა! მოასწარი დატენვა სანამ სხვამ მიგასწრო 🙂")
+                      try:
+                          messaging.send(messaging.Message(
+                              token=token,
+                              notification=messaging.Notification(
+                                  title="⚡ GeoCharge", body=body),
+                              android=messaging.AndroidConfig(priority="high"),
+                          ))
+                          sent += 1
+                      except messaging.UnregisteredError:
+                          dead = True  # token no longer valid — drop the doc
+                          break
+                      except Exception as e:
+                          print("  send failed:", e)
+                  try:
+                      if dead:
+                          doc.reference.delete()
+                      else:
+                          doc.reference.update(
+                              {f"subs.{sid}": firestore.DELETE_FIELD for sid in hits})
+                  except Exception as e:
+                      print("  cleanup failed:", e)
+              print(f"🔔 sent {sent} push(es)")
+
           # ── Load station data from the committed asset file ────────────────
           # The bundled asset ships with snapshots of the live providers for
           # offline use, so for each live provider we drop its bundled rows and
@@ -1267,6 +1351,7 @@ jobs:
           # returns data; on a transient failure or missing secret we keep the
           # last-known bundled snapshot instead of dropping the provider.
           stations = list(bundled)
+          fresh_providers = set()   # providers we actually re-fetched this cycle
           for fn, pname in [(fetch_martev, "mart EV"),
                             (fetch_moveo, "MOVEO"),
                             (fetch_electrify, "Electrify Georgia"),
@@ -1286,6 +1371,7 @@ jobs:
               if fresh:
                   stations = [s for s in stations if s.get("provider") != pname]
                   stations += fresh
+                  fresh_providers.add(pname)
 
           # Stamp every station with the current UTC time so the app shows
           # a meaningful "last verified" timestamp after each gist refresh.
@@ -1301,6 +1387,20 @@ jobs:
           )
           resp.raise_for_status()
           gist_data = resp.json()
+
+          # ── Fire push alerts for stations that just freed up ───────────────
+          # Uses the gist we just fetched as the "previous" state (it still holds
+          # the last cycle's availability, since we haven't patched yet).
+          try:
+              f0 = (gist_data.get("files") or {}).get("chargers.json") or {}
+              if f0.get("truncated") and f0.get("raw_url"):
+                  old_stations = requests.get(
+                      f0["raw_url"], headers=headers, timeout=30).json()
+              else:
+                  old_stations = json.loads(f0.get("content") or "[]")
+              notify_freed(old_stations, stations, fresh_providers)
+          except Exception as e:
+              print("charger-free alerts skipped:", e)
 
           # Preserve every file in the gist except chargers.json
           files = {

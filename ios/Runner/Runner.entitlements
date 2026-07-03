@@ -10,5 +10,16 @@
 	<array>
 		<string>Default</string>
 	</array>
+
+	<!-- Push Notifications (charger-freed-up alerts, via Firebase Cloud Messaging).
+	     "production" matches Codemagic's release/App-Store build (the only iOS
+	     build path this project uses — see codemagic.yaml). Also requires:
+	       1. "Push Notifications" capability enabled on the ge.geocharge.app
+	          App ID in the Apple Developer portal (Certificates, IDs & Profiles).
+	       2. An APNs Auth Key uploaded in Firebase Console → Project Settings →
+	          Cloud Messaging, so Firebase can actually deliver to APNs.
+	     See docs/IOS_SETUP.md § Push Notifications. -->
+	<key>aps-environment</key>
+	<string>production</string>
 </dict>
 </plist>

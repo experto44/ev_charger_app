@@ -46,6 +46,20 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ── Charger-free push alerts ─────────────────────────────────────────────
+    // One doc per device, keyed by (a sanitized form of) the device's FCM token
+    // — a secret bearer credential only that device knows. No login is required,
+    // so alerts work for anonymous users too. The server-side gist updater reads
+    // this collection with the Admin SDK (bypassing rules) to send the pushes.
+    //
+    // Writes are open (the token is the only thing tying a doc to a device, and
+    // it isn't guessable) but must carry a string `token` field, which blocks
+    // trivially malformed writes. The data here is low-value and disposable.
+    match /charger_alerts/{token} {
+      allow read, delete: if true;
+      allow create, update: if request.resource.data.token is string;
+    }
+
     // Everything else is denied by default (no rule = no access).
   }
 }

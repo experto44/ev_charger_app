@@ -216,6 +216,34 @@ class AppStrings {
     return isGeorgian ? 'იტენება $b+ წთ' : 'Charging $b+ min';
   }
 
+  // ── Charger-free push alerts ("Notify me") ──────────────────────────────────
+  static String get notifyMe => isGeorgian ? 'შემატყობინე!' : 'Notify me!';
+  static String get alertActive =>
+      isGeorgian ? 'შეტყობინება ჩართულია' : 'Alert is on';
+  static String get alertPopupTitle =>
+      isGeorgian ? '🔔 შეტყობინება ჩართულია!' : '🔔 Alert set!';
+  static String get alertPopupBody => isGeorgian
+      ? 'როდესაც დამტენი გათავისუფლდება, შენ მიიღებ შეტყობინებას! გაითვალისწინე, რომ სხვადასხვა პროვაიდერებისგან ინფორმაცია განსხვავებულად მოდის და შეიძლება რამდენიმე წუთიანი დაგვიანებით მიიღო შეტყობინება. იმედია სხვა არ დაგასწრებს 🙂'
+      : "When the charger frees up, you'll get a notification! Note that different providers report data differently, so the alert may arrive with a few minutes' delay. Hope no one beats you to it 🙂";
+  static String get alertGotIt => isGeorgian ? 'გასაგებია' : 'Got it';
+  static String get alertLimitReached => isGeorgian
+      ? 'ერთდროულად მაქსიმუმ 4 დამტენზე შეგიძლია შეტყობინების დაყენება'
+      : 'You can set alerts on up to 4 chargers at a time';
+  static String get alertCancelled =>
+      isGeorgian ? 'შეტყობინება გაუქმდა' : 'Alert cancelled';
+  static String get alertError => isGeorgian
+      ? 'შეტყობინების დაყენება ვერ მოხერხდა — სცადეთ თავიდან'
+      : 'Could not set the alert — please try again';
+  static String get alertPermissionDenied => isGeorgian
+      ? 'შეტყობინებების მისაღებად ჩართე ნებართვა პარამეტრებში'
+      : 'Enable notification permission in settings to receive alerts';
+
+  /// Push notification body sent when a subscribed charger frees up. The
+  /// station name is the notification title; this is the body line.
+  static String get alertPushBody => isGeorgian
+      ? 'გათავისუფლდა! მოასწარი დატენვა სანამ სხვამ მიგასწრო 🙂'
+      : 'is now free! Grab it before someone beats you to it 🙂';
+
   // ── Paywall ──────────────────────────────────────────────────────────────
   static String get paywallSubtitle => isGeorgian
       ? 'უფასო 7 დღე, შემდეგ აირჩიე გეგმა'

@@ -43,7 +43,7 @@
 **Identifiers → +** → App IDs → `ge.geocharge.app`. ჩართე capabilities:
 - ✅ **Sign in with Apple**
 - ✅ **In-App Purchase**
-- ✅ **Push Notifications** (თუ მომავალში დაგჭირდება)
+- ✅ **Push Notifications** (საჭიროა — იხ. § Push Notifications ქვემოთ)
 
 ---
 
@@ -151,6 +151,45 @@ TestFlight-ში.** build number ავტომატურად იზრდ
 
 ---
 
+## 8.5. Push Notifications (APNs) — "დამტენი გათავისუფლდა" შეტყობინებისთვის
+
+Android-ზე push სრულად მუშაობს დამატებითი კონფიგურაციის გარეშე (Firebase Cloud
+Messaging პირდაპირ აგზავნის Google-ის საკუთარ არხზე). **iOS განსხვავებულია**:
+Firebase-საც კი, თუნდაც FCM იყოს გამომგზავნი, **საბოლოოდ Apple-ის საკუთარ APNs
+(Apple Push Notification service) არხზე გადადის** — ეს ისეთივე სავალდებულო
+შუამავალია, როგორც App Store თავად აპლიკაციისთვის. FCM → APNs → მოწყობილობა.
+ამ ხიდის გარეშე Firebase-ს არაფრის გაგზავნა არ შეუძლია iPhone-ზე, თუნდაც კოდი
+100%-ით მზად იყოს (რაც უკვე არის).
+
+რეპოში უკვე გაკეთებულია (კოდის მხარე, Mac არ სჭირდება):
+- ✅ `ios/Runner/Runner.entitlements` — დამატებულია `aps-environment: production`
+- ✅ `ios/Runner/Info.plist` — დამატებულია `UIBackgroundModes: remote-notification`
+
+**შენ 2 რამ დაგრჩა**, ორივე ვებ-კონსოლში, Mac/Xcode არ სჭირდება:
+
+1. **App ID-ზე Push Notifications ჩართვა** (ერთხელაა საჭირო):
+   [developer.apple.com](https://developer.apple.com/account) → Certificates,
+   IDs & Profiles → Identifiers → `ge.geocharge.app` → ჩართე ✅ **Push
+   Notifications** capability → Save.
+   (Codemagic ავტომატურად გადააგენერირებს provisioning profile-ს შემდეგ build-ზე
+   — არაფრის დამატებითი კეთება არ გჭირდება Codemagic-ის მხარეს.)
+
+2. **APNs Auth Key ატვირთვა Firebase-ში** (ერთხელაა საჭირო):
+   - [developer.apple.com](https://developer.apple.com/account) → Certificates,
+     IDs & Profiles → **Keys → +** → ჩართე **Apple Push Notifications service
+     (APNs)** → Continue → Register → **ჩამოტვირთე `.p8` ფაილი**
+     (⚠️ მხოლოდ ერთხელ იტვირთება — არ დაკარგო!). დაიმახსოვრე **Key ID**-იც.
+   - [Firebase Console](https://console.firebase.google.com) → შენი პროექტი →
+     ⚙ Project Settings → **Cloud Messaging** ჩანართი → **Apple app
+     configuration** → **APNs Authentication Key → Upload** → აირჩიე `.p8`
+     ფაილი, ჩაწერე **Key ID** და **Team ID** (Team ID ჩანს Apple Developer
+     ანგარიშის ზედა მარჯვნივ, ან Membership გვერდზე).
+
+ამის შემდეგ push სრულად იმუშავებს iOS-ზეც — არაფრის ხელახლა build-ი/deploy არ
+სჭირდება ამ ორი ნაბიჯისთვის, ისინი მხოლოდ Apple/Firebase-ის კონფიგია.
+
+---
+
 ## 9. ვერსიების სინქრონი ✅ (გაკეთებულია)
 
 ვერსია ახლა **ერთ წყაროშია** — `pubspec.yaml`-ის `version: <name>+<build>` (მაგ. `1.1.5+17`).
@@ -170,6 +209,7 @@ TestFlight-ში.** build number ავტომატურად იზრდ
 - [ ] App Store Connect API key (.p8) → Codemagic integration "CodemagicASCKey"
 - [ ] Codemagic-ში repo + `geocharge_ios` ცვლადების group
 - [ ] Firebase Apple sign-in ჩართული
+- [ ] Push Notifications capability (App ID) + APNs Auth Key ატვირთული Firebase-ში (§ 8.5)
 - [ ] Subscription product + Paid Apps Agreement + Banking/Tax
 - [ ] პირველი push main-ში → TestFlight build ✅
 

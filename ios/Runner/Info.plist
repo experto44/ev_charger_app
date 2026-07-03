@@ -90,6 +90,13 @@
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-2323581212631140~3327603543</string>
 
+	<!-- Lets a silent/data-only FCM push (e.g. a token-refresh signal) wake the
+	     app briefly in the background — needed for reliable push delivery. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+
 	<!-- SKAdNetwork ids for ad attribution (AdMob-recommended core set). -->
 	<key>SKAdNetworkItems</key>
 	<array>

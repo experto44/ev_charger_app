@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
@@ -13,7 +14,9 @@ import 'firebase_options.dart';
 import 'l10n/app_strings.dart';
 import 'profile_screen.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/charger_alert_popup.dart';
 import 'screens/support_popup.dart';
+import 'services/notification_service.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:geolocator/geolocator.dart';
@@ -33,14 +36,27 @@ import 'services/purchase_service.dart';
 import 'services/user_activity_service.dart';
 import 'settings_screen.dart';
 
+/// Background/terminated FCM handler. The "charger freed up" pushes carry a
+/// `notification` payload, so the OS displays them itself — nothing to do here.
+/// Must be a top-level function annotated for the Flutter engine entrypoint.
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // No work needed: the notification block is rendered by the system.
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await AppStrings.load(); // restore saved language (English/Georgian)
   // Subscriptions first (sets isPremium from cache), then ads — the ad layer
   // reads isPremium to decide whether to load anything at all.
   await PurchaseService.I.init();
   await AdService.I.init();
+  // Push alerts ("notify me when this charger frees up"). Unawaited — it may
+  // prompt for notification permission and resolve the FCM token, neither of
+  // which should delay first paint.
+  unawaited(NotificationService.I.init());
   // Record an app open for analytics (no-op when signed out). Unawaited so it
   // never delays first paint; auth persistence has already restored any user.
   unawaited(UserActivityService.I.recordOpen());
@@ -111,6 +127,8 @@ class EVChargerApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
     title: 'GeoCharge',
     debugShowCheckedModeBanner: false,
+    // Lets foreground "charger freed up" pushes surface an in-app SnackBar.
+    scaffoldMessengerKey: NotificationService.I.messengerKey,
     theme: ThemeData.dark().copyWith(
       scaffoldBackgroundColor: _bgDark,
       colorScheme: const ColorScheme.dark(primary: _emerald, surface: _bgCard),
@@ -1754,6 +1772,68 @@ class _StationSheetState extends State<_StationSheet> {
   bool _refreshing   = false;
   bool _justRefreshed = false;
   bool _refreshFailed = false;
+  bool _alertBusy    = false; // arming/cancelling a "notify me" alert in flight
+
+  // A busy station (no free plugs) with a stable id can be watched: the user
+  // gets a push the moment a plug frees up. International/coordinate-only rows
+  // have no id and can't be matched server-side, so no button for them.
+  bool get _canAlert => _station.id.isNotEmpty && _station.available == 0;
+  bool get _alertOn  => NotificationService.I.isSubscribed(_station.id);
+
+  Future<void> _toggleAlert() async {
+    if (_alertBusy) { return; }
+    final svc = NotificationService.I;
+
+    // Already watching → cancel (no ad, no popup).
+    if (_alertOn) {
+      setState(() => _alertBusy = true);
+      await svc.unsubscribe(_station.id);
+      if (!mounted) { return; }
+      setState(() => _alertBusy = false);
+      _snack(AppStrings.alertCancelled);
+      return;
+    }
+
+    setState(() => _alertBusy = true);
+    final res = await svc.subscribe(
+      stationId:   _station.id,
+      stationName: _station.name,
+      provider:    _station.provider,
+    );
+    if (!mounted) { return; }
+    setState(() => _alertBusy = false);
+
+    switch (res) {
+      case AlertResult.ok:
+        // Confirmation popup, then — per spec — a full-screen ad on close
+        // (free tier only; premium never sees one).
+        await showChargerAlertPopup(context);
+        if (!PurchaseService.I.isPremium.value) {
+          AdService.I.maybeShowInterstitial();
+        }
+        break;
+      case AlertResult.limitReached:
+        _snack(AppStrings.alertLimitReached);
+        break;
+      case AlertResult.permissionDenied:
+        _snack(AppStrings.alertPermissionDenied);
+        break;
+      case AlertResult.error:
+        _snack(AppStrings.alertError);
+        break;
+    }
+  }
+
+  void _snack(String msg) {
+    if (!mounted) { return; }
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(
+        content: Text(msg, style: AppStrings.font()),
+        backgroundColor: _bgSurface,
+        behavior: SnackBarBehavior.floating,
+      ));
+  }
 
   Future<void> _refresh() async {
     if (_refreshing) { return; }
@@ -2001,6 +2081,18 @@ class _StationSheetState extends State<_StationSheet> {
           ],
           const SizedBox(height: 22),
 
+          // ── "Notify me!" — only when the station is fully occupied ──────────
+          // Arms a push alert that fires when a plug frees up. Toggles to an
+          // "alert is on" state that cancels it on a second tap.
+          if (_canAlert) ...[
+            _NotifyButton(
+              on:      _alertOn,
+              busy:    _alertBusy,
+              onTap:   _toggleAlert,
+            ),
+            const SizedBox(height: 10),
+          ],
+
           // Get Directions button
           GestureDetector(
             onTap: widget.onGetDirections,
@@ -2025,6 +2117,55 @@ class _StationSheetState extends State<_StationSheet> {
         ],
       ),
     ), // SafeArea
+    );
+  }
+}
+
+// ── "Notify me!" button (station sheet) ───────────────────────────────────────
+// Filled emerald when off (a clear call-to-action); outlined + bell-check when
+// the alert is already armed (tap again to cancel). Shows a spinner while a
+// subscribe/unsubscribe round-trip is in flight.
+class _NotifyButton extends StatelessWidget {
+  const _NotifyButton({required this.on, required this.busy, required this.onTap});
+  final bool on;
+  final bool busy;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color fg = on ? _emerald : Colors.black;
+    return GestureDetector(
+      onTap: busy ? null : onTap,
+      child: Container(
+        width: double.infinity,
+        height: 52,
+        decoration: BoxDecoration(
+          color: on ? Colors.transparent : _emerald,
+          borderRadius: BorderRadius.circular(14),
+          border: on ? Border.all(color: _emerald, width: 1.5) : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (busy)
+              SizedBox(
+                width: 20, height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: fg),
+              )
+            else ...[
+              Icon(on ? Icons.notifications_active_rounded
+                      : Icons.notifications_none_rounded,
+                  color: fg, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                on ? AppStrings.alertActive : AppStrings.notifyMe,
+                style: AppStrings.font(TextStyle(
+                    color: fg, fontSize: 15, fontWeight: FontWeight.w700)),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
