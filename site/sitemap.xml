@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>[SITE_URL]/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="[SITE_URL]/?lang=ka"/>
+    <xhtml:link rel="alternate" hreflang="en" href="[SITE_URL]/?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="[SITE_URL]/"/>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>[SITE_URL]/privacy-policy.html</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="[SITE_URL]/privacy-policy.html?lang=ka"/>
+    <xhtml:link rel="alternate" hreflang="en" href="[SITE_URL]/privacy-policy.html?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="[SITE_URL]/privacy-policy.html"/>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+</urlset>

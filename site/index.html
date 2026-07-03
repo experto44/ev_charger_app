@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&amp;family=Noto+Sans+Georgian:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: #FFFFFF; font-family: 'Poppins', 'Noto Sans Georgian', system-ui, sans-serif; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+    * { box-sizing: border-box; }
+    ::selection { background: #2BD594; color: #11161A; }
+  </style>
+</helmet>
+
+<header data-screen-label="Header" style="position: sticky; top: 0; z-index: 60; background: rgba(17, 22, 26, 0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid rgba(255, 255, 255, 0.07)">
+  <div style="max-width: 1180px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 48px); height: 66px; display: flex; align-items: center; justify-content: space-between; gap: 16px">
+    <a href="#" onClick="{{ goTop }}" aria-label="GeoCharge" style="display: flex; align-items: center; min-width: 0">
+      <img src="assets/logo-dark.svg" alt="GeoCharge" style="height: 30px; display: block" height="30">
+    </a>
+    <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+      <nav aria-label="Main navigation" style="display: flex; align-items: center; gap: clamp(16px, 2.2vw, 28px)">
+        <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="6">
+          <a href="{{ n.href }}" onClick="{{ n.onClick }}" style="color: #B9C4CB; text-decoration: none; font-size: 14.5px; font-weight: 500; white-space: nowrap" style-hover="color: #FFFFFF">{{ n.label }}</a>
+        </sc-for>
+      </nav>
+      <div style="display: flex; align-items: center; gap: 14px">
+        <div role="group" aria-label="Language" style="display: flex; border: 1px solid #39434C; border-radius: 999px; overflow: hidden">
+          <button onClick="{{ setKa }}" style="{{ kaBtnStyle }}">ქარ</button>
+          <button onClick="{{ setEn }}" style="{{ enBtnStyle }}">ENG</button>
+        </div>
+        <button onClick="{{ ctaClick }}" style="background: #2BD594; color: #0D1A13; border: none; border-radius: 11px; padding: 10px 20px; font-size: 14.5px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap" style-hover="background: #25C486">{{ t.ctaDownload }}</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <div role="group" aria-label="Language" style="display: flex; border: 1px solid #39434C; border-radius: 999px; overflow: hidden">
+          <button onClick="{{ setKa }}" style="{{ kaBtnStyle }}">ქარ</button>
+          <button onClick="{{ setEn }}" style="{{ enBtnStyle }}">ENG</button>
+        </div>
+        <button onClick="{{ toggleMenu }}" aria-label="Menu" style="background: none; border: 1px solid #39434C; border-radius: 10px; padding: 9px 10px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; width: 40px; height: 38px">
+          <span style="display: block; width: 17px; height: 2px; background: #DDE5EA; border-radius: 2px"></span>
+          <span style="display: block; width: 17px; height: 2px; background: #DDE5EA; border-radius: 2px"></span>
+          <span style="display: block; width: 17px; height: 2px; background: #DDE5EA; border-radius: 2px"></span>
+        </button>
+      </div>
+    </sc-if>
+  </div>
+  <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+    <nav aria-label="Mobile navigation" style="display: flex; flex-direction: column; padding: 6px clamp(16px, 4vw, 48px) 18px; background: rgba(13, 17, 21, 0.97); border-top: 1px solid rgba(255, 255, 255, 0.06)">
+      <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="6">
+        <a href="{{ n.href }}" onClick="{{ n.onClick }}" style="color: #DDE5EA; text-decoration: none; font-size: 16px; font-weight: 500; padding: 13px 2px; border-bottom: 1px solid rgba(255, 255, 255, 0.05)">{{ n.label }}</a>
+      </sc-for>
+      <button onClick="{{ ctaClick }}" style="background: #2BD594; color: #0D1A13; border: none; border-radius: 12px; padding: 14px; font-size: 15.5px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 16px">{{ t.ctaDownload }}</button>
+    </nav>
+  </sc-if>
+</header>
+
+<main>
+  <section data-screen-label="Hero" style="background-color: #11161A; background-image: radial-gradient(720px 480px at 82% 12%, rgba(43, 213, 148, 0.16), transparent 62%), radial-gradient(560px 400px at 4% 96%, rgba(43, 213, 148, 0.09), transparent 60%); color: #FFFFFF; overflow: hidden">
+    <div style="max-width: 1180px; margin: 0 auto; padding: clamp(52px, 8vw, 96px) clamp(20px, 5vw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: clamp(40px, 6vw, 80px)">
+      <div style="flex: 1 1 460px; min-width: min(100%, 300px); max-width: 640px">
+        <p style="display: inline-flex; align-items: center; gap: 9px; background: rgba(43, 213, 148, 0.10); border: 1px solid rgba(43, 213, 148, 0.32); color: #8BEAC6; border-radius: 999px; padding: 7px 15px; font-size: 13.5px; font-weight: 500; margin: 0; max-width: 100%">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #2BD594; flex-shrink: 0"></span>
+          <span>{{ t.heroTrust }}</span>
+        </p>
+        <h1 style="font-size: clamp(32px, 5.2vw, 56px); line-height: 1.13; font-weight: 700; letter-spacing: -0.02em; margin: 20px 0 0; text-wrap: balance">{{ t.heroTitle1 }} <span style="color: #2BD594">{{ t.heroTitle2 }}</span></h1>
+        <p style="color: #A7B4BD; font-size: clamp(16px, 2vw, 18.5px); line-height: 1.68; margin: 18px 0 0; max-width: 560px; text-wrap: pretty">{{ t.heroSub }}</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 14px; margin-top: 32px; align-items: center">
+          <a href="https://play.google.com/store/apps/details?id=ge.geocharge.app" target="_blank" rel="noopener" aria-label="Get it on Google Play" style="display: inline-flex; align-items: center; gap: 12px; background: #000000; border: 1px solid #46505A; border-radius: 12px; padding: 9px 20px 9px 16px; text-decoration: none" style-hover="border-color: #2BD594">
+            <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2.8v18.4c0 .6.7 1 1.2.7L8 20.2 16.5 15 19.8 13c.8-.45.8-1.55 0-2L5.2 2.1C4.7 1.8 4 2.2 4 2.8Z" fill="#2BD594"></path><path d="M4.4 2.2 14.6 12 4.4 21.8" fill="none" stroke="#0D1A13" stroke-width="0.9"></path></svg>
+            <span style="display: flex; flex-direction: column; line-height: 1.2">
+              <span style="font-size: 10.5px; color: #B9C4CB; letter-spacing: 0.06em; text-transform: uppercase">{{ t.playTop }}</span>
+              <span style="font-size: 17px; color: #FFFFFF; font-weight: 600">Google Play</span>
+            </span>
+          </a>
+          <div style="position: relative; display: inline-flex">
+            <div aria-label="App Store — coming soon" style="display: inline-flex; align-items: center; gap: 12px; background: #000000; border: 1px solid #39434C; border-radius: 12px; padding: 9px 20px 9px 16px; opacity: 0.45; filter: grayscale(0.7)">
+              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#FFFFFF" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"></path><path d="M8 10l4 4 4-4"></path><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path></svg>
+              <span style="display: flex; flex-direction: column; line-height: 1.2">
+                <span style="font-size: 10.5px; color: #B9C4CB; letter-spacing: 0.06em; text-transform: uppercase">{{ t.appStoreTop }}</span>
+                <span style="font-size: 17px; color: #FFFFFF; font-weight: 600">App Store</span>
+              </span>
+            </div>
+            <span style="position: absolute; top: -10px; right: -8px; background: #FFB02E; color: #11161A; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 3px 10px; white-space: nowrap">{{ t.comingSoon }}</span>
+          </div>
+        </div>
+      </div>
+      <div style="flex: 0 1 auto; display: flex; justify-content: center">
+        <div style="width: min(300px, 76vw); border-radius: 44px; padding: 11px; background: #1B2127; border: 1px solid #313B44; box-shadow: 0 44px 90px -34px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(43, 213, 148, 0.07)">
+          <img src="assets/shot-nationwide.jpg" alt="{{ t.altNationwide }}" width="720" height="1600" style="width: 100%; height: auto; border-radius: 34px; display: block">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="about" data-screen-label="About" style="background: #FFFFFF">
+    <div data-reveal="1" style="max-width: 820px; margin: 0 auto; padding: clamp(64px, 9vw, 110px) clamp(20px, 5vw, 48px); text-align: center">
+      <p style="color: #17995F; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12.5px; margin: 0 0 12px">{{ t.aboutKicker }}</p>
+      <h2 style="font-size: clamp(28px, 4vw, 40px); font-weight: 700; color: #11161A; letter-spacing: -0.02em; margin: 0 0 22px; text-wrap: balance">{{ t.aboutTitle }}</h2>
+      <p style="color: #5A6671; font-size: 17px; line-height: 1.7; margin: 0 0 16px; text-wrap: pretty">{{ t.aboutP1 }}</p>
+      <p style="color: #5A6671; font-size: 17px; line-height: 1.7; margin: 0 0 16px; text-wrap: pretty">{{ t.aboutP2 }}</p>
+      <p style="color: #5A6671; font-size: 17px; line-height: 1.7; margin: 0; text-wrap: pretty">{{ t.aboutP3 }}</p>
+      <p style="display: inline-flex; align-items: center; gap: 9px; background: #ECFAF3; border: 1px solid #C8EFDD; color: #137A4C; border-radius: 999px; padding: 9px 18px; font-size: 14.5px; font-weight: 600; margin: 28px 0 0">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#17995F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+        <span>{{ t.freeNote }}</span>
+      </p>
+    </div>
+  </section>
+
+  <section id="features" data-screen-label="Features" style="background: #F6FAF8; border-top: 1px solid #EAF1ED; border-bottom: 1px solid #EAF1ED">
+    <div style="max-width: 1180px; margin: 0 auto; padding: clamp(64px, 9vw, 110px) clamp(20px, 5vw, 48px)">
+      <div data-reveal="1" style="text-align: center; max-width: 680px; margin: 0 auto 48px">
+        <p style="color: #17995F; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12.5px; margin: 0 0 12px">{{ t.featuresKicker }}</p>
+        <h2 style="font-size: clamp(28px, 4vw, 40px); font-weight: 700; color: #11161A; letter-spacing: -0.02em; margin: 0; text-wrap: balance">{{ t.featuresTitle }}</h2>
+      </div>
+      <div data-reveal="1" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr)); gap: 18px">
+        <sc-for list="{{ featureCards }}" as="f" hint-placeholder-count="8">
+          <article style="background: #FFFFFF; border: 1px solid #E3EEE8; border-radius: 18px; padding: 26px 24px; display: flex; flex-direction: column; gap: 14px" style-hover="border-color: #2BD594; box-shadow: 0 12px 32px -18px rgba(23, 153, 95, 0.35)">
+            <span style="width: 48px; height: 48px; border-radius: 13px; background: #ECFAF3; display: flex; align-items: center; justify-content: center">{{ f.icon }}</span>
+            <h3 style="font-size: 17px; font-weight: 600; color: #11161A; margin: 0">{{ f.t }}</h3>
+            <p style="color: #5A6671; font-size: 14.5px; line-height: 1.62; margin: 0; text-wrap: pretty">{{ f.d }}</p>
+          </article>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section id="coverage" data-screen-label="Coverage" style="background: #FFFFFF">
+    <div data-reveal="1" style="max-width: 1180px; margin: 0 auto; padding: clamp(64px, 9vw, 110px) clamp(20px, 5vw, 48px); display: flex; flex-wrap: wrap; align-items: center; gap: clamp(36px, 6vw, 80px)">
+      <div style="flex: 1 1 380px; min-width: min(100%, 300px)">
+        <p style="color: #17995F; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12.5px; margin: 0 0 12px">{{ t.coverageKicker }}</p>
+        <h2 style="font-size: clamp(28px, 4vw, 40px); font-weight: 700; color: #11161A; letter-spacing: -0.02em; margin: 0 0 18px; text-wrap: balance">{{ t.coverageTitle }}</h2>
+        <p style="color: #5A6671; font-size: 17px; line-height: 1.7; margin: 0; max-width: 520px; text-wrap: pretty">{{ t.coverageBody }}</p>
+        <p style="color: #5A6671; font-size: 17px; line-height: 1.7; margin: 16px 0 0; max-width: 520px; text-wrap: pretty">{{ t.coverageEurope }}</p>
+      </div>
+      <div style="flex: 1 1 340px; min-width: min(100%, 280px); display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px">
+        <sc-for list="{{ stats }}" as="s" hint-placeholder-count="3">
+          <div style="background: #ECFAF3; border: 1px solid #C8EFDD; border-radius: 18px; padding: 26px 20px; text-align: center">
+            <p style="font-size: clamp(32px, 4.5vw, 44px); font-weight: 800; color: #17995F; margin: 0; letter-spacing: -0.02em">{{ s.n }}</p>
+            <p style="font-size: 14px; font-weight: 500; color: #3D4A52; margin: 8px 0 0; line-height: 1.4">{{ s.l }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section id="how" data-screen-label="How it works" style="background: #F6FAF8; border-top: 1px solid #EAF1ED; border-bottom: 1px solid #EAF1ED">
+    <div style="max-width: 1180px; margin: 0 auto; padding: clamp(64px, 9vw, 110px) clamp(20px, 5vw, 48px)">
+      <div data-reveal="1" style="text-align: center; max-width: 680px; margin: 0 auto 48px">
+        <p style="color: #17995F; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12.5px; margin: 0 0 12px">{{ t.howKicker }}</p>
+        <h2 style="font-size: clamp(28px, 4vw, 40px); font-weight: 700; color: #11161A; letter-spacing: -0.02em; margin: 0; text-wrap: balance">{{ t.howTitle }}</h2>
+      </div>
+      <div data-reveal="1" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 18px">
+        <sc-for list="{{ steps }}" as="s" hint-placeholder-count="3">
+          <article style="background: #FFFFFF; border: 1px solid #E3EEE8; border-radius: 18px; padding: 30px 26px">
+            <span style="display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 50%; background: #2BD594; color: #0D1A13; font-weight: 700; font-size: 18px">{{ s.n }}</span>
+            <h3 style="font-size: 18px; font-weight: 600; color: #11161A; margin: 18px 0 8px">{{ s.t }}</h3>
+            <p style="color: #5A6671; font-size: 15px; line-height: 1.62; margin: 0; text-wrap: pretty">{{ s.d }}</p>
+          </article>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section id="screens" data-screen-label="Screenshots" style="background: #FFFFFF; overflow: hidden">
+    <div style="max-width: 1180px; margin: 0 auto; padding: clamp(64px, 9vw, 110px) clamp(20px, 5vw, 48px) clamp(40px, 6vw, 70px)">
+      <div data-reveal="1" style="text-align: center; max-width: 680px; margin: 0 auto 40px">
+        <p style="color: #17995F; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12.5px; margin: 0 0 12px">{{ t.galleryKicker }}</p>
+        <h2 style="font-size: clamp(28px, 4vw, 40px); font-weight: 700; color: #11161A; letter-spacing: -0.02em; margin: 0; text-wrap: balance">{{ t.galleryTitle }}</h2>
+      </div>
+      <div data-reveal="1" style="display: flex; gap: clamp(18px, 3vw, 30px); overflow-x: auto; scroll-snap-type: x mandatory; padding: 8px 6px 28px; -webkit-overflow-scrolling: touch">
+        <figure style="margin: 0; flex: 0 0 auto; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px">
+          <div style="width: min(232px, 64vw); border-radius: 36px; padding: 9px; background: #1B2127; border: 1px solid #313B44; box-shadow: 0 26px 50px -26px rgba(0, 0, 0, 0.45)">
+            <img loading="lazy" src="assets/shot-nationwide.jpg" alt="{{ gal.alt1 }}" width="720" height="1600" style="width: 100%; height: auto; border-radius: 28px; display: block">
+          </div>
+          <figcaption style="font-size: 14px; color: #5A6671; font-weight: 500; text-align: center; max-width: 220px; line-height: 1.45">{{ gal.cap1 }}</figcaption>
+        </figure>
+        <figure style="margin: 0; flex: 0 0 auto; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px">
+          <div style="width: min(232px, 64vw); border-radius: 36px; padding: 9px; background: #1B2127; border: 1px solid #313B44; box-shadow: 0 26px 50px -26px rgba(0, 0, 0, 0.45)">
+            <img loading="lazy" src="assets/shot-dark-map.jpg" alt="{{ gal.alt2 }}" width="720" height="1600" style="width: 100%; height: auto; border-radius: 28px; display: block">
+          </div>
+          <figcaption style="font-size: 14px; color: #5A6671; font-weight: 500; text-align: center; max-width: 220px; line-height: 1.45">{{ gal.cap2 }}</figcaption>
+        </figure>
+        <figure style="margin: 0; flex: 0 0 auto; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px">
+          <div style="width: min(232px, 64vw); border-radius: 36px; padding: 9px; background: #1B2127; border: 1px solid #313B44; box-shadow: 0 26px 50px -26px rgba(0, 0, 0, 0.45)">
+            <img loading="lazy" src="assets/shot-light-map.jpg" alt="{{ gal.alt3 }}" width="720" height="1600" style="width: 100%; height: auto; border-radius: 28px; display: block">
+          </div>
+          <figcaption style="font-size: 14px; color: #5A6671; font-weight: 500; text-align: center; max-width: 220px; line-height: 1.45">{{ gal.cap3 }}</figcaption>
+        </figure>
+        <figure style="margin: 0; flex: 0 0 auto; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px">
+          <div style="width: min(232px, 64vw); border-radius: 36px; padding: 9px; background: #1B2127; border: 1px solid #313B44; box-shadow: 0 26px 50px -26px rgba(0, 0, 0, 0.45)">
+            <img loading="lazy" src="assets/shot-route.jpg" alt="{{ gal.alt4 }}" width="720" height="1600" style="width: 100%; height: auto; border-radius: 28px; display: block">
+          </div>
+          <figcaption style="font-size: 14px; color: #5A6671; font-weight: 500; text-align: center; max-width: 220px; line-height: 1.45">{{ gal.cap4 }}</figcaption>
+        </figure>
+        <figure style="margin: 0; flex: 0 0 auto; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px">
+          <div style="width: min(232px, 64vw); border-radius: 36px; padding: 9px; background: #1B2127; border: 1px solid #313B44; box-shadow: 0 26px 50px -26px rgba(0, 0, 0, 0.45)">
+            <img loading="lazy" src="assets/shot-countries.jpg" alt="{{ gal.alt5 }}" width="720" height="1600" style="width: 100%; height: auto; border-radius: 28px; display: block">
+          </div>
+          <figcaption style="font-size: 14px; color: #5A6671; font-weight: 500; text-align: center; max-width: 220px; line-height: 1.45">{{ gal.cap5 }}</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="why" data-screen-label="Why GeoCharge" style="background: #FFFFFF">
+    <div data-reveal="1" style="max-width: 820px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 48px) clamp(64px, 9vw, 110px)">
+      <h2 style="font-size: clamp(24px, 3.2vw, 32px); font-weight: 700; color: #11161A; letter-spacing: -0.02em; margin: 0 0 26px; text-align: center; text-wrap: balance">{{ t.whyTitle }}</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 14px">
+        <sc-for list="{{ whyItems }}" as="w" hint-placeholder-count="4">
+          <p style="display: flex; align-items: center; gap: 12px; background: #F6FAF8; border: 1px solid #E3EEE8; border-radius: 14px; padding: 16px 18px; margin: 0; color: #11161A; font-size: 15.5px; font-weight: 500">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17995F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="M20 6 9 17l-5-5"></path></svg>
+            <span>{{ w }}</span>
+          </p>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" data-screen-label="FAQ" style="background: #F6FAF8; border-top: 1px solid #EAF1ED">
+    <div data-reveal="1" style="max-width: 820px; margin: 0 auto; padding: clamp(64px, 9vw, 110px) clamp(20px, 5vw, 48px)">
+      <div style="text-align: center; margin-bottom: 36px">
+        <p style="color: #17995F; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12.5px; margin: 0 0 12px">FAQ</p>
+        <h2 style="font-size: clamp(28px, 4vw, 40px); font-weight: 700; color: #11161A; letter-spacing: -0.02em; margin: 0; text-wrap: balance">{{ t.faqTitle }}</h2>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E3EEE8; border-radius: 20px; padding: 6px 26px">
+        <sc-for list="{{ faqItems }}" as="f" hint-placeholder-count="8">
+          <div style="border-bottom: 1px solid #EDF3EF">
+            <button onClick="{{ f.toggle }}" aria-expanded="{{ f.open }}" style="background: none; border: none; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 19px 0; cursor: pointer; font-family: inherit; text-align: left">
+              <span style="font-size: 16px; font-weight: 600; color: #11161A; line-height: 1.45">{{ f.q }}</span>
+              <span aria-hidden="true" style="color: #17995F; font-size: 22px; font-weight: 500; line-height: 1; flex-shrink: 0; width: 22px; text-align: center">{{ f.sign }}</span>
+            </button>
+            <sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}">
+              <p style="color: #5A6671; font-size: 15px; line-height: 1.68; margin: 0; padding: 0 28px 20px 0; text-wrap: pretty">{{ f.a }}</p>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section id="download" data-screen-label="Download" style="background-color: #11161A; background-image: radial-gradient(640px 420px at 50% 0%, rgba(43, 213, 148, 0.14), transparent 65%)">
+    <div data-reveal="1" style="max-width: 760px; margin: 0 auto; padding: clamp(64px, 9vw, 110px) clamp(20px, 5vw, 48px); text-align: center">
+      <img src="assets/mark.svg" alt="" width="74" height="74" style="width: 74px; height: 74px; display: block; margin: 0 auto 24px">
+      <h2 style="font-size: clamp(28px, 4.4vw, 44px); font-weight: 700; color: #FFFFFF; letter-spacing: -0.02em; margin: 0 0 14px; text-wrap: balance">{{ t.dlTitle }}</h2>
+      <p style="color: #A7B4BD; font-size: 17px; line-height: 1.65; margin: 0 0 32px">{{ t.dlSub }}</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: center">
+        <a href="https://play.google.com/store/apps/details?id=ge.geocharge.app" target="_blank" rel="noopener" aria-label="Get it on Google Play" style="display: inline-flex; align-items: center; gap: 12px; background: #000000; border: 1px solid #46505A; border-radius: 12px; padding: 10px 22px 10px 17px; text-decoration: none" style-hover="border-color: #2BD594">
+          <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2.8v18.4c0 .6.7 1 1.2.7L8 20.2 16.5 15 19.8 13c.8-.45.8-1.55 0-2L5.2 2.1C4.7 1.8 4 2.2 4 2.8Z" fill="#2BD594"></path><path d="M4.4 2.2 14.6 12 4.4 21.8" fill="none" stroke="#0D1A13" stroke-width="0.9"></path></svg>
+          <span style="display: flex; flex-direction: column; line-height: 1.2; text-align: left">
+            <span style="font-size: 11px; color: #B9C4CB; letter-spacing: 0.06em; text-transform: uppercase">{{ t.playTop }}</span>
+            <span style="font-size: 18px; color: #FFFFFF; font-weight: 600">Google Play</span>
+          </span>
+        </a>
+        <div style="position: relative; display: inline-flex">
+          <div aria-label="App Store — coming soon" style="display: inline-flex; align-items: center; gap: 12px; background: #000000; border: 1px solid #39434C; border-radius: 12px; padding: 10px 22px 10px 17px; opacity: 0.45; filter: grayscale(0.7)">
+            <svg width="25" height="25" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#FFFFFF" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"></path><path d="M8 10l4 4 4-4"></path><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path></svg>
+            <span style="display: flex; flex-direction: column; line-height: 1.2; text-align: left">
+              <span style="font-size: 11px; color: #B9C4CB; letter-spacing: 0.06em; text-transform: uppercase">{{ t.appStoreTop }}</span>
+              <span style="font-size: 18px; color: #FFFFFF; font-weight: 600">App Store</span>
+            </span>
+          </div>
+          <span style="position: absolute; top: -10px; right: -8px; background: #FFB02E; color: #11161A; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 3px 10px; white-space: nowrap">{{ t.comingSoon }}</span>
+        </div>
+      </div>
+      <p style="color: #6E7B85; font-size: 13.5px; margin: 26px 0 0">{{ t.dlFree }}</p>
+    </div>
+  </section>
+
+  <section id="contact" data-screen-label="Contact" style="background: #FFFFFF">
+    <div data-reveal="1" style="max-width: 620px; margin: 0 auto; padding: clamp(64px, 9vw, 110px) clamp(20px, 5vw, 48px)">
+      <div style="text-align: center; margin-bottom: 34px">
+        <p style="color: #17995F; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12.5px; margin: 0 0 12px">{{ t.contactKicker }}</p>
+        <h2 style="font-size: clamp(28px, 4vw, 40px); font-weight: 700; color: #11161A; letter-spacing: -0.02em; margin: 0 0 12px; text-wrap: balance">{{ t.contactTitle }}</h2>
+        <p style="color: #5A6671; font-size: 16px; line-height: 1.65; margin: 0; text-wrap: pretty">{{ t.contactSub }}</p>
+      </div>
+      <form onSubmit="{{ submitForm }}" encType="multipart/form-data" style="display: grid; gap: 18px">
+        <input type="hidden" name="access_key" value="ba0ee836-eb6e-4c38-a2b1-aed140485d61">
+        <input type="hidden" name="from_name" value="GeoCharge Website">
+        <input type="checkbox" name="botcheck" tabIndex="-1" autoComplete="off" aria-hidden="true" style="position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 18px">
+          <div>
+            <label for="gc-name" style="display: block; font-size: 14px; font-weight: 600; color: #11161A; margin-bottom: 7px">{{ t.fName }}</label>
+            <input id="gc-name" name="name" type="text" required="required" placeholder="{{ t.fNamePh }}" style="width: 100%; padding: 13px 16px; border: 1px solid #D7E0DB; border-radius: 12px; font-size: 15.5px; font-family: inherit; color: #11161A; background: #FFFFFF; outline: none" style-focus="border-color: #2BD594; box-shadow: 0 0 0 3px rgba(43, 213, 148, 0.18)">
+          </div>
+          <div>
+            <label for="gc-email" style="display: block; font-size: 14px; font-weight: 600; color: #11161A; margin-bottom: 7px">{{ t.fEmail }}</label>
+            <input id="gc-email" name="email" type="email" required="required" placeholder="{{ t.fEmailPh }}" style="width: 100%; padding: 13px 16px; border: 1px solid #D7E0DB; border-radius: 12px; font-size: 15.5px; font-family: inherit; color: #11161A; background: #FFFFFF; outline: none" style-focus="border-color: #2BD594; box-shadow: 0 0 0 3px rgba(43, 213, 148, 0.18)">
+          </div>
+        </div>
+        <div>
+          <label for="gc-subject" style="display: block; font-size: 14px; font-weight: 600; color: #11161A; margin-bottom: 7px">{{ t.fSubject }}</label>
+          <input id="gc-subject" name="subject" type="text" placeholder="{{ t.fSubjectPh }}" style="width: 100%; padding: 13px 16px; border: 1px solid #D7E0DB; border-radius: 12px; font-size: 15.5px; font-family: inherit; color: #11161A; background: #FFFFFF; outline: none" style-focus="border-color: #2BD594; box-shadow: 0 0 0 3px rgba(43, 213, 148, 0.18)">
+        </div>
+        <div>
+          <label for="gc-message" style="display: block; font-size: 14px; font-weight: 600; color: #11161A; margin-bottom: 7px">{{ t.fMessage }}</label>
+          <textarea id="gc-message" name="message" required="required" rows="5" placeholder="{{ t.fMessagePh }}" style="width: 100%; padding: 13px 16px; border: 1px solid #D7E0DB; border-radius: 12px; font-size: 15.5px; font-family: inherit; color: #11161A; background: #FFFFFF; outline: none; resize: vertical; min-height: 120px" style-focus="border-color: #2BD594; box-shadow: 0 0 0 3px rgba(43, 213, 148, 0.18)"></textarea>
+        </div>
+        <div>
+          <label for="gc-file" style="display: block; font-size: 14px; font-weight: 600; color: #11161A; margin-bottom: 7px">{{ t.fFile }}</label>
+          <input id="gc-file" name="attachment" type="file" accept=".pdf,.zip,.doc,.docx,.xlsx,.html,.htm,image/*" style="width: 100%; padding: 11px 14px; border: 1px dashed #C2D2C9; border-radius: 12px; font-size: 14px; font-family: inherit; color: #4A565F; background: #FBFDFC; outline: none" style-focus="border-color: #2BD594; box-shadow: 0 0 0 3px rgba(43, 213, 148, 0.18)">
+          <p style="font-size: 12.5px; color: #8B98A1; margin: 7px 0 0">{{ t.fFileNote }}</p>
+        </div>
+        <button type="submit" disabled="{{ isSending }}" style="background: #2BD594; color: #0D1A13; border: none; border-radius: 13px; padding: 15px; font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit" style-hover="background: #25C486">{{ submitLabel }}</button>
+        <sc-if value="{{ showOk }}" hint-placeholder-val="{{ false }}">
+          <p role="status" style="background: #ECFAF3; border: 1px solid #C8EFDD; color: #137A4C; border-radius: 12px; padding: 14px 18px; font-size: 14.5px; font-weight: 500; margin: 0">{{ t.fOk }}</p>
+        </sc-if>
+        <sc-if value="{{ showErr }}" hint-placeholder-val="{{ false }}">
+          <p role="alert" style="background: #FDF0EF; border: 1px solid #F3CDC9; color: #B03A2E; border-radius: 12px; padding: 14px 18px; font-size: 14.5px; font-weight: 500; margin: 0">{{ errText }}</p>
+        </sc-if>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer data-screen-label="Footer" style="background: #0D1115; color: #8B98A1">
+  <div style="max-width: 1180px; margin: 0 auto; padding: clamp(44px, 6vw, 64px) clamp(20px, 5vw, 48px) 30px">
+    <div style="display: flex; flex-wrap: wrap; gap: 32px; justify-content: space-between; align-items: flex-start; padding-bottom: 32px; border-bottom: 1px solid rgba(255, 255, 255, 0.07)">
+      <div style="max-width: 320px">
+        <img src="assets/logo-dark.svg" alt="GeoCharge" style="height: 28px; display: block" height="28">
+        <p style="font-size: 14px; line-height: 1.6; margin: 14px 0 0">{{ t.footerTagline }}</p>
+      </div>
+      <nav aria-label="Footer navigation" style="display: flex; flex-wrap: wrap; gap: 10px 24px; max-width: 460px">
+        <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="6">
+          <a href="{{ n.href }}" onClick="{{ n.onClick }}" style="color: #B9C4CB; text-decoration: none; font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">{{ n.label }}</a>
+        </sc-for>
+      </nav>
+      <div role="group" aria-label="Language" style="display: flex; border: 1px solid #39434C; border-radius: 999px; overflow: hidden">
+        <button onClick="{{ setKa }}" style="{{ kaBtnStyle }}">ქარ</button>
+        <button onClick="{{ setEn }}" style="{{ enBtnStyle }}">ENG</button>
+      </div>
+    </div>
+    <p style="font-size: 12.5px; line-height: 1.75; color: #6E7B85; margin: 24px 0 0; max-width: 800px; text-wrap: pretty">{{ t.footerDisclaimer }}</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px 28px; justify-content: space-between; align-items: center; padding-top: 24px">
+      <p style="font-size: 13px; margin: 0">{{ t.footerRights }}</p>
+      <a href="{{ privacyHref }}" style="color: #B9C4CB; text-decoration: none; font-size: 13.5px; font-weight: 500" style-hover="color: #2BD594">{{ t.footerPrivacy }}</a>
+    </div>
+  </div>
+</footer>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { lang: 'ka', mobile: false, menuOpen: false, openFaq: -1, formStatus: 'idle' };
+
+  SITE = '[SITE_URL]';
+  PLAY = 'https://play.google.com/store/apps/details?id=ge.geocharge.app';
+
+  translations = {
+    en: {
+      metaTitle: 'GeoCharge — Every EV Charger in Georgia, in One Free App',
+      metaDesc: 'GeoCharge is a free app that maps 663+ EV charging stations across Georgia. All charging networks in one map, with smart filters and route planning. Android now, iOS coming soon.',
+      nav: [
+        { id: 'about', label: 'About' },
+        { id: 'features', label: 'Features' },
+        { id: 'coverage', label: 'Coverage' },
+        { id: 'how', label: 'How it works' },
+        { id: 'faq', label: 'FAQ' },
+        { id: 'download', label: 'Download' }
+      ],
+      ctaDownload: 'Download',
+      heroTrust: '663+ charging stations across Georgia, updated automatically — completely free',
+      heroTitle1: 'Every EV charger in Georgia.',
+      heroTitle2: 'One app.',
+      heroSub: 'GeoCharge brings together 663+ public charging stations from across Georgia\u2019s charging networks into a single, free map — so you always know where to charge your electric car.',
+      playTop: 'Get it on',
+      appStoreTop: 'Download on the',
+      comingSoon: 'Coming soon',
+      altNationwide: 'GeoCharge app map showing EV charging stations across all of Georgia',
+      aboutKicker: 'About',
+      aboutTitle: 'What is GeoCharge?',
+      aboutP1: 'Georgia\u2019s EV charging infrastructure is fragmented across many independent operators. Until now, drivers had to juggle several different apps — or none at all — just to find a compatible charger.',
+      aboutP2: 'GeoCharge unifies them. It aggregates public charging stations from across the country\u2019s networks into one interactive map, with consistent station details and filtering.',
+      aboutP3: 'Our mission is to make EV driving in Georgia effortless — by giving every driver one trusted place to find, filter, and navigate to any public charger.',
+      freeNote: 'GeoCharge is completely free for everyone.',
+      featuresKicker: 'Features',
+      featuresTitle: 'Everything you need to charge with confidence',
+      features: [
+        { t: 'Nationwide map of 663+ stations', d: 'Every major public charging point in Georgia, in one view — new stations are added automatically.' },
+        { t: 'All networks in one app', d: 'Multiple independent Georgian charging networks together — no separate app for each.' },
+        { t: 'Smart filtering', d: 'Filter by operator, connector type, and power (kW) to find the right charger fast.' },
+        { t: 'Route planning with charging stops', d: 'Plan trips and find chargers along the way, powered by Google Directions.' },
+        { t: 'Detailed station info', d: 'Connectors, power, location, and operator — all at a glance.' },
+        { t: 'Quick sign-in', d: 'Sign in with Google or email and keep a saved profile.' },
+        { t: 'Georgia — and Europe too', d: 'Cities and highways nationwide, plus optional European countries for EV trips abroad.' },
+        { t: 'Completely free', d: 'No fees, no premium tier. GeoCharge is free for everyone.' }
+      ],
+      coverageKicker: 'Coverage',
+      coverageTitle: 'All of Georgia. One map.',
+      coverageBody: 'All of Georgia\u2019s major public charging networks, together in one place — from city centers to intercity highways. Wherever you drive, GeoCharge shows you the nearest place to plug in. The map keeps growing on its own — new stations appear automatically as providers bring them online.',
+      coverageEurope: 'Traveling beyond Georgia? Switch on European countries in the app settings and GeoCharge will show their charging stations too — so you can take your EV on a road trip across Europe with the same single app.',
+      stats: [
+        { n: '663+', l: 'charging stations, auto-updated' },
+        { n: '1', l: 'app for every network' },
+        { n: '100%', l: 'free for everyone' }
+      ],
+      howKicker: 'How it works',
+      howTitle: 'Charging in three simple steps',
+      steps: [
+        { n: '1', t: 'Download', d: 'Get GeoCharge free on Google Play.' },
+        { n: '2', t: 'Open the map', d: 'Find chargers near you or along your route.' },
+        { n: '3', t: 'Filter & navigate', d: 'Pick the right station, navigate to it, and charge.' }
+      ],
+      galleryKicker: 'Screenshots',
+      galleryTitle: 'Inside the app',
+      gallery: [
+        { caption: 'Nationwide coverage on a single map', alt: 'GeoCharge map of Georgia with charging station clusters in every region' },
+        { caption: 'Live map with station availability', alt: 'GeoCharge dark map of Tbilisi showing available EV charging stations' },
+        { caption: 'Light and dark themes', alt: 'GeoCharge light theme map of Tbilisi with charging stations and filters' },
+        { caption: 'Route planner with charging stops', alt: 'GeoCharge route planner screen with battery level and a suggested charging stop' },
+        { caption: 'Driving across Europe? Switch on more countries', alt: 'GeoCharge settings screen for enabling European countries and their charging stations' }
+      ],
+      whyTitle: 'Why drivers choose GeoCharge',
+      why: [
+        'One app instead of many',
+        'The most complete station coverage in Georgia',
+        'Plan longer trips with confidence',
+        'Free, fast, and simple'
+      ],
+      faqTitle: 'Frequently asked questions',
+      faq: [
+        { q: 'What is GeoCharge?', a: 'GeoCharge is a free app that shows EV charging stations across Georgia on one map, aggregating multiple charging networks.' },
+        { q: 'Is GeoCharge free?', a: 'Yes, GeoCharge is completely free to use.' },
+        { q: 'How many charging stations does GeoCharge show?', a: 'GeoCharge shows 663+ public charging stations across Georgia — and new stations are added automatically as they come online.' },
+        { q: 'Does GeoCharge work across all of Georgia?', a: 'Yes — in cities and along highways nationwide.' },
+        { q: 'Can I plan a route with charging stops?', a: 'Yes, GeoCharge includes route planning so you can find chargers along your way.' },
+        { q: 'What devices is GeoCharge available on?', a: 'GeoCharge is available on Android now (on Google Play); iOS is coming soon.' },
+        { q: 'Do I need an account?', a: 'You can sign in quickly with Google or email to save your profile.' },
+        { q: 'How is GeoCharge different from using each network\u2019s own app?', a: 'Instead of juggling multiple apps, GeoCharge brings stations from across Georgia\u2019s networks into a single map with consistent details and filtering.' }
+      ],
+      dlTitle: 'Download GeoCharge for free',
+      dlSub: 'Available now on Google Play. The iOS version is coming soon.',
+      dlFree: 'Free forever. No ads, no premium tier.',
+      contactKicker: 'Contact',
+      contactTitle: 'Get in touch',
+      contactSub: 'A question, feedback, or a missing station? Send us a message — we read everything.',
+      fName: 'Name',
+      fNamePh: 'Your name',
+      fEmail: 'Email',
+      fEmailPh: 'you@example.com',
+      fSubject: 'Subject (optional)',
+      fSubjectPh: 'What is it about?',
+      fMessage: 'Message',
+      fMessagePh: 'Write your message here\u2026',
+      fSend: 'Send message',
+      fSending: 'Sending\u2026',
+      fOk: 'Thank you! Your message has been sent.',
+      fErr: 'Something went wrong. Please try again.',
+      footerTagline: 'Every EV charger in Georgia, in one free app.',
+      footerDisclaimer: 'GeoCharge is a passion project, built and maintained by an EV enthusiast. Station information is updated automatically from every provider, so while we do our best, GeoCharge cannot guarantee that every detail is 100% accurate — we depend on the statuses our providers publish. If you ever spot incorrect information about a station, please write to us and we will look into it right away.',
+      footerPrivacy: 'Privacy Policy',
+      footerRights: '\u00A9 2026 GeoCharge. All rights reserved.'
+    },
+    ka: {
+      metaTitle: 'GeoCharge, ელექტრომობილის ყველა დამტენი საქართველოში, ერთ უფასო აპლიკაციაში',
+      metaDesc: 'GeoCharge, უფასო აპლიკაცია, რომელიც 663+ EV დამტენ სადგურს აჩვენებს მთელ საქართველოში ერთ რუკაზე. ყველა ქსელი ერთად, ჭკვიანი ფილტრებითა და მარშრუტის დაგეგმვით. Android, უკვე, iOS, მალე.',
+      nav: [
+        { id: 'about', label: 'შესახებ' },
+        { id: 'features', label: 'ფუნქციები' },
+        { id: 'coverage', label: 'დაფარვა' },
+        { id: 'how', label: 'როგორ მუშაობს' },
+        { id: 'faq', label: 'კითხვები' },
+        { id: 'download', label: 'ჩამოტვირთვა' }
+      ],
+      ctaDownload: 'ჩამოტვირთვა',
+      heroTrust: '663+ დამტენი სადგური მთელ საქართველოში, ავტომატური განახლებით, სრულიად უფასოდ',
+      heroTitle1: 'ელექტრომობილის ყველა დამტენი საქართველოში.',
+      heroTitle2: 'ერთ აპლიკაციაში.',
+      heroSub: 'GeoCharge აერთიანებს 663-ზე მეტ საჯარო დამტენ სადგურს საქართველოს სხვადასხვა ქსელიდან ერთ უფასო ინტერაქტიულ რუკაზე, ყოველთვის იცით, სად დატენოთ ელექტრომანქანა.',
+      playTop: 'ხელმისაწვდომია',
+      appStoreTop: 'ჩამოტვირთეთ',
+      comingSoon: 'მალე',
+      altNationwide: 'GeoCharge აპლიკაციის რუკა, ელექტრომობილის დამტენი სადგურები მთელ საქართველოში',
+      aboutKicker: 'შესახებ',
+      aboutTitle: 'რა არის GeoCharge?',
+      aboutP1: 'საქართველოში ელექტრომობილების დატენვის ინფრასტრუქტურა მრავალ დამოუკიდებელ ოპერატორზეა გადანაწილებული. აქამდე მძღოლებს რამდენიმე სხვადასხვა აპლიკაციის გამოყენება უწევდათ შესაფერისი დამტენის მოსაძებნად, ან საერთოდ აპლიკაციის გარეშე რჩებოდნენ.',
+      aboutP2: 'GeoCharge მათ აერთიანებს: ქვეყნის ქსელების საჯარო დამტენი სადგურები თავმოყრილია ერთ ინტერაქტიულ რუკაზე, ერთიანი დეტალებითა და ფილტრებით.',
+      aboutP3: 'ჩვენი მისიაა, ელექტრომობილით გადაადგილება საქართველოში მარტივი გახდეს, ყველა მძღოლს ჰქონდეს ერთი სანდო ადგილი ნებისმიერი საჯარო დამტენის მოსაძებნად, გასაფილტრად და ნავიგაციისთვის.',
+      freeNote: 'GeoCharge სრულიად უფასოა ყველასთვის.',
+      featuresKicker: 'ფუნქციები',
+      featuresTitle: 'ყველაფერი, რაც დატენვისთვის გჭირდებათ',
+      features: [
+        { t: '663+ სადგური ერთ რუკაზე', d: 'საქართველოს ყველა მთავარი საჯარო დამტენი წერტილი ერთ ხედში, ახალი სადგურები ავტომატურად ემატება.' },
+        { t: 'ყველა ქსელი ერთ აპლიკაციაში', d: 'რამდენიმე დამოუკიდებელი ქართული ქსელი ერთად, ცალკე აპლიკაციები აღარ გჭირდებათ.' },
+        { t: 'ჭკვიანი ფილტრები', d: 'გაფილტრეთ ოპერატორის, კონექტორის ტიპისა და სიმძლავრის (kW) მიხედვით.' },
+        { t: 'მარშრუტი დატენვის გაჩერებებით', d: 'დაგეგმეთ მგზავრობა და იპოვეთ დამტენები გზაში, Google Directions-ის საფუძველზე.' },
+        { t: 'დეტალური ინფორმაცია', d: 'კონექტორები, სიმძლავრე, მდებარეობა და ოპერატორი, ერთი შეხედვით.' },
+        { t: 'სწრაფი ავტორიზაცია', d: 'შესვლა Google-ით ან ელფოსტით, შენახული პროფილით.' },
+        { t: 'საქართველო, და ევროპაც', d: 'ქალაქები და ავტომაგისტრალები მთელ ქვეყანაში, სურვილისამებრ კი ევროპის ქვეყნების დამტენებიც, საზღვარგარეთ მოგზაურობისთვის.' },
+        { t: 'სრულიად უფასო', d: 'არც გადასახადი, არც პრემიუმი, GeoCharge უფასოა ყველასთვის.' }
+      ],
+      coverageKicker: 'დაფარვა',
+      coverageTitle: 'მთელი საქართველო. ერთი რუკა.',
+      coverageBody: 'საქართველოს ყველა ძირითადი საჯარო დამტენი ქსელი, ერთად, ერთ ადგილას. ქალაქის ცენტრებიდან საქალაქთაშორისო ავტომაგისტრალებამდე: სადაც არ უნდა მგზავრობდეთ, GeoCharge გაჩვენებთ უახლოეს დატენვის ადგილს. რუკა კი თავისით იზრდება, ახალი სადგურები ავტომატურად ჩნდება, როგორც კი პროვაიდერები მათ აამუშავებენ.',
+      coverageEurope: 'აპირებთ მოგზაურობას საქართველოს ფარგლებს გარეთ? ჩართეთ ევროპის ქვეყნები აპლიკაციის პარამეტრებში და GeoCharge მათ დამტენ სადგურებსაც გაჩვენებთ, ელექტრომობილით ევროპაშიც თავისუფლად იმოგზაურებთ, იმავე ერთი აპლიკაციით.',
+      stats: [
+        { n: '663+', l: 'დამტენი სადგური, ავტომატურად განახლებადი' },
+        { n: '1', l: 'აპლიკაცია ყველა ქსელისთვის' },
+        { n: '100%', l: 'უფასო ყველასთვის' }
+      ],
+      howKicker: 'როგორ მუშაობს',
+      howTitle: 'დატენვა სამ მარტივ ნაბიჯში',
+      steps: [
+        { n: '1', t: 'ჩამოტვირთეთ', d: 'ჩამოტვირთეთ GeoCharge უფასოდ Google Play-დან.' },
+        { n: '2', t: 'გახსენით რუკა', d: 'იპოვეთ დამტენები თქვენ გარშემო ან მარშრუტზე.' },
+        { n: '3', t: 'გაფილტრეთ და დატენეთ', d: 'აირჩიეთ შესაფერისი სადგური, გაჰყევით ნავიგაციას და დატენეთ.' }
+      ],
+      galleryKicker: 'ეკრანები',
+      galleryTitle: 'აპლიკაციის ეკრანები',
+      gallery: [
+        { caption: 'მთელი ქვეყნის დაფარვა ერთ რუკაზე', alt: 'GeoCharge-ის რუკა, დამტენი სადგურების ჯგუფები საქართველოს ყველა რეგიონში' },
+        { caption: 'ცოცხალი რუკა ხელმისაწვდომობის სტატუსით', alt: 'GeoCharge-ის მუქი რუკა თბილისში ხელმისაწვდომი დამტენი სადგურებით' },
+        { caption: 'ნათელი და მუქი თემები', alt: 'GeoCharge-ის ნათელი თემის რუკა თბილისში დამტენი სადგურებითა და ფილტრებით' },
+        { caption: 'მარშრუტის დაგეგმვა დატენვის გაჩერებებით', alt: 'GeoCharge-ის მარშრუტის დაგეგმვის ეკრანი ბატარეის დონითა და დატენვის გაჩერებით' },
+        { caption: 'მოგზაურობთ ევროპაში? ჩართეთ სასურველი ქვეყნები', alt: 'GeoCharge-ის პარამეტრების ეკრანი ევროპის ქვეყნებისა და მათი დამტენი სადგურების ჩასართავად' }
+      ],
+      whyTitle: 'რატომ ირჩევენ მძღოლები GeoCharge-ს',
+      why: [
+        'ერთი აპლიკაცია მრავლის ნაცვლად',
+        'ყველაზე სრული დაფარვა საქართველოში',
+        'შორი მგზავრობა, თავდაჯერებულად',
+        'უფასო, სწრაფი და მარტივი'
+      ],
+      faqTitle: 'ხშირად დასმული კითხვები',
+      faq: [
+        { q: 'რა არის GeoCharge?', a: 'GeoCharge არის უფასო აპლიკაცია, რომელიც საქართველოს EV დამტენ სადგურებს ერთ რუკაზე აჩვენებს და რამდენიმე დამტენ ქსელს აერთიანებს.' },
+        { q: 'GeoCharge უფასოა?', a: 'დიახ, GeoCharge სრულიად უფასოა.' },
+        { q: 'რამდენ დამტენ სადგურს აჩვენებს GeoCharge?', a: '663-ზე მეტ საჯარო დამტენ სადგურს მთელ საქართველოში, ახალი სადგურები კი ავტომატურად ემატება, როგორც კი ამუშავდება.' },
+        { q: 'მუშაობს GeoCharge მთელ საქართველოში?', a: 'დიახ, ქალაქებშიც და ავტომაგისტრალებზეც, მთელი ქვეყნის მასშტაბით.' },
+        { q: 'შემიძლია მარშრუტის დაგეგმვა დატენვის გაჩერებებით?', a: 'დიახ, GeoCharge-ს აქვს მარშრუტის დაგეგმვის ფუნქცია, რომ გზაში დამტენები იპოვოთ.' },
+        { q: 'რომელ მოწყობილობებზეა GeoCharge ხელმისაწვდომი?', a: 'ამჟამად Android-ზე (Google Play); iOS ვერსია მალე გამოვა.' },
+        { q: 'მჭირდება ანგარიში?', a: 'შეგიძლიათ სწრაფად შეხვიდეთ Google-ით ან ელფოსტით და შეინახოთ პროფილი.' },
+        { q: 'რით განსხვავდება GeoCharge ცალკეული ქსელების აპლიკაციებისგან?', a: 'რამდენიმე აპლიკაციის ნაცვლად GeoCharge ყველა ქსელის სადგურს ერთ რუკაზე აჩვენებს, ერთიანი დეტალებითა და ფილტრებით.' },
+        { q: 'შემიძლია GeoCharge-ის გამოყენება ევროპაში?', a: 'დიახ. პარამეტრებში ჩართეთ ევროპის სასურველი ქვეყნები და GeoCharge მათ დამტენ სადგურებსაც იმავე რუკაზე გაჩვენებთ, ასე ელექტრომობილით ევროპაში მოგზაურობასაც მარტივად დაგეგმავთ.' }
+      ],
+      dlTitle: 'ჩამოტვირთეთ GeoCharge უფასოდ',
+      dlSub: 'ხელმისაწვდომია Google Play-ზე. iOS ვერსია მალე გამოვა.',
+      dlFree: '',
+      contactKicker: 'კონტაქტი',
+      contactTitle: 'დაგვიკავშირდით',
+      contactSub: 'კითხვა, შენიშვნა თუ გამორჩენილი სადგური? მოგვწერეთ, ყველა შეტყობინებას ვკითხულობთ.',
+      fName: 'სახელი',
+      fNamePh: 'თქვენი სახელი',
+      fEmail: 'ელფოსტა',
+      fEmailPh: 'you@example.com',
+      fSubject: 'თემა (არასავალდებულო)',
+      fSubjectPh: 'რას ეხება?',
+      fMessage: 'შეტყობინება',
+      fMessagePh: 'დაწერეთ შეტყობინება აქ…',
+      fFile: 'დანართი (არასავალდებულო)',
+      fFileNote: 'დასაშვებია: PDF, ZIP, DOC/DOCX, XLSX, HTML, სურათები. ფაილის მაქსიმალური ზომა: 10 MB.',
+      fFileBig: 'მიმაგრებული ფაილი 10 MB-ს აღემატება. გთხოვთ, აირჩიოთ უფრო პატარა ფაილი.',
+      fSend: 'გაგზავნა',
+      fSending: 'იგზავნება…',
+      fOk: 'მადლობა! თქვენი შეტყობინება გაიგზავნა.',
+      fErr: 'დაფიქსირდა შეცდომა. გთხოვთ, სცადოთ თავიდან.',
+      footerTagline: 'ელექტრომობილის ყველა დამტენი საქართველოში, ერთ უფასო აპლიკაციაში.',
+      footerDisclaimer: 'GeoCharge ენთუზიასტის მიერ შექმნილი პროექტია, ელექტრომობილების მოყვარულთათვის. სადგურების შესახებ ინფორმაცია აპლიკაციაში ავტომატურად ახლდება უშუალოდ პროვაიდერებისგან, ამიტომ GeoCharge ვერ იძლევა მონაცემთა 100%-იანი სიზუსტის გარანტიას, ჩვენ ოპერატორების მიერ გამოქვეყნებულ სტატუსებზე ვართ დამოკიდებული. თუ რომელიმე სადგურზე უზუსტობას შენიშნავთ, აუცილებლად მოგვწერეთ, მაშინვე გადავამოწმებთ.',
+      footerPrivacy: 'კონფიდენციალურობის პოლიტიკა',
+      footerRights: '© 2026 GeoCharge. ყველა უფლება დაცულია.'
+    }
+  };
+
+  componentDidMount() {
+    let lang = 'ka';
+    try {
+      const qp = new URLSearchParams(window.location.search).get('lang');
+      const saved = window.localStorage.getItem('geocharge-lang');
+      if (qp === 'en' || qp === 'ka') lang = qp;
+      else if (saved === 'en' || saved === 'ka') lang = saved;
+    } catch (e) {}
+    if (lang !== this.state.lang) this.setState({ lang });
+    this.updateMeta(lang);
+    this._mq = window.matchMedia('(max-width: 1080px)');
+    this._onMq = () => this.setState({ mobile: this._mq.matches, menuOpen: false });
+    this._mq.addEventListener('change', this._onMq);
+    this.setState({ mobile: this._mq.matches });
+    setTimeout(() => this.setupReveal(), 200);
+  }
+
+  componentWillUnmount() {
+    if (this._mq) this._mq.removeEventListener('change', this._onMq);
+  }
+
+  setupReveal() {
+    try {
+      const els = document.querySelectorAll('[data-reveal]');
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((en) => {
+          if (en.isIntersecting) {
+            en.target.style.opacity = '1';
+            en.target.style.transform = 'none';
+            io.unobserve(en.target);
+          }
+        });
+      }, { threshold: 0.1 });
+      els.forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.top < window.innerHeight * 0.92) return;
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(18px)';
+        el.style.transition = 'opacity 0.65s ease, transform 0.65s ease';
+        io.observe(el);
+      });
+    } catch (e) {}
+  }
+
+  setLang(l) {
+    try { window.localStorage.setItem('geocharge-lang', l); } catch (e) {}
+    this.setState({ lang: l, menuOpen: false });
+    this.updateMeta(l);
+  }
+
+  ensureMeta(attr, key, content) {
+    let el = document.head.querySelector('meta[' + attr + '="' + key + '"]');
+    if (!el) {
+      el = document.createElement('meta');
+      el.setAttribute(attr, key);
+      document.head.appendChild(el);
+    }
+    el.setAttribute('content', content);
+  }
+
+  ensureLink(id, rel, href, hreflang) {
+    let el = document.getElementById(id);
+    if (!el) {
+      el = document.createElement('link');
+      el.id = id;
+      document.head.appendChild(el);
+    }
+    el.rel = rel;
+    el.href = href;
+    if (hreflang) el.hreflang = hreflang;
+  }
+
+  updateMeta(lang) {
+    const t = this.translations[lang];
+    document.title = t.metaTitle;
+    document.documentElement.lang = lang;
+    this.ensureMeta('name', 'description', t.metaDesc);
+    this.ensureMeta('name', 'viewport', 'width=device-width, initial-scale=1');
+    this.ensureMeta('property', 'og:title', t.metaTitle);
+    this.ensureMeta('property', 'og:description', t.metaDesc);
+    this.ensureMeta('property', 'og:type', 'website');
+    this.ensureMeta('property', 'og:url', this.SITE + '/');
+    this.ensureMeta('property', 'og:image', this.SITE + '/assets/icon-1024.png');
+    this.ensureMeta('property', 'og:locale', lang === 'ka' ? 'ka_GE' : 'en_US');
+    this.ensureMeta('property', 'og:site_name', 'GeoCharge');
+    this.ensureMeta('name', 'twitter:card', 'summary_large_image');
+    this.ensureMeta('name', 'twitter:title', t.metaTitle);
+    this.ensureMeta('name', 'twitter:description', t.metaDesc);
+    this.ensureMeta('name', 'twitter:image', this.SITE + '/assets/icon-1024.png');
+    this.ensureLink('gc-canonical', 'canonical', this.SITE + '/');
+    this.ensureLink('gc-alt-ka', 'alternate', this.SITE + '/?lang=ka', 'ka');
+    this.ensureLink('gc-alt-en', 'alternate', this.SITE + '/?lang=en', 'en');
+    this.ensureLink('gc-alt-xd', 'alternate', this.SITE + '/', 'x-default');
+    let s = document.getElementById('gc-jsonld');
+    if (!s) {
+      s = document.createElement('script');
+      s.id = 'gc-jsonld';
+      s.type = 'application/ld+json';
+      document.head.appendChild(s);
+    }
+    s.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': [
+        { '@type': 'Organization', name: 'GeoCharge', url: this.SITE + '/', logo: this.SITE + '/assets/icon-1024.png' },
+        {
+          '@type': 'MobileApplication',
+          name: 'GeoCharge',
+          operatingSystem: 'Android',
+          applicationCategory: 'TravelApplication',
+          description: t.metaDesc,
+          installUrl: this.PLAY,
+          url: this.SITE + '/',
+          inLanguage: lang,
+          offers: { '@type': 'Offer', price: '0', priceCurrency: 'GEL' }
+        },
+        {
+          '@type': 'FAQPage',
+          inLanguage: lang,
+          mainEntity: t.faq.map((f) => ({
+            '@type': 'Question',
+            name: f.q,
+            acceptedAnswer: { '@type': 'Answer', text: f.a }
+          }))
+        }
+      ]
+    });
+  }
+
+  scrollToId(id, e) {
+    if (e) e.preventDefault();
+    this.setState({ menuOpen: false });
+    const el = document.getElementById(id);
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY - 66;
+    window.scrollTo({ top, behavior: 'smooth' });
+  }
+
+  async submitForm(e) {
+    e.preventDefault();
+    const form = e.target;
+    const data = new FormData(form);
+    if (data.get('botcheck')) return;
+    data.delete('botcheck');
+    const file = data.get('attachment');
+    if (file && typeof file === 'object') {
+      if (!file.size) data.delete('attachment');
+      else if (file.size > 10 * 1024 * 1024) { this.setState({ formStatus: 'big' }); return; }
+    }
+    this.setState({ formStatus: 'sending' });
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        body: data
+      });
+      const json = await res.json();
+      if (json && json.success) {
+        this.setState({ formStatus: 'ok' });
+        form.reset();
+      } else {
+        this.setState({ formStatus: 'err' });
+      }
+    } catch (err) {
+      this.setState({ formStatus: 'err' });
+    }
+  }
+
+  icn(children) {
+    return React.createElement(
+      'svg',
+      { width: 25, height: 25, viewBox: '0 0 24 24', fill: 'none', stroke: '#17995F', strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true },
+      children.map((c, i) => React.createElement(c[0], Object.assign({ key: i }, c[1])))
+    );
+  }
+
+  get icons() {
+    const P = (d) => ['path', { d }];
+    const C = (cx, cy, r) => ['circle', { cx, cy, r }];
+    return [
+      [P('M12 21s-7-5.3-7-11a7 7 0 0 1 14 0c0 5.7-7 11-7 11Z'), C(12, 10, 2.6)],
+      [P('M12 3l9 5-9 5-9-5 9-5Z'), P('M3 12.5l9 5 9-5'), P('M3 17l9 5 9-5')],
+      [P('M4 5h16l-6.5 7.6V18l-3 2v-7.4L4 5Z')],
+      [C(6, 6, 2.2), C(18, 18, 2.2), P('M8.2 6H14a4 4 0 0 1 0 8h-4a4 4 0 0 0 0 8h5.8')],
+      [C(12, 12, 9), P('M12 11v5.2'), P('M12 7.6v0.2')],
+      [C(12, 8, 3.4), P('M5.5 20a6.5 6.5 0 0 1 13 0')],
+      [P('M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z'), P('M9 4v14'), P('M15 6v14')],
+      [P('M20.6 12.7 12.7 20.6a2 2 0 0 1-2.8 0L4 14.7V4h10.7l5.9 5.9a2 2 0 0 1 0 2.8Z'), C(8.6, 8.6, 1.3)]
+    ];
+  }
+
+  langBtn(active) {
+    return {
+      background: active ? '#2BD594' : 'transparent',
+      color: active ? '#0D1A13' : '#B9C4CB',
+      border: 'none',
+      padding: '7px 13px',
+      fontWeight: 600,
+      fontSize: '12.5px',
+      cursor: 'pointer',
+      fontFamily: 'inherit',
+      letterSpacing: '0.03em'
+    };
+  }
+
+  renderVals() {
+    const lang = this.state.lang;
+    const t = this.translations[lang];
+    const status = this.state.formStatus;
+    return {
+      t,
+      isMobile: this.state.mobile,
+      isDesktop: !this.state.mobile,
+      menuOpen: this.state.menuOpen,
+      toggleMenu: () => this.setState((s) => ({ menuOpen: !s.menuOpen })),
+      setKa: () => this.setLang('ka'),
+      setEn: () => this.setLang('en'),
+      kaBtnStyle: this.langBtn(lang === 'ka'),
+      enBtnStyle: this.langBtn(lang === 'en'),
+      navItems: t.nav.map((n) => ({
+        label: n.label,
+        href: '#' + n.id,
+        onClick: (e) => this.scrollToId(n.id, e)
+      })),
+      ctaClick: (e) => this.scrollToId('download', e),
+      goTop: (e) => { if (e) e.preventDefault(); this.setState({ menuOpen: false }); window.scrollTo({ top: 0, behavior: 'smooth' }); },
+      featureCards: t.features.map((f, i) => ({ t: f.t, d: f.d, icon: this.icn(this.icons[i]) })),
+      stats: t.stats,
+      steps: t.steps,
+      gal: {
+        cap1: t.gallery[0].caption, alt1: t.gallery[0].alt,
+        cap2: t.gallery[1].caption, alt2: t.gallery[1].alt,
+        cap3: t.gallery[2].caption, alt3: t.gallery[2].alt,
+        cap4: t.gallery[3].caption, alt4: t.gallery[3].alt,
+        cap5: t.gallery[4].caption, alt5: t.gallery[4].alt
+      },
+      whyItems: t.why,
+      faqItems: t.faq.map((f, i) => ({
+        q: f.q,
+        a: f.a,
+        open: this.state.openFaq === i,
+        sign: this.state.openFaq === i ? '−' : '+',
+        toggle: () => this.setState((s) => ({ openFaq: s.openFaq === i ? -1 : i }))
+      })),
+      submitForm: (e) => this.submitForm(e),
+      isSending: status === 'sending',
+      showOk: status === 'ok',
+      showErr: status === 'err' || status === 'big',
+      errText: status === 'big' ? t.fFileBig : t.fErr,
+      submitLabel: status === 'sending' ? t.fSending : t.fSend,
+      privacyHref: 'Privacy Policy.dc.html?lang=' + lang
+    };
+  }
+}
+</script>
+</body>
+</html>
