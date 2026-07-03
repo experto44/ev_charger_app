@@ -849,6 +849,34 @@ class _MapScreenState extends State<MapScreen>
                     ),
                   ),
                 ]),
+              // Attribution for the third-party map tiles and station data.
+              // Required by the CARTO / OpenStreetMap and Open Charge Map licences.
+              RichAttributionWidget(
+                alignment: AttributionAlignment.bottomLeft,
+                attributions: [
+                  TextSourceAttribution(
+                    'OpenStreetMap contributors',
+                    onTap: () => launchUrl(
+                      Uri.parse('https://www.openstreetmap.org/copyright'),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                  ),
+                  TextSourceAttribution(
+                    'CARTO',
+                    onTap: () => launchUrl(
+                      Uri.parse('https://carto.com/attributions'),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                  ),
+                  TextSourceAttribution(
+                    'Open Charge Map',
+                    onTap: () => launchUrl(
+                      Uri.parse('https://openchargemap.org/'),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
 
