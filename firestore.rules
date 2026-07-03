@@ -1,0 +1,51 @@
+rules_version = '2';
+
+// GeoCharge Firestore security rules.
+//
+// Two audiences:
+//   • The mobile app — each signed-in user reads/writes ONLY their own
+//     users/{uid} document (profile, phone, premium flag, usage analytics).
+//   • The admin panel (admin.geocharge.ge) — an allow-listed admin reads the
+//     whole users collection (and manages the admin list).
+//
+// Admin membership is an entry in the `admins` collection keyed by the admin's
+// email. The very first admin must be created by hand in the Firebase console
+// (the rules below forbid writing `admins` unless you are already an admin, so
+// the collection can't be bootstrapped from the client).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // True when the caller is a signed-in, allow-listed admin.
+    function isAdmin() {
+      return request.auth != null
+          && request.auth.token.email != null
+          && exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+    }
+
+    // ── User accounts ────────────────────────────────────────────────────────
+    match /users/{uid} {
+      // A user sees only their own document; an admin can read (and query/list)
+      // every user for the panel.
+      allow get:  if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+
+      // Only the owner writes their own profile/analytics. Admins have no reason
+      // to mutate user documents from the panel, so writes stay owner-only.
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // ── Admin allow-list ─────────────────────────────────────────────────────
+    match /admins/{email} {
+      // A signed-in user may read their OWN admin entry to learn whether they're
+      // an admin (needed at panel login). Enumerating the whole list is admins-only.
+      allow get:  if request.auth != null
+                  && (request.auth.token.email == email || isAdmin());
+      allow list: if isAdmin();
+
+      // Adding/removing admins is restricted to existing admins.
+      allow write: if isAdmin();
+    }
+
+    // Everything else is denied by default (no rule = no access).
+  }
+}

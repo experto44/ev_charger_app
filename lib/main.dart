@@ -30,6 +30,7 @@ import 'route_planner_screen.dart';
 import 'routing_service.dart';
 import 'services/ad_service.dart';
 import 'services/purchase_service.dart';
+import 'services/user_activity_service.dart';
 import 'settings_screen.dart';
 
 void main() async {
@@ -40,6 +41,9 @@ void main() async {
   // reads isPremium to decide whether to load anything at all.
   await PurchaseService.I.init();
   await AdService.I.init();
+  // Record an app open for analytics (no-op when signed out). Unawaited so it
+  // never delays first paint; auth persistence has already restored any user.
+  unawaited(UserActivityService.I.recordOpen());
   PaintingBinding.instance.imageCache.maximumSize = 30;
   PaintingBinding.instance.imageCache.maximumSizeBytes = 10 * 1024 * 1024;
   // iOS only: after the first frame (app active), ask for tracking permission so
@@ -502,6 +506,9 @@ class _MapScreenState extends State<MapScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _locateMe();
+      // Count re-opens (throttled inside the service) so "opens per day" and
+      // "last active" stay current for the admin analytics.
+      unawaited(UserActivityService.I.recordOpen());
     }
   }
 

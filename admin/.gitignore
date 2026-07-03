@@ -5,14 +5,12 @@
 *.swp
 .DS_Store
 .atom/
+.build/
 .buildlog/
 .history
 .svn/
+.swiftpm/
 migrate_working_dir/
-
-# Firebase CLI deploy cache & tooling artifacts
-.firebase/
-.playwright-mcp/
 
 # IntelliJ related
 *.iml
@@ -29,14 +27,11 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
-.flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
-
-# Firebase iOS config — kept local, supplied to CI as a secure base64 var.
-ios/Runner/GoogleService-Info.plist
+/coverage/
 
 # Symbolication related
 app.*.symbols

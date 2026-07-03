@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -9,6 +10,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import 'purchase_service.dart';
+import 'user_activity_service.dart';
 
 class AuthService {
   static final _auth      = FirebaseAuth.instance;
@@ -27,6 +29,8 @@ class AuthService {
     );
     // Pull this account's premium status from Firestore into local state.
     await PurchaseService.I.syncPremiumFromFirestore();
+    // Best-effort: stamp/refresh usage analytics for the admin panel.
+    unawaited(UserActivityService.I.recordOpen());
     return cred;
   }
 
@@ -41,6 +45,8 @@ class AuthService {
     // New account starts with no premium; sync clears any premium the previous
     // user left cached on this device.
     await PurchaseService.I.syncPremiumFromFirestore();
+    // Best-effort: stamp/refresh usage analytics for the admin panel.
+    unawaited(UserActivityService.I.recordOpen());
     return cred;
   }
 
@@ -67,6 +73,8 @@ class AuthService {
     final cred = await _auth.signInWithCredential(credential);
     // Pull this account's premium status from Firestore into local state.
     await PurchaseService.I.syncPremiumFromFirestore();
+    // Best-effort: stamp/refresh usage analytics for the admin panel.
+    unawaited(UserActivityService.I.recordOpen());
     return cred;
   }
 
@@ -107,6 +115,8 @@ class AuthService {
     }
 
     await PurchaseService.I.syncPremiumFromFirestore();
+    // Best-effort: stamp/refresh usage analytics for the admin panel.
+    unawaited(UserActivityService.I.recordOpen());
     return cred;
   }
 
