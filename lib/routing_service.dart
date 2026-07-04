@@ -275,6 +275,7 @@ class EVRouteResult {
     required this.options,
     required this.effectiveRangeKm,
     required this.maxRangeKm,
+    this.legEndsKm = const [],
   });
   final List<LatLng>       polylinePoints;
   final double             totalDistanceKm;
@@ -283,6 +284,12 @@ class EVRouteResult {
   final List<RouteChargerOption> options;          // every selectable block
   final double             effectiveRangeKm;
   final double             maxRangeKm;
+  /// Cumulative along-route distance (km) at the end of each Directions leg,
+  /// i.e. legEndsKm[i] is where waypoint i+1 sits along the route. Lets the
+  /// planner interleave charging stops with the user's manual stops WITHOUT
+  /// re-sorting the manual stops (their order is the driver's choice — a round
+  /// trip must never be "optimised" back into a straight line).
+  final List<double>       legEndsKm;
 }
 
 // ── Routing service ───────────────────────────────────────────────────────────
@@ -332,11 +339,15 @@ class RoutingService {
       final pts = _decodePolyline(
           route['overview_polyline']['points'] as String);
 
-      // Total distance from leg metadata (more accurate than polyline)
+      // Total distance from leg metadata (more accurate than polyline).
+      // legEnds records the cumulative km at each waypoint boundary so callers
+      // can place the user's manual stops along the route.
       double totalDistKm = 0;
+      final legEnds = <double>[];
       for (final leg in route['legs'] as List) {
         totalDistKm +=
             ((leg as Map<String, dynamic>)['distance']['value'] as int) / 1000.0;
+        legEnds.add(totalDistKm);
       }
 
       // ── Cumulative along-route distance for every polyline point ───────────
@@ -555,6 +566,7 @@ class RoutingService {
         options:             options,
         effectiveRangeKm:    effectiveKm,
         maxRangeKm:          maxRangeKm,
+        legEndsKm:           legEnds,
       );
     } catch (_) {
       return null;

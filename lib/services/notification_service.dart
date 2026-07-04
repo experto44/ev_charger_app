@@ -11,6 +11,19 @@ import '../l10n/app_strings.dart';
 /// Result of attempting to arm a "notify me when this charger frees up" alert.
 enum AlertResult { ok, limitReached, permissionDenied, error }
 
+/// One active "charger freed up" alert, as shown in the profile's
+/// "Active Alerts" list.
+class ChargerAlert {
+  const ChargerAlert({
+    required this.stationId,
+    required this.name,
+    required this.provider,
+  });
+  final String stationId;
+  final String name;
+  final String provider;
+}
+
 /// Manages the "Notify me!" charger-free push alerts.
 ///
 /// Flow:
@@ -45,17 +58,25 @@ class NotificationService {
   String? _token;
   bool _initialized = false;
 
-  /// Station ids this device currently has an active alert on. Cached so the
-  /// station sheet can render the toggle state instantly without a round-trip.
-  final Set<String> _subscribed = <String>{};
+  /// Active alerts by station id (with name/provider for the profile list).
+  /// Cached so the station sheet can render the toggle state instantly
+  /// without a round-trip.
+  final Map<String, ChargerAlert> _subscribed = <String, ChargerAlert>{};
 
-  /// Rebuilt-on-change flag so any listening widget (the station sheet) can
-  /// refresh its "alert on/off" state after a subscribe/unsubscribe.
+  /// Rebuilt-on-change flag so any listening widget (the station sheet, the
+  /// profile's Active Alerts list) can refresh after a subscribe/unsubscribe.
   final ValueNotifier<int> revision = ValueNotifier<int>(0);
 
   bool get ready => _token != null;
   int get count => _subscribed.length;
-  bool isSubscribed(String stationId) => _subscribed.contains(stationId);
+  bool isSubscribed(String stationId) => _subscribed.containsKey(stationId);
+
+  /// Current alerts, name-sorted, for the profile's "Active Alerts" section.
+  List<ChargerAlert> get alerts {
+    final list = _subscribed.values.toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+    return list;
+  }
 
   // FCM tokens are safe as Firestore doc ids except that ids may not contain
   // '/'. Sanitize for the id; the real token is always stored in the `token`
@@ -97,9 +118,15 @@ class NotificationService {
     try {
       final snap = await doc.get();
       final subs = (snap.data()?['subs'] as Map<String, dynamic>?) ?? const {};
-      _subscribed
-        ..clear()
-        ..addAll(subs.keys);
+      _subscribed.clear();
+      subs.forEach((id, value) {
+        final v = value is Map<String, dynamic> ? value : const <String, dynamic>{};
+        _subscribed[id] = ChargerAlert(
+          stationId: id,
+          name:      (v['name'] as String?) ?? id,
+          provider:  (v['provider'] as String?) ?? '',
+        );
+      });
       revision.value++;
     } catch (_) {
       // Offline / read error — leave the cache empty; the toggles just show off.
@@ -135,7 +162,7 @@ class NotificationService {
     required String provider,
   }) async {
     if (stationId.isEmpty) return AlertResult.error;
-    if (_subscribed.contains(stationId)) return AlertResult.ok;
+    if (_subscribed.containsKey(stationId)) return AlertResult.ok;
     if (_subscribed.length >= _maxAlerts) return AlertResult.limitReached;
 
     // Make sure we actually have permission + a token before promising alerts.
@@ -165,7 +192,11 @@ class NotificationService {
           },
         },
       }, SetOptions(merge: true));
-      _subscribed.add(stationId);
+      _subscribed[stationId] = ChargerAlert(
+        stationId: stationId,
+        name:      stationName,
+        provider:  provider,
+      );
       revision.value++;
       return AlertResult.ok;
     } catch (e) {

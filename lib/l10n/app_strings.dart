@@ -244,6 +244,25 @@ class AppStrings {
       ? 'გათავისუფლდა! მოასწარი დატენვა სანამ სხვამ მიგასწრო 🙂'
       : 'is now free! Grab it before someone beats you to it 🙂';
 
+  // ── Active alerts list (profile) ─────────────────────────────────────────
+  static String get activeAlertsTitle =>
+      isGeorgian ? 'აქტიური შეტყობინებები' : 'Active Alerts';
+  static String get activeAlertsHint => isGeorgian
+      ? 'დამტენები, რომელთა გათავისუფლებასაც ელოდები'
+      : 'Chargers you are waiting to free up';
+  static String get noActiveAlerts => isGeorgian
+      ? 'აქტიური შეტყობინება არ გაქვს — დაკავებულ დამტენზე დააჭირე „შემატყობინე!"'
+      : 'No active alerts — tap "Notify me!" on a busy charger';
+  static String get cancelAlert =>
+      isGeorgian ? 'გაუქმება' : 'Cancel';
+
+  // ── Map filter chips ─────────────────────────────────────────────────────
+  static String get fastDcSheetTitle =>
+      isGeorgian ? 'Fast DC — მინიმალური სიმძლავრე' : 'Fast DC — Minimum power';
+  static String get filterOff => isGeorgian ? 'გამორთვა' : 'Off';
+  static String get dcAnyPower =>
+      isGeorgian ? 'DC — ნებისმიერი სიმძლავრე' : 'DC — any power';
+
   // ── Paywall ──────────────────────────────────────────────────────────────
   static String get paywallSubtitle => isGeorgian
       ? 'უფასო 7 დღე, შემდეგ აირჩიე გეგმა'

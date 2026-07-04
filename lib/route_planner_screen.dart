@@ -193,7 +193,8 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
 
   void _addStop() {
     if (_stops.length >= 5) { return; }
-    setState(() => _stops.insert(_stops.length - 1, RouteStop()));
+    // Appends a new final destination; drag any stop to rearrange afterwards.
+    setState(() => _stops.add(RouteStop()));
     _scheduleRouteCompute();
   }
 
@@ -201,6 +202,17 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
     setState(() {
       _stops[i].dispose();
       _stops.removeAt(i);
+    });
+    _scheduleRouteCompute();
+  }
+
+  // Drag-handle reorder. RouteStop objects move whole (controller + coords),
+  // and the From/Stop N/To labels + dot colours re-derive from position.
+  // Wired to onReorderItem, so newIndex arrives already adjusted for removal.
+  void _onReorder(int oldIndex, int newIndex) {
+    setState(() {
+      final s = _stops.removeAt(oldIndex);
+      _stops.insert(newIndex, s);
     });
     _scheduleRouteCompute();
   }
@@ -255,15 +267,6 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
         cos(a.latitude * pi / 180) * cos(b.latitude * pi / 180) *
         sin(dLng / 2) * sin(dLng / 2);
     return 2 * r * asin(sqrt(x));
-  }
-
-  // ── Linear progress of a point along origin→destination (0.0–1.0) ─────────
-  // Used to sort all waypoints (manual + charging) into the correct visit order
-  // before handing them to the Google Maps URL.
-  static double _linearProgress(LatLng pt, LatLng origin, LatLng dest) {
-    final total = _haversine(origin, dest);
-    if (total == 0) { return 0; }
-    return (_haversine(origin, pt) / total).clamp(0.0, 1.0);
   }
 
   // ── Find N charging-station waypoints evenly spaced along origin→dest ──────
@@ -344,14 +347,12 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
   }
 
   // ── Open complete multi-stop route in native Google Maps ─────────────────
-  // Waypoint build order:
-  //   1. Manual intermediate stops the user added (RouteStop entries 1..n-2)
-  //   2. EV charging stops from RoutingService.planRoute, which routes through
-  //      Google Directions and snaps chargers to the real road polyline (so a
-  //      Tbilisi→Batumi route picks E60/Kutaisi chargers, not ones along the
-  //      straight geodesic across the Borjomi mountains).
-  // All waypoints are sorted by their progress from origin→destination so
-  // Google Maps always receives them in the correct geographic visit order.
+  // Waypoint order rule: the user's manual stops ALWAYS keep the order they
+  // chose in the UI (a Tbilisi→Kutaisi→Batumi→Zugdidi→Tbilisi round trip must
+  // never be re-sorted geographically — the old progress-sort did exactly that
+  // and collapsed round trips entirely). Ticked charging stops are interleaved
+  // between the manual stops using their true along-route distance (alongKm)
+  // against the Directions legs' cumulative distances (legEndsKm).
   Future<void> _planRoute() async {
     setState(() => _isPlanning = true);
     try {
@@ -364,15 +365,18 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
       final resolvedStops =
           _stops.map((s) => s.coords).whereType<LatLng>().toList();
 
-      // Reuse the result already computed for the preview if available;
-      // otherwise ask the routing service for charging stops along the *actual*
-      // road right now.
-      final routeResult = _routeResult ??
-          await RoutingService.planRoute(
-            waypoints:         resolvedStops,
-            currentBatteryPct: _batteryPct,
-            stations:          _filteredStations,
-          );
+      // Reuse the preview's result only when it matches the CURRENT stop list
+      // (a tap within the debounce window could otherwise pair fresh stops with
+      // a stale route); otherwise recompute against the actual road right now.
+      var routeResult = _routeResult;
+      if (routeResult == null ||
+          routeResult.legEndsKm.length != resolvedStops.length - 1) {
+        routeResult = await RoutingService.planRoute(
+          waypoints:         resolvedStops,
+          currentBatteryPct: _batteryPct,
+          stations:          _filteredStations,
+        );
+      }
 
       String urlStr =
           'https://www.google.com/maps/dir/?api=1'
@@ -380,48 +384,63 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
           '&destination=${destination.latitude},${destination.longitude}'
           '&travelmode=driving';
 
-      // ── Collect every waypoint with its route-progress fraction ───────────
-      // Using a positional record (progress, coord-string) for lightweight sorting.
-      final wps = <(double, String)>[];
+      // Ordered waypoint coordinate strings for the Google Maps URL.
+      final ordered = <String>[];
 
-      // 1. Manual intermediate stops (user-added via the +/stop UI)
-      if (_stops.length > 2) {
-        for (final s in _stops.sublist(1, _stops.length - 1)) {
-          if (s.coords == null) { continue; }
-          wps.add((
-            _linearProgress(s.coords!, origin, destination),
-            '${s.coords!.latitude},${s.coords!.longitude}',
+      if (routeResult != null && routeResult.legEndsKm.isNotEmpty) {
+        // Manual stop i (1..n-2) sits at the end of Directions leg i-1; ticked
+        // chargers carry their own along-route km. Sorting the combined list by
+        // that single axis interleaves chargers into the right legs while the
+        // manual stops keep their user-chosen order (their leg-end distances
+        // are monotonically increasing by construction, even on round trips).
+        final entries = <(double, String)>[];
+        for (int i = 1; i < resolvedStops.length - 1; i++) {
+          final p = resolvedStops[i];
+          entries.add((
+            routeResult.legEndsKm[i - 1],
+            '${p.latitude},${p.longitude}',
           ));
         }
-      }
-
-      // 2. EV charging waypoints — only the blocks the driver ticked, snapped to
-      //    the real road polyline. Their progress fraction comes from the true
-      //    along-route distance, so ordering stays correct even where the highway
-      //    curves away from the straight line. Falls back to the old straight-line
-      //    estimate only if the Directions call failed (no network / API error).
-      if (routeResult != null) {
-        final totalKm = routeResult.totalDistanceKm;
         for (final o in routeResult.options) {
           if (!_selectedKeys.contains(o.locationKey)) { continue; }
-          final progress = totalKm > 0
-              ? (o.alongKm / totalKm).clamp(0.0, 1.0)
-              : 0.0;
-          wps.add((progress, '${o.location.latitude},${o.location.longitude}'));
+          entries.add((o.alongKm, '${o.location.latitude},${o.location.longitude}'));
         }
+        entries.sort((a, b) => a.$1.compareTo(b.$1));
+        ordered.addAll(entries.map((e) => e.$2));
       } else {
-        for (final s in _chargingStationWaypoints(_evPreview.stopsNeeded)) {
-          wps.add((
-            _linearProgress(LatLng(s.lat, s.lng), origin, destination),
+        // Directions failed (offline / API error): keep manual stops in user
+        // order and slot each straight-line-estimated charger into the leg
+        // where it adds the least detour, ordered outward from the leg start.
+        final chargers = _chargingStationWaypoints(_evPreview.stopsNeeded);
+        final perLeg = List.generate(
+            resolvedStops.length - 1, (_) => <(double, String)>[]);
+        for (final s in chargers) {
+          final pt = LatLng(s.lat, s.lng);
+          var bestLeg = 0;
+          var bestExtra = double.infinity;
+          for (int i = 0; i < resolvedStops.length - 1; i++) {
+            final a = resolvedStops[i], b = resolvedStops[i + 1];
+            final extra =
+                _haversine(a, pt) + _haversine(pt, b) - _haversine(a, b);
+            if (extra < bestExtra) { bestExtra = extra; bestLeg = i; }
+          }
+          perLeg[bestLeg].add((
+            _haversine(resolvedStops[bestLeg], pt),
             '${s.lat},${s.lng}',
           ));
         }
+        for (int i = 0; i < resolvedStops.length - 1; i++) {
+          perLeg[i].sort((a, b) => a.$1.compareTo(b.$1));
+          ordered.addAll(perLeg[i].map((e) => e.$2));
+          if (i < resolvedStops.length - 2) {
+            final p = resolvedStops[i + 1];
+            ordered.add('${p.latitude},${p.longitude}');
+          }
+        }
       }
 
-      // Sort by progress so the order is always origin→…→destination
-      if (wps.isNotEmpty) {
-        wps.sort((a, b) => a.$1.compareTo(b.$1));
-        urlStr += '&waypoints=${wps.map((w) => w.$2).join('|')}';
+      if (ordered.isNotEmpty) {
+        urlStr += '&waypoints=${ordered.join('|')}';
       }
 
       final uri = Uri.parse(urlStr);
@@ -478,27 +497,68 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
               child: Column(
                 children: [
-                  // Stop rows
-                  for (int i = 0; i < _stops.length; i++) ...[
-                    _StopRow(
-                      index:        i,
-                      total:        _stops.length,
-                      stop:         _stops[i],
-                      onRemove:     _stops.length > 2 ? () => _removeStop(i) : null,
-                      onMyLocation: i == 0 ? _fillMyLocation : null,
-                      onPlaceSelected: (pred, coords) {
-                        setState(() {
-                          _stops[i].coords = coords;
-                          _stops[i].controller.text = pred.description;
-                        });
-                        _scheduleRouteCompute();
-                      },
+                  // Stop rows — drag the ≡ handle to reorder; labels (From /
+                  // Stop N / To) and dot colours re-derive from the new order.
+                  ReorderableListView(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    buildDefaultDragHandles: false,
+                    onReorderItem: _onReorder,
+                    proxyDecorator: (child, _, __) => Material(
+                      color: Colors.transparent,
+                      child: child,
                     ),
-                    if (i < _stops.length - 1)
-                      _StopConnector(
-                        canAdd: i == 0 && _stops.length < 5,
-                        onAdd:  _addStop,
+                    children: [
+                      for (int i = 0; i < _stops.length; i++)
+                        Padding(
+                          key: ObjectKey(_stops[i]),
+                          padding: EdgeInsets.only(
+                              bottom: i < _stops.length - 1 ? 12 : 0),
+                          child: _StopRow(
+                            index:        i,
+                            total:        _stops.length,
+                            stop:         _stops[i],
+                            onRemove:     _stops.length > 2
+                                ? () => _removeStop(i)
+                                : null,
+                            onMyLocation: i == 0 ? _fillMyLocation : null,
+                            onPlaceSelected: (pred, coords) {
+                              setState(() {
+                                _stops[i].coords = coords;
+                                _stops[i].controller.text = pred.description;
+                              });
+                              _scheduleRouteCompute();
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                  if (_stops.length < 5) ...[
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: GestureDetector(
+                        onTap: _addStop,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: _bgCard,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: _bgSurface),
+                          ),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            const Icon(Icons.add_rounded,
+                                color: _emerald, size: 16),
+                            const SizedBox(width: 6),
+                            Text(AppStrings.addStop,
+                                style: AppStrings.font(const TextStyle(
+                                    color: _textPri, fontSize: 13,
+                                    fontWeight: FontWeight.w600))),
+                          ]),
+                        ),
                       ),
+                    ),
                   ],
                   const SizedBox(height: 20),
                   // Charger filters for THIS trip — connector types + min power.
@@ -649,50 +709,22 @@ class _StopRow extends StatelessWidget {
             child: const Icon(Icons.close_rounded, color: _textSec, size: 18),
           ),
         ],
-      ],
-    );
-  }
-}
-
-// ── Connector line between stops ──────────────────────────────────────────────
-class _StopConnector extends StatelessWidget {
-  const _StopConnector({required this.canAdd, required this.onAdd});
-  final bool canAdd;
-  final VoidCallback onAdd;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 5),
-      child: Row(
-        children: [
-          Column(children: [
-            for (int i = 0; i < 3; i++) ...[
-              Container(width: 2, height: 5, color: _bgSurface),
-              const SizedBox(height: 3),
-            ],
-          ]),
-          const SizedBox(width: 24),
-          if (canAdd)
-            GestureDetector(
-              onTap: onAdd,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _bgCard,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: _bgSurface),
-                ),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.add_rounded, color: _textSec, size: 14),
-                  const SizedBox(width: 4),
-                  Text(AppStrings.addStop,
-                      style: const TextStyle(color: _textSec, fontSize: 12)),
-                ]),
-              ),
+        // Drag handle — press and drag to move this stop up/down the list.
+        const SizedBox(width: 8),
+        ReorderableDragStartListener(
+          index: index,
+          child: Container(
+            width: 34, height: 34,
+            decoration: BoxDecoration(
+              color: _bgCard,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: _bgSurface),
             ),
-        ],
-      ),
+            child: const Icon(Icons.drag_indicator_rounded,
+                color: _textSec, size: 18),
+          ),
+        ),
+      ],
     );
   }
 }

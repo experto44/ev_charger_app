@@ -10,6 +10,7 @@ import 'app_constants.dart';
 import 'l10n/app_strings.dart';
 import 'screens/paywall_screen.dart';
 import 'services/auth_service.dart';
+import 'services/notification_service.dart';
 
 // ── Palette (mirrors main.dart) ───────────────────────────────────────────────
 const _bgDark    = Color(0xFF1A1A1A);
@@ -705,6 +706,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
 
+            // ── Active charger-free alerts ("Notify me!") ────────────────────
+            // Device-scoped (keyed by FCM token), so shown even when signed out.
+            const SizedBox(height: 28),
+            _Label(AppStrings.activeAlertsTitle),
+            const SizedBox(height: 8),
+            const _ActiveAlertsCard(),
+
             // Sign out (only when signed in, below the save button)
             if (_user != null) ...[
               const SizedBox(height: 20),
@@ -883,6 +891,121 @@ class _Field extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+// ── Active charger-free alerts card ──────────────────────────────────────────
+// Lists every station this device is waiting on ("Notify me!") with a cancel
+// button per row. Listens to NotificationService.revision so the list updates
+// live after a cancel (and after the initial Firestore load finishes).
+class _ActiveAlertsCard extends StatelessWidget {
+  const _ActiveAlertsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<int>(
+      valueListenable: NotificationService.I.revision,
+      builder: (context, _, __) {
+        final alerts = NotificationService.I.alerts;
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: _bgCard,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _bgSurface),
+          ),
+          child: alerts.isEmpty
+              ? Text(
+                  AppStrings.noActiveAlerts,
+                  style: AppStrings.font(const TextStyle(
+                      color: _textSec, fontSize: 13, height: 1.4)),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppStrings.activeAlertsHint,
+                      style: AppStrings.font(const TextStyle(
+                          color: _textSec, fontSize: 12)),
+                    ),
+                    const SizedBox(height: 10),
+                    for (int i = 0; i < alerts.length; i++) ...[
+                      if (i > 0)
+                        const Divider(color: _bgSurface, height: 16),
+                      _AlertRow(alert: alerts[i]),
+                    ],
+                  ],
+                ),
+        );
+      },
+    );
+  }
+}
+
+class _AlertRow extends StatelessWidget {
+  const _AlertRow({required this.alert});
+  final ChargerAlert alert;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Icon(Icons.notifications_active_rounded,
+            color: _emerald, size: 18),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                alert.name,
+                style: const TextStyle(
+                    color: _textPri, fontSize: 14, fontWeight: FontWeight.w600),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (alert.provider.isNotEmpty)
+                Text(
+                  alert.provider,
+                  style: const TextStyle(color: _textSec, fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        GestureDetector(
+          onTap: () => NotificationService.I.unsubscribe(alert.stationId),
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: _bgSurface,
+              borderRadius: BorderRadius.circular(8),
+              border:
+                  Border.all(color: _errorRed.withValues(alpha: 0.45)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.notifications_off_outlined,
+                    color: _errorRed, size: 14),
+                const SizedBox(width: 4),
+                Text(
+                  AppStrings.cancelAlert,
+                  style: AppStrings.font(const TextStyle(
+                      color: _errorRed,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

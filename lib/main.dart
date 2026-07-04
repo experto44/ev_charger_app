@@ -47,6 +47,19 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Firebase Auth restores a persisted session asynchronously AFTER
+  // initializeApp returns. Without this gate a cold-started app sees
+  // currentUser == null for the first moments, so the profile button (and the
+  // premium sync in PurchaseService.init) wrongly treated a signed-in user as
+  // signed out — the "asks me to log in again on every launch" bug. The first
+  // authStateChanges event fires exactly when restoration completes (with the
+  // user or with null); the timeout keeps a hung Firebase from blocking launch.
+  try {
+    await FirebaseAuth.instance
+        .authStateChanges()
+        .first
+        .timeout(const Duration(seconds: 5));
+  } catch (_) {/* timeout — launch anyway; auth finishes restoring in background */}
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await AppStrings.load(); // restore saved language (English/Georgian)
   // Subscriptions first (sets isPremium from cache), then ads — the ad layer
@@ -309,15 +322,113 @@ class _MapScreenState extends State<MapScreen>
     // OCM loads viewport-first; the map's onMapReady kicks off the initial load.
   }
 
-  // Re-read the min-power filter after returning from the profile screen so a
-  // changed threshold applies to the map immediately (not just on next launch).
-  Future<void> _reloadMinPower() async {
+  // Re-read the profile-owned filters (min power + selected connectors) after
+  // returning from the profile screen so changes apply to the map immediately
+  // (not just on next launch). Connectors matter here because the map no longer
+  // has its own connector chips — the profile's "My Ports" is the only source.
+  Future<void> _reloadProfileFilters() async {
     final p = await SharedPreferences.getInstance();
+    final rawConn = p.getString(kDefaultConnector);
     if (!mounted) { return; }
+    var defConns = <String>[];
+    if (rawConn != null && rawConn.isNotEmpty) {
+      try {
+        defConns = (jsonDecode(rawConn) as List).map((e) => e as String).toList();
+      } catch (_) {
+        defConns = [rawConn];
+      }
+    }
     setState(() {
+      _filterConnectors
+        ..clear()
+        ..addAll(defConns);
       _minPowerOn = p.getBool(kMinPowerEnabled) ?? false;
       _minPowerKw = p.getInt(kMinPowerKw) ?? 0;
     });
+  }
+
+  // Opens Profile (or Login when signed out) — shared by the search-bar avatar
+  // and the "My Ports" filter chip. Auth state is safe to read synchronously
+  // here: main() already waited for the persisted session to restore.
+  Future<void> _openProfile() async {
+    final user = FirebaseAuth.instance.currentUser;
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => user == null ? const LoginScreen() : const ProfileScreen(),
+      ),
+    );
+    await _reloadProfileFilters();
+  }
+
+  // "Fast DC" chip tap → pick the minimum charger power for the map filter.
+  // The chosen threshold is persisted to the SAME prefs the profile screen
+  // edits (kMinPowerEnabled/kMinPowerKw), so map and profile never disagree.
+  Future<void> _showFastDcSheet() async {
+    // Sentinel values for the sheet result alongside real kW steps.
+    const off = -1, dcAny = 0;
+    final current = !_filterDC && !_minPowerOn
+        ? off
+        : (_minPowerOn ? _minPowerKw : dcAny);
+    final picked = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: _bgCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => AppStrings.wrap(SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 14),
+            Container(
+              width: 36, height: 4,
+              decoration: BoxDecoration(
+                color: _bgSurface, borderRadius: BorderRadius.circular(2)),
+            ),
+            const SizedBox(height: 14),
+            Text(AppStrings.fastDcSheetTitle,
+                style: AppStrings.font(const TextStyle(
+                    color: _textPri, fontSize: 15, fontWeight: FontWeight.w700))),
+            const SizedBox(height: 10),
+            for (final (value, label) in <(int, String)>[
+              (off,   AppStrings.filterOff),
+              (dcAny, AppStrings.dcAnyPower),
+              for (final kw in kMinPowerSteps) (kw, '≥ $kw kW'),
+            ])
+              ListTile(
+                dense: true,
+                onTap: () => Navigator.pop(ctx, value),
+                leading: Icon(
+                  value == current
+                      ? Icons.radio_button_checked_rounded
+                      : Icons.radio_button_off_rounded,
+                  color: value == current ? _emerald : _textSec,
+                  size: 20,
+                ),
+                title: Text(label,
+                    style: AppStrings.font(TextStyle(
+                      color: value == current ? _emerald : _textPri,
+                      fontSize: 14,
+                      fontWeight:
+                          value == current ? FontWeight.w700 : FontWeight.w500,
+                    ))),
+              ),
+            const SizedBox(height: 10),
+          ],
+        ),
+      )),
+    );
+    if (picked == null || !mounted) { return; }
+    final p = await SharedPreferences.getInstance();
+    if (!mounted) { return; }
+    setState(() {
+      _filterDC   = picked != off;
+      _minPowerOn = picked > 0;
+      if (picked > 0) { _minPowerKw = picked; }
+    });
+    await p.setBool(kMinPowerEnabled, picked > 0);
+    if (picked > 0) { await p.setInt(kMinPowerKw, picked); }
   }
 
   // Re-read the saved country selection after returning from Settings, then
@@ -771,15 +882,6 @@ class _MapScreenState extends State<MapScreen>
     }).toList();
   }
 
-  // Connector types actually present in the loaded data (local + OCM) — used to
-  // build the filter chips so we never show a dead chip and any new connector
-  // type (incl. international ones) appears automatically.
-  Set<String> get _availableConnectors {
-    final out = <String>{};
-    for (final s in _allStations) { out.addAll(s.connectors); }
-    return out;
-  }
-
   @override
   Widget build(BuildContext context) {
     final stations = _filtered;
@@ -963,18 +1065,7 @@ class _MapScreenState extends State<MapScreen>
                       );
                       await _reloadCountries(); // apply country changes immediately
                     },
-                    onProfile: () async {
-                      final user = FirebaseAuth.instance.currentUser;
-                      await Navigator.push<void>(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => user == null
-                              ? const LoginScreen()
-                              : const ProfileScreen(),
-                        ),
-                      );
-                      await _reloadMinPower(); // apply min-power changes immediately
-                    },
+                    onProfile: _openProfile,
                   ),
                   if (_suggestions.isNotEmpty) ...[
                     const SizedBox(height: 4),
@@ -983,19 +1074,14 @@ class _MapScreenState extends State<MapScreen>
                   // Top banner ad removed — only the bottom banner remains.
                   const SizedBox(height: 10),
                   _FilterChips(
-                    filterDC:         _filterDC,
-                    filterAvail:      _filterAvail,
-                    onDC:             (v) => setState(() => _filterDC    = v),
-                    onAvail:          (v) => setState(() => _filterAvail = v),
-                    availableConnectors: _availableConnectors,
-                    filterConnectors: _filterConnectors,
-                    onConnector:      (ct) => setState(() {
-                      if (_filterConnectors.contains(ct)) {
-                        _filterConnectors.remove(ct);
-                      } else {
-                        _filterConnectors.add(ct);
-                      }
-                    }),
+                    filterDC:    _filterDC,
+                    filterAvail: _filterAvail,
+                    minPowerOn:  _minPowerOn,
+                    minPowerKw:  _minPowerKw,
+                    portsCount:  _filterConnectors.length,
+                    onFastDc:    _showFastDcSheet,
+                    onAvail:     (v) => setState(() => _filterAvail = v),
+                    onMyPorts:   _openProfile,
                   ),
                   // Live OCM fetch indicator (international countries).
                   if (_ocmLoading) ...[
@@ -1228,54 +1314,46 @@ class _FilterChips extends StatelessWidget {
   const _FilterChips({
     required this.filterDC,
     required this.filterAvail,
-    required this.onDC,
+    required this.minPowerOn,
+    required this.minPowerKw,
+    required this.portsCount,
+    required this.onFastDc,
     required this.onAvail,
-    required this.availableConnectors,
-    required this.filterConnectors,
-    required this.onConnector,
+    required this.onMyPorts,
   });
-  final bool              filterDC, filterAvail;
-  final ValueChanged<bool> onDC, onAvail;
-  final Set<String>        availableConnectors;  // present in loaded data
-  final Set<String>        filterConnectors;
-  final ValueChanged<String> onConnector;
-
-  // Canonical connector types in the shared display order (kConnectorOrder).
-  // Only those actually present in the loaded data are shown, so there's never
-  // a dead chip; new types appear automatically.
-  static const _kConnectors = kConnectorOrder;
+  final bool filterDC, filterAvail;
+  // Min-power filter state (shared with the profile via prefs) — shown as a
+  // "≥N kW" suffix on the Fast DC chip so the active threshold is visible.
+  final bool minPowerOn;
+  final int  minPowerKw;
+  // How many connector types the profile has selected (badge on My Ports).
+  final int  portsCount;
+  final VoidCallback       onFastDc;   // opens the min-power sheet
+  final ValueChanged<bool> onAvail;
+  final VoidCallback       onMyPorts;  // opens the profile ("My Ports" lives there)
 
   @override
   Widget build(BuildContext context) {
-    // Data-driven (canonical order): show a connector chip when data is still
-    // loading, when it's present in the loaded data, OR when it's the active
-    // filter (so a default connector with no matches is still toggle-able and
-    // never strands the user on an empty map with no chip to clear).
-    final conns = _kConnectors
-        .where((c) =>
-            availableConnectors.isEmpty ||
-            filterConnectors.contains(c) ||
-            availableConnectors.any((a) => a.toLowerCase() == c.toLowerCase()))
-        .toList();
+    // Connector-type chips were removed on purpose: the connector selection
+    // lives in the profile ("My Ports") and having both created conflicting
+    // filter states. The profile selection still filters the map silently.
+    final fastDcLabel = minPowerOn && minPowerKw > 0
+        ? 'Fast DC ≥${minPowerKw}kW'
+        : 'Fast DC';
     return SizedBox(
       height: 36,
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
-          _Chip(icon: Icons.bolt, label: 'Fast DC',
-              active: filterDC, onTap: () => onDC(!filterDC)),
+          _Chip(icon: Icons.bolt, label: fastDcLabel,
+              active: filterDC || minPowerOn, onTap: onFastDc),
           const SizedBox(width: 8),
           _Chip(icon: Icons.check_circle_outline, label: 'Available',
               active: filterAvail, onTap: () => onAvail(!filterAvail)),
-          // Connector-type chips — multi-select, data-driven
-          ...conns.map((ct) => Padding(
-            padding: const EdgeInsets.only(left: 8),
-            child: _Chip(
-              label:  ct,
-              active: filterConnectors.contains(ct),
-              onTap:  () => onConnector(ct),
-            ),
-          )),
+          const SizedBox(width: 8),
+          _Chip(icon: Icons.settings_input_component_rounded,
+              label: portsCount > 0 ? 'My Ports ($portsCount)' : 'My Ports',
+              active: false, onTap: onMyPorts),
         ],
       ),
     );
