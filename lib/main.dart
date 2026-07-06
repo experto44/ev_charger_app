@@ -65,7 +65,14 @@ void main() async {
   // Subscriptions first (sets isPremium from cache), then ads — the ad layer
   // reads isPremium to decide whether to load anything at all.
   await PurchaseService.I.init();
-  await AdService.I.init();
+  // Android initialises ads now. iOS defers it until AFTER the ATT prompt (see
+  // the post-frame callback below) so the very first banner/interstitial
+  // requests can carry the IDFA — without consent-first ordering, early iOS
+  // requests go out non-personalised, which hurts fill/eCPM. google_mobile_ads
+  // is mobile-only, so no other platform initialises it.
+  if (!kIsWeb && Platform.isAndroid) {
+    await AdService.I.init();
+  }
   // Push alerts ("notify me when this charger frees up"). Unawaited — it may
   // prompt for notification permission and resolve the FCM token, neither of
   // which should delay first paint.
@@ -80,11 +87,18 @@ void main() async {
   // status simply yields non-personalized ads — nothing else changes.
   WidgetsBinding.instance.addPostFrameCallback((_) async {
     if (kIsWeb || !Platform.isIOS) { return; }
+    // iOS: resolve App Tracking Transparency consent BEFORE initialising the ad
+    // SDK, so the first banner/interstitial requests can use the IDFA (better
+    // fill + eCPM). The ATT prompt can only appear once the app is active, hence
+    // the post-frame timing and the short settle delay before requesting it.
     await Future<void>.delayed(const Duration(milliseconds: 400));
     final status = await AppTrackingTransparency.trackingAuthorizationStatus;
     if (status == TrackingStatus.notDetermined) {
       await AppTrackingTransparency.requestTrackingAuthorization();
     }
+    // Now that consent is resolved (granted, denied, or restricted), bring up
+    // the ad SDK; AdService.ready flips true and the banner appears.
+    await AdService.I.init();
   });
   runApp(const EVChargerApp());
 }
@@ -913,9 +927,15 @@ class _MapScreenState extends State<MapScreen>
       // Free-tier banner — rebuilds (and disappears) when premium is granted.
       // Returns an empty box when premium or no ad unit is configured.
       bottomNavigationBar: ValueListenableBuilder<bool>(
-        valueListenable: PurchaseService.I.isPremium,
-        builder: (_, __, ___) =>
-            AdService.I.bottomBanner() ?? const SizedBox.shrink(),
+        // Rebuild when ads finish initialising (on iOS that's after the ATT
+        // prompt, i.e. after the first frame) as well as when premium changes,
+        // so the banner appears the moment the SDK is ready.
+        valueListenable: AdService.I.ready,
+        builder: (_, __, ___) => ValueListenableBuilder<bool>(
+          valueListenable: PurchaseService.I.isPremium,
+          builder: (_, __, ___) =>
+              AdService.I.bottomBanner() ?? const SizedBox.shrink(),
+        ),
       ),
       body: Stack(
         children: [

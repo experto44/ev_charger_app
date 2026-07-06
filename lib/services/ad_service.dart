@@ -35,7 +35,11 @@ class AdService {
   AdService._();
   static final AdService I = AdService._();
 
-  bool _initialized = false;
+  /// Flips true once the Mobile Ads SDK has finished initialising. Exposed as a
+  /// notifier so the banner in the widget tree rebuilds and appears when init
+  /// completes — on iOS init is deferred until AFTER the ATT prompt, so it
+  /// finishes after the first frame rather than before runApp.
+  final ValueNotifier<bool> ready = ValueNotifier<bool>(false);
   InterstitialAd? _interstitial;
   DateTime _lastInterstitial = DateTime.fromMillisecondsSinceEpoch(0);
 
@@ -48,11 +52,11 @@ class AdService {
   /// Initialise the Mobile Ads SDK. No-op when no ad unit is configured (so the
   /// SDK isn't spun up needlessly) — call once at startup after PurchaseService.
   Future<void> init() async {
-    if (_initialized) return;
+    if (ready.value) return;
     if (!bannerConfigured && !interstitialConfigured) return;
     try {
       await MobileAds.instance.initialize();
-      _initialized = true;
+      ready.value = true;
       _preloadInterstitial();
     } catch (_) {
       // SDK init can fail on devices without Play Services — degrade silently.
@@ -64,7 +68,7 @@ class AdService {
   /// (premium user, or no banner unit configured). Suitable for
   /// `Scaffold.bottomNavigationBar`.
   Widget? bottomBanner() {
-    if (!_adsAllowed || !bannerConfigured || !_initialized) return null;
+    if (!_adsAllowed || !bannerConfigured || !ready.value) return null;
     return _AdBanner(adUnitId: _kBannerAdUnitId);
   }
 
@@ -74,7 +78,7 @@ class AdService {
   /// moment premium is granted. Loads its own [BannerAd] independently of the
   /// bottom banner.
   Widget? topBanner() {
-    if (!_adsAllowed || !bannerConfigured || !_initialized) return null;
+    if (!_adsAllowed || !bannerConfigured || !ready.value) return null;
     return _AdBanner(adUnitId: _kBannerAdUnitId);
   }
 
