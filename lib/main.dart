@@ -348,10 +348,28 @@ class _MapScreenState extends State<MapScreen>
   }
 
   // Opens Profile (or Login when signed out) — shared by the search-bar avatar
-  // and the "My Ports" filter chip. Auth state is safe to read synchronously
-  // here: main() already waited for the persisted session to restore.
+  // and the "My Ports" filter chip.
+  //
+  // Auth restore is NOT reliably finished by the time this runs. On Android,
+  // Firebase Auth restores the persisted session a moment after launch, and its
+  // FIRST authStateChanges event can be a spurious `null` before the SharedPrefs
+  // session is loaded — so the startup gate in main() can return early and this
+  // synchronous currentUser read can momentarily see `null` even for a signed-in
+  // user. A profile tap right after opening the app then wrongly demanded a
+  // fresh Google login on every launch (the reported Android bug). So when we
+  // see no user, wait a short, bounded window for restoration to settle before
+  // falling back to Login; a genuinely signed-out user just waits it out once.
   Future<void> _openProfile() async {
-    final user = FirebaseAuth.instance.currentUser;
+    var user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      try {
+        user = await FirebaseAuth.instance
+            .authStateChanges()
+            .firstWhere((u) => u != null)
+            .timeout(const Duration(seconds: 3), onTimeout: () => null);
+      } catch (_) {/* stream error — treat as signed out, show Login */}
+    }
+    if (!mounted) { return; }
     await Navigator.push<void>(
       context,
       MaterialPageRoute(
