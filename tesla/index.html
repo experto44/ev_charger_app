@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeoCharge for Tesla</title>
+  <meta name="description" content="EV chargers across Georgia with live status — built for the Tesla in-car browser.">
+  <link rel="icon" type="image/svg+xml" href="assets/mark.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Noto+Sans+Georgian:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+  <script src="https://unpkg.com/@googlemaps/markerclusterer@2.5.3/dist/index.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__brand">
+      <img src="assets/mark.svg" alt="" class="topbar__mark">
+      <span class="topbar__title">GeoCharge <span class="accent" data-t="forTesla"></span></span>
+    </div>
+    <span id="access-badge" class="badge is-hidden"></span>
+    <span id="station-count" class="topbar__count"></span>
+    <div class="topbar__actions">
+      <button id="btn-trip" class="btn" data-t="trip"></button>
+      <button id="btn-filters" class="btn" data-t="filters"></button>
+      <div class="lang-switch">
+        <button class="lang-switch__btn" data-lang-btn="ka">ქა</button>
+        <button class="lang-switch__btn" data-lang-btn="en">EN</button>
+      </div>
+      <button id="btn-logout" class="btn btn--ghost is-hidden" data-t="logout"></button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <div id="map"></div>
+
+    <div id="loading" class="loading"><span data-t="loading"></span></div>
+
+    <!-- Station details -->
+    <aside id="station-panel" class="panel">
+      <button id="panel-close" class="panel__close" aria-label="Close">✕</button>
+      <h2 class="panel__name"></h2>
+      <p class="panel__provider"></p>
+      <span class="panel__status"></span>
+      <div class="panel__meta">
+        <div><span class="label" data-t="power"></span><span class="panel__power"></span></div>
+        <div><span class="label" data-t="price"></span><span class="panel__price"></span></div>
+      </div>
+      <h3 class="panel__ports-title" data-t="ports"></h3>
+      <div class="panel__ports"></div>
+      <p class="panel__updated"></p>
+    </aside>
+
+    <!-- Filters -->
+    <aside id="filter-drawer" class="drawer">
+      <div class="drawer__head">
+        <h2 data-t="filters"></h2>
+        <button id="filter-close" class="panel__close" aria-label="Close">✕</button>
+      </div>
+      <h3 class="drawer__label" data-t="provider"></h3>
+      <div id="filter-providers" class="chip-row"></div>
+      <h3 class="drawer__label" data-t="connector"></h3>
+      <div id="filter-connectors" class="chip-row"></div>
+      <div class="drawer__foot">
+        <button id="filter-dc" class="btn btn--toggle" data-t="fastDcOnly"></button>
+        <button id="filter-clear" class="btn btn--ghost" data-t="clearFilters"></button>
+      </div>
+    </aside>
+
+    <!-- Trip planner -->
+    <aside id="trip-drawer" class="drawer">
+      <div class="drawer__head">
+        <h2 data-t="trip"></h2>
+        <button id="trip-close" class="panel__close" aria-label="Close">✕</button>
+      </div>
+      <div class="trip-field">
+        <input id="trip-origin" type="text" class="input" data-t-placeholder="tripOrigin">
+        <button id="trip-pick-origin" class="btn" data-t="tripPickOnMap"></button>
+      </div>
+      <div class="trip-field">
+        <input id="trip-dest" type="text" class="input" data-t-placeholder="tripDest">
+        <button id="trip-pick-dest" class="btn" data-t="tripPickOnMap"></button>
+      </div>
+      <div class="trip-params">
+        <label class="trip-param">
+          <span class="label"><span data-t="tripBatteryNow"></span> <b id="trip-battery-val">80%</b></span>
+          <input id="trip-battery" type="range" min="5" max="100" step="5" value="80">
+        </label>
+        <label class="trip-param">
+          <span class="label" data-t="tripRange"></span>
+          <input id="trip-range" type="number" class="input input--small" min="80" max="800" value="300">
+        </label>
+      </div>
+      <div class="drawer__foot">
+        <button id="trip-plan" class="btn btn--primary" data-t="tripPlan"></button>
+        <button id="trip-clear" class="btn btn--ghost" data-t="tripClear"></button>
+      </div>
+      <div id="trip-results" class="is-hidden">
+        <div id="trip-summary" class="trip-summary"></div>
+        <p id="trip-warning" class="gate__error is-hidden" data-t="tripUnreachable"></p>
+        <div id="trip-stops"></div>
+      </div>
+    </aside>
+
+    <div id="toast" class="toast"></div>
+
+    <!-- One-time onboarding hint (first granted visit) -->
+    <div id="onboard" class="onboard is-hidden">
+      <div class="onboard__card">
+        <h3 data-t="onboardTitle"></h3>
+        <ul>
+          <li data-t="onboardFullscreen"></li>
+          <li data-t="onboardBookmark"></li>
+        </ul>
+        <button id="onboard-ok" class="btn btn--primary" data-t="onboardOk"></button>
+      </div>
+    </div>
+
+    <!-- Login (blocks the app until signed in) -->
+    <section id="login-screen" class="gate">
+      <div class="gate__card">
+        <img src="assets/logo-dark.svg" alt="GeoCharge" class="gate__logo">
+        <h2 data-t="signInTitle"></h2>
+        <p class="gate__subtitle" data-t="signInSubtitle"></p>
+        <form id="login-form">
+          <input id="login-email" type="email" class="input" autocomplete="email" required data-t-placeholder="email">
+          <input id="login-password" type="password" class="input" autocomplete="current-password" required data-t-placeholder="password">
+          <p id="login-error" class="gate__error is-hidden"></p>
+          <button type="submit" class="btn btn--primary btn--wide" data-t="signInBtn"></button>
+        </form>
+        <div class="gate__divider"><span data-t="orDivider"></span></div>
+        <button id="btn-google" class="btn btn--wide">
+          <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6C12.3 13.4 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.4 28.8a14.5 14.5 0 0 1 0-9.6l-7.8-6a24 24 0 0 0 0 21.6l7.8-6z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.4-5.6l-7.5-5.8c-2.1 1.4-4.8 2.3-7.9 2.3-6.3 0-11.7-3.9-13.6-9.6l-7.8 6C6.5 42.6 14.6 48 24 48z"/></svg>
+          <span data-t="googleBtn"></span>
+        </button>
+        <p class="gate__note" data-t="noAccount"></p>
+      </div>
+    </section>
+
+    <!-- Paywall (trial expired, not premium) -->
+    <section id="paywall-screen" class="gate">
+      <div class="gate__card gate__card--wide">
+        <img src="assets/logo-dark.svg" alt="GeoCharge" class="gate__logo">
+        <h2 data-t="paywallTitle"></h2>
+        <p class="gate__subtitle" data-t="paywallBody"></p>
+        <div class="paywall__row">
+          <ol class="paywall__steps">
+            <li data-t="paywallStep1"></li>
+            <li data-t="paywallStep2"></li>
+            <li data-t="paywallStep3"></li>
+          </ol>
+          <div class="paywall__qr">
+            <div id="qr"></div>
+            <span class="gate__note" data-t="paywallQr"></span>
+          </div>
+        </div>
+        <p class="gate__note"><span id="user-email"></span></p>
+        <button id="btn-logout-paywall" class="btn btn--ghost" data-t="logout"></button>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

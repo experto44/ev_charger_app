@@ -44,6 +44,11 @@
         "**/node_modules/**",
         "uploads/geocharge-website-brief.md"
       ]
+    },
+    {
+      "site": "geocharge-tesla",
+      "public": "tesla",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
     }
   ]
 }
