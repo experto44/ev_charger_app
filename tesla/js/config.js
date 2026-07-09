@@ -28,4 +28,5 @@ export const FIREBASE_CONFIG = {
   storageBucket: 'geocharge-f6714.firebasestorage.app',
   messagingSenderId: '518875377655',
   appId: '1:518875377655:web:460e04cac1603f2545c8f2',
+  measurementId: 'G-3DK8B61WL8',
 };

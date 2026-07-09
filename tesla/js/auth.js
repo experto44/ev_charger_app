@@ -23,6 +23,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 import { FIREBASE_CONFIG } from './config.js';
+import { track } from './analytics.js';
 
 const app = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
@@ -67,6 +68,7 @@ export async function ensureTrial(uid) {
     return snap.data().startedAt.toMillis() + TRIAL_MS;
   }
   await setDoc(ref, { startedAt: serverTimestamp() });
+  track('tesla_trial_start');
   const created = await getDoc(ref);
   return created.data().startedAt.toMillis() + TRIAL_MS;
 }

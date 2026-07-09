@@ -6,6 +6,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "5173", "--directory", "tesla"],
       "port": 5173
+    },
+    {
+      "name": "site-web",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "5174", "--directory", "site"],
+      "port": 5174
     }
   ]
 }

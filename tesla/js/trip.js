@@ -4,6 +4,7 @@
 import { planRoute } from './routing.js';
 import { getMap } from './map.js';
 import { getStations } from './data.js';
+import { track } from './analytics.js';
 import { t, getLang } from './i18n.js';
 
 const state = {
@@ -171,8 +172,10 @@ async function plan() {
       maxRangeKm: Number($('trip-range').value) || 300,
       stations: getStations(),
     });
-    if (res) drawResult(res);
-    else {
+    if (res) {
+      drawResult(res);
+      track('trip_planned', { stops: res.stops.length, km: Math.round(res.totalDistanceKm) });
+    } else {
       $('trip-results').classList.remove('is-hidden');
       $('trip-summary').innerHTML = `<span class="txt-danger">${t('tripNoRoute')}</span>`;
       $('trip-stops').innerHTML = '';

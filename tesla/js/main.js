@@ -1,6 +1,7 @@
 // App bootstrap: gate (login → trial/premium) → map + live feed + UI.
 
 import { applyStaticStrings, setLang, t } from './i18n.js';
+import { initAnalytics } from './analytics.js';
 import { loginEmail, loginGoogle, logout } from './auth.js';
 import { startGate } from './gate.js';
 import { startFeed } from './data.js';
@@ -130,6 +131,7 @@ function wireGateUi() {
 }
 
 applyStaticStrings();
+initAnalytics();
 wireChrome();
 wireGateUi();
 startGate(bootApp);

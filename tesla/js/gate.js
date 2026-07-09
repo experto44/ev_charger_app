@@ -6,6 +6,7 @@
 //   the app itself   — signed in AND (premium OR trial active)
 
 import { ensureTrial, watchAuth, watchPremium, TRIAL_MS } from './auth.js';
+import { track } from './analytics.js';
 import { t } from './i18n.js';
 
 const state = {
@@ -52,6 +53,10 @@ function evaluate() {
     return;
   }
   document.getElementById('access-badge').classList.add('is-hidden');
+  if (!state.paywallSeen) {
+    state.paywallSeen = true; // once per session
+    track('paywall_view');
+  }
   show('paywall');
 }
 
@@ -104,6 +109,7 @@ export function startGate(whenGranted) {
 
     // Premium is realtime: buying on the phone unlocks this screen live.
     state.stopPremium = watchPremium(user.uid, (premium) => {
+      if (premium && !state.premium && state.paywallSeen) track('premium_unlock');
       state.premium = premium;
       evaluate();
     });
