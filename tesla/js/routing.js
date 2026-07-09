@@ -93,7 +93,20 @@ export async function planRoute({ waypoints, currentBatteryPct, maxRangeKm, stat
   }
   if (!route) return null;
 
-  const pts = route.overview_path.map((p) => ({ lat: p.lat(), lng: p.lng() }));
+  // Detailed road-following geometry: concatenate every step's decoded path.
+  // (route.overview_path is simplified and visibly cuts corners on long routes.)
+  const pts = [];
+  for (const leg of route.legs) {
+    for (const step of leg.steps) {
+      step.path.forEach((p, i) => {
+        if (pts.length && i === 0) return; // skip the vertex shared with prev step
+        pts.push({ lat: p.lat(), lng: p.lng() });
+      });
+    }
+  }
+  if (!pts.length) {
+    for (const p of route.overview_path) pts.push({ lat: p.lat(), lng: p.lng() });
+  }
   let totalDistKm = 0;
   const legEndsKm = []; // cumulative km at each waypoint boundary
   for (const leg of route.legs) {

@@ -3,7 +3,7 @@
 import { t } from './i18n.js';
 import { stationStatus } from './map.js';
 import { busyForLabel, formatVerified, providerLogo } from './format.js';
-import { navigateTo } from './nav.js';
+import { startDrive } from './drive.js';
 import { track } from './analytics.js';
 
 const PORT_LABEL = { free: 'statusFree', busy: 'statusBusy', out: 'statusOut' };
@@ -76,11 +76,12 @@ export function showStation(s) {
     logo.removeAttribute('src');
   }
 
-  // Navigate → Google Maps directions (auto-start) in a new tab.
+  // Navigate → in-browser turn-by-turn drive mode.
   const navBtn = panel.querySelector('.panel__nav');
   navBtn.onclick = () => {
     track('navigate_station', { provider: s.provider });
-    navigateTo(s.lat, s.lng);
+    hideStation();
+    startDrive({ destination: { lat: s.lat, lng: s.lng } });
   };
 
   const badge = panel.querySelector('.panel__status');
@@ -214,4 +215,10 @@ export function showToast(msg, ms = 5000) {
   el.classList.add('is-visible');
   clearTimeout(el.__t);
   el.__t = setTimeout(() => el.classList.remove('is-visible'), ms);
+}
+
+export function hideToast() {
+  const el = document.getElementById('toast');
+  clearTimeout(el.__t);
+  el.classList.remove('is-visible');
 }

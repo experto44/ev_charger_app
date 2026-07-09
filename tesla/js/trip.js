@@ -5,7 +5,7 @@
 import { planRoute } from './routing.js';
 import { getMap, panTo, setMarkersDimmed, locateMe } from './map.js';
 import { getStations } from './data.js';
-import { navigateRoute } from './nav.js';
+import { startDrive } from './drive.js';
 import { track } from './analytics.js';
 import { MIN_POWER_STEPS, sortConnectors } from './ui.js';
 import { t } from './i18n.js';
@@ -445,6 +445,24 @@ function toggleOption(key) {
   renderOptions();
 }
 
+/** Full reset: stops, result, ticks, and the drawn route. */
+function clearPlan() {
+  clearTimeout(state.debounce);
+  state.stops = [{ coords: null, label: '' }, { coords: null, label: '' }];
+  state.result = null;
+  state.signature = null;
+  state.selectedKeys.clear();
+  if (state.pickTarget != null) {
+    state.pickTarget = null;
+    document.body.classList.remove('is-picking');
+  }
+  clearRoute();
+  renderStops();
+  renderPreview();
+  renderOptions();
+  updateNavButton();
+}
+
 // ── Start navigation ─────────────────────────────────────────────────────────
 function updateNavButton() {
   $('trip-nav').disabled = !canPlan();
@@ -452,12 +470,12 @@ function updateNavButton() {
 
 function startNavigation() {
   const r = state.result;
-  const origin = state.stops[0].coords;
   const destination = state.stops[state.stops.length - 1].coords;
-  if (!origin || !destination) return;
+  if (!canPlan()) return;
 
   // Interleave manual intermediate stops (by leg-end distance) and ticked
-  // chargers (by along-route distance) — the app's _planRoute ordering.
+  // chargers (by along-route distance) — the app's _planRoute ordering. The
+  // origin is the driver's live GPS (added inside startDrive), not stop 0.
   const entries = [];
   if (r && r.legEndsKm.length) {
     for (let i = 1; i < state.stops.length - 1; i++) {
@@ -474,7 +492,8 @@ function startNavigation() {
   entries.sort((a, b) => a[0] - b[0]);
 
   track('trip_navigate', { stops: state.selectedKeys.size });
-  navigateRoute({ origin, destination, waypoints: entries.map((e) => e[1]) });
+  toggleTripDrawer(false);
+  startDrive({ destination, waypoints: entries.map((e) => e[1]) });
 }
 
 // ── Public wiring ────────────────────────────────────────────────────────────
@@ -502,6 +521,11 @@ export function initTrip() {
 
   $('trip-add-stop').addEventListener('click', addStop);
   $('trip-nav').addEventListener('click', startNavigation);
+  $('trip-clear-route').addEventListener('click', clearPlan);
+
+  // Drive mode draws its own route line — take the planner preview off the
+  // map so the two don't overlap (and don't linger after "End").
+  document.addEventListener('gc:drive-start', clearRoute);
 
   renderPreview();
   updateNavButton();

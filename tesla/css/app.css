@@ -494,6 +494,7 @@ input[type='range'] { accent-color: var(--accent); height: var(--touch); }
 .trip-none { padding: 8px 2px; }
 .trip-nav { margin-top: 18px; }
 .trip-nav:disabled { opacity: 0.4; }
+.trip-clear { margin-top: 10px; }
 
 body.is-picking #map { cursor: crosshair; }
 
@@ -604,6 +605,14 @@ body.is-picking #map { cursor: crosshair; }
 
 .gate__error { color: var(--danger); font-size: 15px; }
 .gate__note  { color: var(--text-dim); font-size: 14px; line-height: 1.5; }
+.gate__note--price {
+  margin-top: 4px;
+  padding: 10px 14px;
+  background: rgba(43, 213, 148, 0.1);
+  border: 1px solid rgba(43, 213, 148, 0.3);
+  border-radius: 12px;
+  color: var(--text);
+}
 
 .paywall__row {
   display: flex;
@@ -667,6 +676,99 @@ body.is-picking #map { cursor: crosshair; }
 }
 .onboard__card h3 { font-size: 22px; }
 .onboard__card ul { padding-left: 22px; color: var(--text-dim); line-height: 1.9; font-size: 17px; }
+
+/* ── Drive mode (turn-by-turn) ───────────────────────────────────── */
+/* Overlays float over the map; only the cards themselves catch touches. */
+.drive { position: absolute; inset: 0; z-index: 25; pointer-events: none; }
+
+/* Hide the normal chrome while driving so the map fills the screen. */
+body.is-driving .topbar,
+body.is-driving #search-box,
+body.is-driving .map-controls,
+body.is-driving #dest-card,
+body.is-driving #station-panel,
+body.is-driving .drawer { display: none !important; }
+
+.drive-banner {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  margin: 0 auto;
+  max-width: 760px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 18px 26px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+}
+.drive-banner__icon { flex-shrink: 0; color: var(--accent); }
+.drive-banner__icon svg { width: 60px; height: 60px; display: block; }
+.drive-banner__txt { min-width: 0; }
+.drive-banner__dist { font-size: 42px; font-weight: 700; line-height: 1; }
+.drive-banner__road {
+  font-size: 20px;
+  color: var(--text-dim);
+  margin-top: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.drive-banner.is-arrived .drive-banner__dist { display: none; }
+.drive-banner.is-arrived .drive-banner__road { color: var(--accent); font-size: 26px; font-weight: 600; }
+
+.drive-reroute {
+  position: absolute;
+  top: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 22px;
+  background: var(--busy);
+  color: #0d1216;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 600;
+  pointer-events: auto;
+}
+
+.drive-foot {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  margin: 0 auto;
+  max-width: 760px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+}
+.drive-foot__stats { display: flex; gap: 20px; flex: 1; align-items: baseline; }
+#drive-remain { font-size: 24px; font-weight: 700; }
+#drive-eta { font-size: 17px; color: var(--text-dim); }
+.drive-foot__btn {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.drive-foot__btn.is-off { color: var(--out); }
+.drive-foot__btn:active { background: var(--border); }
+.drive-foot__exit { min-height: 52px; padding: 0 28px; }
 
 /* ── Toast ───────────────────────────────────────────────────────── */
 .toast {

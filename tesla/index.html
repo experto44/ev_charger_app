@@ -144,7 +144,28 @@
       <div id="trip-options"></div>
 
       <button id="trip-nav" class="btn btn--primary btn--wide trip-nav" data-t="startNav" disabled></button>
+      <button id="trip-clear-route" class="btn btn--ghost btn--wide trip-clear" data-t="tripClearRoute"></button>
     </aside>
+
+    <!-- Turn-by-turn drive mode (in-browser navigation) -->
+    <div id="drive" class="drive is-hidden">
+      <div id="drive-banner" class="drive-banner">
+        <div id="drive-icon" class="drive-banner__icon"></div>
+        <div class="drive-banner__txt">
+          <div id="drive-dist" class="drive-banner__dist"></div>
+          <div id="drive-road" class="drive-banner__road"></div>
+        </div>
+      </div>
+      <div id="drive-reroute" class="drive-reroute is-hidden" data-t="driveRerouting"></div>
+      <div class="drive-foot">
+        <div class="drive-foot__stats">
+          <span id="drive-remain"></span>
+          <span id="drive-eta"></span>
+        </div>
+        <button id="drive-voice" class="drive-foot__btn" aria-label="Voice"></button>
+        <button id="drive-exit" class="btn btn--primary drive-foot__exit" data-t="driveEnd"></button>
+      </div>
+    </div>
 
     <div id="toast" class="toast"></div>
 
@@ -178,6 +199,7 @@
           <span data-t="googleBtn"></span>
         </button>
         <p class="gate__note" data-t="noAccount"></p>
+        <p class="gate__note gate__note--price" data-t="signInPrice"></p>
       </div>
     </section>
 

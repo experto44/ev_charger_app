@@ -17,7 +17,7 @@ import {
   setTraffic,
 } from './map.js';
 import { initSearch } from './search.js';
-import { navigateTo } from './nav.js';
+import { initDrive, startDrive } from './drive.js';
 import {
   applyFilters,
   buildFilterDrawer,
@@ -81,7 +81,10 @@ function wireMapControls() {
     clearSearchPin();
   });
   document.getElementById('dest-nav').addEventListener('click', () => {
-    if (destPos) navigateTo(destPos.lat, destPos.lng);
+    if (!destPos) return;
+    document.getElementById('dest-card').classList.add('is-hidden');
+    clearSearchPin();
+    startDrive({ destination: destPos });
   });
   document.getElementById('dest-route').addEventListener('click', () => {
     if (destPos) {
@@ -100,6 +103,7 @@ async function bootApp() {
     await loadMapsApi();
     initMap(document.getElementById('map'));
     initTrip();
+    initDrive();
     initSearch({ getStations: () => allStations, onStation: openStation, onPlace: openDestination });
     wireMapControls();
   } catch (e) {

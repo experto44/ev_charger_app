@@ -39,7 +39,7 @@ export function loadMapsApi() {
     const s = document.createElement('script');
     s.src =
       `https://maps.googleapis.com/maps/api/js?key=${MAPS_API_KEY}` +
-      `&callback=${cb}&language=ka&region=GE&loading=async&libraries=places`;
+      `&callback=${cb}&language=ka&region=GE&loading=async&libraries=places,geometry`;
     s.onerror = () => reject(new Error('maps script failed'));
     document.head.appendChild(s);
   });
