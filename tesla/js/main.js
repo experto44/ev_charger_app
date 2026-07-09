@@ -5,7 +5,19 @@ import { initAnalytics } from './analytics.js';
 import { loginEmail, loginGoogle, logout } from './auth.js';
 import { startGate } from './gate.js';
 import { startFeed } from './data.js';
-import { loadMapsApi, initMap, renderMarkers } from './map.js';
+import {
+  loadMapsApi,
+  initMap,
+  getMap,
+  renderMarkers,
+  locateMe,
+  panTo,
+  setSearchPin,
+  clearSearchPin,
+  setTraffic,
+} from './map.js';
+import { initSearch } from './search.js';
+import { navigateTo } from './nav.js';
 import {
   applyFilters,
   buildFilterDrawer,
@@ -15,7 +27,7 @@ import {
   showToast,
   toggleFilterDrawer,
 } from './ui.js';
-import { initTrip, isTripOpen, setTripPoints, toggleTripDrawer } from './trip.js';
+import { initTrip, isTripOpen, relabelTrip, setTripDestination, setTripPoints, toggleTripDrawer } from './trip.js';
 
 let allStations = [];
 let drawerBuilt = false;
@@ -26,12 +38,70 @@ function repaint() {
   setCount(visible.length);
 }
 
+// ── Search result handlers ───────────────────────────────────────────────────
+let destPos = null;
+
+function openStation(s) {
+  panTo({ lat: s.lat, lng: s.lng }, 15);
+  showStation(s);
+}
+
+function openDestination(pos, name) {
+  destPos = pos;
+  setSearchPin(pos);
+  panTo(pos, 14);
+  const card = document.getElementById('dest-card');
+  card.querySelector('.dest-card__name').textContent = name;
+  card.classList.remove('is-hidden');
+}
+
+function wireMapControls() {
+  document.getElementById('btn-locate').addEventListener('click', async () => {
+    try {
+      await locateMe();
+    } catch (e) {
+      showToast(t('locationError'));
+    }
+  });
+
+  // Traffic layer toggle (persisted).
+  const trafficBtn = document.getElementById('btn-traffic');
+  let trafficOn = localStorage.getItem('gc_traffic') === '1';
+  setTraffic(trafficOn);
+  trafficBtn.classList.toggle('is-active', trafficOn);
+  trafficBtn.addEventListener('click', () => {
+    trafficOn = !trafficOn;
+    setTraffic(trafficOn);
+    trafficBtn.classList.toggle('is-active', trafficOn);
+    localStorage.setItem('gc_traffic', trafficOn ? '1' : '0');
+  });
+
+  document.getElementById('dest-close').addEventListener('click', () => {
+    document.getElementById('dest-card').classList.add('is-hidden');
+    clearSearchPin();
+  });
+  document.getElementById('dest-nav').addEventListener('click', () => {
+    if (destPos) navigateTo(destPos.lat, destPos.lng);
+  });
+  document.getElementById('dest-route').addEventListener('click', () => {
+    if (destPos) {
+      setTripDestination(destPos);
+      toggleFilterDrawer(false);
+      toggleTripDrawer(true);
+    }
+    document.getElementById('dest-card').classList.add('is-hidden');
+    clearSearchPin();
+  });
+}
+
 /** Boots the map + live feed. Runs once, the first time access is granted. */
 async function bootApp() {
   try {
     await loadMapsApi();
     initMap(document.getElementById('map'));
     initTrip();
+    initSearch({ getStations: () => allStations, onStation: openStation, onPlace: openDestination });
+    wireMapControls();
   } catch (e) {
     document.getElementById('map').innerHTML =
       `<div class="map-error">${t('mapError')}</div>`;
@@ -72,6 +142,7 @@ function wireChrome() {
     btn.addEventListener('click', () => {
       setLang(btn.dataset.langBtn);
       if (drawerBuilt) buildFilterDrawer(allStations, repaint); // re-label chips
+      relabelTrip();
       repaint();
     });
   }
@@ -137,4 +208,10 @@ wireGateUi();
 startGate(bootApp);
 
 // Debug handle for driving the UI from the console / automated tests.
-window.__gc = { showStation, stations: () => allStations, setTripPoints };
+window.__gc = {
+  showStation,
+  stations: () => allStations,
+  setTripPoints,
+  map: getMap,
+  openTrip: () => { toggleFilterDrawer(false); toggleTripDrawer(true); },
+};

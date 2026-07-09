@@ -18,9 +18,17 @@ const NIGHT_STYLE = [
 
 const STATUS_COLORS = { free: '#2bd594', busy: '#f5a623', out: '#6b7a85' };
 
+// Marker pie colours — match the app's _AvailabilityPainter exactly.
+const PIN_FREE = '#00C896'; // emerald  (available portion)
+const PIN_BUSY = '#FFAB40'; // orangeAccent (busy/out portion)
+
 let map = null;
 let markers = new Map(); // station.id -> google.maps.Marker
 let clusterer = null;
+let userMarker = null;   // blue "my location" dot
+let searchMarker = null; // red destination pin
+let watchId = null;
+let trafficLayer = null;
 
 /** Load the Maps JS API once; resolves when `google.maps` is usable. */
 export function loadMapsApi() {
@@ -61,12 +69,38 @@ export function stationStatus(s) {
   return 'out';
 }
 
+/** Fraction of plugs free (available/total), like the app's freeFraction. */
+function freeFraction(s) {
+  if (s.total > 0) return Math.min(1, Math.max(0, s.available / s.total));
+  return s.available > 0 ? 1 : 0;
+}
+
+// Point on the r=15 circle centred at (22,22) at `frac` of a full turn,
+// measured clockwise from the top (12 o'clock) — for the SVG pie wedge.
+function arcPoint(frac) {
+  const a = -Math.PI / 2 + frac * 2 * Math.PI;
+  return [22 + 15 * Math.cos(a), 22 + 15 * Math.sin(a)];
+}
+
 function markerIcon(s) {
-  const color = STATUS_COLORS[stationStatus(s)];
-  const ring = s.isDC ? '#eef3f6' : 'transparent'; // DC chargers get a white ring
+  const f = freeFraction(s);
+  let body;
+  if (f >= 1) {
+    body = `<circle cx="22" cy="22" r="15" fill="${PIN_FREE}"/>`;
+  } else if (f <= 0) {
+    body = `<circle cx="22" cy="22" r="15" fill="${PIN_BUSY}"/>`;
+  } else {
+    // Orange base, then a green pie wedge from the top clockwise by f×360°.
+    const [ex, ey] = arcPoint(f);
+    const large = f > 0.5 ? 1 : 0;
+    body =
+      `<circle cx="22" cy="22" r="15" fill="${PIN_BUSY}"/>` +
+      `<path d="M22 22 L22 7 A15 15 0 ${large} 1 ${ex.toFixed(2)} ${ey.toFixed(2)} Z" fill="${PIN_FREE}"/>`;
+  }
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44">` +
-    `<circle cx="22" cy="22" r="15" fill="${color}" stroke="${ring}" stroke-width="2.5"/>` +
+    body +
+    `<circle cx="22" cy="22" r="14" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>` +
     `<path d="M23.5 13l-7 10.5h5l-1 7 7-10.5h-5z" fill="#0d1216"/>` +
     `</svg>`;
   return {
@@ -131,4 +165,93 @@ export function renderMarkers(stations, onSelect) {
     clusterer.clearMarkers();
     clusterer.addMarkers(list);
   }
+}
+
+/** Dim/undim the charger + cluster layer (used while a route is displayed). */
+export function setMarkersDimmed(dim) {
+  const op = dim ? 0.35 : 1;
+  for (const m of markers.values()) m.setOpacity(op);
+}
+
+export function panTo(pos, zoom) {
+  map.panTo(pos);
+  if (zoom != null) map.setZoom(zoom);
+}
+
+// ── My-location blue dot ─────────────────────────────────────────────────────
+export function setUserLocation(pos) {
+  if (!userMarker) {
+    userMarker = new google.maps.Marker({
+      map,
+      zIndex: 3000,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 8,
+        fillColor: '#2196F3',
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 3,
+      },
+    });
+  }
+  userMarker.setPosition(pos);
+}
+
+/**
+ * Locate the user, centre on them, and keep the dot updated. Resolves with the
+ * position, or rejects (denied/unavailable/timeout) so the caller can warn.
+ */
+export function locateMe({ center = true } = {}) {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) return reject(new Error('no geolocation'));
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        const pos = { lat: p.coords.latitude, lng: p.coords.longitude };
+        setUserLocation(pos);
+        if (center) panTo(pos, 13);
+        // Keep the dot fresh without moving the camera.
+        if (watchId == null) {
+          watchId = navigator.geolocation.watchPosition(
+            (q) => setUserLocation({ lat: q.coords.latitude, lng: q.coords.longitude }),
+            () => {},
+            { enableHighAccuracy: true, maximumAge: 15000 },
+          );
+        }
+        resolve(pos);
+      },
+      (err) => reject(err),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+  });
+}
+
+// ── Search destination pin (red) ─────────────────────────────────────────────
+export function setSearchPin(pos) {
+  if (!searchMarker) {
+    searchMarker = new google.maps.Marker({
+      map,
+      zIndex: 2500,
+      icon: {
+        path: 'M12 0C7 0 3 4 3 9c0 6 9 15 9 15s9-9 9-15c0-5-4-9-9-9z',
+        fillColor: '#E53935',
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 1.5,
+        scale: 1.6,
+        anchor: new google.maps.Point(12, 24),
+      },
+    });
+  }
+  searchMarker.setPosition(pos);
+  searchMarker.setMap(map);
+}
+
+export function clearSearchPin() {
+  searchMarker?.setMap(null);
+}
+
+// ── Traffic layer ────────────────────────────────────────────────────────────
+export function setTraffic(on) {
+  if (on && !trafficLayer) trafficLayer = new google.maps.TrafficLayer();
+  trafficLayer?.setMap(on ? map : null);
 }

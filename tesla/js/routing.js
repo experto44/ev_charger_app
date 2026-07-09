@@ -95,7 +95,11 @@ export async function planRoute({ waypoints, currentBatteryPct, maxRangeKm, stat
 
   const pts = route.overview_path.map((p) => ({ lat: p.lat(), lng: p.lng() }));
   let totalDistKm = 0;
-  for (const leg of route.legs) totalDistKm += leg.distance.value / 1000;
+  const legEndsKm = []; // cumulative km at each waypoint boundary
+  for (const leg of route.legs) {
+    totalDistKm += leg.distance.value / 1000;
+    legEndsKm.push(totalDistKm);
+  }
 
   // Cumulative along-route distance for every polyline point.
   const cum = new Array(pts.length).fill(0);
@@ -180,12 +184,148 @@ export async function planRoute({ waypoints, currentBatteryPct, maxRangeKm, stat
   }
 
   const remainAtDestKm = currentKm - (routeKm - coveredKm);
+
+  // ── Selectable charger "option" blocks (~one per 50 km) ─────────────────────
+  // 1. Corridor chargers, ordered along the road.
+  const onRoute = projected
+    .filter((p) => p.detourKm <= corridorKm)
+    .sort((a, b) => a.alongKm - b.alongKm);
+
+  // 2. Merge co-located chargers (≤200 m) into single blocks.
+  const clusters = [];
+  for (const p of onRoute) {
+    if (clusters.length) {
+      const anchor = clusters[clusters.length - 1][0].station;
+      const m =
+        haversineKm({ lat: anchor.lat, lng: anchor.lng }, { lat: p.station.lat, lng: p.station.lng }) * 1000;
+      if (m <= 200) {
+        clusters[clusters.length - 1].push(p);
+        continue;
+      }
+    }
+    clusters.push([p]);
+  }
+
+  // 3. Mark clusters holding a greedy-recommended charger (always shown/ticked);
+  //    a recommended charger outside the corridor gets its own appended cluster.
+  const sameStation = (a, b) => a.name === b.name && a.lat === b.lat && a.lng === b.lng;
+  const recommendedIdx = new Set();
+  for (const stop of stops) {
+    let found = -1;
+    for (let i = 0; i < clusters.length; i++) {
+      if (clusters[i].some((e) => sameStation(e.station, stop.station))) { found = i; break; }
+    }
+    if (found === -1) {
+      const proj =
+        projected.find((p) => sameStation(p.station, stop.station)) ||
+        { station: stop.station, detourKm: 0, alongKm: stop.distanceFromStartKm };
+      clusters.push([proj]);
+      recommendedIdx.add(clusters.length - 1);
+    } else {
+      recommendedIdx.add(found);
+    }
+  }
+
+  // 4. Sample ~one cluster per 50 km, always moving forward.
+  const sampleStepKm = 50.0;
+  const pickedIdx = new Set();
+  let lastAlong = -1;
+  for (let cp = sampleStepKm; cp < routeKm + sampleStepKm; cp += sampleStepKm) {
+    let best = -1, bestDelta = Infinity;
+    for (let i = 0; i < clusters.length; i++) {
+      if (pickedIdx.has(i)) continue;
+      const a = clusters[i][0].alongKm;
+      if (a <= lastAlong) continue;
+      const d = Math.abs(a - cp);
+      if (d < bestDelta) { bestDelta = d; best = i; }
+    }
+    if (best === -1) continue;
+    pickedIdx.add(best);
+    lastAlong = clusters[best][0].alongKm;
+  }
+  for (const i of recommendedIdx) pickedIdx.add(i);
+
+  const options = [...pickedIdx]
+    .map((i) => toOption(clusters[i], recommendedIdx.has(i), pts, cum))
+    .sort((a, b) => a.alongKm - b.alongKm);
+
   return {
     polyline: pts,
     totalDistanceKm: totalDistKm,
     batteryAtArrivalPct: Math.min(100, Math.max(0, (remainAtDestKm / effectiveKm) * 100)),
     stops,
+    options,
+    legEndsKm,
     effectiveRangeKm: effectiveKm,
     reachable,
+  };
+}
+
+// ── Option-block helpers (ported from RouteChargerOption) ─────────────────────
+function providerPowers(stationsArr) {
+  const names = new Map();      // key → display name
+  const byProvider = new Map(); // key → kW[]
+  for (const s of stationsArr) {
+    const p = (s.provider || '').trim();
+    if (!p) continue;
+    const key = p.toLowerCase();
+    if (!names.has(key)) names.set(key, p);
+    if (!byProvider.has(key)) byProvider.set(key, []);
+    if (s.kw > 0) byProvider.get(key).push(s.kw);
+  }
+  const out = [];
+  for (const key of names.keys()) {
+    const kws = byProvider.get(key);
+    let power = '';
+    if (kws.length) {
+      const mn = Math.min(...kws), mx = Math.max(...kws);
+      power = mn === mx ? `${kws[0]} kW` : `${mn}–${mx} kW`;
+    }
+    out.push({ name: names.get(key), power });
+  }
+  return out;
+}
+
+function connectorTypes(stationsArr) {
+  const seen = new Set();
+  const out = [];
+  for (const s of stationsArr) {
+    for (const c of s.connectors) {
+      const tt = (c || '').trim();
+      if (!tt || seen.has(tt.toLowerCase())) continue;
+      seen.add(tt.toLowerCase());
+      out.push(tt);
+    }
+  }
+  return out;
+}
+
+function toOption(cl, recommended, pts, cum) {
+  const along = cl.reduce((a, e) => a + e.alongKm, 0) / cl.length;
+  const detour = Math.min(...cl.map((e) => e.detourKm));
+  const preferred = preferredSide(bearingAlong(pts, cum, along));
+  let hasGoodSide = false;
+  for (const e of cl) {
+    const sd = parseSideFromName(e.station.name);
+    if (sd === 'unknown' || sd === preferred) { hasGoodSide = true; break; }
+  }
+  const requiresUTurn = !hasGoodSide;
+  const blockSide = requiresUTurn ? (preferred === 'right' ? 'left' : 'right') : preferred;
+  const sts = cl.map((e) => e.station);
+  const first = cl[0].station;
+  return {
+    location: { lat: first.lat, lng: first.lng },
+    locationKey: `${first.lat.toFixed(5)},${first.lng.toFixed(5)}`,
+    alongKm: along,
+    detourKm: detour,
+    title: (first.city || '').trim() || first.name,
+    providerPowers: providerPowers(sts),
+    connectorTypes: connectorTypes(sts),
+    chargerCount: sts.reduce((n, s) => n + (s.total > 0 ? s.total : 1), 0),
+    availableCount: sts.reduce((n, s) => n + s.available, 0),
+    isDC: sts.some((s) => s.isDC),
+    requiresUTurn,
+    side: blockSide,
+    recommended,
   };
 }
