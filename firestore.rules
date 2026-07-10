@@ -61,6 +61,25 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ── Revenue events ───────────────────────────────────────────────────────
+    // One document per completed in-app purchase, written by the buyer's app
+    // (id = the store transaction id, so retries are idempotent). Feeds the
+    // admin panel's financial analytics.
+    //
+    // A signed-in user may create/merge ONLY their own purchase record (the
+    // `uid` field must match their token); nobody but an admin can read the
+    // collection, and no client can delete rows. Amounts come straight from the
+    // store's ProductDetails, so a user can at most misreport their own row.
+    match /purchases/{id} {
+      allow get, list: if isAdmin();
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid;
+      allow update: if request.auth != null
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.uid == request.auth.uid;
+      // delete intentionally absent → denied (revenue history is append-only).
+    }
+
     // ── Charger-free push alerts ─────────────────────────────────────────────
     // One doc per device, keyed by (a sanitized form of) the device's FCM token
     // — a secret bearer credential only that device knows. No login is required,

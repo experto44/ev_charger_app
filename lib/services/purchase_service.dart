@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -187,6 +188,13 @@ class PurchaseService {
             // Persist to the signed-in user's account so premium follows the
             // user, not the device.
             await _persistPremiumToFirestore(purchase);
+            // Record a revenue event for the admin panel's financial analytics.
+            // ONLY for a genuinely new purchase — a `restored` event replays on
+            // every launch for an owned subscription, so recording it too would
+            // inflate revenue. Deduped by the store transaction id regardless.
+            if (purchase.status == PurchaseStatus.purchased) {
+              await _recordPurchaseEvent(purchase);
+            }
           }
           await _finish(purchase);
           break;
@@ -231,6 +239,58 @@ class PurchaseService {
     } catch (_) {
       // Offline / Firestore error — premium is still granted locally and will
       // re-persist on the next purchase-stream replay or login sync.
+    }
+  }
+
+  // ── Revenue events (Firestore `purchases` collection) ──────────────────────
+  /// Write one revenue record per completed purchase so the admin panel can
+  /// build financial analytics (gross/net, split by plan and platform). The
+  /// document id is the store transaction id, making the write idempotent — a
+  /// replayed/retried transaction updates the same row instead of double-
+  /// counting. Best-effort and never blocks the purchase flow.
+  ///
+  /// The gross amount + currency come from the store's own [ProductDetails]
+  /// (localized, correct per storefront — e.g. GEL on Android, USD on the iOS
+  /// App Store in Georgia). When product details are unavailable we fall back to
+  /// the list prices so a row is still recorded, just approximate.
+  Future<void> _recordPurchaseEvent(PurchaseDetails purchase) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return; // anonymous purchase — no account to attribute it to
+
+    final plan     = purchase.productID == yearlyId ? 'yearly' : 'monthly';
+    final platform = Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other');
+    final product  = _productById(purchase.productID);
+    final gross    = (product != null && product.rawPrice > 0)
+        ? product.rawPrice
+        : (plan == 'yearly' ? 9.99 : 1.0); // GEL list-price fallback
+    final currency = product?.currencyCode ?? 'GEL';
+
+    // Store transaction id is globally unique per purchase → dedupe key.
+    final docId = purchase.purchaseID?.isNotEmpty == true
+        ? purchase.purchaseID!
+        : '${uid}_${DateTime.now().millisecondsSinceEpoch}';
+
+    try {
+      await _firestore.collection('purchases').doc(docId).set({
+        'uid':       uid,
+        'plan':      plan,
+        'platform':  platform,
+        'gross':     gross,
+        'currency':  currency,
+        'productId': purchase.productID,
+        'type':      'new',
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // Mirror the resolved plan/price onto the user doc for convenience.
+      await _firestore.collection('users').doc(uid).set({
+        'plan':          plan,
+        'pricePaid':     gross,
+        'priceCurrency': currency,
+      }, SetOptions(merge: true));
+    } catch (_) {
+      // Offline / Firestore error — analytics is best-effort; the purchase
+      // itself already succeeded. The row is simply lost (no retry queue).
     }
   }
 
