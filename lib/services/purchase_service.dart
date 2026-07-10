@@ -173,9 +173,15 @@ class PurchaseService {
         case PurchaseStatus.purchased:
         case PurchaseStatus.restored:
           // The only paths that confer entitlement: a completed new purchase or
-          // a store-confirmed owned subscription, and only after validation.
-          if (_productIds.contains(purchase.productID) &&
-              await _isValid(purchase)) {
+          // a store-confirmed owned subscription. The store (StoreKit / Play
+          // Billing) only reports these statuses AFTER it has verified the
+          // transaction itself, so the status is the entitlement signal — we
+          // must NOT gate the grant on the local receipt string. On iOS in
+          // particular the App Store receipt (serverVerificationData) is often
+          // empty on a fresh sandbox install when the first `.purchased` event
+          // arrives; gating on it there silently drops a real purchase and the
+          // paying user is never credited (App Store review 2.1(b)).
+          if (_productIds.contains(purchase.productID)) {
             _ownedSeen = true; // store confirms an active owned subscription
             await _grantPremium();
             // Persist to the signed-in user's account so premium follows the
@@ -193,15 +199,6 @@ class PurchaseService {
           break;
       }
     }
-  }
-
-  /// Verify a purchase before granting entitlement. Here we do a lightweight
-  /// local check (a non-empty verification token). For production-grade
-  /// anti-fraud you would forward `purchase.verificationData.serverVerificationData`
-  /// to your backend / Play Developer API and confirm it there.
-  Future<bool> _isValid(PurchaseDetails purchase) async {
-    final token = purchase.verificationData.serverVerificationData;
-    return token.isNotEmpty;
   }
 
   /// Acknowledge/consume the transaction with the store so it is not redelivered.
