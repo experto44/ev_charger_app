@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 
 /// GeoCharge brand accent (same emerald as the mobile app).
 const Color kEmerald = Color(0xFF00C896);
-const Color kBgDark = Color(0xFF1A1A1A);
-const Color kBgCard = Color(0xFF252525);
-const Color kBgSurface = Color(0xFF2E2E2E);
+const Color kBgDark = Color(0xFF141414);
+const Color kBgCard = Color(0xFF1E1E1E);
+const Color kBgSurface = Color(0xFF2A2A2A);
 const Color kTextSec = Color(0xFF9E9E9E);
+
+/// Hairline used for card and table borders — keeps the dark UI legible without
+/// heavy elevation.
+const Color kBorder = Color(0xFF303030);
+
+/// Secondary accents used by the KPI strip / status chips.
+const Color kBlue = Color(0xFF3B82F6);
+const Color kAmber = Color(0xFFF59E0B);
 
 ThemeData buildAdminTheme() {
   final base = ThemeData.dark(useMaterial3: true);
@@ -20,6 +28,10 @@ ThemeData buildAdminTheme() {
       color: kBgCard,
       elevation: 0,
       margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: kBorder),
+        borderRadius: BorderRadius.all(Radius.circular(16)),
+      ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
@@ -30,6 +42,6 @@ ThemeData buildAdminTheme() {
       ),
       isDense: true,
     ),
-    dividerColor: kBgSurface,
+    dividerColor: kBorder,
   );
 }

@@ -12,6 +12,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "5174", "--directory", "site"],
       "port": 5174
+    },
+    {
+      "name": "admin-preview",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8099", "--directory", "admin/build/preview"],
+      "port": 8099
     }
   ]
 }

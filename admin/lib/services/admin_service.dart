@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/app_user.dart';
+import '../models/purchase.dart';
 
 /// Data + auth layer for the admin panel.
 ///
@@ -58,6 +59,23 @@ class AdminService {
         return bd.compareTo(ad);
       });
       return users;
+    });
+  }
+
+  /// Live stream of every recorded purchase (revenue event), newest first.
+  /// Sorted client-side so purchases still missing a server `createdAt` (the
+  /// brief window before the timestamp resolves) aren't dropped.
+  Stream<List<Purchase>> purchasesStream() {
+    return _db.collection('purchases').snapshots().map((snap) {
+      final list = snap.docs.map(Purchase.fromDoc).toList();
+      list.sort((a, b) {
+        final ad = a.createdAt, bd = b.createdAt;
+        if (ad == null && bd == null) return 0;
+        if (ad == null) return 1;
+        if (bd == null) return -1;
+        return bd.compareTo(ad);
+      });
+      return list;
     });
   }
 
