@@ -121,9 +121,11 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: _bgDark,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 28),
-          child: Form(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -270,9 +272,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ]),
                 const SizedBox(height: 40),
-              ],
+                  ],
+                ),
+              ),
             ),
-          ),
+
+            // ── Close (X) — return to the app without signing in ──────────
+            Positioned(
+              top: 4,
+              left: 4,
+              child: IconButton(
+                icon: const Icon(Icons.close_rounded, color: _textSec, size: 26),
+                onPressed: () => Navigator.pop(context),
+                tooltip: 'Close',
+              ),
+            ),
+          ],
         ),
       ),
     );

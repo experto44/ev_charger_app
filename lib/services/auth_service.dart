@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -16,6 +17,23 @@ class AuthService {
   static final _auth      = FirebaseAuth.instance;
   static final _firestore = FirebaseFirestore.instance;
   static final _google    = GoogleSignIn();
+  static final _functions = FirebaseFunctions.instance;
+
+  // Sends the branded verification email (noreply@geocharge.ge, Zoho SMTP) via
+  // the sendVerificationEmail Cloud Function. Falls back to Firebase's default
+  // email if the function is unreachable, so a user is never left unable to
+  // verify. Best-effort throw: caller can surface failures on the resend path.
+  static Future<void> _sendBrandedVerification() async {
+    try {
+      await _functions
+          .httpsCallable('sendVerificationEmail')
+          .call<Map<String, dynamic>>();
+    } catch (e) {
+      debugPrint('[AuthService] branded verification failed ($e) — '
+          'falling back to Firebase default email');
+      await _auth.currentUser?.sendEmailVerification();
+    }
+  }
 
   static Stream<User?> get authStateChanges => _auth.authStateChanges();
   static User?         get currentUser      => _auth.currentUser;
@@ -41,7 +59,7 @@ class AuthService {
       email: email.trim(),
       password: password,
     );
-    await cred.user?.sendEmailVerification();
+    await _sendBrandedVerification();
     // New account starts with no premium; sync clears any premium the previous
     // user left cached on this device.
     await PurchaseService.I.syncPremiumFromFirestore();
@@ -52,7 +70,7 @@ class AuthService {
 
   // ── Resend verification email ─────────────────────────────────────────────────
   static Future<void> resendVerificationEmail() async {
-    await _auth.currentUser?.sendEmailVerification();
+    await _sendBrandedVerification();
   }
 
   // ── Reload user to pick up latest emailVerified state ────────────────────────
