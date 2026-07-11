@@ -63,15 +63,19 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await AppStrings.load(); // restore saved language (English/Georgian)
   // Subscriptions first (sets isPremium from cache), then ads — the ad layer
-  // reads isPremium to decide whether to load anything at all.
+  // reads isPremium to decide whether to load anything at all. init() only
+  // awaits the local cached-flag read; the store connection runs in the
+  // background, so this never blocks launch on Play Billing.
   await PurchaseService.I.init();
-  // Android initialises ads now. iOS defers it until AFTER the ATT prompt (see
-  // the post-frame callback below) so the very first banner/interstitial
-  // requests can carry the IDFA — without consent-first ordering, early iOS
-  // requests go out non-personalised, which hurts fill/eCPM. google_mobile_ads
+  // Android initialises ads now — but UNAWAITED. MobileAds.initialize() talks
+  // to Play Services and can be slow (or hang) when Play Services is unhealthy;
+  // awaiting it here froze the whole launch on the splash screen. The bottom
+  // banner listens to AdService.ready, so it appears the moment the SDK is
+  // actually ready. iOS defers ads until AFTER the ATT prompt (post-frame
+  // callback below) so the first requests can carry the IDFA. google_mobile_ads
   // is mobile-only, so no other platform initialises it.
   if (!kIsWeb && Platform.isAndroid) {
-    await AdService.I.init();
+    unawaited(AdService.I.init());
   }
   // Push alerts ("notify me when this charger frees up"). Unawaited — it may
   // prompt for notification permission and resolve the FCM token, neither of

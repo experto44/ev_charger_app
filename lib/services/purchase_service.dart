@@ -62,44 +62,62 @@ class PurchaseService {
     return null;
   }
 
-  /// Initialise the store connection and start listening for purchase updates.
-  /// Call once during app startup, before `runApp`. Safe to call when the
-  /// store is unavailable (e.g. emulator without Play Services) — it just
-  /// leaves [storeAvailable] false and the app runs on the cached flag.
+  /// Initialise premium state and (in the background) the store connection.
+  /// Call once during app startup, before `runApp`. Only the cached-flag
+  /// restore is awaited — it's a local SharedPreferences read, so it returns
+  /// instantly and gives the ad layer a correct [isPremium] to gate on. The
+  /// store connection is deferred to [_connectStore] and run unawaited, because
+  /// binding to Play Billing can hang for many seconds (or forever) when Play
+  /// Services/Play Store is slow to respond. Blocking `main()` on it froze the
+  /// whole Android launch on the splash screen — this keeps launch instant and
+  /// lets billing/products settle in the background.
   Future<void> init() async {
-    // 1. Restore the cached flag first so the UI never flashes the wrong state.
+    // Restore the cached flag first so the UI never flashes the wrong state and
+    // the ad layer has a correct premium value from the very first frame.
     final prefs = await SharedPreferences.getInstance();
     isPremium.value = prefs.getBool(_prefsKey) ?? false;
+    // Everything below can touch the network / Play Billing and must never
+    // delay first paint — run it detached from the startup await chain.
+    unawaited(_connectStore());
+  }
 
-    // 2. Connect to the store.
+  /// Connect to the store, subscribe to purchase updates, load products, and
+  /// reconcile the authoritative premium state. Runs in the background (see
+  /// [init]); [isAvailable] is bounded by a timeout so a hung Play Billing
+  /// bind can never wedge the flow.
+  Future<void> _connectStore() async {
+    // Connect to the store (bounded — a stuck Play Billing bind resolves to
+    // "unavailable" instead of hanging indefinitely).
     bool available = false;
     try {
-      available = await _iap.isAvailable();
+      available = await _iap
+          .isAvailable()
+          .timeout(const Duration(seconds: 8), onTimeout: () => false);
     } catch (_) {
       available = false;
     }
     storeAvailable.value = available;
     if (!available) return;
 
-    // 3. Listen BEFORE querying so we never miss a restored/owned purchase that
-    //    the platform replays on connection.
+    // Listen BEFORE querying so we never miss a restored/owned purchase that
+    // the platform replays on connection.
     _sub = _iap.purchaseStream.listen(
       _onPurchaseUpdates,
       onDone: () => _sub?.cancel(),
       onError: (_) {/* transient stream error — ignore, next event recovers */},
     );
 
-    // 4. Load product details for the paywall.
+    // Load product details for the paywall.
     await loadProducts();
 
-    // 5. Establish the authoritative premium state.
-    //    • Signed in  → the user's Firestore document is the source of truth, so
-    //      premium follows the account across devices (read it, don't trust the
-    //      device cache or the local Play account).
-    //    • Anonymous  → no account to consult; fall back to the store-based
-    //      reconciliation that clears a stale cached flag.
-    //    Both run unawaited so they never block startup; the cached flag drives
-    //    the UI instantly and is corrected a moment later.
+    // Establish the authoritative premium state.
+    //   • Signed in  → the user's Firestore document is the source of truth, so
+    //     premium follows the account across devices (read it, don't trust the
+    //     device cache or the local Play account).
+    //   • Anonymous  → no account to consult; fall back to the store-based
+    //     reconciliation that clears a stale cached flag.
+    //   Both run unawaited so they never block; the cached flag drives the UI
+    //   instantly and is corrected a moment later.
     if (FirebaseAuth.instance.currentUser != null) {
       unawaited(syncPremiumFromFirestore());
     } else if (isPremium.value) {
