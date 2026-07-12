@@ -2016,6 +2016,22 @@ class _StationSheetState extends State<_StationSheet> {
       _station.ports.isEmpty && _station.available == 0;
   bool get _alertOn  => NotificationService.I.isSubscribed(_station.id);
 
+  // True if a user is signed in. Auth state can be spuriously null for a moment
+  // right after launch while the session restores, so wait out a short, bounded
+  // window before concluding signed-out (same guard as _openProfile).
+  Future<bool> _hasSession() async {
+    if (FirebaseAuth.instance.currentUser != null) { return true; }
+    try {
+      final u = await FirebaseAuth.instance
+          .authStateChanges()
+          .firstWhere((user) => user != null)
+          .timeout(const Duration(seconds: 3), onTimeout: () => null);
+      return u != null;
+    } catch (_) {
+      return false;
+    }
+  }
+
   // Arm / cancel a "notify me when it frees up" alert. [connector] scopes it to
   // one plug type (from a per-connector button); empty = whole-station alert.
   Future<void> _toggleAlert({String connector = ''}) async {
@@ -2033,7 +2049,20 @@ class _StationSheetState extends State<_StationSheet> {
       return;
     }
 
+    // Arming a new alert requires an account: alerts are tied to the signed-in
+    // user, so a signed-out tap opens Login instead of silently arming.
     setState(() => _alertPending.add(key));
+    final loggedIn = await _hasSession();
+    if (!mounted) { return; }
+    if (!loggedIn) {
+      setState(() => _alertPending.remove(key));
+      _snack(AppStrings.alertLoginRequired);
+      await Navigator.push<void>(context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()));
+      // If they signed in while there, arm it now; otherwise stop.
+      if (!mounted || FirebaseAuth.instance.currentUser == null) { return; }
+      setState(() => _alertPending.add(key));
+    }
     final res = await svc.subscribe(
       stationId:   _station.id,
       stationName: _station.name,
