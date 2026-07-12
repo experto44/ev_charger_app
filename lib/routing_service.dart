@@ -257,6 +257,7 @@ class RouteChargerOption {
     return out;
   }
 
+  int  get stationCount   => stations.length; // merged charger units at this place
   int  get chargerCount   => stations.fold(0, (n, s) => n + (s.total > 0 ? s.total : 1));
   int  get availableCount => stations.fold(0, (n, s) => n + s.available);
   bool get isDC           => stations.any((s) => s.isDC);
@@ -357,14 +358,25 @@ class RoutingService {
       }
       final routeKm = pts.isEmpty ? totalDistKm : cum.last;
 
-      // ── Project every available station onto the route polyline ────────────
+      // ── Project every operational station onto the route polyline ──────────
       // detourKm = how far the station sits off the road; alongKm = how far
       // along the route its closest point lies. Picking chargers by minimal
       // detour + strictly-ahead progress keeps stops ON the highway corridor
       // and never routes the driver backward or deep into another region.
+      //
+      // A busy charger (0 free plugs) is still SHOWN — the driver wants to see it
+      // (it may free up by arrival). Only a charger that is fully out of order is
+      // dropped: every published plug reads "out". Providers with no per-plug
+      // data are assumed present (busy), matching the map, which shows them too.
+      bool operational(Station s) {
+        if (s.available > 0) { return true; }
+        if (s.ports.isNotEmpty) { return s.ports.any((p) => p.status != 'out'); }
+        return true;
+      }
+
       final projected = <_StationProjection>[];
       for (final s in stations) {
-        if (s.available == 0) { continue; }
+        if (!operational(s)) { continue; }
         final sp = LatLng(s.lat, s.lng);
         double bestDist = double.infinity, bestAlong = 0;
         for (int i = 0; i < pts.length - 1; i++) {
@@ -378,7 +390,8 @@ class RoutingService {
       }
 
       // ── Greedy EV planning along the corridor ──────────────────────────────
-      const corridorKm = 8.0;   // a charger counts as "on the route" within this
+      const onRouteKm  = 2.5;   // "directly on the road the driver passes"
+      const corridorKm = 8.0;   // a charger still counts as "on the route" within this
       final stops      = <ChargingStop>[];
       double coveredKm = 0.0;                                        // progress along route
       double currentKm = (currentBatteryPct / 100.0) * effectiveKm;  // range remaining
@@ -387,19 +400,31 @@ class RoutingService {
       while (coveredKm + currentKm - reserveKm < routeKm && guard++ < 25) {
         final reachKm = coveredKm + currentKm - reserveKm; // farthest along we can reach
 
-        // Candidates: strictly ahead, reachable before the reserve, and within
-        // the highway corridor (so we don't dive off into a far-off town).
-        var cands = projected.where((p) =>
+        // Only currently-free chargers can be RECOMMENDED (a busy one still shows
+        // in the list, just isn't pre-picked as a planned stop).
+        bool usable(_StationProjection p) =>
+            p.station.available > 0 &&
             p.alongKm > coveredKm + 0.5 &&
-            p.alongKm <= reachKm &&
-            p.detourKm <= corridorKm).toList();
+            p.alongKm <= reachKm;
 
-        // Fallback: nothing in the tight corridor — widen to any reachable
-        // station ahead and take the least-detour one (still never backward).
+        // Tier 1 — chargers DIRECTLY on the road (tiny detour). Always preferred:
+        // the driver should be recommended stops right on the highway, never a
+        // detour into a side town when a roadside charger is reachable.
+        var cands =
+            projected.where((p) => usable(p) && p.detourKm <= onRouteKm).toList();
+
+        // Tier 2 — nothing right on the road: widen to the highway corridor.
         if (cands.isEmpty) {
-          cands = projected.where((p) =>
-              p.alongKm > coveredKm + 0.5 && p.alongKm <= reachKm).toList();
-          if (cands.isEmpty) { break; } // can't reach a charger — leave rest unplanned
+          cands = projected
+              .where((p) => usable(p) && p.detourKm <= corridorKm)
+              .toList();
+        }
+
+        // Tier 3 — still nothing: any reachable free station ahead (least detour),
+        // so the driver isn't stranded on a charger-sparse stretch.
+        if (cands.isEmpty) {
+          cands = projected.where(usable).toList();
+          if (cands.isEmpty) { break; } // can't reach a free charger — leave rest unplanned
         }
 
         // Reward progress along the route, penalise detour off the highway,
@@ -460,25 +485,30 @@ class RoutingService {
 
       final remainAtDestKm = currentKm - (routeKm - coveredKm);
 
-      // ── Build the selectable charger options (~one block per 50 km) ─────────
+      // ── Build the selectable charger options — one block per charger ────────
       // 1. Keep only chargers inside the highway corridor, ordered along the road.
       final onRoute = projected
           .where((p) => p.detourKm <= corridorKm)
           .toList()
         ..sort((a, b) => a.alongKm.compareTo(b.alongKm));
 
-      // 2. Cluster co-located chargers (≤200 m apart) into single blocks so a
-      //    place served by several providers shows as one option.
+      // 2. Merge chargers that are the SAME provider at the SAME place (≤200 m)
+      //    into one block — e.g. E-Space's several units at Argveta collapse into
+      //    a single "E-Space · N stations · 50–360 kW" block. Different providers
+      //    are NEVER merged, so Terjola's EV Power GE and E-Space stay separate,
+      //    each keeping its own correct Google Maps pin.
       final clusters = <List<_StationProjection>>[];
       for (final p in onRoute) {
-        if (clusters.isNotEmpty) {
-          final anchor = clusters.last.first.station;
+        List<_StationProjection>? target;
+        for (final c in clusters) {
+          final anchor = c.first.station;
+          if (anchor.provider.trim().toLowerCase() !=
+              p.station.provider.trim().toLowerCase()) { continue; }
           final m = _haversine(LatLng(anchor.lat, anchor.lng),
-                  LatLng(p.station.lat, p.station.lng)) *
-              1000.0;
-          if (m <= 200.0) { clusters.last.add(p); continue; }
+                  LatLng(p.station.lat, p.station.lng)) * 1000.0;
+          if (m <= 200.0) { target = c; break; }
         }
-        clusters.add([p]);
+        if (target != null) { target.add(p); } else { clusters.add([p]); }
       }
 
       // Turns one cluster into an option, resolving carriageway / U-turn from
@@ -532,31 +562,32 @@ class RoutingService {
         }
       }
 
-      // 4. Sample ~one cluster per 50 km, always moving forward. Empty windows
-      //    naturally roll over to the next reachable cluster ahead.
-      const sampleStepKm = 50.0;
-      final pickedIdx = <int>{};
-      double lastAlong = -1;
-      for (double cp = sampleStepKm; cp < routeKm + sampleStepKm; cp += sampleStepKm) {
-        var best = -1;
-        var bestDelta = double.infinity;
-        for (int i = 0; i < clusters.length; i++) {
-          if (pickedIdx.contains(i)) { continue; }
-          final a = clusters[i].first.alongKm;
-          if (a <= lastAlong) { continue; }
-          final d = (a - cp).abs();
-          if (d < bestDelta) { bestDelta = d; best = i; }
-        }
-        if (best == -1) { continue; }
-        pickedIdx.add(best);
-        lastAlong = clusters[best].first.alongKm;
-      }
-      pickedIdx.addAll(recommendedIdx); // recommended blocks are always present
+      // 4. Build every corridor block, ordered along the route. Recommended
+      //    blocks stay flagged (pre-ticked) so a charging plan is still ready.
+      final allOptions = [
+        for (int i = 0; i < clusters.length; i++)
+          toOption(clusters[i], recommendedIdx.contains(i)),
+      ]..sort((a, b) => a.alongKm.compareTo(b.alongKm));
 
-      final options = pickedIdx
-          .map((i) => toOption(clusters[i], recommendedIdx.contains(i)))
-          .toList()
-        ..sort((a, b) => a.alongKm.compareTo(b.alongKm));
+      // 5. Prefer on-road chargers in the LIST too: within each 50 km window, if
+      //    any charger sits right on the road, drop the detour ones there. A
+      //    window whose road has no charger still shows its detour options, and
+      //    recommended blocks are always kept.
+      const displayWindowKm = 50.0;
+      final windows = <int, List<RouteChargerOption>>{};
+      for (final o in allOptions) {
+        (windows[o.alongKm ~/ displayWindowKm] ??= <RouteChargerOption>[]).add(o);
+      }
+      final options = <RouteChargerOption>[];
+      for (final group in windows.values) {
+        final hasOnRoad = group.any((o) => o.detourKm <= onRouteKm);
+        for (final o in group) {
+          if (!hasOnRoad || o.detourKm <= onRouteKm || o.recommended) {
+            options.add(o);
+          }
+        }
+      }
+      options.sort((a, b) => a.alongKm.compareTo(b.alongKm));
 
       return EVRouteResult(
         polylinePoints:      pts,

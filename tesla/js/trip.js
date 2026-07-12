@@ -8,6 +8,7 @@ import { getStations } from './data.js';
 import { startDrive } from './drive.js';
 import { track } from './analytics.js';
 import { MIN_POWER_STEPS, sortConnectors } from './ui.js';
+import { providerLogo } from './format.js';
 import { t } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
@@ -24,6 +25,7 @@ const state = {
   pickTarget: null,      // stop index awaiting a map tap
   result: null,
   selectedKeys: new Set(),
+  expandedSegments: new Set(), // which 50 km segments are open in the list
   signature: null,
   debounce: null,
   // map artefacts
@@ -385,6 +387,56 @@ function renderPreview() {
   $('trip-warning').classList.toggle('is-hidden', r.reachable);
 }
 
+// One detailed charger block (inside an expanded segment).
+function optionBlockEl(o) {
+  const sel = state.selectedKeys.has(o.locationKey);
+  const arrival = Math.round(arrivalPctAt(o.alongKm));
+  const el = document.createElement('div');
+  el.className = 'opt-block' + (sel ? ' is-selected' : '');
+
+  const providerLines = o.providerPowers
+    .map(
+      (pp) =>
+        `<div class="opt-prov"><span>${pp.name}</span>${pp.power ? `<b>${pp.power}</b>` : ''}</div>`,
+    )
+    .join('');
+  // Provider logo(s) on the right — which company operates this charger.
+  const logos = o.providerPowers
+    .map((pp) => providerLogo(pp.name))
+    .filter(Boolean)
+    .map((src) => `<img class="opt-logo__img" src="${src}" alt="">`)
+    .join('');
+
+  const badges =
+    (o.recommended ? `<span class="opt-badge">${t('recommended')}</span>` : '') +
+    (o.requiresUTurn ? `<span class="opt-uturn" title="${t('uTurnInfo')}">⤴</span>` : '');
+
+  // connectors · [N stations ·] N ports · X/Y free · arrival%
+  const metaParts = [];
+  if (o.connectorTypes.length) metaParts.push(o.connectorTypes.join(', '));
+  if (o.stationCount > 1) metaParts.push(`${o.stationCount} ${t('tripStationsUnit')}`);
+  metaParts.push(`${o.chargerCount} ${t('tripPortsUnit')}`);
+  const availClass = o.availableCount > 0 ? 'txt-accent' : 'txt-busy';
+  const meta =
+    metaParts.join(' · ') +
+    ` · <span class="${availClass}">${o.availableCount}/${o.chargerCount} ${t('tripFreeUnit')}</span>` +
+    ` · <span class="${arrival < 15 ? 'txt-danger' : 'txt-accent'}">${arrival}%</span>`;
+
+  el.innerHTML =
+    `<div class="opt-tick">${sel ? '✓' : ''}</div>` +
+    `<div class="opt-body">` +
+    `<div class="opt-title">${o.title}${badges}</div>` +
+    providerLines +
+    `<div class="opt-meta">${meta}</div>` +
+    `</div>` +
+    (logos ? `<div class="opt-logo">${logos}</div>` : '');
+  el.addEventListener('click', () => toggleOption(o.locationKey));
+  return el;
+}
+
+// Charger list, grouped into 50 km collapsible segments. A collapsed segment
+// header shows whether a recommended / ticked stop sits inside (✓ + name), so
+// the driver knows which one to open. Expanding reveals the detailed blocks.
 function renderOptions() {
   const list = $('trip-options');
   const title = $('trip-options-title');
@@ -399,43 +451,71 @@ function renderOptions() {
   }
   title.classList.remove('is-hidden');
 
-  r.options.forEach((o, i) => {
-    if (i > 0) {
-      const gap = document.createElement('div');
-      gap.className = 'opt-divider';
-      gap.innerHTML = `<span>↓ ${Math.round(o.alongKm - r.options[i - 1].alongKm)} km</span>`;
-      list.appendChild(gap);
+  const hint = document.createElement('p');
+  hint.className = 'txt-dim trip-seg-hint';
+  hint.textContent = t('tripSegmentsHint');
+  list.appendChild(hint);
+
+  // Group options into consecutive 50 km windows.
+  const segMap = new Map();
+  for (const o of r.options) {
+    const k = Math.floor(o.alongKm / 50);
+    if (!segMap.has(k)) segMap.set(k, []);
+    segMap.get(k).push(o);
+  }
+
+  for (const k of [...segMap.keys()].sort((a, b) => a - b)) {
+    const items = segMap.get(k);
+    const startKm = k * 50;
+    const endKm = startKm + 50;
+    const selectedItems = items.filter((o) => state.selectedKeys.has(o.locationKey));
+    const hasSelected = selectedItems.length > 0;
+    const open = state.expandedSegments.has(k);
+
+    const seg = document.createElement('div');
+    seg.className =
+      'seg' + (hasSelected ? ' has-selected' : '') + (open ? ' is-open' : '');
+
+    const sub = hasSelected
+      ? `<div class="seg__sub">✓ ${selectedItems.map((o) => o.title).join(', ')}</div>`
+      : `<div class="seg__sub txt-dim">${items.length} ${t('tripChargers')}</div>`;
+    const badge = hasSelected
+      ? `<span class="seg__badge">✓ ${selectedItems.length}</span>`
+      : `<span class="seg__count txt-dim">${items.length} ${t('tripChargers')}</span>`;
+
+    const head = document.createElement('div');
+    head.className = 'seg__head';
+    head.innerHTML =
+      `<span class="seg__chev">▸</span>` +
+      `<div class="seg__title">` +
+      `<div class="seg__range">${startKm}–${endKm} ${t('tripKmUnit')}</div>` +
+      sub +
+      `</div>` +
+      badge;
+    head.addEventListener('click', () => {
+      if (state.expandedSegments.has(k)) state.expandedSegments.delete(k);
+      else state.expandedSegments.add(k);
+      renderOptions();
+    });
+    seg.appendChild(head);
+
+    if (open) {
+      const body = document.createElement('div');
+      body.className = 'seg__body';
+      items.forEach((o, i) => {
+        if (i > 0) {
+          const gap = document.createElement('div');
+          gap.className = 'opt-divider';
+          gap.innerHTML =
+            `<span>↓ ${Math.round(o.alongKm - items[i - 1].alongKm)} ${t('tripKmUnit')}</span>`;
+          body.appendChild(gap);
+        }
+        body.appendChild(optionBlockEl(o));
+      });
+      seg.appendChild(body);
     }
-
-    const sel = state.selectedKeys.has(o.locationKey);
-    const arrival = Math.round(arrivalPctAt(o.alongKm));
-    const el = document.createElement('div');
-    el.className = 'opt-block' + (sel ? ' is-selected' : '');
-
-    const providerLines = o.providerPowers
-      .map(
-        (pp) =>
-          `<div class="opt-prov"><span>${pp.name}</span>${pp.power ? `<b>${pp.power}</b>` : ''}</div>`,
-      )
-      .join('');
-    const badges =
-      (o.recommended ? `<span class="opt-badge">${t('recommended')}</span>` : '') +
-      (o.requiresUTurn ? `<span class="opt-uturn" title="${t('uTurnInfo')}">⤴</span>` : '');
-    const meta =
-      `${o.connectorTypes.join(', ')}` +
-      ` · ${o.chargerCount} ${t('tripChargers')}` +
-      ` · <span class="${arrival < 15 ? 'txt-danger' : 'txt-accent'}">${arrival}%</span>`;
-
-    el.innerHTML =
-      `<div class="opt-tick">${sel ? '✓' : ''}</div>` +
-      `<div class="opt-body">` +
-      `<div class="opt-title">${o.title}${badges}</div>` +
-      providerLines +
-      `<div class="opt-meta">${meta}</div>` +
-      `</div>`;
-    el.addEventListener('click', () => toggleOption(o.locationKey));
-    list.appendChild(el);
-  });
+    list.appendChild(seg);
+  }
 }
 
 function toggleOption(key) {
@@ -452,6 +532,7 @@ function clearPlan() {
   state.result = null;
   state.signature = null;
   state.selectedKeys.clear();
+  state.expandedSegments.clear();
   if (state.pickTarget != null) {
     state.pickTarget = null;
     document.body.classList.remove('is-picking');

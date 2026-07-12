@@ -491,10 +491,70 @@ input[type='range'] { accent-color: var(--accent); height: var(--touch); }
 .opt-prov { display: flex; gap: 8px; font-size: 13px; margin-top: 3px; }
 .opt-prov b { color: var(--accent); }
 .opt-meta { color: var(--text-dim); font-size: 12px; margin-top: 5px; }
+/* Provider logo chip on the right of an option block. Logos are drawn for
+   light backgrounds, so each sits on a white tile to stay legible. */
+.opt-logo { flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; justify-content: center; }
+.opt-logo__img {
+  height: 26px;
+  max-width: 68px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 6px;
+  padding: 3px 6px;
+}
 .trip-none { padding: 8px 2px; }
 .trip-nav { margin-top: 18px; }
 .trip-nav:disabled { opacity: 0.4; }
 .trip-clear { margin-top: 10px; }
+.txt-busy { color: var(--busy); }
+
+/* ── 50 km collapsible charger segments ─────────────────────────────────── */
+.trip-seg-hint { margin: 0 2px 12px; font-size: 12px; line-height: 1.35; }
+.seg {
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.seg.has-selected { border-color: rgba(43, 213, 148, 0.5); }
+.seg__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  cursor: pointer;
+}
+.seg__chev {
+  flex-shrink: 0;
+  color: var(--text-dim);
+  font-size: 14px;
+  transition: transform 0.18s ease;
+}
+.seg.is-open .seg__chev { transform: rotate(90deg); }
+.seg__title { flex: 1; min-width: 0; }
+.seg__range { font-size: 15px; font-weight: 600; }
+.seg__sub {
+  font-size: 12px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.seg.has-selected .seg__sub { color: var(--accent); font-weight: 600; }
+.seg__badge {
+  flex-shrink: 0;
+  background: var(--accent);
+  color: #0d1216;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.seg__count { flex-shrink: 0; font-size: 13px; }
+.seg__body { padding: 0 12px 12px; }
+/* Darken blocks inside a segment so they stay distinct from the tile. */
+.seg__body .opt-block:not(.is-selected) { background: var(--surface); }
 
 body.is-picking #map { cursor: crosshair; }
 

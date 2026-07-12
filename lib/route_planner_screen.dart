@@ -11,6 +11,7 @@ import 'app_constants.dart';
 import 'l10n/app_strings.dart';
 import 'places_service.dart';
 import 'profile_screen.dart';
+import 'provider_logos.dart';
 import 'routing_service.dart';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
@@ -448,7 +449,9 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
 
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
-        if (mounted) { Navigator.pop(context); }
+        // Deliberately DON'T pop the planner: Google Maps opens in a separate
+        // app, and when the driver hits back they land right here with the route,
+        // stops and ticked chargers intact — ready to tweak or add a stop.
       } else {
         if (!mounted) { return; }
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -1015,10 +1018,12 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-// ── Charging options list (selectable blocks, ~one per 50 km) ─────────────────
-// Each block is a place along the route the driver can tick as a stop. Co-located
-// providers are merged upstream into one option. Shows distance from the previous
-// block, dynamic arrival %, and an info button for opposite-carriageway chargers.
+// ── Charging options list (chargers grouped into 50 km collapsible segments) ──
+// Every charger on the route is a selectable block, but on a long trip that is a
+// very long list — so blocks are grouped into 50 km segments, each a collapsible
+// dropdown. A collapsed segment header already shows whether a recommended /
+// ticked stop sits inside it (green ✓ + station name), so the driver knows which
+// dropdown to open. Expanding shows the detailed blocks (with provider logos).
 class _ChargingOptionsList extends StatelessWidget {
   const _ChargingOptionsList({
     required this.options,
@@ -1031,8 +1036,25 @@ class _ChargingOptionsList extends StatelessWidget {
   final int Function(RouteChargerOption) arrivalPctFor;
   final void Function(String)            onToggle;
 
+  static const double _segmentKm = 50.0;
+
+  // Group the options into consecutive 50 km windows along the route, in order.
+  List<({int startKm, List<RouteChargerOption> items})> get _segments {
+    final byWindow = <int, List<RouteChargerOption>>{};
+    for (final o in options) {
+      final idx = o.alongKm ~/ _segmentKm;
+      (byWindow[idx] ??= <RouteChargerOption>[]).add(o);
+    }
+    final keys = byWindow.keys.toList()..sort();
+    return [
+      for (final k in keys)
+        (startKm: (k * _segmentKm).round(), items: byWindow[k]!),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
+    final segments = _segments;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -1055,22 +1077,163 @@ class _ChargingOptionsList extends StatelessWidget {
                 style: const TextStyle(color: _textSec, fontSize: 12)),
           ] else ...[
             const SizedBox(height: 4),
-            Text(AppStrings.selectStopsHint,
-                style: const TextStyle(color: _textSec, fontSize: 11)),
+            Text(AppStrings.segmentsHint,
+                style: const TextStyle(color: _textSec, fontSize: 11, height: 1.35)),
             const SizedBox(height: 14),
-            for (int i = 0; i < options.length; i++) ...[
-              if (i > 0)
-                _DistanceDivider(
-                    km: options[i].alongKm - options[i - 1].alongKm),
-              _OptionBlock(
-                index:      i + 1,
-                option:     options[i],
-                selected:   selectedKeys.contains(options[i].locationKey),
-                arrivalPct: arrivalPctFor(options[i]),
-                onToggle:   () => onToggle(options[i].locationKey),
+            for (int i = 0; i < segments.length; i++) ...[
+              if (i > 0) const SizedBox(height: 8),
+              _RouteSegmentTile(
+                startKm:       segments[i].startKm,
+                endKm:         segments[i].startKm + _segmentKm.round(),
+                options:       segments[i].items,
+                selectedKeys:  selectedKeys,
+                arrivalPctFor: arrivalPctFor,
+                onToggle:      onToggle,
               ),
             ],
           ],
+        ],
+      ),
+    );
+  }
+}
+
+// One 50 km segment: a tappable header that expands to the detailed charger
+// blocks. The header surfaces the ticked stop(s) inside (green ✓ + name) while
+// collapsed, so the recommended plan stays visible without opening anything.
+class _RouteSegmentTile extends StatefulWidget {
+  const _RouteSegmentTile({
+    required this.startKm,
+    required this.endKm,
+    required this.options,
+    required this.selectedKeys,
+    required this.arrivalPctFor,
+    required this.onToggle,
+  });
+  final int                      startKm, endKm;
+  final List<RouteChargerOption> options;
+  final Set<String>              selectedKeys;
+  final int Function(RouteChargerOption) arrivalPctFor;
+  final void Function(String)            onToggle;
+
+  @override
+  State<_RouteSegmentTile> createState() => _RouteSegmentTileState();
+}
+
+class _RouteSegmentTileState extends State<_RouteSegmentTile> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = widget.options
+        .where((o) => widget.selectedKeys.contains(o.locationKey))
+        .toList();
+    final hasSelected = selected.isNotEmpty;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: _bgSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: hasSelected ? _emerald.withOpacity(0.55) : Colors.transparent,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header — tap to expand / collapse.
+          GestureDetector(
+            onTap: () => setState(() => _expanded = !_expanded),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(children: [
+                AnimatedRotation(
+                  turns: _expanded ? 0.25 : 0.0,
+                  duration: const Duration(milliseconds: 180),
+                  child: const Icon(Icons.chevron_right_rounded,
+                      color: _textSec, size: 22),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppStrings.segmentKmRange(widget.startKm, widget.endKm),
+                        style: const TextStyle(color: _textPri, fontSize: 14,
+                            fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 2),
+                      if (hasSelected)
+                        Row(children: [
+                          const Icon(Icons.check_circle_rounded,
+                              color: _emerald, size: 13),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              selected.map((o) => o.title).join(', '),
+                              style: const TextStyle(color: _emerald, fontSize: 11,
+                                  fontWeight: FontWeight.w600),
+                              maxLines: 1, overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ])
+                      else
+                        Text(AppStrings.chargersCount(widget.options.length),
+                            style: const TextStyle(color: _textSec, fontSize: 11)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Right badge: a green ✓N pill when a stop inside is ticked,
+                // otherwise the charger count.
+                if (hasSelected)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: _emerald,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(Icons.check_rounded, color: Colors.black, size: 12),
+                      const SizedBox(width: 2),
+                      Text('${selected.length}',
+                          style: const TextStyle(color: Colors.black, fontSize: 11,
+                              fontWeight: FontWeight.w700)),
+                    ]),
+                  )
+                else
+                  Text(AppStrings.chargersCount(widget.options.length),
+                      style: const TextStyle(color: _textSec, fontSize: 11)),
+              ]),
+            ),
+          ),
+          // Expanded body — the detailed charger blocks for this segment.
+          if (_expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (int i = 0; i < widget.options.length; i++) ...[
+                    if (i > 0)
+                      _DistanceDivider(
+                          km: widget.options[i].alongKm -
+                              widget.options[i - 1].alongKm),
+                    _OptionBlock(
+                      index:      i + 1,
+                      option:     widget.options[i],
+                      selected:   widget.selectedKeys
+                          .contains(widget.options[i].locationKey),
+                      arrivalPct: widget.arrivalPctFor(widget.options[i]),
+                      onToggle:   () =>
+                          widget.onToggle(widget.options[i].locationKey),
+                    ),
+                  ],
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -1148,13 +1311,27 @@ class _OptionBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final providerPowers = option.providerPowers;
     final connectors     = option.connectorTypes.join(', ');
+    // Meta pieces, joined by "·" below. "N stations" only when several charger
+    // units are merged into this one location block.
+    final metaParts = <String>[
+      if (connectors.isNotEmpty) connectors,
+      if (option.stationCount > 1)
+        AppStrings.stationsCount(option.stationCount),
+      AppStrings.portsCount(option.chargerCount),
+    ];
+    // Live availability colour — green when any plug is free here, orange when
+    // the whole block is currently busy (still shown, just flagged busy).
+    final availColor =
+        option.availableCount > 0 ? _emerald : Colors.orangeAccent;
     return GestureDetector(
       onTap: onToggle,
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: selected ? _emerald.withOpacity(0.08) : _bgSurface,
+          // Sits inside a _bgSurface segment tile, so use the darker _bgCard for
+          // an unticked block to keep the two layers visually distinct.
+          color: selected ? _emerald.withOpacity(0.10) : _bgCard,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected ? _emerald.withOpacity(0.55) : Colors.transparent,
@@ -1246,18 +1423,33 @@ class _OptionBlock extends StatelessWidget {
                       ),
                   ],
                   const SizedBox(height: 4),
-                  // Meta row: connectors · charger count · arrival %
+                  // Meta row: connectors · [N stations ·] N ports
+                  // Station count only appears when several units are merged into
+                  // this one location block; ports = total plugs across them.
                   Wrap(
                     spacing: 8,
                     runSpacing: 4,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      if (connectors.isNotEmpty)
-                        Text(connectors,
+                      for (int mi = 0; mi < metaParts.length; mi++) ...[
+                        if (mi > 0)
+                          Text('·',
+                              style: TextStyle(
+                                  color: _textSec.withOpacity(0.6), fontSize: 11)),
+                        Text(metaParts[mi],
                             style: const TextStyle(color: _textSec, fontSize: 11)),
-                      Text('·', style: TextStyle(color: _textSec.withOpacity(0.6), fontSize: 11)),
-                      Text(AppStrings.chargersCount(option.chargerCount),
-                          style: const TextStyle(color: _textSec, fontSize: 11)),
+                      ],
+                      Text('·',
+                          style: TextStyle(
+                              color: _textSec.withOpacity(0.6), fontSize: 11)),
+                      Text(
+                        AppStrings.plugsFree(
+                            option.availableCount, option.chargerCount),
+                        style: TextStyle(
+                            color: availColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -1274,6 +1466,23 @@ class _OptionBlock extends StatelessWidget {
                 ],
               ),
             ),
+            // Provider logo(s) on the right — which company operates this
+            // charger. Each block is a single charger now, so this is normally
+            // one logo (co-located providers are no longer merged).
+            if (option.providers.isNotEmpty) ...[
+              const SizedBox(width: 10),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  for (final p in option.providers)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: ProviderLogo(provider: p),
+                    ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

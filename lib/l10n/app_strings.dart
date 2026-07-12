@@ -15,15 +15,18 @@ class AppStrings {
   static const _prefsKey = 'app_language_georgian';
 
   /// `true` once a language change happens, letting [ValueListenableBuilder]s
-  /// rebuild without any global state-management package.
-  static final ValueNotifier<bool> notifier = ValueNotifier<bool>(false);
+  /// rebuild without any global state-management package. Defaults to Georgian
+  /// — GeoCharge is a Georgia-first app, so a fresh install opens in Georgian.
+  static final ValueNotifier<bool> notifier = ValueNotifier<bool>(true);
 
   static bool get isGeorgian => notifier.value;
 
   /// Load the saved preference. Call once during app startup (before runApp).
+  /// No saved choice (first launch) → Georgian by default; users who picked a
+  /// language keep it (setGeorgian persists the key).
   static Future<void> load() async {
     final p = await SharedPreferences.getInstance();
-    notifier.value = p.getBool(_prefsKey) ?? false;
+    notifier.value = p.getBool(_prefsKey) ?? true;
   }
 
   /// Switch language and persist the choice.
@@ -160,6 +163,18 @@ class AppStrings {
   static String chargersCount(int n) =>
       isGeorgian ? '$n დამტენი' : '$n chargers';
 
+  /// "N stations" — how many charger units are merged into one location block.
+  static String stationsCount(int n) =>
+      isGeorgian ? '$n სადგური' : '$n stations';
+
+  /// "N ports" — total physical plugs across the block.
+  static String portsCount(int n) =>
+      isGeorgian ? '$n პორტი' : '$n ports';
+
+  /// "X/Y free" — free vs total plugs at a block (so a busy block reads busy).
+  static String plugsFree(int free, int total) =>
+      isGeorgian ? '$free/$total თავისუფალი' : '$free/$total free';
+
   /// "X% on arrival" line for a charger block / the destination.
   static String onArrivalPct(int pct) =>
       isGeorgian ? 'ჩასვლისას $pct%' : '$pct% on arrival';
@@ -167,6 +182,15 @@ class AppStrings {
   /// Distance label between two blocks, e.g. "47 km".
   static String kmLabel(num v) =>
       isGeorgian ? '${v.toStringAsFixed(0)} კმ' : '${v.toStringAsFixed(0)} km';
+
+  /// Collapsible route-segment header range, e.g. "0–50 km".
+  static String segmentKmRange(int a, int b) =>
+      isGeorgian ? '$a–$b კმ' : '$a–$b km';
+
+  /// Hint above the grouped (collapsible) charger segments.
+  static String get segmentsHint => isGeorgian
+      ? 'გახსენი მონაკვეთი დამტენების სანახავად — ✓ ნიშნავს რომ იქ რეკომენდებული გაჩერებაა'
+      : 'Open a segment to see its chargers — ✓ means a recommended stop is inside';
 
   // ── Premium / subscriptions ──────────────────────────────────────────────
   static String get getPremium =>

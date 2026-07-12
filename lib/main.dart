@@ -29,6 +29,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app_constants.dart';
 import 'ocm_service.dart';
 import 'places_service.dart';
+import 'provider_logos.dart';
 import 'route_planner_screen.dart';
 import 'routing_service.dart';
 import 'services/ad_service.dart';
@@ -921,6 +922,11 @@ class _MapScreenState extends State<MapScreen>
   @override
   Widget build(BuildContext context) {
     final stations = _filtered;
+    // Lookup so the cluster bubble can aggregate the availability of the pins it
+    // groups (keyed by the exact LatLng each marker is built from below).
+    final stationByPoint = <String, Station>{
+      for (final s in stations) '${s.lat},${s.lng}': s,
+    };
     final navBottom        = MediaQuery.of(context).padding.bottom;
     final controlsBottom   = 130.0 + navBottom;
     // Bound the right control column below the search-bar/chips block (plus the
@@ -1000,24 +1006,50 @@ class _MapScreenState extends State<MapScreen>
                       child: _AvailabilityPin(
                         available: s.available,
                         total:     s.total,
+                        isOut:     _stationOutOfOrder(s),
                       ),
                     ),
                   )).toList(),
-                  // Cluster bubble — themed teal circle with the station count.
-                  builder: (context, markers) => Container(
-                    decoration: BoxDecoration(
-                      color: _emerald,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white.withOpacity(0.4), width: 2),
-                      boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 6)],
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '${markers.length}',
-                      style: const TextStyle(
-                        color: Colors.black, fontWeight: FontWeight.bold, fontSize: 15),
-                    ),
-                  ),
+                  // Cluster bubble — a proportional availability pie (same green/
+                  // orange split as a single pin), so a group of all-busy chargers
+                  // reads orange from far out instead of a misleading green.
+                  builder: (context, markers) {
+                    int avail = 0, tot = 0, count = 0, outCount = 0;
+                    for (final m in markers) {
+                      final s = stationByPoint[
+                          '${m.point.latitude},${m.point.longitude}'];
+                      if (s == null) { continue; }
+                      count++;
+                      if (_stationOutOfOrder(s)) { outCount++; }
+                      avail += s.available;
+                      tot   += s.total > 0
+                          ? s.total
+                          : (s.available > 0 ? s.available : 1);
+                    }
+                    final freeFraction = tot > 0
+                        ? (avail / tot).clamp(0.0, 1.0)
+                        : (avail > 0 ? 1.0 : 0.0);
+                    // Grey only when EVERY charger in the cluster is out of order.
+                    final allOut = count > 0 && outCount == count;
+                    return Container(
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 6)],
+                      ),
+                      child: CustomPaint(
+                        painter: _AvailabilityPainter(freeFraction, isOut: allOut),
+                        child: Center(
+                          child: Text(
+                            '${markers.length}',
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
               // User location dot
@@ -1702,10 +1734,25 @@ class _SearchDestinationSheet extends StatelessWidget {
 // 1 of 2 plugs free shows half green / half orange; 1 of 4 shows a quarter
 // green. Falls back to all-green (any free) or all-orange (none free) when a
 // total isn't known. The bolt icon and white ring match the old pin styling.
+// A station is fully out of order: no free plug, and every published plug reads
+// "out" (neither free nor busy). Such pins are drawn grey, not busy-orange.
+bool _stationOutOfOrder(Station s) =>
+    s.available == 0 &&
+    s.ports.isNotEmpty &&
+    !s.ports.any((p) => p.isFree || p.isBusy);
+
+// Grey used for out-of-order chargers (mirrors the Tesla map's "out" colour).
+const _outGrey = Color(0xFF6B7A85);
+
 class _AvailabilityPin extends StatelessWidget {
-  const _AvailabilityPin({required this.available, required this.total});
-  final int available;
-  final int total;
+  const _AvailabilityPin({
+    required this.available,
+    required this.total,
+    this.isOut = false,
+  });
+  final int  available;
+  final int  total;
+  final bool isOut; // fully out of order → grey pin
 
   @override
   Widget build(BuildContext context) {
@@ -1721,7 +1768,7 @@ class _AvailabilityPin extends StatelessWidget {
         boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 6)],
       ),
       child: CustomPaint(
-        painter: _AvailabilityPainter(freeFraction),
+        painter: _AvailabilityPainter(freeFraction, isOut: isOut),
         child: const Center(child: Icon(Icons.bolt, color: Colors.black, size: 20)),
       ),
     );
@@ -1729,8 +1776,9 @@ class _AvailabilityPin extends StatelessWidget {
 }
 
 class _AvailabilityPainter extends CustomPainter {
-  const _AvailabilityPainter(this.freeFraction);
+  const _AvailabilityPainter(this.freeFraction, {this.isOut = false});
   final double freeFraction; // 0..1 portion of the circle drawn green
+  final bool   isOut;        // fully out of order → solid grey
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1739,7 +1787,10 @@ class _AvailabilityPainter extends CustomPainter {
     final green  = Paint()..color = _emerald..style = PaintingStyle.fill;
     final orange = Paint()..color = Colors.orangeAccent..style = PaintingStyle.fill;
 
-    if (freeFraction >= 1.0) {
+    if (isOut) {
+      canvas.drawCircle(center, radius,
+          Paint()..color = _outGrey..style = PaintingStyle.fill);
+    } else if (freeFraction >= 1.0) {
       canvas.drawCircle(center, radius, green);
     } else if (freeFraction <= 0.0) {
       canvas.drawCircle(center, radius, orange);
@@ -1769,7 +1820,7 @@ class _AvailabilityPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_AvailabilityPainter old) =>
-      old.freeFraction != freeFraction;
+      old.freeFraction != freeFraction || old.isOut != isOut;
 }
 
 // ── Zoom +/- button ───────────────────────────────────────────────────────────
@@ -2119,24 +2170,50 @@ class _StationSheetState extends State<_StationSheet> {
           ]),
           const SizedBox(height: 16),
 
-          // Last-updated timestamp
+          // Last-updated timestamp, with the provider's logo to its right.
           if (s.lastUpdated.isNotEmpty) ...[
             const SizedBox(height: 6),
-            Row(children: [
-              const Icon(Icons.history_rounded, color: _textSec, size: 13),
-              const SizedBox(width: 5),
-              Text(
-                'Last verified: ${_formatVerified(s.lastUpdated)}',
-                style: const TextStyle(color: _textSec, fontSize: 11),
-              ),
-            ]),
-            Padding(
-              padding: const EdgeInsets.only(left: 18, top: 2),
-              child: Text(
-                AppStrings.providerLastCheck,
-                style: AppStrings.font(
-                    const TextStyle(color: _textSec, fontSize: 9.5)),
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [
+                        const Icon(Icons.history_rounded, color: _textSec, size: 13),
+                        const SizedBox(width: 5),
+                        Flexible(
+                          child: Text(
+                            'Last verified: ${_formatVerified(s.lastUpdated)}',
+                            style: const TextStyle(color: _textSec, fontSize: 11),
+                          ),
+                        ),
+                      ]),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 18, top: 2),
+                        child: Text(
+                          AppStrings.providerLastCheck,
+                          style: AppStrings.font(
+                              const TextStyle(color: _textSec, fontSize: 9.5)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Provider logo (white tile so it reads on the dark sheet).
+                if (providerLogoAsset(s.provider) != null) ...[
+                  const SizedBox(width: 12),
+                  ProviderLogo(provider: s.provider, height: 56),
+                ],
+              ],
+            ),
+          ] else if (providerLogoAsset(s.provider) != null) ...[
+            // No timestamp to anchor beside — still show the logo, right-aligned.
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerRight,
+              child: ProviderLogo(provider: s.provider, height: 56),
             ),
           ],
           const SizedBox(height: 10),

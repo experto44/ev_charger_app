@@ -119,10 +119,19 @@ export async function planRoute({ waypoints, currentBatteryPct, maxRangeKm, stat
   for (let i = 1; i < pts.length; i++) cum[i] = cum[i - 1] + haversineKm(pts[i - 1], pts[i]);
   const routeKm = pts.length ? cum[cum.length - 1] : totalDistKm;
 
-  // Project every available station onto the route.
+  // A busy charger (0 free plugs) is still SHOWN — it may free up by arrival.
+  // Only a charger that is fully out of order is dropped: every published plug
+  // reads "out". Providers with no per-plug data are assumed present (busy).
+  const operational = (s) => {
+    if (s.available > 0) return true;
+    if (s.ports && s.ports.length) return s.ports.some((p) => p.status !== 'out');
+    return true;
+  };
+
+  // Project every operational station onto the route.
   const projected = [];
   for (const s of stations) {
-    if (s.available === 0) continue;
+    if (!operational(s)) continue;
     let bestDist = Infinity, bestAlong = 0;
     for (let i = 0; i < pts.length - 1; i++) {
       const [d, t] = projectToSegment({ lat: s.lat, lng: s.lng }, pts[i], pts[i + 1]);
@@ -135,7 +144,8 @@ export async function planRoute({ waypoints, currentBatteryPct, maxRangeKm, stat
   }
 
   // Greedy corridor planning (identical constants to the mobile app).
-  const corridorKm = 8.0;
+  const onRouteKm = 2.5;   // "directly on the road the driver passes"
+  const corridorKm = 8.0;  // still counts as "on the route" within this
   const stops = [];
   let coveredKm = 0;
   let currentKm = (currentBatteryPct / 100) * effectiveKm;
@@ -145,12 +155,18 @@ export async function planRoute({ waypoints, currentBatteryPct, maxRangeKm, stat
   while (coveredKm + currentKm - reserveKm < routeKm && guard++ < 25) {
     const reachKm = coveredKm + currentKm - reserveKm;
 
-    let cands = projected.filter(
-      (p) => p.alongKm > coveredKm + 0.5 && p.alongKm <= reachKm && p.detourKm <= corridorKm,
-    );
+    // Only currently-free chargers can be RECOMMENDED (a busy one still shows in
+    // the list, just isn't pre-picked). Tier 1 prefers chargers directly on the
+    // road, tier 2 the wider corridor, tier 3 any reachable free charger.
+    const usable = (p) =>
+      p.station.available > 0 && p.alongKm > coveredKm + 0.5 && p.alongKm <= reachKm;
+    let cands = projected.filter((p) => usable(p) && p.detourKm <= onRouteKm);
     if (!cands.length) {
-      cands = projected.filter((p) => p.alongKm > coveredKm + 0.5 && p.alongKm <= reachKm);
-      if (!cands.length) { reachable = false; break; } // can't reach any charger
+      cands = projected.filter((p) => usable(p) && p.detourKm <= corridorKm);
+    }
+    if (!cands.length) {
+      cands = projected.filter(usable);
+      if (!cands.length) { reachable = false; break; } // can't reach a free charger
     }
 
     // Reward progress, penalise detour.
@@ -204,19 +220,26 @@ export async function planRoute({ waypoints, currentBatteryPct, maxRangeKm, stat
     .filter((p) => p.detourKm <= corridorKm)
     .sort((a, b) => a.alongKm - b.alongKm);
 
-  // 2. Merge co-located chargers (≤200 m) into single blocks.
+  // 2. Merge chargers that are the SAME provider at the SAME place (≤200 m) into
+  //    one block — e.g. E-Space's several units at Argveta collapse into a single
+  //    "E-Space · N stations · 50–360 kW" block. Different providers are NEVER
+  //    merged, so Terjola's EV Power GE and E-Space stay separate, each keeping
+  //    its own correct Google Maps pin.
   const clusters = [];
   for (const p of onRoute) {
-    if (clusters.length) {
-      const anchor = clusters[clusters.length - 1][0].station;
-      const m =
-        haversineKm({ lat: anchor.lat, lng: anchor.lng }, { lat: p.station.lat, lng: p.station.lng }) * 1000;
-      if (m <= 200) {
-        clusters[clusters.length - 1].push(p);
-        continue;
-      }
+    let target = null;
+    for (const c of clusters) {
+      const anchor = c[0].station;
+      if ((anchor.provider || '').trim().toLowerCase() !==
+          (p.station.provider || '').trim().toLowerCase()) continue;
+      const m = haversineKm(
+        { lat: anchor.lat, lng: anchor.lng },
+        { lat: p.station.lat, lng: p.station.lng },
+      ) * 1000;
+      if (m <= 200) { target = c; break; }
     }
-    clusters.push([p]);
+    if (target) target.push(p);
+    else clusters.push([p]);
   }
 
   // 3. Mark clusters holding a greedy-recommended charger (always shown/ticked);
@@ -239,28 +262,29 @@ export async function planRoute({ waypoints, currentBatteryPct, maxRangeKm, stat
     }
   }
 
-  // 4. Sample ~one cluster per 50 km, always moving forward.
-  const sampleStepKm = 50.0;
-  const pickedIdx = new Set();
-  let lastAlong = -1;
-  for (let cp = sampleStepKm; cp < routeKm + sampleStepKm; cp += sampleStepKm) {
-    let best = -1, bestDelta = Infinity;
-    for (let i = 0; i < clusters.length; i++) {
-      if (pickedIdx.has(i)) continue;
-      const a = clusters[i][0].alongKm;
-      if (a <= lastAlong) continue;
-      const d = Math.abs(a - cp);
-      if (d < bestDelta) { bestDelta = d; best = i; }
-    }
-    if (best === -1) continue;
-    pickedIdx.add(best);
-    lastAlong = clusters[best][0].alongKm;
-  }
-  for (const i of recommendedIdx) pickedIdx.add(i);
-
-  const options = [...pickedIdx]
-    .map((i) => toOption(clusters[i], recommendedIdx.has(i), pts, cum))
+  // 4. Build every corridor block, ordered along the route. Recommended blocks
+  //    stay flagged (pre-ticked) so a charging plan is still ready.
+  const allOptions = clusters
+    .map((cl, i) => toOption(cl, recommendedIdx.has(i), pts, cum))
     .sort((a, b) => a.alongKm - b.alongKm);
+
+  // 5. Prefer on-road chargers in the LIST too: within each 50 km window, if any
+  //    charger sits right on the road, drop the detour ones there. A window whose
+  //    road has no charger still shows its detour options; recommended kept.
+  const displayWindowKm = 50.0;
+  const windows = new Map();
+  for (const o of allOptions) {
+    const k = Math.floor(o.alongKm / displayWindowKm);
+    (windows.get(k) || windows.set(k, []).get(k)).push(o);
+  }
+  const options = [];
+  for (const group of windows.values()) {
+    const hasOnRoad = group.some((o) => o.detourKm <= onRouteKm);
+    for (const o of group) {
+      if (!hasOnRoad || o.detourKm <= onRouteKm || o.recommended) options.push(o);
+    }
+  }
+  options.sort((a, b) => a.alongKm - b.alongKm);
 
   return {
     polyline: pts,
@@ -334,6 +358,7 @@ function toOption(cl, recommended, pts, cum) {
     title: (first.city || '').trim() || first.name,
     providerPowers: providerPowers(sts),
     connectorTypes: connectorTypes(sts),
+    stationCount: sts.length, // merged charger units at this place
     chargerCount: sts.reduce((n, s) => n + (s.total > 0 ? s.total : 1), 0),
     availableCount: sts.reduce((n, s) => n + s.available, 0),
     isDC: sts.some((s) => s.isDC),

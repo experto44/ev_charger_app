@@ -20,7 +20,18 @@ const STATUS_COLORS = { free: '#2bd594', busy: '#f5a623', out: '#6b7a85' };
 
 // Marker pie colours — match the app's _AvailabilityPainter exactly.
 const PIN_FREE = '#00C896'; // emerald  (available portion)
-const PIN_BUSY = '#FFAB40'; // orangeAccent (busy/out portion)
+const PIN_BUSY = '#FFAB40'; // orangeAccent (busy portion)
+const PIN_OUT  = '#6B7A85'; // grey — fully out-of-order charger
+
+// A station is fully out of order: no free plug and every published plug reads
+// "out" (neither free nor busy). Such pins are drawn grey, not busy-orange.
+function stationOut(s) {
+  return (
+    s.available === 0 &&
+    s.ports && s.ports.length > 0 &&
+    !s.ports.some((p) => p.status === 'free' || p.status === 'busy')
+  );
+}
 
 let map = null;
 let markers = new Map(); // station.id -> google.maps.Marker
@@ -85,7 +96,9 @@ function arcPoint(frac) {
 function markerIcon(s) {
   const f = freeFraction(s);
   let body;
-  if (f >= 1) {
+  if (stationOut(s)) {
+    body = `<circle cx="22" cy="22" r="15" fill="${PIN_OUT}"/>`;
+  } else if (f >= 1) {
     body = `<circle cx="22" cy="22" r="15" fill="${PIN_FREE}"/>`;
   } else if (f <= 0) {
     body = `<circle cx="22" cy="22" r="15" fill="${PIN_BUSY}"/>`;
@@ -107,6 +120,49 @@ function markerIcon(s) {
     url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
     scaledSize: new google.maps.Size(44, 44),
     anchor: new google.maps.Point(22, 22),
+  };
+}
+
+// Cluster bubble icon: a proportional availability pie across the grouped
+// stations (same green/orange split as a single pin), so a group of all-busy
+// chargers reads orange from far out instead of a misleading solid green.
+function clusterIcon(clustered) {
+  let avail = 0, tot = 0, count = 0, outCount = 0;
+  for (const m of clustered) {
+    const s = m.__station;
+    if (!s) continue;
+    count++;
+    if (stationOut(s)) outCount++;
+    avail += s.available;
+    tot += s.total > 0 ? s.total : s.available > 0 ? s.available : 1;
+  }
+  const f = tot > 0 ? Math.min(1, Math.max(0, avail / tot)) : avail > 0 ? 1 : 0;
+  const allOut = count > 0 && outCount === count; // grey only if every one is out
+  const cx = 26, cy = 26, r = 20;
+  let body;
+  if (allOut) {
+    body = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${PIN_OUT}"/>`;
+  } else if (f >= 1) {
+    body = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${PIN_FREE}"/>`;
+  } else if (f <= 0) {
+    body = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${PIN_BUSY}"/>`;
+  } else {
+    const a = -Math.PI / 2 + f * 2 * Math.PI;
+    const ex = (cx + r * Math.cos(a)).toFixed(2);
+    const ey = (cy + r * Math.sin(a)).toFixed(2);
+    const large = f > 0.5 ? 1 : 0;
+    body =
+      `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${PIN_BUSY}"/>` +
+      `<path d="M${cx} ${cy} L${cx} ${cy - r} A${r} ${r} 0 ${large} 1 ${ex} ${ey} Z" fill="${PIN_FREE}"/>`;
+  }
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 52 52">` +
+    body +
+    `<circle cx="${cx}" cy="${cy}" r="${r - 1}" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>` +
+    `</svg>`;
+  return {
+    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+    scaledSize: new google.maps.Size(52, 52),
   };
 }
 
@@ -143,21 +199,12 @@ export function renderMarkers(stations, onSelect) {
       map,
       markers: list,
       renderer: {
-        render: ({ count, position }) =>
+        render: ({ count, position, markers: clustered }) =>
           new google.maps.Marker({
             position,
             zIndex: google.maps.Marker.MAX_ZINDEX + count,
-            icon: {
-              url:
-                'data:image/svg+xml;charset=UTF-8,' +
-                encodeURIComponent(
-                  `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 52 52">` +
-                    `<circle cx="26" cy="26" r="20" fill="#1c252d" stroke="#2bd594" stroke-width="2.5"/>` +
-                    `</svg>`,
-                ),
-              scaledSize: new google.maps.Size(52, 52),
-            },
-            label: { text: String(count), color: '#eef3f6', fontSize: '15px', fontWeight: '600' },
+            icon: clusterIcon(clustered),
+            label: { text: String(count), color: '#0d1216', fontSize: '15px', fontWeight: '700' },
           }),
       },
     });
