@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 import 'app_constants.dart';
 import 'routing_service.dart';
@@ -24,65 +27,225 @@ class OcmService {
     'X-API-Key':  _key,
   };
 
-  // Session cache: ISO alpha-2 country code -> mapped stations. Populated on the
-  // first fetch for a country and reused for the rest of the session, so
-  // toggling the International chip or panning the map never refetches. OCM
-  // covers 100+ countries, so we fetch per country live (on demand) rather than
-  // bundling every country into the app.
+  // Country fetches page through the full national dataset with
+  // sortby=id_asc + greaterthanid — the same scheme OCM's own ocm-export
+  // mirror uses — instead of a single capped request (the old maxresults=500
+  // fetch showed a tiny arbitrary slice of big countries like Germany).
+  // _kMaxPerCountry bounds memory and marker-cluster load; the viewport
+  // top-up fetch fills in local density wherever the user actually pans.
+  static const _kPageSize      = 1000;
+  static const _kMaxPerCountry = 10000;
+  static const _kPageTimeout   = Duration(seconds: 30);
+
+  // Disk cache: one JSON file per country under the app-support directory so
+  // a week of travel doesn't re-download multi-MB national datasets on every
+  // launch (roaming data is expensive). Stale files still serve as an offline
+  // fallback when the refresh fails.
+  static const _kDiskTtl = Duration(days: 7);
+
+  // Session cache: ISO alpha-2 country code -> mapped stations. Populated on
+  // the first fetch for a country and reused for the rest of the session, so
+  // toggling the International chip or panning the map never refetches.
   static final Map<String, List<Station>> _cache = {};
+
+  // Viewport tile cache: quantised-bounds key -> stations. Keeps repeated
+  // pans over the same area from refetching. Bounded; cleared wholesale when
+  // it grows past the cap (entries are cheap to refetch).
+  static final Map<String, List<Station>> _tileCache = {};
+  static const _kMaxTiles = 60;
 
   /// Fetch every OCM charge point for one ISO 3166-1 alpha-2 [countryCode]
   /// (e.g. "AT" for Austria), mapped onto our shared [Station] schema and
-  /// grouped under the single "International" provider. Cached in memory for the
-  /// session; returns the cached list immediately on subsequent calls.
+  /// grouped under the single "International" provider. Resolution order:
+  /// session memory -> fresh disk cache -> paginated network fetch (saved to
+  /// disk) -> stale disk cache as an offline fallback.
   static Future<List<Station>> fetchByCountry(String countryCode) async {
     final code = countryCode.toUpperCase();
     final hit  = _cache[code];
     if (hit != null) { return hit; }
 
+    final disk = await _loadDisk(code);
+    if (disk != null && disk.fresh) {
+      return _cache[code] = disk.stations;
+    }
+
+    final maps = await _fetchCountryPaged(code);
+    if (maps != null && maps.isNotEmpty) {
+      unawaited(_saveDisk(code, maps));
+      return _cache[code] = maps.map(Station.fromJson).toList();
+    }
+
+    // Network failed (or returned nothing): a stale cache beats an empty map.
+    if (disk != null && disk.stations.isNotEmpty) {
+      return _cache[code] = disk.stations;
+    }
+    return const [];
+  }
+
+  /// Fetch the OCM charge points inside a map viewport (all countries),
+  /// mapped onto our schema. Used as a live top-up while panning abroad so
+  /// dense areas of big countries show full detail even beyond the
+  /// per-country cap. Results carry an empty country (compact payloads don't
+  /// include ISO codes); the caller treats them as International pins.
+  static Future<List<Station>> fetchViewport({
+    required double south,
+    required double west,
+    required double north,
+    required double east,
+  }) async {
+    // Quantise the bounds to a ~0.25° grid so small pans hit the tile cache.
+    String lo(double v) => ((v * 4).floor() / 4).toStringAsFixed(2);
+    String hi(double v) => ((v * 4).ceil()  / 4).toStringAsFixed(2);
+    final key = '${lo(south)},${lo(west)},${hi(north)},${hi(east)}';
+    final hit = _tileCache[key];
+    if (hit != null) { return hit; }
+
     final uri = Uri.parse('https://api.openchargemap.io/v3/poi/').replace(
       queryParameters: <String, String>{
         'key':         _key,
-        'countrycode': code,
-        'maxresults':  '500',
+        'boundingbox': '(${hi(north)},${lo(west)}),(${lo(south)},${hi(east)})',
+        'maxresults':  '$_kPageSize',
         'compact':     'true',
         'verbose':     'false',
         'output':      'json',
       },
     );
     try {
-      final res = await http.get(uri, headers: _headers)
-          .timeout(const Duration(seconds: 45));
+      final res = await http.get(uri, headers: _headers).timeout(_kPageTimeout);
       if (res.statusCode != 200) { return const []; }
-      // Decode + map on a background isolate so large payloads never jank the
-      // UI. We already know the country (we fetched by code), so we pass its
-      // display name in — each station is tagged correctly even though
-      // verbose=false strips the expanded Country object from the payload.
-      final name = countryNameForCode(code) ?? '';
-      final maps = await compute(_parseOcm, <String>[res.body, name]);
-      final list = maps.map(Station.fromJson).toList();
-      _cache[code] = list;
-      return list;
+      final page = await compute(_parseOcm, <String>[res.body, '']);
+      final list = page.stations.map(Station.fromJson).toList();
+      if (_tileCache.length >= _kMaxTiles) { _tileCache.clear(); }
+      return _tileCache[key] = list;
     } catch (_) {
       return const [];
     }
   }
+
+  // ── Paginated country download ──────────────────────────────────────────
+
+  // Pages through a country's POIs (id-ascending) until the server runs dry
+  // or the per-country cap is hit. Returns the accumulated station maps, or
+  // null when the very first page fails (so callers can fall back to a stale
+  // disk cache). A failure on a later page returns the partial result —
+  // partial coverage beats none.
+  static Future<List<Map<String, dynamic>>?> _fetchCountryPaged(
+      String code) async {
+    final name = countryNameForCode(code) ?? '';
+    final out  = <Map<String, dynamic>>[];
+    var afterId = 0;
+    while (out.length < _kMaxPerCountry) {
+      final uri = Uri.parse('https://api.openchargemap.io/v3/poi/').replace(
+        queryParameters: <String, String>{
+          'key':         _key,
+          'countrycode': code,
+          'maxresults':  '$_kPageSize',
+          'compact':     'true',
+          'verbose':     'false',
+          'output':      'json',
+          'sortby':      'id_asc',
+          if (afterId > 0) 'greaterthanid': '$afterId',
+        },
+      );
+      _OcmPage page;
+      try {
+        final res =
+            await http.get(uri, headers: _headers).timeout(_kPageTimeout);
+        if (res.statusCode != 200) { return out.isEmpty ? null : out; }
+        // Decode + map on a background isolate so large payloads never jank
+        // the UI. We already know the country (we fetched by code), so we pass
+        // its display name in — each station is tagged correctly even though
+        // verbose=false strips the expanded Country object from the payload.
+        page = await compute(_parseOcm, <String>[res.body, name]);
+      } catch (_) {
+        return out.isEmpty ? null : out;
+      }
+      out.addAll(page.stations);
+      // Continuation is keyed off the RAW page, not the mapped one: entries
+      // without coordinates are dropped by the parser but still advance the
+      // id cursor, and a short raw page means the server has no more rows.
+      if (page.rawCount < _kPageSize || page.maxId <= afterId) { break; }
+      afterId = page.maxId;
+    }
+    return out;
+  }
+
+  // ── Disk cache ────────────────────────────────────────────────────────────
+
+  static Future<File?> _diskFile(String code) async {
+    if (kIsWeb) { return null; }
+    try {
+      final dir = await getApplicationSupportDirectory();
+      return File('${dir.path}${Platform.pathSeparator}ocm_$code.json');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<_DiskHit?> _loadDisk(String code) async {
+    try {
+      final file = await _diskFile(code);
+      if (file == null || !await file.exists()) { return null; }
+      final decoded = jsonDecode(await file.readAsString());
+      if (decoded is! Map) { return null; }
+      final fetchedAt = (decoded['fetchedAt'] as num?)?.toInt() ?? 0;
+      final raw       = decoded['stations'];
+      if (raw is! List) { return null; }
+      final stations = raw
+          .whereType<Map<String, dynamic>>()
+          .map(Station.fromJson)
+          .toList();
+      final age = DateTime.now().millisecondsSinceEpoch - fetchedAt;
+      return _DiskHit(stations, fresh: age < _kDiskTtl.inMilliseconds);
+    } catch (_) {
+      return null; // corrupt/unreadable cache is the same as no cache
+    }
+  }
+
+  static Future<void> _saveDisk(
+      String code, List<Map<String, dynamic>> maps) async {
+    try {
+      final file = await _diskFile(code);
+      if (file == null) { return; }
+      await file.writeAsString(jsonEncode(<String, dynamic>{
+        'fetchedAt': DateTime.now().millisecondsSinceEpoch,
+        'stations':  maps,
+      }));
+    } catch (_) {/* cache write failures are non-fatal */}
+  }
+}
+
+class _DiskHit {
+  const _DiskHit(this.stations, {required this.fresh});
+  final List<Station> stations;
+  final bool fresh;
 }
 
 // ── Isolate-safe parsing (top-level function) ─────────────────────────────────
-// Decodes the OCM POI array and maps each entry into our production station
-// schema (returned as plain maps so they cross the isolate boundary cheaply).
+// Decodes one OCM POI page and maps each entry into our production station
+// schema (plain maps so they cross the isolate boundary cheaply), plus the
+// pagination cursor data: the raw row count and the highest raw POI id.
 // [args] is [body, countryName]: the raw JSON plus the known country display
-// name (we fetch one country at a time, so it's resolved on the caller side).
-List<Map<String, dynamic>> _parseOcm(List<String> args) {
+// name (empty for viewport fetches, where the country isn't known up front).
+class _OcmPage {
+  const _OcmPage(this.stations, this.rawCount, this.maxId);
+  final List<Map<String, dynamic>> stations;
+  final int rawCount;
+  final int maxId;
+}
+
+_OcmPage _parseOcm(List<String> args) {
   final body        = args[0];
   final countryName = args[1];
   final decoded = jsonDecode(body);
-  if (decoded is! List) { return const []; }
+  if (decoded is! List) { return const _OcmPage([], 0, 0); }
 
+  var maxId = 0;
   final out = <Map<String, dynamic>>[];
   for (final p in decoded) {
     if (p is! Map) { continue; }
+    final rawId = (p['ID'] as num?)?.toInt() ?? 0;
+    if (rawId > maxId) { maxId = rawId; }
     final ai = p['AddressInfo'];
     if (ai is! Map) { continue; }
     final lat = (ai['Latitude']  as num?)?.toDouble();
@@ -137,7 +300,7 @@ List<Map<String, dynamic>> _parseOcm(List<String> args) {
     final town  = ((ai['Town'] ?? ai['StateOrProvince'] ?? '') as String?)?.trim() ?? '';
 
     out.add({
-      'id':              'ocm_${p['ID']}',
+      'id':              'ocm_$rawId',
       'name':            (title != null && title.isNotEmpty) ? title : 'Charging Station',
       'lat':             lat,
       'lng':             lng,
@@ -153,7 +316,7 @@ List<Map<String, dynamic>> _parseOcm(List<String> args) {
       'last_updated':    'Just now',
     });
   }
-  return out;
+  return _OcmPage(out, decoded.length, maxId);
 }
 
 // Map an OCM connection-type title onto our canonical chip labels.

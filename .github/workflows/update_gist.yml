@@ -1354,20 +1354,42 @@ jobs:
               sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT", "").strip()
               if not sa_json:
                   return  # push alerts not configured — skip silently
+              # Set of connector types with at least one FREE port right now.
+              def free_types(s):
+                  return {p.get("type") for p in (s.get("ports") or [])
+                          if p.get("status") == "free" and p.get("type")}
+
               old_avail = {s.get("id"): _avail(s)
                            for s in old_stations if s.get("id")}
-              freed = {}
+              old_free  = {s.get("id"): free_types(s)
+                           for s in old_stations if s.get("id")}
+
+              # New-state lookup, limited to providers we actually re-fetched
+              # this cycle AND stations seen last cycle — so a first-seen or a
+              # skipped-provider snapshot can never fire a false "it's free!".
+              new_by_id = {}
               for s in new_stations:
                   sid = s.get("id")
                   if not sid or s.get("provider") not in fresh_providers:
                       continue
                   if sid not in old_avail:
-                      continue  # unseen before → no reliable transition
-                  if old_avail[sid] == 0 and _avail(s) > 0:
-                      freed[sid] = s
-              if not freed:
+                      continue
+                  new_by_id[sid] = s
+              if not new_by_id:
                   return
-              print(f"🔔 {len(freed)} station(s) freed up — checking alerts")
+
+              # An alert fires when its target went busy -> free since last cycle.
+              # conn set → that connector TYPE had no free port before and has one
+              # now (matches any plug of the type). conn empty → legacy station-
+              # level alert: fully occupied -> at least one free plug.
+              def has_freed(sid, conn):
+                  s = new_by_id.get(sid)
+                  if s is None:
+                      return False
+                  if conn:
+                      return conn not in old_free.get(sid, set()) \
+                          and conn in free_types(s)
+                  return old_avail.get(sid, 0) == 0 and _avail(s) > 0
 
               import firebase_admin
               from firebase_admin import credentials, messaging, firestore
@@ -1384,16 +1406,27 @@ jobs:
                   if not token or not subs:
                       continue
                   lang = data.get("lang", "ka")
-                  hits = [sid for sid in subs if sid in freed]
+                  # Each sub entry is either station-level (legacy, no connector)
+                  # or scoped to a connector type. The dict KEY is opaque; the
+                  # station id + connector come from the VALUE (falling back to
+                  # the key for docs written before per-connector alerts).
+                  hits = []
+                  for skey, meta in subs.items():
+                      meta = meta if isinstance(meta, dict) else {}
+                      sid  = meta.get("stationId") or skey
+                      conn = meta.get("connector") or ""
+                      if has_freed(sid, conn):
+                          hits.append((skey, sid, conn, meta))
                   if not hits:
                       continue
                   dead = False
-                  for sid in hits:
-                      s    = freed[sid]
-                      name = (subs.get(sid) or {}).get("name") or s.get("name") or "დამტენი"
-                      body = (f"{name} is now free! Grab it before someone beats you to it 🙂"
+                  for skey, sid, conn, meta in hits:
+                      s    = new_by_id[sid]
+                      name = meta.get("name") or s.get("name") or "დამტენი"
+                      label = f"{conn} — {name}" if conn else name
+                      body = (f"{label} is now free! Grab it before someone beats you to it 🙂"
                               if lang == "en"
-                              else f"{name} გათავისუფლდა! მოასწარი დატენვა სანამ სხვამ მიგასწრო 🙂")
+                              else f"{label} გათავისუფლდა! მოასწარი დატენვა სანამ სხვამ მიგასწრო 🙂")
                       try:
                           messaging.send(messaging.Message(
                               token=token,
@@ -1411,8 +1444,12 @@ jobs:
                       if dead:
                           doc.reference.delete()
                       else:
+                          # Back-tick quote the key as one literal path segment:
+                          # connector types like "GB/T" / "Type 2" contain chars
+                          # the field-path parser would otherwise reject.
                           doc.reference.update(
-                              {f"subs.{sid}": firestore.DELETE_FIELD for sid in hits})
+                              {f"subs.`{skey}`": firestore.DELETE_FIELD
+                               for skey, _sid, _conn, _meta in hits})
                   except Exception as e:
                       print("  cleanup failed:", e)
               print(f"🔔 sent {sent} push(es)")

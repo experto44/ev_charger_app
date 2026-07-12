@@ -960,7 +960,11 @@ class _AlertRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                alert.name,
+                // Prefix the connector type for a per-connector alert so the
+                // row isn't ambiguous when two alerts share a station.
+                alert.connector.isEmpty
+                    ? alert.name
+                    : '${alert.connector} · ${alert.name}',
                 style: const TextStyle(
                     color: _textPri, fontSize: 14, fontWeight: FontWeight.w600),
                 maxLines: 1,
@@ -978,7 +982,7 @@ class _AlertRow extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         GestureDetector(
-          onTap: () => NotificationService.I.unsubscribe(alert.stationId),
+          onTap: () => NotificationService.I.unsubscribe(alert.key),
           child: Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

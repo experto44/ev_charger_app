@@ -238,6 +238,15 @@ class _MapScreenState extends State<MapScreen>
   bool          _ocmLoading  = false;
   StreamSubscription<MapEvent>? _mapEventSub;
   int           _ocmGen = 0;   // guards against stale / superseded responses
+
+  // Viewport top-up: while panning abroad with the International chip on, the
+  // stations visible on screen are fetched live from OCM (keyed by id so
+  // repeats merge) — big countries are capped in the per-country download, so
+  // this fills in full local density wherever the user actually looks.
+  final Map<String, Station> _ocmViewport = {};
+  Timer? _ocmViewportDebounce;
+  static const _kOcmViewportMinZoom = 9.0;   // below this a box is too huge
+  static const _kOcmViewportCap     = 4000;  // keep marker building sane
   bool          _centerInGeorgia = true; // carousel only shows over Georgia
 
   // Periodic background refresh of the station feed. The Gist itself is updated
@@ -500,11 +509,19 @@ class _MapScreenState extends State<MapScreen>
   // discards superseded responses so the loading pill can never stick on.
   Future<void> _loadOcmCountries() async {
     if (!_internationalOn) {
-      if (mounted && (_ocmStations.isNotEmpty || _ocmLoading)) {
-        setState(() { _ocmStations = const []; _ocmLoading = false; });
+      if (mounted &&
+          (_ocmStations.isNotEmpty || _ocmViewport.isNotEmpty || _ocmLoading)) {
+        setState(() {
+          _ocmStations = const [];
+          _ocmViewport.clear();
+          _ocmLoading  = false;
+        });
       }
       return;
     }
+    // Top up the current viewport too (no-op over Georgia/Armenia or when
+    // zoomed way out) so toggling the chip abroad shows local pins at once.
+    _scheduleOcmViewportFetch();
     // ISO codes of the selected countries we load from OCM. Locally-covered
     // countries (Georgia, Armenia) ship richer provider data, so they're skipped
     // here and never duplicated by international pins.
@@ -525,6 +542,39 @@ class _MapScreenState extends State<MapScreen>
     setState(() {
       _ocmStations = [for (final list in results) ...list];
       _ocmLoading  = false;
+    });
+  }
+
+  // Debounced viewport top-up: fires ~0.7s after the map settles so a fling
+  // across Europe doesn't spray a request per frame. Silent (no loading pill)
+  // — it's a background enrichment, not a user-initiated load.
+  void _scheduleOcmViewportFetch() {
+    if (!_internationalOn) { return; }
+    _ocmViewportDebounce?.cancel();
+    _ocmViewportDebounce =
+        Timer(const Duration(milliseconds: 700), _fetchOcmViewport);
+  }
+
+  Future<void> _fetchOcmViewport() async {
+    if (!mounted || !_internationalOn) { return; }
+    final cam = _mapCtrl.camera;
+    if (cam.zoom < _kOcmViewportMinZoom) { return; }
+    // Locally-covered countries (Georgia, Armenia) ship richer provider data —
+    // never overlay OCM pins on top of them.
+    final c = cam.center;
+    final inLocal = kCountries.any(
+        (k) => k.localCovered && k.contains(c.latitude, c.longitude));
+    if (inLocal) { return; }
+    final b    = cam.visibleBounds;
+    final list = await OcmService.fetchViewport(
+      south: b.south, west: b.west, north: b.north, east: b.east,
+    );
+    if (!mounted || !_internationalOn || list.isEmpty) { return; }
+    setState(() {
+      // Bound the accumulated set: past the cap, keep only the fresh viewport
+      // (older, off-screen pins are the cheapest thing to shed).
+      if (_ocmViewport.length > _kOcmViewportCap) { _ocmViewport.clear(); }
+      for (final s in list) { _ocmViewport[s.id] = s; }
     });
   }
 
@@ -705,6 +755,7 @@ class _MapScreenState extends State<MapScreen>
     _searchCtrl.dispose();
     _searchFocus.dispose();
     _debounce?.cancel();
+    _ocmViewportDebounce?.cancel();
     _mapEventSub?.cancel();
     _refreshTimer?.cancel();
     super.dispose();
@@ -881,9 +932,18 @@ class _MapScreenState extends State<MapScreen>
     );
   }
 
-  // Local Gist stations + live OCM international stations.
-  List<Station> get _allStations =>
-      _ocmStations.isEmpty ? _stations : [..._stations, ..._ocmStations];
+  // Local Gist stations + live OCM international stations (the per-country
+  // downloads plus the viewport top-up, deduped by OCM id).
+  List<Station> get _allStations {
+    if (_ocmStations.isEmpty && _ocmViewport.isEmpty) { return _stations; }
+    final seen = <String>{for (final s in _ocmStations) s.id};
+    return [
+      ..._stations,
+      ..._ocmStations,
+      for (final s in _ocmViewport.values)
+        if (!seen.contains(s.id)) s,
+    ];
+  }
 
   List<Station> get _filtered {
     // NOTE: the search bar is a Google Places *destination* search — it must NOT
@@ -967,6 +1027,7 @@ class _MapScreenState extends State<MapScreen>
               onMapReady: () {
                 _mapEventSub ??= _mapCtrl.mapEventStream.listen((_) {
                   _updateCenterInGeorgia();
+                  _scheduleOcmViewportFetch();
                 });
                 _locateMe(recenter: true);
                 _loadOcmCountries();
@@ -1943,36 +2004,44 @@ class _StationSheetState extends State<_StationSheet> {
   bool _refreshing   = false;
   bool _justRefreshed = false;
   bool _refreshFailed = false;
-  bool _alertBusy    = false; // arming/cancelling a "notify me" alert in flight
+  // Composite alert keys ("id" or "id|connector") currently mid-toggle, so each
+  // button shows its own spinner without blocking the others.
+  final Set<String> _alertPending = {};
 
-  // A busy station (no free plugs) with a stable id can be watched: the user
-  // gets a push the moment a plug frees up. International/coordinate-only rows
-  // have no id and can't be matched server-side, so no button for them.
-  bool get _canAlert => _station.id.isNotEmpty && _station.available == 0;
+  // Station-level "Notify me!" button — only for providers WITHOUT per-plug
+  // data (OCM/International, etc.). Providers that publish ports get a per-
+  // connector button on each busy row instead. Needs a stable id and a fully
+  // occupied station (no free plug to grab right now).
+  bool get _canAlert => _station.id.isNotEmpty &&
+      _station.ports.isEmpty && _station.available == 0;
   bool get _alertOn  => NotificationService.I.isSubscribed(_station.id);
 
-  Future<void> _toggleAlert() async {
-    if (_alertBusy) { return; }
+  // Arm / cancel a "notify me when it frees up" alert. [connector] scopes it to
+  // one plug type (from a per-connector button); empty = whole-station alert.
+  Future<void> _toggleAlert({String connector = ''}) async {
     final svc = NotificationService.I;
+    final key = connector.isEmpty ? _station.id : '${_station.id}|$connector';
+    if (_alertPending.contains(key)) { return; }
 
     // Already watching → cancel (no ad, no popup).
-    if (_alertOn) {
-      setState(() => _alertBusy = true);
-      await svc.unsubscribe(_station.id);
+    if (svc.isSubscribed(_station.id, connector)) {
+      setState(() => _alertPending.add(key));
+      await svc.unsubscribe(key);
       if (!mounted) { return; }
-      setState(() => _alertBusy = false);
+      setState(() => _alertPending.remove(key));
       _snack(AppStrings.alertCancelled);
       return;
     }
 
-    setState(() => _alertBusy = true);
+    setState(() => _alertPending.add(key));
     final res = await svc.subscribe(
       stationId:   _station.id,
       stationName: _station.name,
       provider:    _station.provider,
+      connector:   connector,
     );
     if (!mounted) { return; }
-    setState(() => _alertBusy = false);
+    setState(() => _alertPending.remove(key));
 
     switch (res) {
       case AlertResult.ok:
@@ -2085,6 +2154,18 @@ class _StationSheetState extends State<_StationSheet> {
               p.price,
               style: AppStrings.font(TextStyle(
                   color: color, fontSize: 13, fontWeight: FontWeight.w600)),
+            ),
+          ],
+          // Per-connector "notify me when THIS plug frees up". Only on a busy
+          // plug (a free one needs no alert) and only when the station has a
+          // stable id to match against server-side. Matches by connector type,
+          // so a station with two CCS2 fires when either frees.
+          if (p.isBusy && _station.id.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            _PortNotifyButton(
+              on:   NotificationService.I.isSubscribed(_station.id, p.type),
+              busy: _alertPending.contains('${_station.id}|${p.type}'),
+              onTap: () => _toggleAlert(connector: p.type),
             ),
           ],
         ]),
@@ -2284,8 +2365,8 @@ class _StationSheetState extends State<_StationSheet> {
           if (_canAlert) ...[
             _NotifyButton(
               on:      _alertOn,
-              busy:    _alertBusy,
-              onTap:   _toggleAlert,
+              busy:    _alertPending.contains(_station.id),
+              onTap:   () => _toggleAlert(),
             ),
             const SizedBox(height: 10),
           ],
@@ -2360,6 +2441,54 @@ class _NotifyButton extends StatelessWidget {
                     color: fg, fontSize: 15, fontWeight: FontWeight.w700)),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Compact per-connector "notify me" button (busy port rows) ─────────────────
+// Filled emerald when off; outlined emerald + active bell when armed (tap again
+// to cancel). Spinner while a subscribe/unsubscribe round-trip is in flight.
+class _PortNotifyButton extends StatelessWidget {
+  const _PortNotifyButton(
+      {required this.on, required this.busy, required this.onTap});
+  final bool on;
+  final bool busy;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: busy ? null : onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: on ? Colors.transparent : _emerald,
+          borderRadius: BorderRadius.circular(10),
+          border: on ? Border.all(color: _emerald, width: 1.4) : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (busy)
+              const SizedBox(
+                width: 13, height: 13,
+                child: CircularProgressIndicator(strokeWidth: 2, color: _emerald),
+              )
+            else
+              Icon(
+                on ? Icons.notifications_active_rounded
+                   : Icons.notifications_none_rounded,
+                color: on ? _emerald : Colors.black, size: 15),
+            const SizedBox(width: 5),
+            Text(
+              on ? AppStrings.alertOnShort : AppStrings.notifyMe,
+              style: AppStrings.font(TextStyle(
+                  color: on ? _emerald : Colors.black,
+                  fontSize: 12, fontWeight: FontWeight.w700)),
+            ),
           ],
         ),
       ),

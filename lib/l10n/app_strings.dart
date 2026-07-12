@@ -244,6 +244,8 @@ class AppStrings {
   static String get notifyMe => isGeorgian ? 'შემატყობინე!' : 'Notify me!';
   static String get alertActive =>
       isGeorgian ? 'შეტყობინება ჩართულია' : 'Alert is on';
+  // Compact active-state label for the small per-connector notify button.
+  static String get alertOnShort => isGeorgian ? 'ჩართულია' : 'On';
   static String get alertPopupTitle =>
       isGeorgian ? '🔔 შეტყობინება ჩართულია!' : '🔔 Alert set!';
   static String get alertPopupBody => isGeorgian

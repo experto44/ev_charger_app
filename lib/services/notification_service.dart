@@ -18,10 +18,21 @@ class ChargerAlert {
     required this.stationId,
     required this.name,
     required this.provider,
+    this.connector = '',
   });
   final String stationId;
   final String name;
   final String provider;
+
+  /// Connector type this alert is scoped to (e.g. "CCS2"). Empty for a
+  /// legacy station-level alert (fires when the whole station frees up).
+  final String connector;
+
+  /// The composite id this alert is stored under (see [NotificationService].
+  /// _alertKey). Station-level alerts key on the station id alone, so old
+  /// docs written before per-connector alerts keep working unchanged.
+  String get key =>
+      connector.isEmpty ? stationId : '$stationId|$connector';
 }
 
 /// Manages the "Notify me!" charger-free push alerts.
@@ -69,7 +80,16 @@ class NotificationService {
 
   bool get ready => _token != null;
   int get count => _subscribed.length;
-  bool isSubscribed(String stationId) => _subscribed.containsKey(stationId);
+
+  /// Composite key an alert is stored under. A [connector] scopes the alert to
+  /// one connector type ("notify when a CCS2 here frees up"); an empty
+  /// connector is a whole-station alert (the pre-per-connector behaviour, kept
+  /// for providers that publish no per-plug data).
+  static String _alertKey(String stationId, String connector) =>
+      connector.isEmpty ? stationId : '$stationId|$connector';
+
+  bool isSubscribed(String stationId, [String connector = '']) =>
+      _subscribed.containsKey(_alertKey(stationId, connector));
 
   /// Current alerts, name-sorted, for the profile's "Active Alerts" section.
   List<ChargerAlert> get alerts {
@@ -119,12 +139,17 @@ class NotificationService {
       final snap = await doc.get();
       final subs = (snap.data()?['subs'] as Map<String, dynamic>?) ?? const {};
       _subscribed.clear();
-      subs.forEach((id, value) {
+      subs.forEach((key, value) {
         final v = value is Map<String, dynamic> ? value : const <String, dynamic>{};
-        _subscribed[id] = ChargerAlert(
-          stationId: id,
-          name:      (v['name'] as String?) ?? id,
+        // Station id + connector come from the stored value; legacy docs
+        // (written before per-connector alerts) carry neither, so the doc key
+        // is the station id and the connector is empty.
+        final stationId = (v['stationId'] as String?) ?? key;
+        _subscribed[key] = ChargerAlert(
+          stationId: stationId,
+          name:      (v['name'] as String?) ?? stationId,
           provider:  (v['provider'] as String?) ?? '',
+          connector: (v['connector'] as String?) ?? '',
         );
       });
       revision.value++;
@@ -160,9 +185,11 @@ class NotificationService {
     required String stationId,
     required String stationName,
     required String provider,
+    String connector = '',
   }) async {
     if (stationId.isEmpty) return AlertResult.error;
-    if (_subscribed.containsKey(stationId)) return AlertResult.ok;
+    final key = _alertKey(stationId, connector);
+    if (_subscribed.containsKey(key)) return AlertResult.ok;
     if (_subscribed.length >= _maxAlerts) return AlertResult.limitReached;
 
     // Make sure we actually have permission + a token before promising alerts.
@@ -185,17 +212,20 @@ class NotificationService {
         'lang': AppStrings.isGeorgian ? 'ka' : 'en',
         'updatedAt': FieldValue.serverTimestamp(),
         'subs': {
-          stationId: {
+          key: {
+            'stationId': stationId,
+            'connector': connector,
             'name': stationName,
             'provider': provider,
             'createdAt': DateTime.now().toUtc().toIso8601String(),
           },
         },
       }, SetOptions(merge: true));
-      _subscribed[stationId] = ChargerAlert(
+      _subscribed[key] = ChargerAlert(
         stationId: stationId,
         name:      stationName,
         provider:  provider,
+        connector: connector,
       );
       revision.value++;
       return AlertResult.ok;
@@ -205,16 +235,21 @@ class NotificationService {
     }
   }
 
-  /// Cancel the alert for [stationId] (removes just that entry from the doc).
-  Future<void> unsubscribe(String stationId) async {
+  /// Cancel the alert stored under [alertKey] (the composite station|connector
+  /// id from [ChargerAlert.key]; for a station-level alert that's just the
+  /// station id). Removes only that entry from the doc.
+  Future<void> unsubscribe(String alertKey) async {
     final doc = _doc;
     if (doc == null) return;
     // Optimistic local update so the toggle flips immediately.
-    _subscribed.remove(stationId);
+    _subscribed.remove(alertKey);
     revision.value++;
     try {
+      // Escape the key as a single literal path segment: connector types like
+      // "GB/T" and "Type 2" contain characters update() would otherwise parse
+      // as field-path syntax (a '/' or space), so back-tick quote it.
       await doc.update({
-        'subs.$stationId': FieldValue.delete(),
+        'subs.`$alertKey`': FieldValue.delete(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
     } catch (_) {
