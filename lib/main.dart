@@ -2083,6 +2083,9 @@ class _StationSheetState extends State<_StationSheet> {
       case AlertResult.permissionDenied:
         _showNotice(AppStrings.alertPermissionDenied);
         break;
+      case AlertResult.pushUnavailable:
+        _showNotice(AppStrings.alertPushUnavailable);
+        break;
       case AlertResult.error:
         _showNotice(AppStrings.alertError);
         break;

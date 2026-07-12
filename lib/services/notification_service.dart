@@ -9,7 +9,13 @@ import 'package:flutter/material.dart';
 import '../l10n/app_strings.dart';
 
 /// Result of attempting to arm a "notify me when this charger frees up" alert.
-enum AlertResult { ok, limitReached, permissionDenied, error }
+///
+/// [pushUnavailable] specifically means we couldn't obtain an FCM token — on
+/// iOS that's usually the APNs handshake failing (no APNs auth key in the
+/// Firebase project, or push not provisioned), which is invisible on Android.
+/// Kept distinct from [error] (the Firestore write itself failed) so the field
+/// symptom tells us which half broke.
+enum AlertResult { ok, limitReached, permissionDenied, pushUnavailable, error }
 
 /// One active "charger freed up" alert, as shown in the profile's
 /// "Active Alerts" list.
@@ -226,7 +232,9 @@ class NotificationService {
       return AlertResult.permissionDenied;
     }
     final doc = _doc;
-    if (doc == null) return AlertResult.error;
+    // No token → no doc. On iOS this is the APNs/FCM handshake failing (see
+    // [AlertResult.pushUnavailable]); surface it distinctly from a write error.
+    if (doc == null) return AlertResult.pushUnavailable;
 
     try {
       await doc.set({

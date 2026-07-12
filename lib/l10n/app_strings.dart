@@ -263,6 +263,9 @@ class AppStrings {
   static String get alertPermissionDenied => isGeorgian
       ? 'შეტყობინებების მისაღებად ჩართე ნებართვა პარამეტრებში'
       : 'Enable notification permission in settings to receive alerts';
+  static String get alertPushUnavailable => isGeorgian
+      ? 'მოწყობილობაზე push-შეტყობინებები ვერ ჩაირთო — შეამოწმე ნებართვა და სცადე ხელახლა'
+      : 'Push notifications could not be enabled on this device — check permission and try again';
   static String get alertLoginRequired => isGeorgian
       ? 'შეტყობინების მისაღებად ჯერ გაიარეთ ავტორიზაცია'
       : 'Sign in first to receive alerts';
