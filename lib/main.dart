@@ -2084,7 +2084,13 @@ class _StationSheetState extends State<_StationSheet> {
         _showNotice(AppStrings.alertPermissionDenied);
         break;
       case AlertResult.pushUnavailable:
-        _showNotice(AppStrings.alertPushUnavailable);
+        // Append the raw failure reason (truncated) so a TestFlight tester can
+        // screenshot exactly why the token couldn't be resolved — release
+        // builds surface no console log. TEMP diagnostic.
+        final diag = NotificationService.I.lastDiag;
+        _showNotice(diag == null
+            ? AppStrings.alertPushUnavailable
+            : '${AppStrings.alertPushUnavailable}\n[${diag.length > 140 ? diag.substring(0, 140) : diag}]');
         break;
       case AlertResult.error:
         _showNotice(AppStrings.alertError);

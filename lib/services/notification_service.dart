@@ -75,6 +75,11 @@ class NotificationService {
   String? _token;
   bool _initialized = false;
 
+  /// Human-readable reason the last token resolution failed. Surfaced on-screen
+  /// (TestFlight release builds show no console) so an iOS push failure names
+  /// its actual cause — APNs token missing vs a specific getToken() error.
+  String? lastDiag;
+
   /// Active alerts by station id (with name/provider for the profile list).
   /// Cached so the station sheet can render the toggle state instantly
   /// without a round-trip.
@@ -203,10 +208,17 @@ class NotificationService {
           apns = await _fcm.getAPNSToken();
         }
         // If it still isn't set, getToken() would throw; bail cleanly instead.
-        if (apns == null) return null;
+        if (apns == null) {
+          final s = await _fcm.getNotificationSettings();
+          lastDiag = 'APNs=null auth=${s.authorizationStatus.name}';
+          return null;
+        }
       }
-      return await _fcm.getToken();
+      final t = await _fcm.getToken();
+      if (t == null) lastDiag = 'getToken=null';
+      return t;
     } catch (e) {
+      lastDiag = 'err=$e';
       if (kDebugMode) debugPrint('resolveToken failed: $e');
       return null;
     }
