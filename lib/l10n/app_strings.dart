@@ -264,8 +264,8 @@ class AppStrings {
       ? 'შეტყობინებების მისაღებად ჩართე ნებართვა პარამეტრებში'
       : 'Enable notification permission in settings to receive alerts';
   static String get alertLoginRequired => isGeorgian
-      ? 'შეტყობინების დასაყენებლად ჯერ გაიარე ავტორიზაცია'
-      : 'Sign in to set a charger alert';
+      ? 'შეტყობინების მისაღებად ჯერ გაიარეთ ავტორიზაცია'
+      : 'Sign in first to receive alerts';
 
   /// Push notification body sent when a subscribed charger frees up. The
   /// station name is the notification title; this is the body line.

@@ -2045,23 +2045,19 @@ class _StationSheetState extends State<_StationSheet> {
       await svc.unsubscribe(key);
       if (!mounted) { return; }
       setState(() => _alertPending.remove(key));
-      _snack(AppStrings.alertCancelled);
+      _showNotice(AppStrings.alertCancelled);
       return;
     }
 
-    // Arming a new alert requires an account: alerts are tied to the signed-in
-    // user, so a signed-out tap opens Login instead of silently arming.
+    // Arming a new alert requires an account. Don't yank the user to a Login
+    // screen — just tell them, inline in the sheet, to sign in first.
     setState(() => _alertPending.add(key));
     final loggedIn = await _hasSession();
     if (!mounted) { return; }
     if (!loggedIn) {
       setState(() => _alertPending.remove(key));
-      _snack(AppStrings.alertLoginRequired);
-      await Navigator.push<void>(context,
-          MaterialPageRoute(builder: (_) => const LoginScreen()));
-      // If they signed in while there, arm it now; otherwise stop.
-      if (!mounted || FirebaseAuth.instance.currentUser == null) { return; }
-      setState(() => _alertPending.add(key));
+      _showNotice(AppStrings.alertLoginRequired);
+      return;
     }
     final res = await svc.subscribe(
       stationId:   _station.id,
@@ -2082,26 +2078,35 @@ class _StationSheetState extends State<_StationSheet> {
         }
         break;
       case AlertResult.limitReached:
-        _snack(AppStrings.alertLimitReached);
+        _showNotice(AppStrings.alertLimitReached);
         break;
       case AlertResult.permissionDenied:
-        _snack(AppStrings.alertPermissionDenied);
+        _showNotice(AppStrings.alertPermissionDenied);
         break;
       case AlertResult.error:
-        _snack(AppStrings.alertError);
+        _showNotice(AppStrings.alertError);
         break;
     }
   }
 
-  void _snack(String msg) {
+  // Inline, always-legible feedback shown INSIDE the sheet (a SnackBar from the
+  // app-level messenger renders behind this modal sheet, so it's unreadable).
+  // Auto-clears after a few seconds.
+  String? _alertNotice;
+  Timer?  _noticeTimer;
+  void _showNotice(String msg) {
     if (!mounted) { return; }
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(
-        content: Text(msg, style: AppStrings.font()),
-        backgroundColor: _bgSurface,
-        behavior: SnackBarBehavior.floating,
-      ));
+    setState(() => _alertNotice = msg);
+    _noticeTimer?.cancel();
+    _noticeTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) { setState(() => _alertNotice = null); }
+    });
+  }
+
+  @override
+  void dispose() {
+    _noticeTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _refresh() async {
@@ -2398,6 +2403,34 @@ class _StationSheetState extends State<_StationSheet> {
               onTap:   () => _toggleAlert(),
             ),
             const SizedBox(height: 10),
+          ],
+
+          // Inline alert feedback (sign-in required, cancelled, limit, …). Shown
+          // in the sheet itself so it's always legible — a SnackBar would render
+          // behind this modal sheet.
+          if (_alertNotice != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(
+                color: _emerald.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _emerald.withValues(alpha: 0.45)),
+              ),
+              child: Row(children: [
+                const Icon(Icons.info_outline_rounded, color: _emerald, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _alertNotice!,
+                    style: AppStrings.font(const TextStyle(
+                        color: _textPri, fontSize: 13, height: 1.35,
+                        fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ]),
+            ),
           ],
 
           // Get Directions button
