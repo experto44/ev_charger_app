@@ -119,7 +119,7 @@ class NotificationService {
       await _fcm.requestPermission(alert: true, badge: true, sound: true);
       // iOS needs the APNs token before an FCM token is available; on Android
       // this returns immediately. Either way, don't let it block startup.
-      _token = await _fcm.getToken();
+      _token = await _resolveToken();
       if (_token != null) {
         await _loadSubscriptions();
       }
@@ -179,6 +179,33 @@ class NotificationService {
     } catch (_) {/* best-effort migration */}
   }
 
+  /// Resolve the FCM token, taking care of the iOS ordering constraint:
+  /// `getToken()` throws `apns-token-not-set` until iOS has delivered the APNs
+  /// token, which can lag a moment behind launch. So on iOS we first wait
+  /// (briefly, bounded) for the APNs token, then ask for the FCM token. On
+  /// Android `getAPNSToken()` returns null immediately and we go straight to
+  /// `getToken()`. Returns null if the token can't be resolved (offline, push
+  /// disabled) — callers surface that as an error.
+  Future<String?> _resolveToken() async {
+    try {
+      if (Platform.isIOS) {
+        // Poll for the APNs token — it usually arrives within a second or two
+        // of the first launch after permission is granted.
+        var apns = await _fcm.getAPNSToken();
+        for (var i = 0; apns == null && i < 10; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 300));
+          apns = await _fcm.getAPNSToken();
+        }
+        // If it still isn't set, getToken() would throw; bail cleanly instead.
+        if (apns == null) return null;
+      }
+      return await _fcm.getToken();
+    } catch (e) {
+      if (kDebugMode) debugPrint('resolveToken failed: $e');
+      return null;
+    }
+  }
+
   /// Arm an alert for [stationId]. Enforces the per-device cap and requires
   /// notification permission. Returns a typed result the UI can react to.
   Future<AlertResult> subscribe({
@@ -193,11 +220,7 @@ class NotificationService {
     if (_subscribed.length >= _maxAlerts) return AlertResult.limitReached;
 
     // Make sure we actually have permission + a token before promising alerts.
-    if (_token == null) {
-      try {
-        _token = await _fcm.getToken();
-      } catch (_) {/* handled below */}
-    }
+    _token ??= await _resolveToken();
     final settings = await _fcm.getNotificationSettings();
     if (settings.authorizationStatus == AuthorizationStatus.denied) {
       return AlertResult.permissionDenied;
