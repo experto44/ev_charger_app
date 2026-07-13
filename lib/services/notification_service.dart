@@ -203,22 +203,24 @@ class NotificationService {
         // Poll for the APNs token — it usually arrives within a second or two
         // of the first launch after permission is granted.
         var apns = await _fcm.getAPNSToken();
-        for (var i = 0; apns == null && i < 10; i++) {
-          await Future<void>.delayed(const Duration(milliseconds: 300));
+        for (var i = 0; apns == null && i < 15; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 400));
           apns = await _fcm.getAPNSToken();
         }
-        // If it still isn't set, getToken() would throw; bail cleanly instead.
         if (apns == null) {
+          // APNs token never arrived. Don't bail — calling getToken() forces
+          // APNs registration (which requestPermission may not have kicked) and
+          // surfaces the concrete error instead of us guessing. Record the
+          // state so the on-screen diagnostic shows how far we got.
           final s = await _fcm.getNotificationSettings();
-          lastDiag = 'APNs=null auth=${s.authorizationStatus.name}';
-          return null;
+          lastDiag = 'APNs=null auth=${s.authorizationStatus.name}; ';
         }
       }
       final t = await _fcm.getToken();
-      if (t == null) lastDiag = 'getToken=null';
+      lastDiag = t == null ? '${lastDiag ?? ''}getToken=null' : null;
       return t;
     } catch (e) {
-      lastDiag = 'err=$e';
+      lastDiag = '${lastDiag ?? ''}err=$e';
       if (kDebugMode) debugPrint('resolveToken failed: $e');
       return null;
     }
