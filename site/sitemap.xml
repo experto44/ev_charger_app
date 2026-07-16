@@ -2,18 +2,26 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>[SITE_URL]/</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="[SITE_URL]/?lang=ka"/>
-    <xhtml:link rel="alternate" hreflang="en" href="[SITE_URL]/?lang=en"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="[SITE_URL]/"/>
-    <changefreq>monthly</changefreq>
+    <loc>https://geocharge.ge/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/?lang=ka"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/"/>
+    <lastmod>2026-07-08</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>[SITE_URL]/privacy-policy.html</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="[SITE_URL]/privacy-policy.html?lang=ka"/>
-    <xhtml:link rel="alternate" hreflang="en" href="[SITE_URL]/privacy-policy.html?lang=en"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="[SITE_URL]/privacy-policy.html"/>
+    <loc>https://tesla.geocharge.ge/</loc>
+    <lastmod>2026-07-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/privacy-policy.html</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/privacy-policy.html?lang=ka"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/privacy-policy.html?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/privacy-policy.html"/>
+    <lastmod>2026-07-08</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
