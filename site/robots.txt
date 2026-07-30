@@ -2,6 +2,9 @@
 # Search engines: full access
 User-agent: *
 Allow: /
+# Leftover duplicate of /privacy-policy.html — keep it out of the index
+Disallow: /Privacy%20Policy.dc.html
+Disallow: /uploads/
 
 # AI / answer engines: explicitly welcome (AEO / GEO)
 User-agent: GPTBot

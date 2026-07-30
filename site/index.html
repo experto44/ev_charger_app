@@ -3,989 +3,726 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GeoCharge — ელექტრომობილის ყველა დამტენი საქართველოში, ერთ უფასო აპლიკაციაში</title>
-<meta name="description" content="GeoCharge — უფასო აპლიკაცია, რომელიც საქართველოს ყველა EV დამტენ ქსელს (mart EV, E-Space, EcoCars, Tegeta, Da-Tene, Charger Plus და სხვ.) ერთ რუკაზე აერთიანებს.">
+<title>ელექტრო მანქანის დამტენები საქართველოში — GeoCharge</title>
+<meta name="description" content="ელექტრო მანქანის დამტენები საქართველოში — 800+ სადგური ერთ უფასო რუკაზე. mart EV, E-Space, EcoCars, Da-Tene, Tegeta და სხვა ქსელები ერთ აპლიკაციაში.">
+<meta name="theme-color" content="#11161A">
+
+<link rel="canonical" href="https://geocharge.ge/">
+<link rel="alternate" hreflang="ka" href="https://geocharge.ge/">
+<link rel="alternate" hreflang="en" href="https://geocharge.ge/en/">
+<link rel="alternate" hreflang="x-default" href="https://geocharge.ge/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GeoCharge">
+<meta property="og:locale" content="ka_GE">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:url" content="https://geocharge.ge/">
+<meta property="og:title" content="ელექტრო მანქანის დამტენები საქართველოში — GeoCharge">
+<meta property="og:description" content="საქართველოს ყველა EV ქსელი ერთ რუკაზე — ცოცხალი სტატუსი, კონექტორები და მარშრუტის დაგეგმვა. უფასო.">
+<meta property="og:image" content="https://geocharge.ge/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="GeoCharge — ელექტრომობილის ყველა დამტენი ერთ აპლიკაციაში">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ელექტრო მანქანის დამტენები საქართველოში — GeoCharge">
+<meta name="twitter:description" content="საქართველოს ყველა EV ქსელი ერთ რუკაზე — ცოცხალი სტატუსი, კონექტორები და მარშრუტის დაგეგმვა.">
+<meta name="twitter:image" content="https://geocharge.ge/assets/og-image.png">
+
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
 <link rel="apple-touch-icon" href="/assets/icon-1024.png">
-<script src="./support.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&amp;family=Noto+Sans+Georgian:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="/assets/shot-nationwide.jpg">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://geocharge.ge/#org",
+      "name": "GeoCharge",
+      "url": "https://geocharge.ge/",
+      "logo": "https://geocharge.ge/assets/icon-1024.png",
+      "description": "GeoCharge — უფასო აპლიკაცია, რომელიც საქართველოს ელექტრო მანქანის ყველა დამტენ ქსელს ერთ რუკაზე აერთიანებს.",
+      "areaServed": { "@type": "Country", "name": "Georgia" },
+      "sameAs": [
+        "https://play.google.com/store/apps/details?id=ge.geocharge.app",
+        "https://apps.apple.com/ge/app/geocharge/id6785467389",
+        "https://www.facebook.com/geocharge.ge",
+        "https://www.instagram.com/geo.charge"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://geocharge.ge/#website",
+      "name": "GeoCharge",
+      "url": "https://geocharge.ge/",
+      "inLanguage": "ka",
+      "publisher": { "@id": "https://geocharge.ge/#org" }
+    },
+    {
+      "@type": "MobileApplication",
+      "@id": "https://geocharge.ge/#app",
+      "name": "GeoCharge",
+      "operatingSystem": "Android, iOS",
+      "applicationCategory": "TravelApplication",
+      "description": "ელექტრო მანქანის დამტენები საქართველოში — 800+ საჯარო დამტენი სადგური ერთ უფასო რუკაზე, ცოცხალი სტატუსით, ფილტრებითა და მარშრუტის დაგეგმვით.",
+      "installUrl": "https://play.google.com/store/apps/details?id=ge.geocharge.app",
+      "downloadUrl": "https://play.google.com/store/apps/details?id=ge.geocharge.app",
+      "url": "https://geocharge.ge/",
+      "inLanguage": "ka",
+      "image": "https://geocharge.ge/assets/icon-1024.png",
+      "screenshot": "https://geocharge.ge/assets/shot-nationwide.jpg",
+      "author": { "@id": "https://geocharge.ge/#org" },
+      "publisher": { "@id": "https://geocharge.ge/#org" },
+      "featureList": [
+        "mart EV", "E-Space", "EcoCars", "Da-Tene", "Charger Plus", "EV Power",
+        "Tegeta", "Electrify Georgia", "Solar Station", "MOVEO", "Gadatene", "SOCAR"
+      ],
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "GEL" }
+    },
+    {
+      "@type": "ItemList",
+      "name": "GeoCharge-ში გაერთიანებული EV დამტენი ქსელები საქართველოში",
+      "numberOfItems": 12,
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "item": { "@type": "Organization", "name": "mart EV" } },
+        { "@type": "ListItem", "position": 2, "item": { "@type": "Organization", "name": "E-Space (ი-სფეის)" } },
+        { "@type": "ListItem", "position": 3, "item": { "@type": "Organization", "name": "EcoCars (ეკოკარსი)" } },
+        { "@type": "ListItem", "position": 4, "item": { "@type": "Organization", "name": "Da-Tene (დატენე)" } },
+        { "@type": "ListItem", "position": 5, "item": { "@type": "Organization", "name": "Charger Plus (ჩარჯერ პლუს)" } },
+        { "@type": "ListItem", "position": 6, "item": { "@type": "Organization", "name": "EV Power (ივი პაუერ)" } },
+        { "@type": "ListItem", "position": 7, "item": { "@type": "Organization", "name": "Tegeta (თეგეტა)" } },
+        { "@type": "ListItem", "position": 8, "item": { "@type": "Organization", "name": "Electrify Georgia (ელექტრიფაი)" } },
+        { "@type": "ListItem", "position": 9, "item": { "@type": "Organization", "name": "Solar Station (სოლარ სტეიშენ)" } },
+        { "@type": "ListItem", "position": 10, "item": { "@type": "Organization", "name": "MOVEO (მოვეო)" } },
+        { "@type": "ListItem", "position": 11, "item": { "@type": "Organization", "name": "Gadatene (გადატენე)" } },
+        { "@type": "ListItem", "position": 12, "item": { "@type": "Organization", "name": "SOCAR (სოკარი)" } }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://geocharge.ge/#faq",
+      "inLanguage": "ka",
+      "mainEntity": [
+        { "@type": "Question", "name": "სად ვიპოვო ელექტრო მანქანის დამტენები საქართველოში?", "acceptedAnswer": { "@type": "Answer", "text": "GeoCharge-ის უფასო აპლიკაცია 800-ზე მეტ საჯარო დამტენ სადგურს აჩვენებს მთელ საქართველოში — თბილისში, ბათუმში, ქუთაისში, რეგიონებსა და ავტომაგისტრალებზე. ყველა ქსელი ერთ რუკაზეა, ცოცხალი სტატუსით." } },
+        { "@type": "Question", "name": "რომელ ქართულ დამტენ ქსელებს აერთიანებს GeoCharge?", "acceptedAnswer": { "@type": "Answer", "text": "GeoCharge ერთ რუკაზე აერთიანებს საქართველოს წამყვან EV დამტენ ქსელებს: mart EV, E-Space (ი-სფეის), EcoCars (ეკოკარსი), Da-Tene (დატენე), Charger Plus (ჩარჯერ პლუს), EV Power (ივი პაუერ), Tegeta (თეგეტა), Electrify Georgia (ელექტრიფაი), Solar Station (სოლარ სტეიშენ), MOVEO (მოვეო), Gadatene (გადატენე) და SOCAR-ის (სოკარი) სადგურებზე განთავსებული დამტენები. ახალი ქსელები ავტომატურად ემატება." } },
+        { "@type": "Question", "name": "შემიძლია ერთ აპლიკაციაში ვნახო mart EV, E-Space, Tegeta და სხვა პროვაიდერების დამტენები?", "acceptedAnswer": { "@type": "Answer", "text": "დიახ. mart EV, E-Space, EcoCars, Da-Tene (დატენე), Charger Plus, EV Power, Tegeta (თეგეტა), Electrify Georgia, Solar Station, MOVEO და Gadatene (გადატენე) — ყველა ერთ რუკაზეა GeoCharge-ში. ცალკე აპლიკაცია თითო ქსელისთვის აღარ გჭირდება." } },
+        { "@type": "Question", "name": "რა არის GeoCharge?", "acceptedAnswer": { "@type": "Answer", "text": "GeoCharge არის უფასო აპლიკაცია, რომელიც საქართველოს EV დამტენ სადგურებს ერთ რუკაზე აჩვენებს და რამდენიმე დამტენ ქსელს აერთიანებს." } },
+        { "@type": "Question", "name": "GeoCharge უფასოა?", "acceptedAnswer": { "@type": "Answer", "text": "დიახ, GeoCharge სრულიად უფასოა." } },
+        { "@type": "Question", "name": "რამდენ დამტენ სადგურს აჩვენებს GeoCharge?", "acceptedAnswer": { "@type": "Answer", "text": "800-ზე მეტ საჯარო დამტენ სადგურს მთელ საქართველოში, ახალი სადგურები კი ავტომატურად ემატება, როგორც კი ამუშავდება." } },
+        { "@type": "Question", "name": "მუშაობს GeoCharge მთელ საქართველოში?", "acceptedAnswer": { "@type": "Answer", "text": "დიახ, ქალაქებშიც და ავტომაგისტრალებზეც, მთელი ქვეყნის მასშტაბით." } },
+        { "@type": "Question", "name": "შემიძლია მარშრუტის დაგეგმვა დატენვის გაჩერებებით?", "acceptedAnswer": { "@type": "Answer", "text": "დიახ, GeoCharge-ს აქვს მარშრუტის დაგეგმვის ფუნქცია, რომ გზაში დამტენები იპოვოთ." } },
+        { "@type": "Question", "name": "რომელ მოწყობილობებზეა GeoCharge ხელმისაწვდომი?", "acceptedAnswer": { "@type": "Answer", "text": "GeoCharge ხელმისაწვდომია როგორც Android-ზე (Google Play), ისე iOS-ზე (App Store)." } },
+        { "@type": "Question", "name": "მუშაობს GeoCharge Tesla-ს ეკრანზე?", "acceptedAnswer": { "@type": "Answer", "text": "დიახ — გახსენი tesla.geocharge.ge Tesla-ს ჩაშენებულ ბრაუზერში: დამტენების ცოცხალი რუკა და EV მარშრუტის დამგეგმავი დატენვის გაჩერებებით, მანქანის ეკრანზე მორგებული. შედი GeoCharge-ის ანგარიშით და მიიღე 24-საათიანი უფასო საცდელი პერიოდი; ტელეფონის აპში გააქტიურებული Premium გამოწერა კი მუდმივად ხსნის." } },
+        { "@type": "Question", "name": "მჭირდება ანგარიში?", "acceptedAnswer": { "@type": "Answer", "text": "შეგიძლიათ სწრაფად შეხვიდეთ Google-ით ან ელფოსტით და შეინახოთ პროფილი." } },
+        { "@type": "Question", "name": "რით განსხვავდება GeoCharge ცალკეული ქსელების აპლიკაციებისგან?", "acceptedAnswer": { "@type": "Answer", "text": "რამდენიმე აპლიკაციის ნაცვლად GeoCharge ყველა ქსელის სადგურს ერთ რუკაზე აჩვენებს, ერთიანი დეტალებითა და ფილტრებით." } },
+        { "@type": "Question", "name": "შემიძლია GeoCharge-ის გამოყენება ევროპაში?", "acceptedAnswer": { "@type": "Answer", "text": "დიახ. პარამეტრებში ჩართეთ ევროპის სასურველი ქვეყნები და GeoCharge მათ დამტენ სადგურებსაც იმავე რუკაზე გაჩვენებთ, ასე ელექტრომობილით ევროპაში მოგზაურობასაც მარტივად დაგეგმავთ." } }
+      ]
+    }
+  ]
+}
+</script>
+
+<style>
+:root{
+  --ink:#11161A; --ink-2:#5A6671; --ink-3:#8A97A0;
+  --dark:#11161A; --dark-2:#0D1115;
+  --accent:#2BD594; --accent-d:#17995F; --on-accent:#0D1A13;
+  --mint:#ECFAF3; --mint-b:#C8EFDD; --mint-ink:#137A4C;
+  --soft:#F6FAF8; --line:#E3EEE8; --line-2:#EAF1ED;
+  --on-dark:#A7B4BD; --on-dark-2:#B9C4CB;
+  --wrap:1180px; --pad:clamp(20px,5vw,48px); --sec:clamp(64px,9vw,110px);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:#fff;color:var(--ink);
+  font-family:'Poppins','Noto Sans Georgian',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+::selection{background:var(--accent);color:var(--ink)}
+img{max-width:100%}
+a{color:inherit}
+h1,h2,h3{letter-spacing:-.02em;text-wrap:balance}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:var(--sec) var(--pad)}
+.kicker{color:var(--accent-d);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:12.5px;margin:0 0 12px}
+.h2{font-size:clamp(28px,4vw,40px);font-weight:700;color:var(--ink);margin:0}
+.lead{color:var(--ink-2);font-size:17px;line-height:1.7;text-wrap:pretty}
+.center{text-align:center}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* header */
+.hdr{position:sticky;top:0;z-index:60;background:rgba(17,22,26,.92);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(255,255,255,.07)}
+.hdr-in{max-width:var(--wrap);margin:0 auto;padding:0 clamp(16px,4vw,48px);height:66px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.nav{display:flex;align-items:center;gap:clamp(16px,2.2vw,28px)}
+.nav a{color:var(--on-dark-2);text-decoration:none;font-size:14.5px;font-weight:500;white-space:nowrap}
+.nav a:hover{color:#fff}
+.lang{display:flex;border:1px solid #39434C;border-radius:999px;overflow:hidden}
+.lang a{padding:7px 13px;font-weight:600;font-size:12.5px;letter-spacing:.03em;
+  text-decoration:none;color:var(--on-dark-2)}
+.lang a[aria-current="true"]{background:var(--accent);color:var(--on-accent)}
+.btn{background:var(--accent);color:var(--on-accent);border:none;border-radius:11px;
+  padding:10px 20px;font:600 14.5px/1 inherit;font-family:inherit;cursor:pointer;
+  text-decoration:none;display:inline-block;white-space:nowrap}
+.btn:hover{background:#25C486}
+.burger{background:none;border:1px solid #39434C;border-radius:10px;padding:9px 10px;
+  cursor:pointer;color:#fff;display:none;line-height:0}
+.mnav{display:none;flex-direction:column;gap:2px;padding:10px clamp(16px,4vw,48px) 18px;
+  border-top:1px solid rgba(255,255,255,.07)}
+.mnav a{color:var(--on-dark-2);text-decoration:none;font-size:16px;font-weight:500;padding:11px 0}
+.mnav .btn{margin-top:16px;padding:14px;font-size:15.5px;text-align:center}
+.mnav[data-open="1"]{display:flex}
+
+/* hero */
+.hero{background-color:var(--dark);color:#fff;overflow:hidden;
+  background-image:radial-gradient(720px 480px at 82% 12%,rgba(43,213,148,.16),transparent 62%),
+                   radial-gradient(560px 400px at 4% 96%,rgba(43,213,148,.09),transparent 60%)}
+.hero-in{max-width:var(--wrap);margin:0 auto;padding:clamp(52px,8vw,96px) var(--pad);
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:clamp(40px,6vw,80px)}
+.hero-txt{flex:1 1 460px;min-width:min(100%,300px);max-width:640px}
+.pill{display:inline-flex;align-items:center;gap:9px;background:rgba(43,213,148,.10);
+  border:1px solid rgba(43,213,148,.32);color:#8BEAC6;border-radius:999px;
+  padding:7px 15px;font-size:13.5px;font-weight:500;margin:0;max-width:100%}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
+h1{font-size:clamp(32px,5.2vw,56px);line-height:1.13;font-weight:700;margin:20px 0 0}
+h1 span{color:var(--accent)}
+.hero-sub{color:var(--on-dark);font-size:clamp(16px,2vw,18.5px);line-height:1.68;
+  margin:18px 0 0;max-width:560px;text-wrap:pretty}
+.stores{display:flex;flex-wrap:wrap;gap:14px;margin-top:32px;align-items:center}
+.store{display:inline-flex;align-items:center;gap:12px;background:#000;border:1px solid #46505A;
+  border-radius:12px;padding:9px 16px;text-decoration:none;width:190px}
+.store:hover{border-color:var(--accent)}
+.store svg{flex-shrink:0}
+.store i{display:flex;flex-direction:column;line-height:1.2;font-style:normal;text-align:left}
+.store i b{font-size:17px;color:#fff;font-weight:600}
+.store i u{font-size:10.5px;color:var(--on-dark-2);letter-spacing:.06em;text-transform:uppercase;text-decoration:none}
+.qr{display:flex;align-items:center;gap:16px;margin-top:28px}
+.qr-box{background:#fff;border-radius:14px;padding:11px;line-height:0;box-shadow:0 10px 30px -12px rgba(0,0,0,.55)}
+.qr-txt{max-width:190px}
+.qr-txt p:first-child{display:inline-flex;align-items:center;gap:7px;margin:0 0 5px;color:#8BEAC6;
+  font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.qr-txt p:last-child{margin:0;color:var(--on-dark);font-size:14px;line-height:1.5}
+.phone{width:min(300px,76vw);border-radius:44px;padding:11px;background:#1B2127;border:1px solid #313B44;
+  box-shadow:0 44px 90px -34px rgba(0,0,0,.65),0 0 0 1px rgba(43,213,148,.07)}
+.phone img{width:100%;height:auto;border-radius:34px;display:block}
+
+/* sections */
+.soft{background:var(--soft);border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2)}
+.grid{display:grid;gap:18px}
+.g-cards{grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr))}
+.g-steps{grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr))}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:26px 24px;
+  display:flex;flex-direction:column;gap:14px}
+.card:hover{border-color:var(--accent);box-shadow:0 12px 32px -18px rgba(23,153,95,.35)}
+.card .ic{width:48px;height:48px;border-radius:13px;background:var(--mint);
+  display:flex;align-items:center;justify-content:center}
+.card h3{font-size:17px;font-weight:600;margin:0}
+.card p{color:var(--ink-2);font-size:14.5px;line-height:1.62;margin:0;text-wrap:pretty}
+.badge{display:inline-flex;align-items:center;gap:9px;background:var(--mint);border:1px solid var(--mint-b);
+  color:var(--mint-ink);border-radius:999px;padding:9px 18px;font-size:14.5px;font-weight:600;margin:28px 0 0}
+.head{text-align:center;max-width:680px;margin:0 auto 48px}
+
+/* coverage */
+.cov{max-width:var(--wrap);margin:0 auto;padding:var(--sec) var(--pad) clamp(40px,6vw,56px);
+  display:flex;flex-wrap:wrap;align-items:center;gap:clamp(36px,6vw,80px)}
+.cov>div:first-child{flex:1 1 380px;min-width:min(100%,300px)}
+.cov>div:first-child p{max-width:520px}
+.stats{flex:1 1 340px;min-width:min(100%,280px);display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px}
+.stat{background:var(--mint);border:1px solid var(--mint-b);border-radius:18px;padding:26px 20px;text-align:center}
+.stat b{display:block;font-size:clamp(32px,4.5vw,44px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em}
+.stat span{display:block;font-size:14px;font-weight:500;color:#3D4A52;margin-top:8px;line-height:1.4}
+.nets{max-width:var(--wrap);margin:0 auto;padding:0 var(--pad) var(--sec)}
+.net-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.net{background:#fff;border:1px solid var(--line);border-radius:14px;min-height:136px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px 14px 13px;text-align:center}
+.net:hover{border-color:var(--accent);box-shadow:0 10px 30px -20px rgba(23,153,95,.4)}
+.net .logo{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;width:100%;max-height:52px}
+.net .logo img{max-width:100%;max-height:52px;object-fit:contain;display:block}
+.net .nm{font-size:13px;font-weight:600;color:var(--ink);line-height:1.2}
+.net .ct{font-size:12px;line-height:1}
+.net .ct b{color:var(--accent-d);font-weight:700}
+.net .ct span{color:#77848C;font-weight:500}
+.net-more{background:#fff;border:1px dashed #C1DBCE;border-radius:14px;min-height:136px;
+  display:flex;align-items:center;justify-content:center;padding:16px 20px;
+  color:var(--accent-d);font-weight:600;font-size:15px;text-align:center}
+
+/* steps */
+.step{background:#fff;border:1px solid var(--line);border-radius:18px;padding:30px 26px}
+.step .n{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;
+  border-radius:50%;background:var(--accent);color:var(--on-accent);font-weight:700;font-size:18px}
+.step h3{font-size:18px;font-weight:600;margin:18px 0 8px}
+.step p{color:var(--ink-2);font-size:15px;line-height:1.62;margin:0;text-wrap:pretty}
+
+/* gallery */
+.gal{display:flex;gap:clamp(18px,3vw,30px);overflow-x:auto;scroll-snap-type:x mandatory;
+  padding:8px 6px 28px;-webkit-overflow-scrolling:touch}
+.gal figure{margin:0;flex:0 0 auto;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
+.gal .fr{width:min(232px,64vw);border-radius:36px;padding:9px;background:#1B2127;border:1px solid #313B44;
+  box-shadow:0 26px 50px -26px rgba(0,0,0,.45)}
+.gal .fr img{width:100%;height:auto;border-radius:28px;display:block}
+.gal figcaption{font-size:14px;color:var(--ink-2);font-weight:500;text-align:center;max-width:220px;line-height:1.45}
+
+/* tesla */
+.tesla{background-color:var(--dark);color:#fff;
+  background-image:radial-gradient(720px 480px at 18% 10%,rgba(43,213,148,.14),transparent 62%)}
+.tesla .kicker{color:var(--accent)}
+.tesla .h2{color:#fff}
+.tesla .head{max-width:720px}
+.tesla .head p{color:var(--on-dark-2);font-size:16.5px;line-height:1.65;margin:16px 0 0;text-wrap:pretty}
+.tcard{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:18px;padding:30px 26px}
+.tcard h3{font-size:18px;font-weight:600;color:#fff;margin:18px 0 8px}
+.tcard p{color:var(--on-dark-2);font-size:15px;line-height:1.62;margin:0;text-wrap:pretty}
+.tcard .n{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;
+  border-radius:50%;background:var(--accent);color:var(--on-accent);font-weight:700;font-size:18px}
+.tlink{display:inline-block;background:var(--accent);color:var(--on-accent);text-decoration:none;
+  border-radius:12px;padding:14px 30px;font-size:16px;font-weight:600}
+.tlink:hover{background:#25C486}
+
+/* why */
+.why{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:14px}
+.why p{display:flex;align-items:center;gap:12px;background:var(--soft);border:1px solid var(--line);
+  border-radius:14px;padding:16px 18px;margin:0;font-size:15.5px;font-weight:500}
+
+/* faq */
+.faq-box{background:#fff;border:1px solid var(--line);border-radius:20px;padding:6px 26px}
+.faq-box details{border-bottom:1px solid #EDF3EF}
+.faq-box details:last-child{border-bottom:none}
+.faq-box summary{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:19px 0;cursor:pointer;font-size:16px;font-weight:600;line-height:1.45;list-style:none}
+.faq-box summary::-webkit-details-marker{display:none}
+.faq-box summary::after{content:"+";color:var(--accent-d);font-size:22px;font-weight:500;
+  line-height:1;flex-shrink:0;width:22px;text-align:center}
+.faq-box details[open] summary::after{content:"–"}
+.faq-box details p{color:var(--ink-2);font-size:15px;line-height:1.68;margin:0;padding:0 28px 20px 0;text-wrap:pretty}
+
+/* download */
+.dl{background-color:var(--dark);
+  background-image:radial-gradient(640px 420px at 50% 0%,rgba(43,213,148,.14),transparent 65%)}
+.dl-in{max-width:760px;margin:0 auto;padding:var(--sec) var(--pad);text-align:center}
+.dl h2{color:#fff;font-size:clamp(28px,4.4vw,44px);font-weight:700;margin:0 0 14px}
+.dl p{color:var(--on-dark);font-size:17px;line-height:1.65;margin:0 0 32px}
+.dl .stores{justify-content:center}
+.dl .store{width:200px;padding:10px 17px}
+.dl .store i b{font-size:18px}
+.dl .store i u{font-size:11px}
+
+/* contact */
+.form{display:grid;gap:18px;max-width:620px;margin:0 auto}
+.form .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(230px,100%),1fr));gap:18px}
+.form label{display:block;font-size:14px;font-weight:600;margin-bottom:7px}
+.form input[type=text],.form input[type=email],.form textarea{width:100%;padding:13px 16px;
+  border:1px solid #D7E0DB;border-radius:12px;font-size:15.5px;font-family:inherit;color:var(--ink);
+  background:#fff;outline:none}
+.form textarea{resize:vertical;min-height:120px}
+.form input:focus,.form textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(43,213,148,.18)}
+.form button{background:var(--accent);color:var(--on-accent);border:none;border-radius:13px;padding:15px;
+  font-size:16px;font-weight:600;cursor:pointer;font-family:inherit}
+.form button:hover{background:#25C486}
+.note-ok{background:var(--mint);border:1px solid var(--mint-b);color:var(--mint-ink);border-radius:12px;
+  padding:14px 18px;font-size:14.5px;font-weight:500;margin:0}
+.note-err{background:#FDF0EF;border:1px solid #F3CDC9;color:#B03A2E;border-radius:12px;
+  padding:14px 18px;font-size:14.5px;font-weight:500;margin:0}
+
+/* footer */
+footer{background:var(--dark-2);color:#8B98A1}
+.f-in{max-width:var(--wrap);margin:0 auto;padding:clamp(44px,6vw,64px) var(--pad) 30px}
+.f-top{display:flex;flex-wrap:wrap;gap:32px;justify-content:space-between;align-items:flex-start;
+  padding-bottom:32px;border-bottom:1px solid rgba(255,255,255,.07)}
+.f-nav{display:flex;flex-wrap:wrap;gap:10px 24px;max-width:460px}
+.f-nav a{color:var(--on-dark-2);text-decoration:none;font-size:14px;font-weight:500}
+.f-nav a:hover{color:#fff}
+.f-dis{font-size:12.5px;line-height:1.75;color:#6E7B85;margin:24px 0 0;max-width:800px;text-wrap:pretty}
+.f-bot{display:flex;flex-wrap:wrap;gap:16px 28px;justify-content:space-between;align-items:center;padding-top:24px}
+.soc{display:flex;align-items:center;gap:10px}
+.soc a{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;
+  border-radius:999px;border:1px solid #39434C;color:var(--on-dark-2)}
+.soc a:hover{color:#fff;border-color:var(--accent);background:rgba(43,213,148,.12)}
+
+/* sticky mobile cta */
+.sticky{display:none;position:fixed;left:0;right:0;bottom:0;z-index:70;
+  padding:10px clamp(16px,4vw,48px) calc(10px + env(safe-area-inset-bottom,0px));
+  background:rgba(13,17,21,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-top:1px solid rgba(255,255,255,.08)}
+.sticky a{display:block;width:100%;text-align:center;background:var(--accent);color:var(--on-accent);
+  border-radius:12px;padding:15px 12px;font-size:clamp(14px,4vw,16px);font-weight:600;text-decoration:none}
+
+.d-only{display:flex;align-items:center;gap:14px}
+.m-only{display:none}
+@media (max-width:1199px){
+  .nav,.d-only,.qr{display:none}
+  .m-only{display:flex;align-items:center;gap:12px}
+  .burger{display:block}
+  .sticky{display:block}
+  body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+}
+</style>
 </head>
 <body>
-<x-dc>
-<helmet>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&amp;family=Noto+Sans+Georgian:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
-  <style>
-    html { scroll-behavior: smooth; }
-    body { margin: 0; background: #FFFFFF; font-family: 'Poppins', 'Noto Sans Georgian', system-ui, sans-serif; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
-    * { box-sizing: border-box; }
-    ::selection { background: #2BD594; color: #11161A; }
-  </style>
-</helmet>
 
-<header data-screen-label="Header" style="position: sticky; top: 0; z-index: 60; background: rgba(17, 22, 26, 0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid rgba(255, 255, 255, 0.07)">
-  <div style="max-width: 1180px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 48px); height: 66px; display: flex; align-items: center; justify-content: space-between; gap: 16px">
-    <a href="#" onClick="{{ goTop }}" aria-label="GeoCharge" style="display: flex; align-items: center; flex-shrink: 0">
-      <img src="assets/logo-dark.svg" alt="GeoCharge" style="height: 30px; display: block" height="30">
-    </a>
-    <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
-      <nav aria-label="Main navigation" style="display: flex; align-items: center; gap: clamp(16px, 2.2vw, 28px)">
-        <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="6">
-          <a href="{{ n.href }}" onClick="{{ n.onClick }}" style="color: #B9C4CB; text-decoration: none; font-size: 14.5px; font-weight: 500; white-space: nowrap" style-hover="color: #FFFFFF">{{ n.label }}</a>
-        </sc-for>
-      </nav>
-      <div style="display: flex; align-items: center; gap: 14px">
-        <div role="group" aria-label="Language" style="display: flex; border: 1px solid #39434C; border-radius: 999px; overflow: hidden">
-          <button onClick="{{ setKa }}" style="{{ kaBtnStyle }}">ქარ</button>
-          <button onClick="{{ setEn }}" style="{{ enBtnStyle }}">ENG</button>
-        </div>
-        <button onClick="{{ ctaClick }}" style="background: #2BD594; color: #0D1A13; border: none; border-radius: 11px; padding: 10px 20px; font-size: 14.5px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap" style-hover="background: #25C486">{{ ctaLabel }}</button>
-      </div>
-    </sc-if>
-    <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
-      <div style="display: flex; align-items: center; gap: 12px">
-        <div role="group" aria-label="Language" style="display: flex; border: 1px solid #39434C; border-radius: 999px; overflow: hidden">
-          <button onClick="{{ setKa }}" style="{{ kaBtnStyle }}">ქარ</button>
-          <button onClick="{{ setEn }}" style="{{ enBtnStyle }}">ENG</button>
-        </div>
-        <button onClick="{{ toggleMenu }}" aria-label="Menu" style="background: none; border: 1px solid #39434C; border-radius: 10px; padding: 9px 10px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; width: 40px; height: 38px">
-          <span style="display: block; width: 17px; height: 2px; background: #DDE5EA; border-radius: 2px"></span>
-          <span style="display: block; width: 17px; height: 2px; background: #DDE5EA; border-radius: 2px"></span>
-          <span style="display: block; width: 17px; height: 2px; background: #DDE5EA; border-radius: 2px"></span>
-        </button>
-      </div>
-    </sc-if>
-  </div>
-  <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
-    <nav aria-label="Mobile navigation" style="display: flex; flex-direction: column; padding: 6px clamp(16px, 4vw, 48px) 18px; background: rgba(13, 17, 21, 0.97); border-top: 1px solid rgba(255, 255, 255, 0.06)">
-      <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="6">
-        <a href="{{ n.href }}" onClick="{{ n.onClick }}" style="color: #DDE5EA; text-decoration: none; font-size: 16px; font-weight: 500; padding: 13px 2px; border-bottom: 1px solid rgba(255, 255, 255, 0.05)">{{ n.label }}</a>
-      </sc-for>
-      <button onClick="{{ ctaClick }}" style="background: #2BD594; color: #0D1A13; border: none; border-radius: 12px; padding: 14px; font-size: 15.5px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 16px">{{ ctaLabel }}</button>
+<header class="hdr">
+  <div class="hdr-in">
+    <a href="/" aria-label="GeoCharge"><img src="/assets/logo-dark.svg" alt="GeoCharge" height="30" style="height:30px;display:block"></a>
+    <nav class="nav" aria-label="მთავარი ნავიგაცია">
+      <a href="#about">შესახებ</a>
+      <a href="#features">ფუნქციები</a>
+      <a href="#coverage">დაფარვა</a>
+      <a href="#how">როგორ მუშაობს</a>
+      <a href="#tesla">Tesla</a>
+      <a href="#faq">კითხვები</a>
+      <a href="#download">ჩამოტვირთვა</a>
     </nav>
-  </sc-if>
+    <div class="d-only">
+      <div class="lang" role="group" aria-label="ენა">
+        <a href="/" aria-current="true" hreflang="ka">ქარ</a>
+        <a href="/en/" hreflang="en">ENG</a>
+      </div>
+      <a class="btn" href="#download" data-cta>ჩამოტვირთვა</a>
+    </div>
+    <div class="m-only">
+      <div class="lang" role="group" aria-label="ენა">
+        <a href="/" aria-current="true" hreflang="ka">ქარ</a>
+        <a href="/en/" hreflang="en">ENG</a>
+      </div>
+      <button class="burger" id="burger" aria-label="მენიუ" aria-expanded="false" aria-controls="mnav">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+  <nav class="mnav" id="mnav" aria-label="მობილური ნავიგაცია">
+    <a href="#about">შესახებ</a>
+    <a href="#features">ფუნქციები</a>
+    <a href="#coverage">დაფარვა</a>
+    <a href="#how">როგორ მუშაობს</a>
+    <a href="#tesla">Tesla</a>
+    <a href="#faq">კითხვები</a>
+    <a href="#download">ჩამოტვირთვა</a>
+    <a class="btn" href="#download" data-cta>ჩამოტვირთვა</a>
+  </nav>
 </header>
 
 <main>
-  <section data-screen-label="Hero" style="background-color: #11161A; background-image: radial-gradient(720px 480px at 82% 12%, rgba(43, 213, 148, 0.16), transparent 62%), radial-gradient(560px 400px at 4% 96%, rgba(43, 213, 148, 0.09), transparent 60%); color: #FFFFFF; overflow: hidden">
-    <div style="max-width: 1180px; margin: 0 auto; padding: clamp(52px, 8vw, 96px) clamp(20px, 5vw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: clamp(40px, 6vw, 80px)">
-      <div style="flex: 1 1 460px; min-width: min(100%, 300px); max-width: 640px">
-        <p style="display: inline-flex; align-items: center; gap: 9px; background: rgba(43, 213, 148, 0.10); border: 1px solid rgba(43, 213, 148, 0.32); color: #8BEAC6; border-radius: 999px; padding: 7px 15px; font-size: 13.5px; font-weight: 500; margin: 0; max-width: 100%">
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: #2BD594; flex-shrink: 0"></span>
-          <span>{{ t.heroTrust }}</span>
-        </p>
-        <h1 style="font-size: clamp(32px, 5.2vw, 56px); line-height: 1.13; font-weight: 700; letter-spacing: -0.02em; margin: 20px 0 0; text-wrap: balance">{{ t.heroTitle1 }} <span style="color: #2BD594">{{ t.heroTitle2 }}</span></h1>
-        <p style="color: #A7B4BD; font-size: clamp(16px, 2vw, 18.5px); line-height: 1.68; margin: 18px 0 0; max-width: 560px; text-wrap: pretty">{{ t.heroSub }}</p>
-        <div style="display: flex; flex-wrap: wrap; gap: 14px; margin-top: 32px; align-items: center">
-          <a href="https://play.google.com/store/apps/details?id=ge.geocharge.app" target="_blank" rel="noopener" aria-label="Get it on Google Play" style="display: inline-flex; align-items: center; gap: 12px; background: #000000; border: 1px solid #46505A; border-radius: 12px; padding: 9px 16px; text-decoration: none; width: 190px; box-sizing: border-box" style-hover="border-color: #2BD594">
-            <svg width="25" height="25" viewBox="0 0 24 24" aria-hidden="true" style="flex-shrink: 0"><path d="M4 2.8v18.4c0 .6.7 1 1.2.7L8 20.2 16.5 15 19.8 13c.8-.45.8-1.55 0-2L5.2 2.1C4.7 1.8 4 2.2 4 2.8Z" fill="#2BD594"></path><path d="M4.4 2.2 14.6 12 4.4 21.8" fill="none" stroke="#0D1A13" stroke-width="0.9"></path></svg>
-            <span style="display: flex; flex-direction: column; line-height: 1.2">
-              <span style="font-size: 10.5px; color: #B9C4CB; letter-spacing: 0.06em; text-transform: uppercase">{{ t.playTop }}</span>
-              <span style="font-size: 17px; color: #FFFFFF; font-weight: 600">Google Play</span>
-            </span>
+  <section class="hero">
+    <div class="hero-in">
+      <div class="hero-txt">
+        <p class="pill"><span class="dot"></span><span>800+ დამტენი სადგური მთელ საქართველოში, ავტომატური განახლებით, სრულიად უფასოდ</span></p>
+        <h1>ელექტრომობილის ყველა დამტენი საქართველოში. <span>ერთ აპლიკაციაში.</span></h1>
+        <p class="hero-sub">GeoCharge აერთიანებს 800-ზე მეტ საჯარო დამტენ სადგურს საქართველოს სხვადასხვა ქსელიდან ერთ უფასო ინტერაქტიულ რუკაზე, ყოველთვის იცით, სად დატენოთ ელექტრომანქანა.</p>
+        <div class="stores">
+          <a class="store" href="https://play.google.com/store/apps/details?id=ge.geocharge.app" target="_blank" rel="noopener" aria-label="ჩამოტვირთვა Google Play-დან">
+            <svg width="25" height="25" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2.8v18.4c0 .6.7 1 1.2.7L8 20.2 16.5 15 19.8 13c.8-.45.8-1.55 0-2L5.2 2.1C4.7 1.8 4 2.2 4 2.8Z" fill="#2BD594"></path><path d="M4.4 2.2 14.6 12 4.4 21.8" fill="none" stroke="#0D1A13" stroke-width="0.9"></path></svg>
+            <i><u>ხელმისაწვდომია</u><b>Google Play</b></i>
           </a>
-          <a href="https://apps.apple.com/ge/app/geocharge/id6785467389" target="_blank" rel="noopener" aria-label="Download on the App Store" style="display: inline-flex; align-items: center; gap: 12px; background: #000000; border: 1px solid #46505A; border-radius: 12px; padding: 9px 16px; text-decoration: none; width: 190px; box-sizing: border-box" style-hover="border-color: #2BD594">
-            <svg width="25" height="25" viewBox="0 0 24 24" aria-hidden="true" fill="#FFFFFF" style="flex-shrink: 0"><path d="M16.365 1.43c0 1.14-.42 2.2-1.12 2.99-.85.94-2.23 1.67-3.38 1.58-.14-1.13.42-2.32 1.05-3.06.71-.85 1.94-1.5 2.97-1.54.03.01.05.02.06.03.02.32-.02.35 0 0Zm2.86 15.7c-.51 1.19-.76 1.72-1.42 2.77-.92 1.47-2.22 3.3-3.83 3.31-1.43.02-1.8-.94-3.74-.93-1.94.01-2.35.94-3.78.92-1.61-.02-2.84-1.67-3.76-3.14-2.58-4.11-2.85-8.94-1.26-11.51 1.13-1.82 2.91-2.89 4.58-2.89 1.7 0 2.77.94 4.18.94 1.36 0 2.19-.94 4.16-.94 1.49 0 3.06.82 4.19 2.23-3.68 2.02-3.08 7.28.68 9.24Z"></path></svg>
-            <span style="display: flex; flex-direction: column; line-height: 1.2">
-              <span style="font-size: 10.5px; color: #B9C4CB; letter-spacing: 0.06em; text-transform: uppercase">{{ t.appStoreTop }}</span>
-              <span style="font-size: 17px; color: #FFFFFF; font-weight: 600">App Store</span>
-            </span>
+          <a class="store" href="https://apps.apple.com/ge/app/geocharge/id6785467389" target="_blank" rel="noopener" aria-label="ჩამოტვირთვა App Store-დან">
+            <svg width="25" height="25" viewBox="0 0 24 24" aria-hidden="true" fill="#FFFFFF"><path d="M16.365 1.43c0 1.14-.42 2.2-1.12 2.99-.85.94-2.23 1.67-3.38 1.58-.14-1.13.42-2.32 1.05-3.06.71-.85 1.94-1.5 2.97-1.54.03.01.05.02.06.03.02.32-.02.35 0 0Zm2.86 15.7c-.51 1.19-.76 1.72-1.42 2.77-.92 1.47-2.22 3.3-3.83 3.31-1.43.02-1.8-.94-3.74-.93-1.94.01-2.35.94-3.78.92-1.61-.02-2.84-1.67-3.76-3.14-2.58-4.11-2.85-8.94-1.26-11.51 1.13-1.82 2.91-2.89 4.58-2.89 1.7 0 2.77.94 4.18.94 1.36 0 2.19-.94 4.16-.94 1.49 0 3.06.82 4.19 2.23-3.68 2.02-3.08 7.28.68 9.24Z"></path></svg>
+            <i><u>ჩამოტვირთეთ</u><b>App Store</b></i>
           </a>
         </div>
+        <div class="qr">
+          <div class="qr-box"><img src="/assets/qr-get.svg" alt="QR კოდი GeoCharge-ის ჩამოსატვირთად" width="98" height="98" style="width:98px;height:98px;display:block"></div>
+          <div class="qr-txt">
+            <p><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><line x1="21" y1="14" x2="21" y2="21"/><line x1="14" y1="21" x2="18" y2="21"/></svg><span>დაასკანერე</span></p>
+            <p>დაასკანერე კოდი ტელეფონის კამერით და ჩამოტვირთე აპლიკაცია.</p>
+          </div>
+        </div>
       </div>
-      <div style="flex: 0 1 auto; display: flex; justify-content: center">
-        <div style="width: min(300px, 76vw); border-radius: 44px; padding: 11px; background: #1B2127; border: 1px solid #313B44; box-shadow: 0 44px 90px -34px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(43, 213, 148, 0.07)">
-          <img src="assets/shot-nationwide.jpg" alt="{{ t.altNationwide }}" width="720" height="1600" style="width: 100%; height: auto; border-radius: 34px; display: block">
+      <div style="flex:0 1 auto;display:flex;justify-content:center">
+        <div class="phone">
+          <img src="/assets/shot-nationwide.jpg" alt="GeoCharge აპლიკაციის რუკა, ელექტრომობილის დამტენი სადგურები მთელ საქართველოში" width="720" height="1600" fetchpriority="high">
         </div>
       </div>
     </div>
   </section>
 
-  <section id="about" data-screen-label="About" style="background: #FFFFFF">
-    <div data-reveal="1" style="max-width: 820px; margin: 0 auto; padding: clamp(64px, 9vw, 110px) clamp(20px, 5vw, 48px); text-align: center">
-      <p style="color: #17995F; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12.5px; margin: 0 0 12px">{{ t.aboutKicker }}</p>
-      <h2 style="font-size: clamp(28px, 4vw, 40px); font-weight: 700; color: #11161A; letter-spacing: -0.02em; margin: 0 0 22px; text-wrap: balance">{{ t.aboutTitle }}</h2>
-      <p style="color: #5A6671; font-size: 17px; line-height: 1.7; margin: 0 0 16px; text-wrap: pretty">{{ t.aboutP1 }}</p>
-      <p style="color: #5A6671; font-size: 17px; line-height: 1.7; margin: 0 0 16px; text-wrap: pretty">{{ t.aboutP2 }}</p>
-      <p style="color: #5A6671; font-size: 17px; line-height: 1.7; margin: 0; text-wrap: pretty">{{ t.aboutP3 }}</p>
-      <p style="display: inline-flex; align-items: center; gap: 9px; background: #ECFAF3; border: 1px solid #C8EFDD; color: #137A4C; border-radius: 999px; padding: 9px 18px; font-size: 14.5px; font-weight: 600; margin: 28px 0 0">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#17995F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
-        <span>{{ t.freeNote }}</span>
-      </p>
+  <section id="about">
+    <div class="wrap center" style="max-width:820px">
+      <p class="kicker">შესახებ</p>
+      <h2 class="h2" style="margin-bottom:22px">რა არის GeoCharge?</h2>
+      <p class="lead" style="margin:0 0 16px">საქართველოში ელექტრომობილების დატენვის ინფრასტრუქტურა მრავალ დამოუკიდებელ ოპერატორზეა გადანაწილებული. აქამდე მძღოლებს რამდენიმე სხვადასხვა აპლიკაციის გამოყენება უწევდათ შესაფერისი დამტენის მოსაძებნად, ან საერთოდ აპლიკაციის გარეშე რჩებოდნენ.</p>
+      <p class="lead" style="margin:0 0 16px">GeoCharge მათ აერთიანებს: ქვეყნის ქსელების საჯარო დამტენი სადგურები თავმოყრილია ერთ ინტერაქტიულ რუკაზე, ერთიანი დეტალებითა და ფილტრებით.</p>
+      <p class="lead" style="margin:0">ჩვენი მისიაა, ელექტრომობილით გადაადგილება საქართველოში მარტივი გახდეს, ყველა მძღოლს ჰქონდეს ერთი სანდო ადგილი ნებისმიერი საჯარო დამტენის მოსაძებნად, გასაფილტრად და ნავიგაციისთვის.</p>
+      <p class="badge"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#17995F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg><span>GeoCharge სრულიად უფასოა ყველასთვის.</span></p>
     </div>
   </section>
 
-  <section id="features" data-screen-label="Features" style="background: #F6FAF8; border-top: 1px solid #EAF1ED; border-bottom: 1px solid #EAF1ED">
-    <div style="max-width: 1180px; margin: 0 auto; padding: clamp(64px, 9vw, 110px) clamp(20px, 5vw, 48px)">
-      <div data-reveal="1" style="text-align: center; max-width: 680px; margin: 0 auto 48px">
-        <p style="color: #17995F; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12.5px; margin: 0 0 12px">{{ t.featuresKicker }}</p>
-        <h2 style="font-size: clamp(28px, 4vw, 40px); font-weight: 700; color: #11161A; letter-spacing: -0.02em; margin: 0; text-wrap: balance">{{ t.featuresTitle }}</h2>
+  <section id="features" class="soft">
+    <div class="wrap">
+      <div class="head">
+        <p class="kicker">ფუნქციები</p>
+        <h2 class="h2">ყველაფერი, რაც დატენვისთვის გჭირდებათ</h2>
       </div>
-      <div data-reveal="1" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr)); gap: 18px">
-        <sc-for list="{{ featureCards }}" as="f" hint-placeholder-count="8">
-          <article style="background: #FFFFFF; border: 1px solid #E3EEE8; border-radius: 18px; padding: 26px 24px; display: flex; flex-direction: column; gap: 14px" style-hover="border-color: #2BD594; box-shadow: 0 12px 32px -18px rgba(23, 153, 95, 0.35)">
-            <span style="width: 48px; height: 48px; border-radius: 13px; background: #ECFAF3; display: flex; align-items: center; justify-content: center">{{ f.icon }}</span>
-            <h3 style="font-size: 17px; font-weight: 600; color: #11161A; margin: 0">{{ f.t }}</h3>
-            <p style="color: #5A6671; font-size: 14.5px; line-height: 1.62; margin: 0; text-wrap: pretty">{{ f.d }}</p>
-          </article>
-        </sc-for>
-      </div>
-    </div>
-  </section>
-
-  <section id="coverage" data-screen-label="Coverage" style="background: #FFFFFF">
-    <div data-reveal="1" style="max-width: 1180px; margin: 0 auto; padding: clamp(64px, 9vw, 110px) clamp(20px, 5vw, 48px) clamp(40px, 6vw, 56px); display: flex; flex-wrap: wrap; align-items: center; gap: clamp(36px, 6vw, 80px)">
-      <div style="flex: 1 1 380px; min-width: min(100%, 300px)">
-        <p style="color: #17995F; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12.5px; margin: 0 0 12px">{{ t.coverageKicker }}</p>
-        <h2 style="font-size: clamp(28px, 4vw, 40px); font-weight: 700; color: #11161A; letter-spacing: -0.02em; margin: 0 0 18px; text-wrap: balance">{{ t.coverageTitle }}</h2>
-        <p style="color: #5A6671; font-size: 17px; line-height: 1.7; margin: 0; max-width: 520px; text-wrap: pretty">{{ t.coverageBody }}</p>
-        <p style="color: #5A6671; font-size: 17px; line-height: 1.7; margin: 16px 0 0; max-width: 520px; text-wrap: pretty">{{ t.coverageEurope }}</p>
-      </div>
-      <div style="flex: 1 1 340px; min-width: min(100%, 280px); display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px">
-        <sc-for list="{{ stats }}" as="s" hint-placeholder-count="3">
-          <div style="background: #ECFAF3; border: 1px solid #C8EFDD; border-radius: 18px; padding: 26px 20px; text-align: center">
-            <p style="font-size: clamp(32px, 4.5vw, 44px); font-weight: 800; color: #17995F; margin: 0; letter-spacing: -0.02em">{{ s.n }}</p>
-            <p style="font-size: 14px; font-weight: 500; color: #3D4A52; margin: 8px 0 0; line-height: 1.4">{{ s.l }}</p>
-          </div>
-        </sc-for>
-      </div>
-    </div>
-    <div data-reveal="1" style="max-width: 1180px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 48px) clamp(64px, 9vw, 110px)">
-      <p style="color: #17995F; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12.5px; margin: 0 0 22px; text-align: center">{{ t.coverageNetworks }}</p>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px">
-        <div style="background: #FFFFFF; border: 1px solid #E3EEE8; border-radius: 14px; height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px 18px 13px" style-hover="border-color: #2BD594; box-shadow: 0 10px 30px -20px rgba(23, 153, 95, 0.4)"><div style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; width: 100%"><img loading="lazy" src="assets/providers/martev.svg" alt="mart EV" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block"></div><div style="font-size: 12px; line-height: 1; white-space: nowrap"><b style="color: #17995F; font-weight: 700">183+</b> <span style="color: #77848C; font-weight: 500">{{ t.chargersUnit }}</span></div></div>
-        <div style="background: #FFFFFF; border: 1px solid #E3EEE8; border-radius: 14px; height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px 18px 13px" style-hover="border-color: #2BD594; box-shadow: 0 10px 30px -20px rgba(23, 153, 95, 0.4)"><div style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; width: 100%"><img loading="lazy" src="assets/providers/electrify.png" alt="Electrify Georgia" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block"></div><div style="font-size: 12px; line-height: 1; white-space: nowrap"><b style="color: #17995F; font-weight: 700">22+</b> <span style="color: #77848C; font-weight: 500">{{ t.chargersUnit }}</span></div></div>
-        <div style="background: #FFFFFF; border: 1px solid #E3EEE8; border-radius: 14px; height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px 18px 13px" style-hover="border-color: #2BD594; box-shadow: 0 10px 30px -20px rgba(23, 153, 95, 0.4)"><div style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; width: 100%"><img loading="lazy" src="assets/providers/evpower.png" alt="EV Power" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block"></div><div style="font-size: 12px; line-height: 1; white-space: nowrap"><b style="color: #17995F; font-weight: 700">52+</b> <span style="color: #77848C; font-weight: 500">{{ t.chargersUnit }}</span></div></div>
-        <div style="background: #FFFFFF; border: 1px solid #E3EEE8; border-radius: 14px; height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px 18px 13px" style-hover="border-color: #2BD594; box-shadow: 0 10px 30px -20px rgba(23, 153, 95, 0.4)"><div style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; width: 100%"><img loading="lazy" src="assets/providers/moveo.png" alt="MOVEO" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block"></div><div style="font-size: 12px; line-height: 1; white-space: nowrap"><b style="color: #17995F; font-weight: 700">8+</b> <span style="color: #77848C; font-weight: 500">{{ t.chargersUnit }}</span></div></div>
-        <div style="background: #FFFFFF; border: 1px solid #E3EEE8; border-radius: 14px; height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px 18px 13px" style-hover="border-color: #2BD594; box-shadow: 0 10px 30px -20px rgba(23, 153, 95, 0.4)"><div style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; width: 100%"><img loading="lazy" src="assets/providers/datene.png" alt="Da-Tene" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block"></div><div style="font-size: 12px; line-height: 1; white-space: nowrap"><b style="color: #17995F; font-weight: 700">151+</b> <span style="color: #77848C; font-weight: 500">{{ t.chargersUnit }}</span></div></div>
-        <div style="background: #FFFFFF; border: 1px solid #E3EEE8; border-radius: 14px; height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px 18px 13px" style-hover="border-color: #2BD594; box-shadow: 0 10px 30px -20px rgba(23, 153, 95, 0.4)"><div style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; width: 100%"><img loading="lazy" src="assets/providers/gadatene-dark.svg" alt="Gadatene" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block"></div><div style="font-size: 12px; line-height: 1; white-space: nowrap"><b style="color: #17995F; font-weight: 700">7+</b> <span style="color: #77848C; font-weight: 500">{{ t.chargersUnit }}</span></div></div>
-        <div style="background: #FFFFFF; border: 1px solid #E3EEE8; border-radius: 14px; height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px 18px 13px" style-hover="border-color: #2BD594; box-shadow: 0 10px 30px -20px rgba(23, 153, 95, 0.4)"><div style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; width: 100%"><img loading="lazy" src="assets/providers/ecocars.png" alt="EcoCars" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block"></div><div style="font-size: 12px; line-height: 1; white-space: nowrap"><b style="color: #17995F; font-weight: 700">153+</b> <span style="color: #77848C; font-weight: 500">{{ t.chargersUnit }}</span></div></div>
-        <div style="background: #FFFFFF; border: 1px solid #E3EEE8; border-radius: 14px; height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px 18px 13px" style-hover="border-color: #2BD594; box-shadow: 0 10px 30px -20px rgba(23, 153, 95, 0.4)"><div style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; width: 100%"><img loading="lazy" src="assets/providers/solarstation.png" alt="Solar Station" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block"></div><div style="font-size: 12px; line-height: 1; white-space: nowrap"><b style="color: #17995F; font-weight: 700">16+</b> <span style="color: #77848C; font-weight: 500">{{ t.chargersUnit }}</span></div></div>
-        <div style="background: #FFFFFF; border: 1px solid #E3EEE8; border-radius: 14px; height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px 18px 13px" style-hover="border-color: #2BD594; box-shadow: 0 10px 30px -20px rgba(23, 153, 95, 0.4)"><div style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; width: 100%"><img loading="lazy" src="assets/providers/tegeta.png" alt="Tegeta" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block"></div><div style="font-size: 12px; line-height: 1; white-space: nowrap"><b style="color: #17995F; font-weight: 700">34+</b> <span style="color: #77848C; font-weight: 500">{{ t.chargersUnit }}</span></div></div>
-        <div style="background: #FFFFFF; border: 1px solid #E3EEE8; border-radius: 14px; height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px 18px 13px" style-hover="border-color: #2BD594; box-shadow: 0 10px 30px -20px rgba(23, 153, 95, 0.4)"><div style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; width: 100%"><img loading="lazy" src="assets/providers/chargerplus.png" alt="Charger Plus" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block"></div><div style="font-size: 12px; line-height: 1; white-space: nowrap"><b style="color: #17995F; font-weight: 700">56+</b> <span style="color: #77848C; font-weight: 500">{{ t.chargersUnit }}</span></div></div>
-        <div style="background: #FFFFFF; border: 1px solid #E3EEE8; border-radius: 14px; height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px 18px 13px" style-hover="border-color: #2BD594; box-shadow: 0 10px 30px -20px rgba(23, 153, 95, 0.4)"><div style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; width: 100%"><img loading="lazy" src="assets/providers/espace.svg" alt="E-Space" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block"></div><div style="font-size: 12px; line-height: 1; white-space: nowrap"><b style="color: #17995F; font-weight: 700">138+</b> <span style="color: #77848C; font-weight: 500">{{ t.chargersUnit }}</span></div></div>
-        <div style="background: #FFFFFF; border: 1px solid #E3EEE8; border-radius: 14px; height: 120px; display: flex; align-items: center; justify-content: center; padding: 18px 20px" style-hover="border-color: #2BD594; box-shadow: 0 10px 30px -20px rgba(23, 153, 95, 0.4)"><img loading="lazy" src="assets/providers/socar.png" alt="SOCAR" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block"></div>
-        <div style="background: #FFFFFF; border: 1px dashed #C1DBCE; border-radius: 14px; height: 120px; display: flex; align-items: center; justify-content: center; padding: 16px 20px; color: #17995F; font-weight: 600; font-size: 15px; text-align: center" style-hover="border-color: #2BD594; background: #F6FBF8">{{ t.coverageMore }}</div>
-      </div>
-      <p style="color: #8A97A0; font-size: 13.5px; line-height: 1.5; margin: 22px 0 0; text-align: center">{{ t.coverageNote }}</p>
-    </div>
-  </section>
-
-  <section id="how" data-screen-label="How it works" style="background: #F6FAF8; border-top: 1px solid #EAF1ED; border-bottom: 1px solid #EAF1ED">
-    <div style="max-width: 1180px; margin: 0 auto; padding: clamp(64px, 9vw, 110px) clamp(20px, 5vw, 48px)">
-      <div data-reveal="1" style="text-align: center; max-width: 680px; margin: 0 auto 48px">
-        <p style="color: #17995F; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12.5px; margin: 0 0 12px">{{ t.howKicker }}</p>
-        <h2 style="font-size: clamp(28px, 4vw, 40px); font-weight: 700; color: #11161A; letter-spacing: -0.02em; margin: 0; text-wrap: balance">{{ t.howTitle }}</h2>
-      </div>
-      <div data-reveal="1" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 18px">
-        <sc-for list="{{ steps }}" as="s" hint-placeholder-count="3">
-          <article style="background: #FFFFFF; border: 1px solid #E3EEE8; border-radius: 18px; padding: 30px 26px">
-            <span style="display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 50%; background: #2BD594; color: #0D1A13; font-weight: 700; font-size: 18px">{{ s.n }}</span>
-            <h3 style="font-size: 18px; font-weight: 600; color: #11161A; margin: 18px 0 8px">{{ s.t }}</h3>
-            <p style="color: #5A6671; font-size: 15px; line-height: 1.62; margin: 0; text-wrap: pretty">{{ s.d }}</p>
-          </article>
-        </sc-for>
+      <div class="grid g-cards">
+        <article class="card"><span class="ic"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#17995F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-5.3-7-11a7 7 0 0 1 14 0c0 5.7-7 11-7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg></span><h3>800+ სადგური ერთ რუკაზე</h3><p>საქართველოს ყველა მთავარი საჯარო დამტენი წერტილი ერთ ხედში, ახალი სადგურები ავტომატურად ემატება.</p></article>
+        <article class="card"><span class="ic"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#17995F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5Z"/><path d="M3 12.5l9 5 9-5"/><path d="M3 17l9 5 9-5"/></svg></span><h3>ყველა ქსელი ერთ აპლიკაციაში</h3><p>რამდენიმე დამოუკიდებელი ქართული ქსელი ერთად, ცალკე აპლიკაციები აღარ გჭირდებათ.</p></article>
+        <article class="card"><span class="ic"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#17995F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16l-6.5 7.6V18l-3 2v-7.4L4 5Z"/></svg></span><h3>ჭკვიანი ფილტრები</h3><p>გაფილტრეთ ოპერატორის, კონექტორის ტიპისა და სიმძლავრის (kW) მიხედვით.</p></article>
+        <article class="card"><span class="ic"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#17995F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="M8.2 6H14a4 4 0 0 1 0 8h-4a4 4 0 0 0 0 8h5.8"/></svg></span><h3>მარშრუტი დატენვის გაჩერებებით</h3><p>დაგეგმეთ მგზავრობა და იპოვეთ დამტენები გზაში, Google Directions-ის საფუძველზე.</p></article>
+        <article class="card"><span class="ic"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#17995F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.2"/><path d="M12 7.6v0.2"/></svg></span><h3>დეტალური ინფორმაცია</h3><p>კონექტორები, სიმძლავრე, მდებარეობა და ოპერატორი, ერთი შეხედვით.</p></article>
+        <article class="card"><span class="ic"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#17995F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg></span><h3>სწრაფი ავტორიზაცია</h3><p>შესვლა Google-ით ან ელფოსტით, შენახული პროფილით.</p></article>
+        <article class="card"><span class="ic"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#17995F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14"/><path d="M15 6v14"/></svg></span><h3>საქართველო, და ევროპაც</h3><p>ქალაქები და ავტომაგისტრალები მთელ ქვეყანაში, სურვილისამებრ კი ევროპის ქვეყნების დამტენებიც, საზღვარგარეთ მოგზაურობისთვის.</p></article>
+        <article class="card"><span class="ic"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#17995F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 12.7 12.7 20.6a2 2 0 0 1-2.8 0L4 14.7V4h10.7l5.9 5.9a2 2 0 0 1 0 2.8Z"/><circle cx="8.6" cy="8.6" r="1.3"/></svg></span><h3>სრულიად უფასო</h3><p>არც გადასახადი, არც პრემიუმი, GeoCharge უფასოა ყველასთვის.</p></article>
       </div>
     </div>
   </section>
 
-  <section id="screens" data-screen-label="Screenshots" style="background: #FFFFFF; overflow: hidden">
-    <div style="max-width: 1180px; margin: 0 auto; padding: clamp(64px, 9vw, 110px) clamp(20px, 5vw, 48px) clamp(40px, 6vw, 70px)">
-      <div data-reveal="1" style="text-align: center; max-width: 680px; margin: 0 auto 40px">
-        <p style="color: #17995F; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12.5px; margin: 0 0 12px">{{ t.galleryKicker }}</p>
-        <h2 style="font-size: clamp(28px, 4vw, 40px); font-weight: 700; color: #11161A; letter-spacing: -0.02em; margin: 0; text-wrap: balance">{{ t.galleryTitle }}</h2>
+  <section id="coverage">
+    <div class="cov">
+      <div>
+        <p class="kicker">დაფარვა</p>
+        <h2 class="h2" style="margin-bottom:18px">მთელი საქართველო. ერთი რუკა.</h2>
+        <p class="lead" style="margin:0">საქართველოს ყველა ძირითადი საჯარო დამტენი ქსელი, ერთად, ერთ ადგილას. ქალაქის ცენტრებიდან საქალაქთაშორისო ავტომაგისტრალებამდე: სადაც არ უნდა მგზავრობდეთ, GeoCharge გაჩვენებთ უახლოეს დატენვის ადგილს. რუკა კი თავისით იზრდება, ახალი სადგურები ავტომატურად ჩნდება, როგორც კი პროვაიდერები მათ აამუშავებენ.</p>
+        <p class="lead" style="margin:16px 0 0">აპირებთ მოგზაურობას საქართველოს ფარგლებს გარეთ? ჩართეთ ევროპის ქვეყნები აპლიკაციის პარამეტრებში და GeoCharge მათ დამტენ სადგურებსაც გაჩვენებთ, ელექტრომობილით ევროპაშიც თავისუფლად იმოგზაურებთ, იმავე ერთი აპლიკაციით.</p>
       </div>
-      <div data-reveal="1" style="display: flex; gap: clamp(18px, 3vw, 30px); overflow-x: auto; scroll-snap-type: x mandatory; padding: 8px 6px 28px; -webkit-overflow-scrolling: touch">
-        <figure style="margin: 0; flex: 0 0 auto; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px">
-          <div style="width: min(232px, 64vw); border-radius: 36px; padding: 9px; background: #1B2127; border: 1px solid #313B44; box-shadow: 0 26px 50px -26px rgba(0, 0, 0, 0.45)">
-            <img loading="lazy" src="assets/shot-nationwide.jpg" alt="{{ gal.alt1 }}" width="720" height="1600" style="width: 100%; height: auto; border-radius: 28px; display: block">
-          </div>
-          <figcaption style="font-size: 14px; color: #5A6671; font-weight: 500; text-align: center; max-width: 220px; line-height: 1.45">{{ gal.cap1 }}</figcaption>
-        </figure>
-        <figure style="margin: 0; flex: 0 0 auto; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px">
-          <div style="width: min(232px, 64vw); border-radius: 36px; padding: 9px; background: #1B2127; border: 1px solid #313B44; box-shadow: 0 26px 50px -26px rgba(0, 0, 0, 0.45)">
-            <img loading="lazy" src="assets/shot-dark-map.jpg" alt="{{ gal.alt2 }}" width="720" height="1600" style="width: 100%; height: auto; border-radius: 28px; display: block">
-          </div>
-          <figcaption style="font-size: 14px; color: #5A6671; font-weight: 500; text-align: center; max-width: 220px; line-height: 1.45">{{ gal.cap2 }}</figcaption>
-        </figure>
-        <figure style="margin: 0; flex: 0 0 auto; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px">
-          <div style="width: min(232px, 64vw); border-radius: 36px; padding: 9px; background: #1B2127; border: 1px solid #313B44; box-shadow: 0 26px 50px -26px rgba(0, 0, 0, 0.45)">
-            <img loading="lazy" src="assets/shot-light-map.jpg" alt="{{ gal.alt3 }}" width="720" height="1600" style="width: 100%; height: auto; border-radius: 28px; display: block">
-          </div>
-          <figcaption style="font-size: 14px; color: #5A6671; font-weight: 500; text-align: center; max-width: 220px; line-height: 1.45">{{ gal.cap3 }}</figcaption>
-        </figure>
-        <figure style="margin: 0; flex: 0 0 auto; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px">
-          <div style="width: min(232px, 64vw); border-radius: 36px; padding: 9px; background: #1B2127; border: 1px solid #313B44; box-shadow: 0 26px 50px -26px rgba(0, 0, 0, 0.45)">
-            <img loading="lazy" src="assets/shot-route.jpg" alt="{{ gal.alt4 }}" width="720" height="1600" style="width: 100%; height: auto; border-radius: 28px; display: block">
-          </div>
-          <figcaption style="font-size: 14px; color: #5A6671; font-weight: 500; text-align: center; max-width: 220px; line-height: 1.45">{{ gal.cap4 }}</figcaption>
-        </figure>
-        <figure style="margin: 0; flex: 0 0 auto; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px">
-          <div style="width: min(232px, 64vw); border-radius: 36px; padding: 9px; background: #1B2127; border: 1px solid #313B44; box-shadow: 0 26px 50px -26px rgba(0, 0, 0, 0.45)">
-            <img loading="lazy" src="assets/shot-countries.jpg" alt="{{ gal.alt5 }}" width="720" height="1600" style="width: 100%; height: auto; border-radius: 28px; display: block">
-          </div>
-          <figcaption style="font-size: 14px; color: #5A6671; font-weight: 500; text-align: center; max-width: 220px; line-height: 1.45">{{ gal.cap5 }}</figcaption>
-        </figure>
+      <div class="stats">
+        <div class="stat"><b>800+</b><span>დამტენი სადგური, ავტომატურად განახლებადი</span></div>
+        <div class="stat"><b>1</b><span>აპლიკაცია ყველა ქსელისთვის</span></div>
+        <div class="stat"><b>100%</b><span>უფასო ყველასთვის</span></div>
+      </div>
+    </div>
+    <div class="nets">
+      <h2 class="kicker" style="text-align:center;margin-bottom:22px;font-size:12.5px">ქსელები, რომლებსაც ვფარავთ</h2>
+      <div class="net-grid">
+        <div class="net"><span class="logo"><img loading="lazy" src="/assets/providers/martev.svg" alt="mart EV დამტენების ქსელი"></span><span class="nm">mart EV</span><span class="ct"><b>183+</b> <span>დამტენი</span></span></div>
+        <div class="net"><span class="logo"><img loading="lazy" src="/assets/providers/ecocars.png" alt="EcoCars (ეკოკარსი) დამტენების ქსელი"></span><span class="nm">EcoCars</span><span class="ct"><b>153+</b> <span>დამტენი</span></span></div>
+        <div class="net"><span class="logo"><img loading="lazy" src="/assets/providers/datene.png" alt="Da-Tene (დატენე) დამტენების ქსელი"></span><span class="nm">Da-Tene</span><span class="ct"><b>151+</b> <span>დამტენი</span></span></div>
+        <div class="net"><span class="logo"><img loading="lazy" src="/assets/providers/espace.svg" alt="E-Space (ი-სფეის) დამტენების ქსელი"></span><span class="nm">E-Space<span aria-hidden="true">∗</span></span><span class="ct"><b>138+</b> <span>დამტენი</span></span></div>
+        <div class="net"><span class="logo"><img loading="lazy" src="/assets/providers/chargerplus.png" alt="Charger Plus (ჩარჯერ პლუს) დამტენების ქსელი"></span><span class="nm">Charger Plus</span><span class="ct"><b>56+</b> <span>დამტენი</span></span></div>
+        <div class="net"><span class="logo"><img loading="lazy" src="/assets/providers/evpower.png" alt="EV Power (ივი პაუერ) დამტენების ქსელი"></span><span class="nm">EV Power</span><span class="ct"><b>52+</b> <span>დამტენი</span></span></div>
+        <div class="net"><span class="logo"><img loading="lazy" src="/assets/providers/tegeta.png" alt="Tegeta (თეგეტა) დამტენების ქსელი"></span><span class="nm">Tegeta</span><span class="ct"><b>34+</b> <span>დამტენი</span></span></div>
+        <div class="net"><span class="logo"><img loading="lazy" src="/assets/providers/electrify.png" alt="Electrify Georgia (ელექტრიფაი) დამტენების ქსელი"></span><span class="nm">Electrify Georgia</span><span class="ct"><b>22+</b> <span>დამტენი</span></span></div>
+        <div class="net"><span class="logo"><img loading="lazy" src="/assets/providers/solarstation.png" alt="Solar Station (სოლარ სტეიშენ) დამტენების ქსელი"></span><span class="nm">Solar Station</span><span class="ct"><b>16+</b> <span>დამტენი</span></span></div>
+        <div class="net"><span class="logo"><img loading="lazy" src="/assets/providers/moveo.png" alt="MOVEO (მოვეო) დამტენების ქსელი"></span><span class="nm">MOVEO</span><span class="ct"><b>8+</b> <span>დამტენი</span></span></div>
+        <div class="net"><span class="logo"><img loading="lazy" src="/assets/providers/gadatene-dark.svg" alt="Gadatene (გადატენე) დამტენების ქსელი"></span><span class="nm">Gadatene</span><span class="ct"><b>7+</b> <span>დამტენი</span></span></div>
+        <div class="net"><span class="logo"><img loading="lazy" src="/assets/providers/socar.png" alt="SOCAR (სოკარი) სადგურების დამტენები"></span><span class="nm">SOCAR</span></div>
+        <div class="net-more">და სხვები</div>
+      </div>
+      <p style="color:#8A97A0;font-size:13.5px;line-height:1.5;margin:22px 0 0;text-align:center">∗ E-Space დამტენები განთავსებულია SOCAR-ის სადგურებზე.</p>
+    </div>
+  </section>
+
+  <section id="how" class="soft">
+    <div class="wrap">
+      <div class="head">
+        <p class="kicker">როგორ მუშაობს</p>
+        <h2 class="h2">დატენვა სამ მარტივ ნაბიჯში</h2>
+      </div>
+      <div class="grid g-steps">
+        <article class="step"><span class="n">1</span><h3>ჩამოტვირთეთ</h3><p>ჩამოტვირთეთ GeoCharge უფასოდ Google Play-დან ან App Store-დან.</p></article>
+        <article class="step"><span class="n">2</span><h3>გახსენით რუკა</h3><p>იპოვეთ დამტენები თქვენ გარშემო ან მარშრუტზე.</p></article>
+        <article class="step"><span class="n">3</span><h3>გაფილტრეთ და დატენეთ</h3><p>აირჩიეთ შესაფერისი სადგური, გაჰყევით ნავიგაციას და დატენეთ.</p></article>
       </div>
     </div>
   </section>
 
-  <section id="tesla" data-screen-label="Tesla" style="background-color: #11161A; background-image: radial-gradient(720px 480px at 18% 10%, rgba(43, 213, 148, 0.14), transparent 62%); color: #FFFFFF">
-    <div style="max-width: 1180px; margin: 0 auto; padding: clamp(64px, 9vw, 110px) clamp(20px, 5vw, 48px)">
-      <div data-reveal="1" style="text-align: center; max-width: 720px; margin: 0 auto 48px">
-        <p style="color: #2BD594; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12.5px; margin: 0 0 12px">{{ t.teslaKicker }}</p>
-        <h2 style="font-size: clamp(28px, 4vw, 40px); font-weight: 700; color: #FFFFFF; letter-spacing: -0.02em; margin: 0 0 16px; text-wrap: balance">{{ t.teslaTitle }}</h2>
-        <p style="color: #B9C4CB; font-size: 16.5px; line-height: 1.65; margin: 0; text-wrap: pretty">{{ t.teslaBody }}</p>
+  <section id="screens" style="overflow:hidden">
+    <div class="wrap" style="padding-bottom:clamp(40px,6vw,70px)">
+      <div class="head" style="margin-bottom:40px">
+        <p class="kicker">ეკრანები</p>
+        <h2 class="h2">აპლიკაციის ეკრანები</h2>
       </div>
-      <div data-reveal="1" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 18px; margin-bottom: 40px">
-        <article style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.09); border-radius: 18px; padding: 30px 26px">
-          <span style="display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 50%; background: #2BD594; color: #0D1A13; font-weight: 700; font-size: 18px">1</span>
-          <h3 style="font-size: 18px; font-weight: 600; color: #FFFFFF; margin: 18px 0 8px">{{ t.teslaStep1t }}</h3>
-          <p style="color: #B9C4CB; font-size: 15px; line-height: 1.62; margin: 0; text-wrap: pretty">{{ t.teslaStep1d }}</p>
-        </article>
-        <article style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.09); border-radius: 18px; padding: 30px 26px">
-          <span style="display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 50%; background: #2BD594; color: #0D1A13; font-weight: 700; font-size: 18px">2</span>
-          <h3 style="font-size: 18px; font-weight: 600; color: #FFFFFF; margin: 18px 0 8px">{{ t.teslaStep2t }}</h3>
-          <p style="color: #B9C4CB; font-size: 15px; line-height: 1.62; margin: 0; text-wrap: pretty">{{ t.teslaStep2d }}</p>
-        </article>
-        <article style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.09); border-radius: 18px; padding: 30px 26px">
-          <span style="display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 50%; background: #2BD594; color: #0D1A13; font-weight: 700; font-size: 18px">3</span>
-          <h3 style="font-size: 18px; font-weight: 600; color: #FFFFFF; margin: 18px 0 8px">{{ t.teslaStep3t }}</h3>
-          <p style="color: #B9C4CB; font-size: 15px; line-height: 1.62; margin: 0; text-wrap: pretty">{{ t.teslaStep3d }}</p>
-        </article>
-      </div>
-      <div data-reveal="1" style="text-align: center">
-        <a href="https://tesla.geocharge.ge" target="_blank" rel="noopener" style="display: inline-block; background: #2BD594; color: #0D1A13; text-decoration: none; border-radius: 12px; padding: 14px 30px; font-size: 16px; font-weight: 600" style-hover="background: #25C486">tesla.geocharge.ge</a>
-        <p style="color: #7E8B94; font-size: 13.5px; margin: 14px 0 0">{{ t.teslaNote }}</p>
+      <div class="gal">
+        <figure><div class="fr"><img loading="lazy" src="/assets/shot-nationwide.jpg" alt="GeoCharge-ის რუკა, დამტენი სადგურების ჯგუფები საქართველოს ყველა რეგიონში" width="720" height="1600"></div><figcaption>მთელი ქვეყნის დაფარვა ერთ რუკაზე</figcaption></figure>
+        <figure><div class="fr"><img loading="lazy" src="/assets/shot-dark-map.jpg" alt="GeoCharge-ის მუქი რუკა თბილისში ხელმისაწვდომი დამტენი სადგურებით" width="720" height="1600"></div><figcaption>ცოცხალი რუკა ხელმისაწვდომობის სტატუსით</figcaption></figure>
+        <figure><div class="fr"><img loading="lazy" src="/assets/shot-light-map.jpg" alt="GeoCharge-ის ნათელი თემის რუკა თბილისში დამტენი სადგურებითა და ფილტრებით" width="720" height="1600"></div><figcaption>ნათელი და მუქი თემები</figcaption></figure>
+        <figure><div class="fr"><img loading="lazy" src="/assets/shot-route.jpg" alt="GeoCharge-ის მარშრუტის დაგეგმვის ეკრანი ბატარეის დონითა და დატენვის გაჩერებით" width="720" height="1600"></div><figcaption>მარშრუტის დაგეგმვა დატენვის გაჩერებებით</figcaption></figure>
+        <figure><div class="fr"><img loading="lazy" src="/assets/shot-countries.jpg" alt="GeoCharge-ის პარამეტრების ეკრანი ევროპის ქვეყნებისა და მათი დამტენი სადგურების ჩასართავად" width="720" height="1600"></div><figcaption>მოგზაურობთ ევროპაში? ჩართეთ სასურველი ქვეყნები</figcaption></figure>
       </div>
     </div>
   </section>
 
-  <section id="why" data-screen-label="Why GeoCharge" style="background: #FFFFFF">
-    <div data-reveal="1" style="max-width: 820px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 48px) clamp(64px, 9vw, 110px)">
-      <h2 style="font-size: clamp(24px, 3.2vw, 32px); font-weight: 700; color: #11161A; letter-spacing: -0.02em; margin: 0 0 26px; text-align: center; text-wrap: balance">{{ t.whyTitle }}</h2>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 14px">
-        <sc-for list="{{ whyItems }}" as="w" hint-placeholder-count="4">
-          <p style="display: flex; align-items: center; gap: 12px; background: #F6FAF8; border: 1px solid #E3EEE8; border-radius: 14px; padding: 16px 18px; margin: 0; color: #11161A; font-size: 15.5px; font-weight: 500">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17995F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="M20 6 9 17l-5-5"></path></svg>
-            <span>{{ w }}</span>
-          </p>
-        </sc-for>
+  <section id="tesla" class="tesla">
+    <div class="wrap">
+      <div class="head">
+        <p class="kicker">Tesla</p>
+        <h2 class="h2">GeoCharge შენი Tesla-ს ეკრანზე</h2>
+        <p>Tesla-ს ჩაშენებული ნავიგაცია საქართველოში დატენვის დაგეგმვას ვერ ახერხებს — GeoCharge ახერხებს. გახსენი tesla.geocharge.ge მანქანის ბრაუზერში: ყველა ქსელის ცოცხალი რუკა და EV მარშრუტის დამგეგმავი დატენვის გაჩერებებით, სპეციალურად Tesla-ს ეკრანზე მორგებული.</p>
+      </div>
+      <div class="grid g-steps" style="margin-bottom:40px">
+        <article class="tcard"><span class="n">1</span><h3>გახსენი მანქანის ბრაუზერი</h3><p>შედი tesla.geocharge.ge-ზე და შეინახე bookmark-ად — შემდეგ ჯერზე ერთი შეხებით გაიხსნება.</p></article>
+        <article class="tcard"><span class="n">2</span><h3>შედი ანგარიშით</h3><p>გამოიყენე შენი GeoCharge-ის ანგარიში. ყველა ანგარიშს Tesla-ს ეკრანზე 24-საათიანი უფასო საცდელი პერიოდი აქვს.</p></article>
+        <article class="tcard"><span class="n">3</span><h3>გახსენი Premium-ით</h3><p>გააქტიურე Premium გამოწერა ტელეფონის აპში — Tesla-ს ეკრანი მაშინვე გაიხსნება, იმავე ანგარიშზე.</p></article>
+      </div>
+      <div class="center">
+        <a class="tlink" href="https://tesla.geocharge.ge" target="_blank" rel="noopener">tesla.geocharge.ge</a>
+        <p style="color:#7E8B94;font-size:13.5px;margin:14px 0 0">მუშაობს Tesla-ს ჩაშენებულ ბრაუზერში — ინსტალაცია არ სჭირდება. რჩევა: ჩართე ბრაუზერის სრულეკრანიანი რეჟიმი.</p>
       </div>
     </div>
   </section>
 
-  <section id="faq" data-screen-label="FAQ" style="background: #F6FAF8; border-top: 1px solid #EAF1ED">
-    <div data-reveal="1" style="max-width: 820px; margin: 0 auto; padding: clamp(64px, 9vw, 110px) clamp(20px, 5vw, 48px)">
-      <div style="text-align: center; margin-bottom: 36px">
-        <p style="color: #17995F; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12.5px; margin: 0 0 12px">FAQ</p>
-        <h2 style="font-size: clamp(28px, 4vw, 40px); font-weight: 700; color: #11161A; letter-spacing: -0.02em; margin: 0; text-wrap: balance">{{ t.faqTitle }}</h2>
-      </div>
-      <div style="background: #FFFFFF; border: 1px solid #E3EEE8; border-radius: 20px; padding: 6px 26px">
-        <sc-for list="{{ faqItems }}" as="f" hint-placeholder-count="8">
-          <div style="border-bottom: 1px solid #EDF3EF">
-            <button onClick="{{ f.toggle }}" aria-expanded="{{ f.open }}" style="background: none; border: none; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 19px 0; cursor: pointer; font-family: inherit; text-align: left">
-              <span style="font-size: 16px; font-weight: 600; color: #11161A; line-height: 1.45">{{ f.q }}</span>
-              <span aria-hidden="true" style="color: #17995F; font-size: 22px; font-weight: 500; line-height: 1; flex-shrink: 0; width: 22px; text-align: center">{{ f.sign }}</span>
-            </button>
-            <sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}">
-              <p style="color: #5A6671; font-size: 15px; line-height: 1.68; margin: 0; padding: 0 28px 20px 0; text-wrap: pretty">{{ f.a }}</p>
-            </sc-if>
-          </div>
-        </sc-for>
+  <section id="why">
+    <div style="max-width:820px;margin:0 auto;padding:var(--sec) var(--pad)">
+      <h2 class="h2 center" style="font-size:clamp(24px,3.2vw,32px);margin-bottom:26px">რატომ ირჩევენ მძღოლები GeoCharge-ს</h2>
+      <div class="why">
+        <p><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17995F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><path d="M20 6 9 17l-5-5"></path></svg><span>ერთი აპლიკაცია მრავლის ნაცვლად</span></p>
+        <p><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17995F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><path d="M20 6 9 17l-5-5"></path></svg><span>ყველაზე სრული დაფარვა საქართველოში</span></p>
+        <p><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17995F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><path d="M20 6 9 17l-5-5"></path></svg><span>შორი მგზავრობა, თავდაჯერებულად</span></p>
+        <p><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#17995F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><path d="M20 6 9 17l-5-5"></path></svg><span>უფასო, სწრაფი და მარტივი</span></p>
       </div>
     </div>
   </section>
 
-  <section id="download" data-screen-label="Download" style="background-color: #11161A; background-image: radial-gradient(640px 420px at 50% 0%, rgba(43, 213, 148, 0.14), transparent 65%)">
-    <div data-reveal="1" style="max-width: 760px; margin: 0 auto; padding: clamp(64px, 9vw, 110px) clamp(20px, 5vw, 48px); text-align: center">
-      <img src="assets/mark.svg" alt="" width="74" height="74" style="width: 74px; height: 74px; display: block; margin: 0 auto 24px">
-      <h2 style="font-size: clamp(28px, 4.4vw, 44px); font-weight: 700; color: #FFFFFF; letter-spacing: -0.02em; margin: 0 0 14px; text-wrap: balance">{{ t.dlTitle }}</h2>
-      <p style="color: #A7B4BD; font-size: 17px; line-height: 1.65; margin: 0 0 32px">{{ t.dlSub }}</p>
-      <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: center">
-        <a href="https://play.google.com/store/apps/details?id=ge.geocharge.app" target="_blank" rel="noopener" aria-label="Get it on Google Play" style="display: inline-flex; align-items: center; gap: 12px; background: #000000; border: 1px solid #46505A; border-radius: 12px; padding: 10px 17px; text-decoration: none; width: 200px; box-sizing: border-box" style-hover="border-color: #2BD594">
-          <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" style="flex-shrink: 0"><path d="M4 2.8v18.4c0 .6.7 1 1.2.7L8 20.2 16.5 15 19.8 13c.8-.45.8-1.55 0-2L5.2 2.1C4.7 1.8 4 2.2 4 2.8Z" fill="#2BD594"></path><path d="M4.4 2.2 14.6 12 4.4 21.8" fill="none" stroke="#0D1A13" stroke-width="0.9"></path></svg>
-          <span style="display: flex; flex-direction: column; line-height: 1.2; text-align: left">
-            <span style="font-size: 11px; color: #B9C4CB; letter-spacing: 0.06em; text-transform: uppercase">{{ t.playTop }}</span>
-            <span style="font-size: 18px; color: #FFFFFF; font-weight: 600">Google Play</span>
-          </span>
+  <section id="faq" class="soft" style="border-bottom:none">
+    <div class="wrap" style="max-width:820px">
+      <div class="center" style="margin-bottom:36px">
+        <p class="kicker">FAQ</p>
+        <h2 class="h2">ხშირად დასმული კითხვები</h2>
+      </div>
+      <div class="faq-box">
+        <details open><summary>სად ვიპოვო ელექტრო მანქანის დამტენები საქართველოში?</summary><p>GeoCharge-ის უფასო აპლიკაცია 800-ზე მეტ საჯარო დამტენ სადგურს აჩვენებს მთელ საქართველოში — თბილისში, ბათუმში, ქუთაისში, რეგიონებსა და ავტომაგისტრალებზე. ყველა ქსელი ერთ რუკაზეა, ცოცხალი სტატუსით.</p></details>
+        <details><summary>რომელ ქართულ დამტენ ქსელებს აერთიანებს GeoCharge?</summary><p>GeoCharge ერთ რუკაზე აერთიანებს საქართველოს წამყვან EV დამტენ ქსელებს: mart EV, E-Space (ი-სფეის), EcoCars (ეკოკარსი), Da-Tene (დატენე), Charger Plus (ჩარჯერ პლუს), EV Power (ივი პაუერ), Tegeta (თეგეტა), Electrify Georgia (ელექტრიფაი), Solar Station (სოლარ სტეიშენ), MOVEO (მოვეო), Gadatene (გადატენე) და SOCAR-ის (სოკარი) სადგურებზე განთავსებული დამტენები. ახალი ქსელები ავტომატურად ემატება.</p></details>
+        <details><summary>შემიძლია ერთ აპლიკაციაში ვნახო mart EV, E-Space, Tegeta და სხვა პროვაიდერების დამტენები?</summary><p>დიახ. mart EV, E-Space, EcoCars, Da-Tene (დატენე), Charger Plus, EV Power, Tegeta (თეგეტა), Electrify Georgia, Solar Station, MOVEO და Gadatene (გადატენე) — ყველა ერთ რუკაზეა GeoCharge-ში. ცალკე აპლიკაცია თითო ქსელისთვის აღარ გჭირდება.</p></details>
+        <details><summary>რა არის GeoCharge?</summary><p>GeoCharge არის უფასო აპლიკაცია, რომელიც საქართველოს EV დამტენ სადგურებს ერთ რუკაზე აჩვენებს და რამდენიმე დამტენ ქსელს აერთიანებს.</p></details>
+        <details><summary>GeoCharge უფასოა?</summary><p>დიახ, GeoCharge სრულიად უფასოა.</p></details>
+        <details><summary>რამდენ დამტენ სადგურს აჩვენებს GeoCharge?</summary><p>800-ზე მეტ საჯარო დამტენ სადგურს მთელ საქართველოში, ახალი სადგურები კი ავტომატურად ემატება, როგორც კი ამუშავდება.</p></details>
+        <details><summary>მუშაობს GeoCharge მთელ საქართველოში?</summary><p>დიახ, ქალაქებშიც და ავტომაგისტრალებზეც, მთელი ქვეყნის მასშტაბით.</p></details>
+        <details><summary>შემიძლია მარშრუტის დაგეგმვა დატენვის გაჩერებებით?</summary><p>დიახ, GeoCharge-ს აქვს მარშრუტის დაგეგმვის ფუნქცია, რომ გზაში დამტენები იპოვოთ.</p></details>
+        <details><summary>რომელ მოწყობილობებზეა GeoCharge ხელმისაწვდომი?</summary><p>GeoCharge ხელმისაწვდომია როგორც Android-ზე (Google Play), ისე iOS-ზე (App Store).</p></details>
+        <details><summary>მუშაობს GeoCharge Tesla-ს ეკრანზე?</summary><p>დიახ — გახსენი tesla.geocharge.ge Tesla-ს ჩაშენებულ ბრაუზერში: დამტენების ცოცხალი რუკა და EV მარშრუტის დამგეგმავი დატენვის გაჩერებებით, მანქანის ეკრანზე მორგებული. შედი GeoCharge-ის ანგარიშით და მიიღე 24-საათიანი უფასო საცდელი პერიოდი; ტელეფონის აპში გააქტიურებული Premium გამოწერა კი მუდმივად ხსნის.</p></details>
+        <details><summary>მჭირდება ანგარიში?</summary><p>შეგიძლიათ სწრაფად შეხვიდეთ Google-ით ან ელფოსტით და შეინახოთ პროფილი.</p></details>
+        <details><summary>რით განსხვავდება GeoCharge ცალკეული ქსელების აპლიკაციებისგან?</summary><p>რამდენიმე აპლიკაციის ნაცვლად GeoCharge ყველა ქსელის სადგურს ერთ რუკაზე აჩვენებს, ერთიანი დეტალებითა და ფილტრებით.</p></details>
+        <details><summary>შემიძლია GeoCharge-ის გამოყენება ევროპაში?</summary><p>დიახ. პარამეტრებში ჩართეთ ევროპის სასურველი ქვეყნები და GeoCharge მათ დამტენ სადგურებსაც იმავე რუკაზე გაჩვენებთ, ასე ელექტრომობილით ევროპაში მოგზაურობასაც მარტივად დაგეგმავთ.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section id="download" class="dl">
+    <div class="dl-in">
+      <img src="/assets/mark.svg" alt="GeoCharge-ის ლოგო" width="74" height="74" style="width:74px;height:74px;display:block;margin:0 auto 24px">
+      <h2>ჩამოტვირთეთ GeoCharge უფასოდ</h2>
+      <p>ხელმისაწვდომია Google Play-სა და App Store-ზე.</p>
+      <div class="stores">
+        <a class="store" href="https://play.google.com/store/apps/details?id=ge.geocharge.app" target="_blank" rel="noopener" aria-label="ჩამოტვირთვა Google Play-დან">
+          <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2.8v18.4c0 .6.7 1 1.2.7L8 20.2 16.5 15 19.8 13c.8-.45.8-1.55 0-2L5.2 2.1C4.7 1.8 4 2.2 4 2.8Z" fill="#2BD594"></path><path d="M4.4 2.2 14.6 12 4.4 21.8" fill="none" stroke="#0D1A13" stroke-width="0.9"></path></svg>
+          <i><u>ხელმისაწვდომია</u><b>Google Play</b></i>
         </a>
-        <a href="https://apps.apple.com/ge/app/geocharge/id6785467389" target="_blank" rel="noopener" aria-label="Download on the App Store" style="display: inline-flex; align-items: center; gap: 12px; background: #000000; border: 1px solid #46505A; border-radius: 12px; padding: 10px 17px; text-decoration: none; width: 200px; box-sizing: border-box" style-hover="border-color: #2BD594">
-          <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" fill="#FFFFFF" style="flex-shrink: 0"><path d="M16.365 1.43c0 1.14-.42 2.2-1.12 2.99-.85.94-2.23 1.67-3.38 1.58-.14-1.13.42-2.32 1.05-3.06.71-.85 1.94-1.5 2.97-1.54.03.01.05.02.06.03.02.32-.02.35 0 0Zm2.86 15.7c-.51 1.19-.76 1.72-1.42 2.77-.92 1.47-2.22 3.3-3.83 3.31-1.43.02-1.8-.94-3.74-.93-1.94.01-2.35.94-3.78.92-1.61-.02-2.84-1.67-3.76-3.14-2.58-4.11-2.85-8.94-1.26-11.51 1.13-1.82 2.91-2.89 4.58-2.89 1.7 0 2.77.94 4.18.94 1.36 0 2.19-.94 4.16-.94 1.49 0 3.06.82 4.19 2.23-3.68 2.02-3.08 7.28.68 9.24Z"></path></svg>
-          <span style="display: flex; flex-direction: column; line-height: 1.2; text-align: left">
-            <span style="font-size: 11px; color: #B9C4CB; letter-spacing: 0.06em; text-transform: uppercase">{{ t.appStoreTop }}</span>
-            <span style="font-size: 18px; color: #FFFFFF; font-weight: 600">App Store</span>
-          </span>
+        <a class="store" href="https://apps.apple.com/ge/app/geocharge/id6785467389" target="_blank" rel="noopener" aria-label="ჩამოტვირთვა App Store-დან">
+          <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" fill="#FFFFFF"><path d="M16.365 1.43c0 1.14-.42 2.2-1.12 2.99-.85.94-2.23 1.67-3.38 1.58-.14-1.13.42-2.32 1.05-3.06.71-.85 1.94-1.5 2.97-1.54.03.01.05.02.06.03.02.32-.02.35 0 0Zm2.86 15.7c-.51 1.19-.76 1.72-1.42 2.77-.92 1.47-2.22 3.3-3.83 3.31-1.43.02-1.8-.94-3.74-.93-1.94.01-2.35.94-3.78.92-1.61-.02-2.84-1.67-3.76-3.14-2.58-4.11-2.85-8.94-1.26-11.51 1.13-1.82 2.91-2.89 4.58-2.89 1.7 0 2.77.94 4.18.94 1.36 0 2.19-.94 4.16-.94 1.49 0 3.06.82 4.19 2.23-3.68 2.02-3.08 7.28.68 9.24Z"></path></svg>
+          <i><u>ჩამოტვირთეთ</u><b>App Store</b></i>
         </a>
       </div>
-      <p style="color: #6E7B85; font-size: 13.5px; margin: 26px 0 0">{{ t.dlFree }}</p>
     </div>
   </section>
 
-  <section id="contact" data-screen-label="Contact" style="background: #FFFFFF">
-    <div data-reveal="1" style="max-width: 620px; margin: 0 auto; padding: clamp(64px, 9vw, 110px) clamp(20px, 5vw, 48px)">
-      <div style="text-align: center; margin-bottom: 34px">
-        <p style="color: #17995F; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: 12.5px; margin: 0 0 12px">{{ t.contactKicker }}</p>
-        <h2 style="font-size: clamp(28px, 4vw, 40px); font-weight: 700; color: #11161A; letter-spacing: -0.02em; margin: 0 0 12px; text-wrap: balance">{{ t.contactTitle }}</h2>
-        <p style="color: #5A6671; font-size: 16px; line-height: 1.65; margin: 0; text-wrap: pretty">{{ t.contactSub }}</p>
+  <section id="contact">
+    <div class="wrap" style="max-width:620px">
+      <div class="center" style="margin-bottom:34px">
+        <p class="kicker">კონტაქტი</p>
+        <h2 class="h2" style="margin-bottom:12px">დაგვიკავშირდით</h2>
+        <p class="lead" style="font-size:16px;line-height:1.65;margin:0">კითხვა, შენიშვნა თუ გამორჩენილი სადგური? მოგვწერეთ, ყველა შეტყობინებას ვკითხულობთ.</p>
       </div>
-      <form onSubmit="{{ submitForm }}" encType="multipart/form-data" style="display: grid; gap: 18px">
+      <form class="form" id="gc-form" action="https://api.web3forms.com/submit" method="POST">
         <input type="hidden" name="access_key" value="ba0ee836-eb6e-4c38-a2b1-aed140485d61">
         <input type="hidden" name="from_name" value="GeoCharge Website">
-        <input type="checkbox" name="botcheck" tabIndex="-1" autoComplete="off" aria-hidden="true" style="position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); gap: 18px">
+        <input type="checkbox" name="botcheck" tabindex="-1" autocomplete="off" aria-hidden="true" class="sr-only">
+        <div class="row">
           <div>
-            <label for="gc-name" style="display: block; font-size: 14px; font-weight: 600; color: #11161A; margin-bottom: 7px">{{ t.fName }}</label>
-            <input id="gc-name" name="name" type="text" required="required" placeholder="{{ t.fNamePh }}" style="width: 100%; padding: 13px 16px; border: 1px solid #D7E0DB; border-radius: 12px; font-size: 15.5px; font-family: inherit; color: #11161A; background: #FFFFFF; outline: none" style-focus="border-color: #2BD594; box-shadow: 0 0 0 3px rgba(43, 213, 148, 0.18)">
+            <label for="gc-name">სახელი</label>
+            <input id="gc-name" name="name" type="text" required placeholder="თქვენი სახელი">
           </div>
           <div>
-            <label for="gc-email" style="display: block; font-size: 14px; font-weight: 600; color: #11161A; margin-bottom: 7px">{{ t.fEmail }}</label>
-            <input id="gc-email" name="email" type="email" required="required" placeholder="{{ t.fEmailPh }}" style="width: 100%; padding: 13px 16px; border: 1px solid #D7E0DB; border-radius: 12px; font-size: 15.5px; font-family: inherit; color: #11161A; background: #FFFFFF; outline: none" style-focus="border-color: #2BD594; box-shadow: 0 0 0 3px rgba(43, 213, 148, 0.18)">
+            <label for="gc-email">ელფოსტა</label>
+            <input id="gc-email" name="email" type="email" required placeholder="you@example.com">
           </div>
         </div>
         <div>
-          <label for="gc-subject" style="display: block; font-size: 14px; font-weight: 600; color: #11161A; margin-bottom: 7px">{{ t.fSubject }}</label>
-          <input id="gc-subject" name="subject" type="text" placeholder="{{ t.fSubjectPh }}" style="width: 100%; padding: 13px 16px; border: 1px solid #D7E0DB; border-radius: 12px; font-size: 15.5px; font-family: inherit; color: #11161A; background: #FFFFFF; outline: none" style-focus="border-color: #2BD594; box-shadow: 0 0 0 3px rgba(43, 213, 148, 0.18)">
+          <label for="gc-subject">თემა (არასავალდებულო)</label>
+          <input id="gc-subject" name="subject" type="text" placeholder="რას ეხება?">
         </div>
         <div>
-          <label for="gc-message" style="display: block; font-size: 14px; font-weight: 600; color: #11161A; margin-bottom: 7px">{{ t.fMessage }}</label>
-          <textarea id="gc-message" name="message" required="required" rows="5" placeholder="{{ t.fMessagePh }}" style="width: 100%; padding: 13px 16px; border: 1px solid #D7E0DB; border-radius: 12px; font-size: 15.5px; font-family: inherit; color: #11161A; background: #FFFFFF; outline: none; resize: vertical; min-height: 120px" style-focus="border-color: #2BD594; box-shadow: 0 0 0 3px rgba(43, 213, 148, 0.18)"></textarea>
+          <label for="gc-message">შეტყობინება</label>
+          <textarea id="gc-message" name="message" required rows="5" placeholder="დაწერეთ შეტყობინება აქ…"></textarea>
         </div>
-        <div>
-          <label for="gc-file" style="display: block; font-size: 14px; font-weight: 600; color: #11161A; margin-bottom: 7px">{{ t.fFile }}</label>
-          <input id="gc-file" name="attachment" type="file" accept=".pdf,.zip,.doc,.docx,.xlsx,.html,.htm,image/*" style="width: 100%; padding: 11px 14px; border: 1px dashed #C2D2C9; border-radius: 12px; font-size: 14px; font-family: inherit; color: #4A565F; background: #FBFDFC; outline: none" style-focus="border-color: #2BD594; box-shadow: 0 0 0 3px rgba(43, 213, 148, 0.18)">
-          <p style="font-size: 12.5px; color: #8B98A1; margin: 7px 0 0">{{ t.fFileNote }}</p>
-        </div>
-        <button type="submit" disabled="{{ isSending }}" style="background: #2BD594; color: #0D1A13; border: none; border-radius: 13px; padding: 15px; font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit" style-hover="background: #25C486">{{ submitLabel }}</button>
-        <sc-if value="{{ showOk }}" hint-placeholder-val="{{ false }}">
-          <p role="status" style="background: #ECFAF3; border: 1px solid #C8EFDD; color: #137A4C; border-radius: 12px; padding: 14px 18px; font-size: 14.5px; font-weight: 500; margin: 0">{{ t.fOk }}</p>
-        </sc-if>
-        <sc-if value="{{ showErr }}" hint-placeholder-val="{{ false }}">
-          <p role="alert" style="background: #FDF0EF; border: 1px solid #F3CDC9; color: #B03A2E; border-radius: 12px; padding: 14px 18px; font-size: 14.5px; font-weight: 500; margin: 0">{{ errText }}</p>
-        </sc-if>
+        <button type="submit" id="gc-submit">გაგზავნა</button>
+        <p class="note-ok" id="gc-ok" role="status" hidden>მადლობა! თქვენი შეტყობინება გაიგზავნა.</p>
+        <p class="note-err" id="gc-err" role="alert" hidden>დაფიქსირდა შეცდომა. გთხოვთ, სცადოთ თავიდან.</p>
       </form>
     </div>
   </section>
 </main>
 
-<footer data-screen-label="Footer" style="background: #0D1115; color: #8B98A1">
-  <div style="max-width: 1180px; margin: 0 auto; padding: clamp(44px, 6vw, 64px) clamp(20px, 5vw, 48px) 30px">
-    <div style="display: flex; flex-wrap: wrap; gap: 32px; justify-content: space-between; align-items: flex-start; padding-bottom: 32px; border-bottom: 1px solid rgba(255, 255, 255, 0.07)">
-      <div style="max-width: 320px">
-        <img src="assets/logo-dark.svg" alt="GeoCharge" style="height: 28px; display: block" height="28">
-        <p style="font-size: 14px; line-height: 1.6; margin: 14px 0 0">{{ t.footerTagline }}</p>
+<footer>
+  <div class="f-in">
+    <div class="f-top">
+      <div style="max-width:320px">
+        <img src="/assets/logo-dark.svg" alt="GeoCharge" height="28" style="height:28px;display:block">
+        <p style="font-size:14px;line-height:1.6;margin:14px 0 0">ელექტრომობილის ყველა დამტენი საქართველოში, ერთ უფასო აპლიკაციაში.</p>
       </div>
-      <nav aria-label="Footer navigation" style="display: flex; flex-wrap: wrap; gap: 10px 24px; max-width: 460px">
-        <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="6">
-          <a href="{{ n.href }}" onClick="{{ n.onClick }}" style="color: #B9C4CB; text-decoration: none; font-size: 14px; font-weight: 500" style-hover="color: #FFFFFF">{{ n.label }}</a>
-        </sc-for>
+      <nav class="f-nav" aria-label="ფუტერის ნავიგაცია">
+        <a href="#about">შესახებ</a>
+        <a href="#features">ფუნქციები</a>
+        <a href="#coverage">დაფარვა</a>
+        <a href="#how">როგორ მუშაობს</a>
+        <a href="#tesla">Tesla</a>
+        <a href="#faq">კითხვები</a>
+        <a href="#download">ჩამოტვირთვა</a>
       </nav>
-      <div role="group" aria-label="Language" style="display: flex; border: 1px solid #39434C; border-radius: 999px; overflow: hidden">
-        <button onClick="{{ setKa }}" style="{{ kaBtnStyle }}">ქარ</button>
-        <button onClick="{{ setEn }}" style="{{ enBtnStyle }}">ENG</button>
+      <div class="lang" role="group" aria-label="ენა">
+        <a href="/" aria-current="true" hreflang="ka">ქარ</a>
+        <a href="/en/" hreflang="en">ENG</a>
       </div>
     </div>
-    <p style="font-size: 12.5px; line-height: 1.75; color: #6E7B85; margin: 24px 0 0; max-width: 800px; text-wrap: pretty">{{ t.footerDisclaimer }}</p>
-    <div style="display: flex; flex-wrap: wrap; gap: 12px 28px; justify-content: space-between; align-items: center; padding-top: 24px">
-      <p style="font-size: 13px; margin: 0">{{ t.footerRights }}</p>
-      <a href="{{ privacyHref }}" style="color: #B9C4CB; text-decoration: none; font-size: 13.5px; font-weight: 500" style-hover="color: #2BD594">{{ t.footerPrivacy }}</a>
+    <p class="f-dis">GeoCharge ენთუზიასტის მიერ შექმნილი პროექტია, ელექტრომობილების მოყვარულთათვის. სადგურების შესახებ ინფორმაცია აპლიკაციაში ავტომატურად ახლდება უშუალოდ პროვაიდერებისგან, ამიტომ GeoCharge ვერ იძლევა მონაცემთა 100%-იანი სიზუსტის გარანტიას, ჩვენ ოპერატორების მიერ გამოქვეყნებულ სტატუსებზე ვართ დამოკიდებული. თუ რომელიმე სადგურზე უზუსტობას შენიშნავთ, აუცილებლად მოგვწერეთ, მაშინვე გადავამოწმებთ.</p>
+    <div class="f-bot">
+      <p style="font-size:13px;margin:0">© 2026 GeoCharge. ყველა უფლება დაცულია.</p>
+      <div style="display:flex;align-items:center;gap:20px">
+        <div class="soc">
+          <a href="https://www.facebook.com/geocharge.ge" target="_blank" rel="noopener" aria-label="Facebook"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V7.9c0-.9.25-1.5 1.55-1.5H17V3.6c-.29-.04-1.27-.12-2.41-.12-2.39 0-4.03 1.46-4.03 4.14v2.31H7.85V13H10.56v8h2.94Z"/></svg></a>
+          <a href="https://www.instagram.com/geo.charge" target="_blank" rel="noopener" aria-label="Instagram"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><line x1="17.5" y1="6.5" x2="17.5" y2="6.5"/></svg></a>
+        </div>
+        <a href="/privacy-policy.html" style="color:#B9C4CB;text-decoration:none;font-size:13.5px;font-weight:500">კონფიდენციალურობის პოლიტიკა</a>
+      </div>
     </div>
   </div>
 </footer>
-<sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
-  <div aria-hidden="true" style="height: calc(84px + env(safe-area-inset-bottom, 0px))"></div>
-  <div style="position: fixed; left: 0; right: 0; bottom: 0; z-index: 70; padding: 10px clamp(16px, 4vw, 48px) calc(10px + env(safe-area-inset-bottom, 0px)); background: rgba(13, 17, 21, 0.94); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-top: 1px solid rgba(255, 255, 255, 0.08)">
-    <button onClick="{{ ctaClick }}" style="width: 100%; background: #2BD594; color: #0D1A13; border: none; border-radius: 12px; padding: 15px 12px; font-size: clamp(14px, 4vw, 16px); font-weight: 600; line-height: 1.25; white-space: nowrap; cursor: pointer; font-family: inherit">{{ ctaLabel }}</button>
-  </div>
-</sc-if>
-</x-dc>
-<script type="text/x-dc" data-dc-script>
-class Component extends DCLogic {
-  state = { lang: 'ka', mobile: false, os: 'other', menuOpen: false, openFaq: -1, formStatus: 'idle' };
 
-  SITE = 'https://geocharge.ge';
-  PLAY = 'https://play.google.com/store/apps/details?id=ge.geocharge.app';
-  APPSTORE = 'https://apps.apple.com/ge/app/geocharge/id6785467389';
-  PROVIDERS = [
-    { en: 'mart EV', ka: 'mart EV' },
-    { en: 'E-Space', ka: 'E-Space (ი-სფეის)' },
-    { en: 'EcoCars', ka: 'EcoCars (ეკოკარსი)' },
-    { en: 'Da-Tene', ka: 'Da-Tene (დატენე)' },
-    { en: 'Charger Plus', ka: 'Charger Plus (ჩარჯერ პლუს)' },
-    { en: 'EV Power', ka: 'EV Power (ივი პაუერ)' },
-    { en: 'Tegeta', ka: 'Tegeta (თეგეტა)' },
-    { en: 'Electrify Georgia', ka: 'Electrify Georgia (ელექტრიფაი)' },
-    { en: 'Solar Station', ka: 'Solar Station (სოლარ სტეიშენ)' },
-    { en: 'MOVEO', ka: 'MOVEO (მოვეო)' },
-    { en: 'Gadatene', ka: 'Gadatene (გადატენე)' },
-    { en: 'SOCAR', ka: 'SOCAR (სოკარი)' }
-  ];
+<div class="sticky"><a href="#download" data-cta>ჩამოტვირთვა</a></div>
 
-  translations = {
-    en: {
-      metaTitle: 'GeoCharge — Every EV Charger in Georgia, in One Free App',
-      metaDesc: 'GeoCharge is a free app that maps 800+ EV charging stations across Georgia. All charging networks in one map, with smart filters and route planning. Available on Android and iOS.',
-      nav: [
-        { id: 'about', label: 'About' },
-        { id: 'features', label: 'Features' },
-        { id: 'coverage', label: 'Coverage' },
-        { id: 'how', label: 'How it works' },
-        { id: 'tesla', label: 'Tesla' },
-        { id: 'faq', label: 'FAQ' },
-        { id: 'download', label: 'Download' }
-      ],
-      ctaDownload: 'Download',
-      ctaDownloadIos: 'Download on App Store',
-      ctaDownloadAndroid: 'Get it on Google Play',
-      heroTrust: '800+ charging stations across Georgia, updated automatically — completely free',
-      heroTitle1: 'Every EV charger in Georgia.',
-      heroTitle2: 'One app.',
-      heroSub: 'GeoCharge brings together 800+ public charging stations from across Georgia\u2019s charging networks into a single, free map — so you always know where to charge your electric car.',
-      playTop: 'Get it on',
-      appStoreTop: 'Download on the',
-      comingSoon: 'Coming soon',
-      altNationwide: 'GeoCharge app map showing EV charging stations across all of Georgia',
-      aboutKicker: 'About',
-      aboutTitle: 'What is GeoCharge?',
-      aboutP1: 'Georgia\u2019s EV charging infrastructure is fragmented across many independent operators. Until now, drivers had to juggle several different apps — or none at all — just to find a compatible charger.',
-      aboutP2: 'GeoCharge unifies them. It aggregates public charging stations from across the country\u2019s networks into one interactive map, with consistent station details and filtering.',
-      aboutP3: 'Our mission is to make EV driving in Georgia effortless — by giving every driver one trusted place to find, filter, and navigate to any public charger.',
-      freeNote: 'GeoCharge is completely free for everyone.',
-      featuresKicker: 'Features',
-      featuresTitle: 'Everything you need to charge with confidence',
-      features: [
-        { t: 'Nationwide map of 800+ stations', d: 'Every major public charging point in Georgia, in one view — new stations are added automatically.' },
-        { t: 'All networks in one app', d: 'Multiple independent Georgian charging networks together — no separate app for each.' },
-        { t: 'Smart filtering', d: 'Filter by operator, connector type, and power (kW) to find the right charger fast.' },
-        { t: 'Route planning with charging stops', d: 'Plan trips and find chargers along the way, powered by Google Directions.' },
-        { t: 'Detailed station info', d: 'Connectors, power, location, and operator — all at a glance.' },
-        { t: 'Quick sign-in', d: 'Sign in with Google or email and keep a saved profile.' },
-        { t: 'Georgia — and Europe too', d: 'Cities and highways nationwide, plus optional European countries for EV trips abroad.' },
-        { t: 'Completely free', d: 'No fees, no premium tier. GeoCharge is free for everyone.' }
-      ],
-      coverageKicker: 'Coverage',
-      coverageTitle: 'All of Georgia. One map.',
-      coverageBody: 'All of Georgia\u2019s major public charging networks, together in one place — from city centers to intercity highways. Wherever you drive, GeoCharge shows you the nearest place to plug in. The map keeps growing on its own — new stations appear automatically as providers bring them online.',
-      coverageEurope: 'Traveling beyond Georgia? Switch on European countries in the app settings and GeoCharge will show their charging stations too — so you can take your EV on a road trip across Europe with the same single app.',
-      coverageNetworks: 'Networks we cover',
-      coverageNote: '∗ E-Space chargers are located at SOCAR stations.',
-      coverageMore: 'and more',
-      chargersUnit: 'chargers',
-      stats: [
-        { n: '800+', l: 'charging stations, auto-updated' },
-        { n: '1', l: 'app for every network' },
-        { n: '100%', l: 'free for everyone' }
-      ],
-      howKicker: 'How it works',
-      howTitle: 'Charging in three simple steps',
-      steps: [
-        { n: '1', t: 'Download', d: 'Get GeoCharge free on Google Play or the App Store.' },
-        { n: '2', t: 'Open the map', d: 'Find chargers near you or along your route.' },
-        { n: '3', t: 'Filter & navigate', d: 'Pick the right station, navigate to it, and charge.' }
-      ],
-      galleryKicker: 'Screenshots',
-      galleryTitle: 'Inside the app',
-      gallery: [
-        { caption: 'Nationwide coverage on a single map', alt: 'GeoCharge map of Georgia with charging station clusters in every region' },
-        { caption: 'Live map with station availability', alt: 'GeoCharge dark map of Tbilisi showing available EV charging stations' },
-        { caption: 'Light and dark themes', alt: 'GeoCharge light theme map of Tbilisi with charging stations and filters' },
-        { caption: 'Route planner with charging stops', alt: 'GeoCharge route planner screen with battery level and a suggested charging stop' },
-        { caption: 'Driving across Europe? Switch on more countries', alt: 'GeoCharge settings screen for enabling European countries and their charging stations' }
-      ],
-      teslaKicker: 'Tesla',
-      teslaTitle: 'GeoCharge on your Tesla screen',
-      teslaBody: 'Tesla’s built-in navigation can’t plan charging in Georgia — GeoCharge can. Open tesla.geocharge.ge in the car’s browser: a live map of every charging network plus an EV trip planner with charging stops, designed for the Tesla touchscreen.',
-      teslaStep1t: 'Open the in-car browser',
-      teslaStep1d: 'Go to tesla.geocharge.ge and bookmark it — next time it opens with one tap.',
-      teslaStep2t: 'Sign in',
-      teslaStep2d: 'Use your GeoCharge account. Every account gets a free 24-hour trial on the Tesla screen.',
-      teslaStep3t: 'Unlock with Premium',
-      teslaStep3d: 'Activate the Premium subscription in the phone app — the Tesla screen unlocks instantly, on the same account.',
-      teslaNote: 'Works in the built-in Tesla web browser — nothing to install. Tip: switch the browser to fullscreen for the best experience.',
-      whyTitle: 'Why drivers choose GeoCharge',
-      why: [
-        'One app instead of many',
-        'The most complete station coverage in Georgia',
-        'Plan longer trips with confidence',
-        'Free, fast, and simple'
-      ],
-      faqTitle: 'Frequently asked questions',
-      faq: [
-        { q: 'Which Georgian charging networks does GeoCharge include?', a: 'GeoCharge brings together Georgia\u2019s major public EV charging networks on one map: mart EV, E-Space, EcoCars, Da-Tene, Charger Plus, EV Power, Tegeta, Electrify Georgia, Solar Station, MOVEO, Gadatene, and the chargers at SOCAR stations. New networks are added automatically as they come online.' },
-        { q: 'Can I see mart EV, E-Space, Tegeta and other providers in one app?', a: 'Yes. Chargers from mart EV, E-Space, EcoCars, Da-Tene, Charger Plus, EV Power, Tegeta, Electrify Georgia, Solar Station, MOVEO and Gadatene all appear together on the GeoCharge map, so you no longer need a separate app for each network.' },
-        { q: 'What is GeoCharge?', a: 'GeoCharge is a free app that shows EV charging stations across Georgia on one map, aggregating multiple charging networks.' },
-        { q: 'Is GeoCharge free?', a: 'Yes, GeoCharge is completely free to use.' },
-        { q: 'How many charging stations does GeoCharge show?', a: 'GeoCharge shows 800+ public charging stations across Georgia — and new stations are added automatically as they come online.' },
-        { q: 'Does GeoCharge work across all of Georgia?', a: 'Yes — in cities and along highways nationwide.' },
-        { q: 'Can I plan a route with charging stops?', a: 'Yes, GeoCharge includes route planning so you can find chargers along your way.' },
-        { q: 'What devices is GeoCharge available on?', a: 'GeoCharge is available on both Android (Google Play) and iOS (App Store).' },
-        { q: 'Does GeoCharge work on the Tesla screen?', a: 'Yes — open tesla.geocharge.ge in the Tesla in-car browser: a live charger map plus an EV trip planner with charging stops, built for the car screen. Sign in with your GeoCharge account for a free 24-hour trial; a Premium subscription activated in the phone app unlocks it permanently.' },
-        { q: 'Do I need an account?', a: 'You can sign in quickly with Google or email to save your profile.' },
-        { q: 'How is GeoCharge different from using each network\u2019s own app?', a: 'Instead of juggling multiple apps, GeoCharge brings stations from across Georgia\u2019s networks into a single map with consistent details and filtering.' }
-      ],
-      dlTitle: 'Download GeoCharge for free',
-      dlSub: 'Available now on Google Play and the App Store.',
-      dlFree: 'Free forever. No ads, no premium tier.',
-      contactKicker: 'Contact',
-      contactTitle: 'Get in touch',
-      contactSub: 'A question, feedback, or a missing station? Send us a message — we read everything.',
-      fName: 'Name',
-      fNamePh: 'Your name',
-      fEmail: 'Email',
-      fEmailPh: 'you@example.com',
-      fSubject: 'Subject (optional)',
-      fSubjectPh: 'What is it about?',
-      fMessage: 'Message',
-      fMessagePh: 'Write your message here\u2026',
-      fSend: 'Send message',
-      fSending: 'Sending\u2026',
-      fOk: 'Thank you! Your message has been sent.',
-      fErr: 'Something went wrong. Please try again.',
-      footerTagline: 'Every EV charger in Georgia, in one free app.',
-      footerDisclaimer: 'GeoCharge is a passion project, built and maintained by an EV enthusiast. Station information is updated automatically from every provider, so while we do our best, GeoCharge cannot guarantee that every detail is 100% accurate — we depend on the statuses our providers publish. If you ever spot incorrect information about a station, please write to us and we will look into it right away.',
-      footerPrivacy: 'Privacy Policy',
-      footerRights: '\u00A9 2026 GeoCharge. All rights reserved.'
-    },
-    ka: {
-      metaTitle: 'GeoCharge, ელექტრომობილის ყველა დამტენი საქართველოში, ერთ უფასო აპლიკაციაში',
-      metaDesc: 'GeoCharge, უფასო აპლიკაცია, რომელიც 800+ EV დამტენ სადგურს აჩვენებს მთელ საქართველოში ერთ რუკაზე. ყველა ქსელი ერთად, ჭკვიანი ფილტრებითა და მარშრუტის დაგეგმვით. ხელმისაწვდომია Android-სა და iOS-ზე.',
-      nav: [
-        { id: 'about', label: 'შესახებ' },
-        { id: 'features', label: 'ფუნქციები' },
-        { id: 'coverage', label: 'დაფარვა' },
-        { id: 'how', label: 'როგორ მუშაობს' },
-        { id: 'tesla', label: 'Tesla' },
-        { id: 'faq', label: 'კითხვები' },
-        { id: 'download', label: 'ჩამოტვირთვა' }
-      ],
-      ctaDownload: 'ჩამოტვირთვა',
-      ctaDownloadIos: 'ჩამოტვირთვა App Store-დან',
-      ctaDownloadAndroid: 'ჩამოტვირთვა Google Play-დან',
-      heroTrust: '800+ დამტენი სადგური მთელ საქართველოში, ავტომატური განახლებით, სრულიად უფასოდ',
-      heroTitle1: 'ელექტრომობილის ყველა დამტენი საქართველოში.',
-      heroTitle2: 'ერთ აპლიკაციაში.',
-      heroSub: 'GeoCharge აერთიანებს 800-ზე მეტ საჯარო დამტენ სადგურს საქართველოს სხვადასხვა ქსელიდან ერთ უფასო ინტერაქტიულ რუკაზე, ყოველთვის იცით, სად დატენოთ ელექტრომანქანა.',
-      playTop: 'ხელმისაწვდომია',
-      appStoreTop: 'ჩამოტვირთეთ',
-      comingSoon: 'მალე',
-      altNationwide: 'GeoCharge აპლიკაციის რუკა, ელექტრომობილის დამტენი სადგურები მთელ საქართველოში',
-      aboutKicker: 'შესახებ',
-      aboutTitle: 'რა არის GeoCharge?',
-      aboutP1: 'საქართველოში ელექტრომობილების დატენვის ინფრასტრუქტურა მრავალ დამოუკიდებელ ოპერატორზეა გადანაწილებული. აქამდე მძღოლებს რამდენიმე სხვადასხვა აპლიკაციის გამოყენება უწევდათ შესაფერისი დამტენის მოსაძებნად, ან საერთოდ აპლიკაციის გარეშე რჩებოდნენ.',
-      aboutP2: 'GeoCharge მათ აერთიანებს: ქვეყნის ქსელების საჯარო დამტენი სადგურები თავმოყრილია ერთ ინტერაქტიულ რუკაზე, ერთიანი დეტალებითა და ფილტრებით.',
-      aboutP3: 'ჩვენი მისიაა, ელექტრომობილით გადაადგილება საქართველოში მარტივი გახდეს, ყველა მძღოლს ჰქონდეს ერთი სანდო ადგილი ნებისმიერი საჯარო დამტენის მოსაძებნად, გასაფილტრად და ნავიგაციისთვის.',
-      freeNote: 'GeoCharge სრულიად უფასოა ყველასთვის.',
-      featuresKicker: 'ფუნქციები',
-      featuresTitle: 'ყველაფერი, რაც დატენვისთვის გჭირდებათ',
-      features: [
-        { t: '800+ სადგური ერთ რუკაზე', d: 'საქართველოს ყველა მთავარი საჯარო დამტენი წერტილი ერთ ხედში, ახალი სადგურები ავტომატურად ემატება.' },
-        { t: 'ყველა ქსელი ერთ აპლიკაციაში', d: 'რამდენიმე დამოუკიდებელი ქართული ქსელი ერთად, ცალკე აპლიკაციები აღარ გჭირდებათ.' },
-        { t: 'ჭკვიანი ფილტრები', d: 'გაფილტრეთ ოპერატორის, კონექტორის ტიპისა და სიმძლავრის (kW) მიხედვით.' },
-        { t: 'მარშრუტი დატენვის გაჩერებებით', d: 'დაგეგმეთ მგზავრობა და იპოვეთ დამტენები გზაში, Google Directions-ის საფუძველზე.' },
-        { t: 'დეტალური ინფორმაცია', d: 'კონექტორები, სიმძლავრე, მდებარეობა და ოპერატორი, ერთი შეხედვით.' },
-        { t: 'სწრაფი ავტორიზაცია', d: 'შესვლა Google-ით ან ელფოსტით, შენახული პროფილით.' },
-        { t: 'საქართველო, და ევროპაც', d: 'ქალაქები და ავტომაგისტრალები მთელ ქვეყანაში, სურვილისამებრ კი ევროპის ქვეყნების დამტენებიც, საზღვარგარეთ მოგზაურობისთვის.' },
-        { t: 'სრულიად უფასო', d: 'არც გადასახადი, არც პრემიუმი, GeoCharge უფასოა ყველასთვის.' }
-      ],
-      coverageKicker: 'დაფარვა',
-      coverageTitle: 'მთელი საქართველო. ერთი რუკა.',
-      coverageBody: 'საქართველოს ყველა ძირითადი საჯარო დამტენი ქსელი, ერთად, ერთ ადგილას. ქალაქის ცენტრებიდან საქალაქთაშორისო ავტომაგისტრალებამდე: სადაც არ უნდა მგზავრობდეთ, GeoCharge გაჩვენებთ უახლოეს დატენვის ადგილს. რუკა კი თავისით იზრდება, ახალი სადგურები ავტომატურად ჩნდება, როგორც კი პროვაიდერები მათ აამუშავებენ.',
-      coverageEurope: 'აპირებთ მოგზაურობას საქართველოს ფარგლებს გარეთ? ჩართეთ ევროპის ქვეყნები აპლიკაციის პარამეტრებში და GeoCharge მათ დამტენ სადგურებსაც გაჩვენებთ, ელექტრომობილით ევროპაშიც თავისუფლად იმოგზაურებთ, იმავე ერთი აპლიკაციით.',
-      coverageNetworks: 'ქსელები, რომლებსაც ვფარავთ',
-      coverageNote: '∗ E-Space დამტენები განთავსებულია SOCAR-ის სადგურებზე.',
-      coverageMore: 'და სხვები',
-      chargersUnit: 'დამტენი',
-      stats: [
-        { n: '800+', l: 'დამტენი სადგური, ავტომატურად განახლებადი' },
-        { n: '1', l: 'აპლიკაცია ყველა ქსელისთვის' },
-        { n: '100%', l: 'უფასო ყველასთვის' }
-      ],
-      howKicker: 'როგორ მუშაობს',
-      howTitle: 'დატენვა სამ მარტივ ნაბიჯში',
-      steps: [
-        { n: '1', t: 'ჩამოტვირთეთ', d: 'ჩამოტვირთეთ GeoCharge უფასოდ Google Play-დან ან App Store-დან.' },
-        { n: '2', t: 'გახსენით რუკა', d: 'იპოვეთ დამტენები თქვენ გარშემო ან მარშრუტზე.' },
-        { n: '3', t: 'გაფილტრეთ და დატენეთ', d: 'აირჩიეთ შესაფერისი სადგური, გაჰყევით ნავიგაციას და დატენეთ.' }
-      ],
-      galleryKicker: 'ეკრანები',
-      galleryTitle: 'აპლიკაციის ეკრანები',
-      gallery: [
-        { caption: 'მთელი ქვეყნის დაფარვა ერთ რუკაზე', alt: 'GeoCharge-ის რუკა, დამტენი სადგურების ჯგუფები საქართველოს ყველა რეგიონში' },
-        { caption: 'ცოცხალი რუკა ხელმისაწვდომობის სტატუსით', alt: 'GeoCharge-ის მუქი რუკა თბილისში ხელმისაწვდომი დამტენი სადგურებით' },
-        { caption: 'ნათელი და მუქი თემები', alt: 'GeoCharge-ის ნათელი თემის რუკა თბილისში დამტენი სადგურებითა და ფილტრებით' },
-        { caption: 'მარშრუტის დაგეგმვა დატენვის გაჩერებებით', alt: 'GeoCharge-ის მარშრუტის დაგეგმვის ეკრანი ბატარეის დონითა და დატენვის გაჩერებით' },
-        { caption: 'მოგზაურობთ ევროპაში? ჩართეთ სასურველი ქვეყნები', alt: 'GeoCharge-ის პარამეტრების ეკრანი ევროპის ქვეყნებისა და მათი დამტენი სადგურების ჩასართავად' }
-      ],
-      teslaKicker: 'Tesla',
-      teslaTitle: 'GeoCharge შენი Tesla-ს ეკრანზე',
-      teslaBody: 'Tesla-ს ჩაშენებული ნავიგაცია საქართველოში დატენვის დაგეგმვას ვერ ახერხებს — GeoCharge ახერხებს. გახსენი tesla.geocharge.ge მანქანის ბრაუზერში: ყველა ქსელის ცოცხალი რუკა და EV მარშრუტის დამგეგმავი დატენვის გაჩერებებით, სპეციალურად Tesla-ს ეკრანზე მორგებული.',
-      teslaStep1t: 'გახსენი მანქანის ბრაუზერი',
-      teslaStep1d: 'შედი tesla.geocharge.ge-ზე და შეინახე bookmark-ად — შემდეგ ჯერზე ერთი შეხებით გაიხსნება.',
-      teslaStep2t: 'შედი ანგარიშით',
-      teslaStep2d: 'გამოიყენე შენი GeoCharge-ის ანგარიში. ყველა ანგარიშს Tesla-ს ეკრანზე 24-საათიანი უფასო საცდელი პერიოდი აქვს.',
-      teslaStep3t: 'გახსენი Premium-ით',
-      teslaStep3d: 'გააქტიურე Premium გამოწერა ტელეფონის აპში — Tesla-ს ეკრანი მაშინვე გაიხსნება, იმავე ანგარიშზე.',
-      teslaNote: 'მუშაობს Tesla-ს ჩაშენებულ ბრაუზერში — ინსტალაცია არ სჭირდება. რჩევა: ჩართე ბრაუზერის სრულეკრანიანი რეჟიმი.',
-      whyTitle: 'რატომ ირჩევენ მძღოლები GeoCharge-ს',
-      why: [
-        'ერთი აპლიკაცია მრავლის ნაცვლად',
-        'ყველაზე სრული დაფარვა საქართველოში',
-        'შორი მგზავრობა, თავდაჯერებულად',
-        'უფასო, სწრაფი და მარტივი'
-      ],
-      faqTitle: 'ხშირად დასმული კითხვები',
-      faq: [
-        { q: 'რომელ ქართულ დამტენ ქსელებს აერთიანებს GeoCharge?', a: 'GeoCharge ერთ რუკაზე აერთიანებს საქართველოს წამყვან EV დამტენ ქსელებს: mart EV, E-Space (ი-სფეის), EcoCars (ეკოკარსი), Da-Tene (დატენე), Charger Plus (ჩარჯერ პლუს), EV Power (ივი პაუერ), Tegeta (თეგეტა), Electrify Georgia (ელექტრიფაი), Solar Station (სოლარ სტეიშენ), MOVEO (მოვეო), Gadatene (გადატენე) და SOCAR-ის (სოკარი) სადგურებზე განთავსებული დამტენები. ახალი ქსელები ავტომატურად ემატება.' },
-        { q: 'შემიძლია ერთ აპლიკაციაში ვნახო mart EV, E-Space, Tegeta და სხვა პროვაიდერების დამტენები?', a: 'დიახ. mart EV, E-Space, EcoCars, Da-Tene (დატენე), Charger Plus, EV Power, Tegeta (თეგეტა), Electrify Georgia, Solar Station, MOVEO და Gadatene (გადატენე) — ყველა ერთ რუკაზეა GeoCharge-ში. ცალკე აპლიკაცია თითო ქსელისთვის აღარ გჭირდება.' },
-        { q: 'რა არის GeoCharge?', a: 'GeoCharge არის უფასო აპლიკაცია, რომელიც საქართველოს EV დამტენ სადგურებს ერთ რუკაზე აჩვენებს და რამდენიმე დამტენ ქსელს აერთიანებს.' },
-        { q: 'GeoCharge უფასოა?', a: 'დიახ, GeoCharge სრულიად უფასოა.' },
-        { q: 'რამდენ დამტენ სადგურს აჩვენებს GeoCharge?', a: '800-ზე მეტ საჯარო დამტენ სადგურს მთელ საქართველოში, ახალი სადგურები კი ავტომატურად ემატება, როგორც კი ამუშავდება.' },
-        { q: 'მუშაობს GeoCharge მთელ საქართველოში?', a: 'დიახ, ქალაქებშიც და ავტომაგისტრალებზეც, მთელი ქვეყნის მასშტაბით.' },
-        { q: 'შემიძლია მარშრუტის დაგეგმვა დატენვის გაჩერებებით?', a: 'დიახ, GeoCharge-ს აქვს მარშრუტის დაგეგმვის ფუნქცია, რომ გზაში დამტენები იპოვოთ.' },
-        { q: 'რომელ მოწყობილობებზეა GeoCharge ხელმისაწვდომი?', a: 'GeoCharge ხელმისაწვდომია როგორც Android-ზე (Google Play), ისე iOS-ზე (App Store).' },
-        { q: 'მუშაობს GeoCharge Tesla-ს ეკრანზე?', a: 'დიახ — გახსენი tesla.geocharge.ge Tesla-ს ჩაშენებულ ბრაუზერში: დამტენების ცოცხალი რუკა და EV მარშრუტის დამგეგმავი დატენვის გაჩერებებით, მანქანის ეკრანზე მორგებული. შედი GeoCharge-ის ანგარიშით და მიიღე 24-საათიანი უფასო საცდელი პერიოდი; ტელეფონის აპში გააქტიურებული Premium გამოწერა კი მუდმივად ხსნის.' },
-        { q: 'მჭირდება ანგარიში?', a: 'შეგიძლიათ სწრაფად შეხვიდეთ Google-ით ან ელფოსტით და შეინახოთ პროფილი.' },
-        { q: 'რით განსხვავდება GeoCharge ცალკეული ქსელების აპლიკაციებისგან?', a: 'რამდენიმე აპლიკაციის ნაცვლად GeoCharge ყველა ქსელის სადგურს ერთ რუკაზე აჩვენებს, ერთიანი დეტალებითა და ფილტრებით.' },
-        { q: 'შემიძლია GeoCharge-ის გამოყენება ევროპაში?', a: 'დიახ. პარამეტრებში ჩართეთ ევროპის სასურველი ქვეყნები და GeoCharge მათ დამტენ სადგურებსაც იმავე რუკაზე გაჩვენებთ, ასე ელექტრომობილით ევროპაში მოგზაურობასაც მარტივად დაგეგმავთ.' }
-      ],
-      dlTitle: 'ჩამოტვირთეთ GeoCharge უფასოდ',
-      dlSub: 'ხელმისაწვდომია Google Play-სა და App Store-ზე.',
-      dlFree: '',
-      contactKicker: 'კონტაქტი',
-      contactTitle: 'დაგვიკავშირდით',
-      contactSub: 'კითხვა, შენიშვნა თუ გამორჩენილი სადგური? მოგვწერეთ, ყველა შეტყობინებას ვკითხულობთ.',
-      fName: 'სახელი',
-      fNamePh: 'თქვენი სახელი',
-      fEmail: 'ელფოსტა',
-      fEmailPh: 'you@example.com',
-      fSubject: 'თემა (არასავალდებულო)',
-      fSubjectPh: 'რას ეხება?',
-      fMessage: 'შეტყობინება',
-      fMessagePh: 'დაწერეთ შეტყობინება აქ…',
-      fFile: 'დანართი (არასავალდებულო)',
-      fFileNote: 'დასაშვებია: PDF, ZIP, DOC/DOCX, XLSX, HTML, სურათები. ფაილის მაქსიმალური ზომა: 10 MB.',
-      fFileBig: 'მიმაგრებული ფაილი 10 MB-ს აღემატება. გთხოვთ, აირჩიოთ უფრო პატარა ფაილი.',
-      fSend: 'გაგზავნა',
-      fSending: 'იგზავნება…',
-      fOk: 'მადლობა! თქვენი შეტყობინება გაიგზავნა.',
-      fErr: 'დაფიქსირდა შეცდომა. გთხოვთ, სცადოთ თავიდან.',
-      footerTagline: 'ელექტრომობილის ყველა დამტენი საქართველოში, ერთ უფასო აპლიკაციაში.',
-      footerDisclaimer: 'GeoCharge ენთუზიასტის მიერ შექმნილი პროექტია, ელექტრომობილების მოყვარულთათვის. სადგურების შესახებ ინფორმაცია აპლიკაციაში ავტომატურად ახლდება უშუალოდ პროვაიდერებისგან, ამიტომ GeoCharge ვერ იძლევა მონაცემთა 100%-იანი სიზუსტის გარანტიას, ჩვენ ოპერატორების მიერ გამოქვეყნებულ სტატუსებზე ვართ დამოკიდებული. თუ რომელიმე სადგურზე უზუსტობას შენიშნავთ, აუცილებლად მოგვწერეთ, მაშინვე გადავამოწმებთ.',
-      footerPrivacy: 'კონფიდენციალურობის პოლიტიკა',
-      footerRights: '© 2026 GeoCharge. ყველა უფლება დაცულია.'
-    }
-  };
-
-  componentDidMount() {
-    let lang = 'ka';
-    try {
-      const qp = new URLSearchParams(window.location.search).get('lang');
-      const saved = window.localStorage.getItem('geocharge-lang');
-      if (qp === 'en' || qp === 'ka') lang = qp;
-      else if (saved === 'en' || saved === 'ka') lang = saved;
-    } catch (e) {}
-    if (lang !== this.state.lang) this.setState({ lang });
-    this.updateMeta(lang);
-    this._mq = window.matchMedia('(max-width: 1199px)');
-    this._onMq = () => this.setState({ mobile: this._mq.matches, menuOpen: false });
-    this._mq.addEventListener('change', this._onMq);
-    this.setState({ mobile: this._mq.matches, os: this.detectOs() });
-    setTimeout(() => this.setupReveal(), 200);
-  }
-
-  componentWillUnmount() {
-    if (this._mq) this._mq.removeEventListener('change', this._onMq);
-  }
-
-  detectOs() {
-    try {
-      const ua = navigator.userAgent || '';
-      if (/android/i.test(ua)) return 'android';
-      if (/iPhone|iPad|iPod/i.test(ua)) return 'ios';
-      // iPadOS 13+ reports a desktop Safari UA; touch points give it away.
-      if (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1) return 'ios';
-    } catch (e) {}
-    return 'other';
-  }
-
-  setupReveal() {
-    try {
-      const els = document.querySelectorAll('[data-reveal]');
-      const io = new IntersectionObserver((entries) => {
-        entries.forEach((en) => {
-          if (en.isIntersecting) {
-            en.target.style.opacity = '1';
-            en.target.style.transform = 'none';
-            io.unobserve(en.target);
-          }
-        });
-      }, { threshold: 0.1 });
-      els.forEach((el) => {
-        const r = el.getBoundingClientRect();
-        if (r.top < window.innerHeight * 0.92) return;
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(18px)';
-        el.style.transition = 'opacity 0.65s ease, transform 0.65s ease';
-        io.observe(el);
-      });
-    } catch (e) {}
-  }
-
-  setLang(l) {
-    try { window.localStorage.setItem('geocharge-lang', l); } catch (e) {}
-    this.setState({ lang: l, menuOpen: false });
-    this.updateMeta(l);
-  }
-
-  ensureMeta(attr, key, content) {
-    let el = document.head.querySelector('meta[' + attr + '="' + key + '"]');
-    if (!el) {
-      el = document.createElement('meta');
-      el.setAttribute(attr, key);
-      document.head.appendChild(el);
-    }
-    el.setAttribute('content', content);
-  }
-
-  ensureLink(id, rel, href, hreflang) {
-    let el = document.getElementById(id);
-    if (!el) {
-      el = document.createElement('link');
-      el.id = id;
-      document.head.appendChild(el);
-    }
-    el.rel = rel;
-    el.href = href;
-    if (hreflang) el.hreflang = hreflang;
-  }
-
-  updateMeta(lang) {
-    const t = this.translations[lang];
-    document.title = t.metaTitle;
-    document.documentElement.lang = lang;
-    this.ensureMeta('name', 'description', t.metaDesc);
-    this.ensureMeta('name', 'viewport', 'width=device-width, initial-scale=1');
-    this.ensureMeta('property', 'og:title', t.metaTitle);
-    this.ensureMeta('property', 'og:description', t.metaDesc);
-    this.ensureMeta('property', 'og:type', 'website');
-    this.ensureMeta('property', 'og:url', this.SITE + '/');
-    this.ensureMeta('property', 'og:image', this.SITE + '/assets/icon-1024.png');
-    this.ensureMeta('property', 'og:locale', lang === 'ka' ? 'ka_GE' : 'en_US');
-    this.ensureMeta('property', 'og:site_name', 'GeoCharge');
-    this.ensureMeta('name', 'twitter:card', 'summary_large_image');
-    this.ensureMeta('name', 'twitter:title', t.metaTitle);
-    this.ensureMeta('name', 'twitter:description', t.metaDesc);
-    this.ensureMeta('name', 'twitter:image', this.SITE + '/assets/icon-1024.png');
-    this.ensureMeta('name', 'keywords', (lang === 'ka'
-      ? 'GeoCharge, ელექტრომობილის დამტენი, EV დამტენი საქართველო, დამტენი სადგურები, დატენვის რუკა, ელმობილის დამტენი, '
-      : 'GeoCharge, EV charging Georgia, electric car chargers, charging stations map, EV charger app Georgia, ')
-      + this.PROVIDERS.map((p) => (lang === 'ka' ? p.ka : p.en)).join(', '));
-    this.ensureLink('gc-canonical', 'canonical', this.SITE + '/');
-    this.ensureLink('gc-alt-ka', 'alternate', this.SITE + '/?lang=ka', 'ka');
-    this.ensureLink('gc-alt-en', 'alternate', this.SITE + '/?lang=en', 'en');
-    this.ensureLink('gc-alt-xd', 'alternate', this.SITE + '/', 'x-default');
-    let s = document.getElementById('gc-jsonld');
-    if (!s) {
-      s = document.createElement('script');
-      s.id = 'gc-jsonld';
-      s.type = 'application/ld+json';
-      document.head.appendChild(s);
-    }
-    const provs = this.PROVIDERS.map((p) => (lang === 'ka' ? p.ka : p.en));
-    s.textContent = JSON.stringify({
-      '@context': 'https://schema.org',
-      '@graph': [
-        {
-          '@type': 'Organization',
-          '@id': this.SITE + '/#org',
-          name: 'GeoCharge',
-          url: this.SITE + '/',
-          logo: this.SITE + '/assets/icon-1024.png',
-          description: t.metaDesc,
-          areaServed: { '@type': 'Country', name: 'Georgia' },
-          sameAs: [this.PLAY]
-        },
-        {
-          '@type': 'WebSite',
-          '@id': this.SITE + '/#website',
-          name: 'GeoCharge',
-          url: this.SITE + '/',
-          inLanguage: lang,
-          publisher: { '@id': this.SITE + '/#org' }
-        },
-        {
-          '@type': 'MobileApplication',
-          name: 'GeoCharge',
-          operatingSystem: 'Android, iOS',
-          applicationCategory: 'TravelApplication',
-          description: t.metaDesc,
-          installUrl: this.PLAY,
-          downloadUrl: this.PLAY,
-          url: this.SITE + '/',
-          inLanguage: lang,
-          image: this.SITE + '/assets/icon-1024.png',
-          screenshot: this.SITE + '/assets/shot-nationwide.jpg',
-          author: { '@id': this.SITE + '/#org' },
-          publisher: { '@id': this.SITE + '/#org' },
-          featureList: provs,
-          offers: { '@type': 'Offer', price: '0', priceCurrency: 'GEL' }
-        },
-        {
-          '@type': 'ItemList',
-          name: lang === 'ka' ? 'GeoCharge-ში გაერთიანებული EV დამტენი ქსელები' : 'EV charging networks in GeoCharge',
-          numberOfItems: provs.length,
-          itemListElement: provs.map((nm, i) => ({
-            '@type': 'ListItem',
-            position: i + 1,
-            item: { '@type': 'Organization', name: nm }
-          }))
-        },
-        {
-          '@type': 'FAQPage',
-          inLanguage: lang,
-          mainEntity: t.faq.map((f) => ({
-            '@type': 'Question',
-            name: f.q,
-            acceptedAnswer: { '@type': 'Answer', text: f.a }
-          }))
-        }
-      ]
+<script>
+(function(){
+  var PLAY='https://play.google.com/store/apps/details?id=ge.geocharge.app';
+  var STORE='https://apps.apple.com/ge/app/geocharge/id6785467389';
+  var ua=navigator.userAgent||'',os='other';
+  if(/android/i.test(ua))os='android';
+  else if(/iPhone|iPad|iPod/i.test(ua)||(/Macintosh/i.test(ua)&&navigator.maxTouchPoints>1))os='ios';
+  if(os!=='other'){
+    var url=os==='ios'?STORE:PLAY;
+    var label=os==='ios'?'ჩამოტვირთვა App Store-დან':'ჩამოტვირთვა Google Play-დან';
+    [].forEach.call(document.querySelectorAll('[data-cta]'),function(a){
+      a.href=url;a.target='_blank';a.rel='noopener';a.textContent=label;
     });
   }
-
-  scrollToId(id, e) {
-    if (e) e.preventDefault();
-    this.setState({ menuOpen: false });
-    const el = document.getElementById(id);
-    if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY - 66;
-    window.scrollTo({ top, behavior: 'smooth' });
+  var b=document.getElementById('burger'),m=document.getElementById('mnav');
+  if(b&&m){
+    b.addEventListener('click',function(){
+      var open=m.getAttribute('data-open')==='1';
+      m.setAttribute('data-open',open?'0':'1');
+      b.setAttribute('aria-expanded',String(!open));
+    });
+    [].forEach.call(m.querySelectorAll('a'),function(a){
+      a.addEventListener('click',function(){m.setAttribute('data-open','0');b.setAttribute('aria-expanded','false');});
+    });
   }
-
-  async submitForm(e) {
-    e.preventDefault();
-    const form = e.target;
-    const data = new FormData(form);
-    if (data.get('botcheck')) return;
-    data.delete('botcheck');
-    const file = data.get('attachment');
-    if (file && typeof file === 'object') {
-      if (!file.size) data.delete('attachment');
-      else if (file.size > 10 * 1024 * 1024) { this.setState({ formStatus: 'big' }); return; }
-    }
-    this.setState({ formStatus: 'sending' });
-    try {
-      const res = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        body: data
-      });
-      const json = await res.json();
-      if (json && json.success) {
-        this.setState({ formStatus: 'ok' });
-        form.reset();
-      } else {
-        this.setState({ formStatus: 'err' });
-      }
-    } catch (err) {
-      this.setState({ formStatus: 'err' });
-    }
+  var f=document.getElementById('gc-form');
+  if(f){
+    f.addEventListener('submit',function(e){
+      e.preventDefault();
+      var btn=document.getElementById('gc-submit'),ok=document.getElementById('gc-ok'),err=document.getElementById('gc-err');
+      ok.hidden=true;err.hidden=true;btn.disabled=true;btn.textContent='იგზავნება…';
+      fetch('https://api.web3forms.com/submit',{method:'POST',body:new FormData(f)})
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if(d&&d.success){ok.hidden=false;f.reset();}else{err.hidden=false;}
+        })
+        .catch(function(){err.hidden=false;})
+        .then(function(){btn.disabled=false;btn.textContent='გაგზავნა';});
+    });
   }
-
-  icn(children) {
-    return React.createElement(
-      'svg',
-      { width: 25, height: 25, viewBox: '0 0 24 24', fill: 'none', stroke: '#17995F', strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true },
-      children.map((c, i) => React.createElement(c[0], Object.assign({ key: i }, c[1])))
-    );
-  }
-
-  get icons() {
-    const P = (d) => ['path', { d }];
-    const C = (cx, cy, r) => ['circle', { cx, cy, r }];
-    return [
-      [P('M12 21s-7-5.3-7-11a7 7 0 0 1 14 0c0 5.7-7 11-7 11Z'), C(12, 10, 2.6)],
-      [P('M12 3l9 5-9 5-9-5 9-5Z'), P('M3 12.5l9 5 9-5'), P('M3 17l9 5 9-5')],
-      [P('M4 5h16l-6.5 7.6V18l-3 2v-7.4L4 5Z')],
-      [C(6, 6, 2.2), C(18, 18, 2.2), P('M8.2 6H14a4 4 0 0 1 0 8h-4a4 4 0 0 0 0 8h5.8')],
-      [C(12, 12, 9), P('M12 11v5.2'), P('M12 7.6v0.2')],
-      [C(12, 8, 3.4), P('M5.5 20a6.5 6.5 0 0 1 13 0')],
-      [P('M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z'), P('M9 4v14'), P('M15 6v14')],
-      [P('M20.6 12.7 12.7 20.6a2 2 0 0 1-2.8 0L4 14.7V4h10.7l5.9 5.9a2 2 0 0 1 0 2.8Z'), C(8.6, 8.6, 1.3)]
-    ];
-  }
-
-  langBtn(active) {
-    return {
-      background: active ? '#2BD594' : 'transparent',
-      color: active ? '#0D1A13' : '#B9C4CB',
-      border: 'none',
-      padding: '7px 13px',
-      fontWeight: 600,
-      fontSize: '12.5px',
-      cursor: 'pointer',
-      fontFamily: 'inherit',
-      letterSpacing: '0.03em'
-    };
-  }
-
-  renderVals() {
-    const lang = this.state.lang;
-    const t = this.translations[lang];
-    const status = this.state.formStatus;
-    const os = this.state.os;
-    return {
-      t,
-      isMobile: this.state.mobile,
-      isDesktop: !this.state.mobile,
-      menuOpen: this.state.menuOpen,
-      toggleMenu: () => this.setState((s) => ({ menuOpen: !s.menuOpen })),
-      setKa: () => this.setLang('ka'),
-      setEn: () => this.setLang('en'),
-      kaBtnStyle: this.langBtn(lang === 'ka'),
-      enBtnStyle: this.langBtn(lang === 'en'),
-      navItems: t.nav.map((n) => ({
-        label: n.label,
-        href: '#' + n.id,
-        onClick: (e) => this.scrollToId(n.id, e)
-      })),
-      ctaLabel: os === 'ios' ? t.ctaDownloadIos : os === 'android' ? t.ctaDownloadAndroid : t.ctaDownload,
-      ctaClick: (e) => {
-        const url = os === 'ios' ? this.APPSTORE : os === 'android' ? this.PLAY : null;
-        if (!url) return this.scrollToId('download', e);
-        if (e) e.preventDefault();
-        this.setState({ menuOpen: false });
-        window.location.href = url;
-      },
-      goTop: (e) => { if (e) e.preventDefault(); this.setState({ menuOpen: false }); window.scrollTo({ top: 0, behavior: 'smooth' }); },
-      featureCards: t.features.map((f, i) => ({ t: f.t, d: f.d, icon: this.icn(this.icons[i]) })),
-      stats: t.stats,
-      steps: t.steps,
-      gal: {
-        cap1: t.gallery[0].caption, alt1: t.gallery[0].alt,
-        cap2: t.gallery[1].caption, alt2: t.gallery[1].alt,
-        cap3: t.gallery[2].caption, alt3: t.gallery[2].alt,
-        cap4: t.gallery[3].caption, alt4: t.gallery[3].alt,
-        cap5: t.gallery[4].caption, alt5: t.gallery[4].alt
-      },
-      whyItems: t.why,
-      faqItems: t.faq.map((f, i) => ({
-        q: f.q,
-        a: f.a,
-        open: this.state.openFaq === i,
-        sign: this.state.openFaq === i ? '−' : '+',
-        toggle: () => this.setState((s) => ({ openFaq: s.openFaq === i ? -1 : i }))
-      })),
-      submitForm: (e) => this.submitForm(e),
-      isSending: status === 'sending',
-      showOk: status === 'ok',
-      showErr: status === 'err' || status === 'big',
-      errText: status === 'big' ? t.fFileBig : t.fErr,
-      submitLabel: status === 'sending' ? t.fSending : t.fSend,
-      privacyHref: 'privacy-policy.html?lang=' + lang
-    };
-  }
-}
+})();
 </script>
 </body>
 </html>
