@@ -12,7 +12,7 @@
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = path.join(ROOT, 'site');
@@ -186,7 +186,7 @@ const L = {
 };
 
 /* ── shared chrome ───────────────────────────────────────────────────────── */
-const CSS = `
+export const CSS = `
 :root{--ink:#11161A;--ink-2:#5A6671;--dark:#11161A;--dark-2:#0D1115;
 --accent:#2BD594;--accent-d:#17995F;--on-accent:#0D1A13;--mint:#ECFAF3;--mint-b:#C8EFDD;
 --soft:#F6FAF8;--line:#E3EEE8;--on-dark:#A7B4BD;--on-dark-2:#B9C4CB}
@@ -251,7 +251,7 @@ gap:12px 26px;justify-content:space-between;align-items:center;font-size:13px}
 .note{color:#8B98A1;font-size:13px;margin:12px 0 0}
 `.trim();
 
-function shell({ lang, title, desc, canonical, altHref, jsonld, body }) {
+export function shell({ lang, title, desc, canonical, altHref, jsonld, body }) {
   const t = L[lang];
   const other = lang === 'ka' ? 'en' : 'ka';
   const kaHref = lang === 'ka' ? canonical : altHref;
@@ -687,8 +687,13 @@ ${allProviders.filter(([p]) => p !== provider).map(([p, l]) => `<a href="${t.bas
 
 /* ── sitemap ─────────────────────────────────────────────────────────────── */
 function sitemap(pairs, today) {
+  // Hand-written guides live in tools/build-articles.mjs; keep the slugs in sync.
+  const ARTICLE_SLUGS = ['datenvis-fasi', 'konektorebi', 'ac-da-dc', 'shori-mgzavroba'];
   const fixed = [
     ['https://geocharge.ge/', 'https://geocharge.ge/en/', '1.0', 'weekly'],
+    ['https://geocharge.ge/blog/', 'https://geocharge.ge/en/blog/', '0.8', 'monthly'],
+    ...ARTICLE_SLUGS.map((s) => [
+      `https://geocharge.ge/blog/${s}/`, `https://geocharge.ge/en/blog/${s}/`, '0.8', 'monthly']),
     ['https://geocharge.ge/privacy-policy.html', 'https://geocharge.ge/en/privacy-policy.html', '0.3', 'yearly'],
   ];
   const entry = (ka, en, pri, freq) => [ka, en].map((loc) => `  <url>
@@ -803,8 +808,9 @@ async function main() {
     const en = p.url.replace('/damtenebi/', '/en/chargers/').replace('/qselebi/', '/en/networks/');
     pairs.push({ ka: p.url, en, priority: p.url.endsWith('/damtenebi/') ? '0.9' : '0.7' });
   }
-  await writeFile(path.join(SITE, 'sitemap.xml'), sitemap(pairs, today), 'utf8');
-  console.log(`· sitemap.xml: ${(pairs.length + 3) * 2 - 3} urls`);
+  const xml = sitemap(pairs, today);
+  await writeFile(path.join(SITE, 'sitemap.xml'), xml, 'utf8');
+  console.log(`· sitemap.xml: ${(xml.match(/<loc>/g) || []).length} urls`);
 
   if (ping) {
     const urlList = [...new Set(pages.map((p) => p.url))].slice(0, 10000);
@@ -822,4 +828,7 @@ async function main() {
   console.log(`\n  ${cityList.length} cities × 2 langs + ${provList.length} networks × 2 langs + 2 catalogues = ${pages.length} pages`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+// Only run the build when invoked directly; build-articles.mjs imports CSS/shell.
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((e) => { console.error(e); process.exit(1); });
+}
