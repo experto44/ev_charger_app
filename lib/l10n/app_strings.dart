@@ -1,3 +1,5 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,19 +16,31 @@ class AppStrings {
 
   static const _prefsKey = 'app_language_georgian';
 
-  /// `true` once a language change happens, letting [ValueListenableBuilder]s
-  /// rebuild without any global state-management package. Defaults to Georgian
-  /// — GeoCharge is a Georgia-first app, so a fresh install opens in Georgian.
-  static final ValueNotifier<bool> notifier = ValueNotifier<bool>(true);
+  /// Flips whenever the language changes, letting [ValueListenableBuilder]s
+  /// rebuild without any global state-management package. Seeded by [load]
+  /// before `runApp`, so this initial value is only a safe English fallback.
+  static final ValueNotifier<bool> notifier = ValueNotifier<bool>(false);
 
   static bool get isGeorgian => notifier.value;
 
+  /// `true` when the device itself is set to Georgian.
+  ///
+  /// Safe to read from [load]: that runs after `WidgetsFlutterBinding
+  /// .ensureInitialized()`, so the platform locale is already resolved.
+  static bool _deviceIsGeorgian() =>
+      PlatformDispatcher.instance.locale.languageCode == 'ka';
+
   /// Load the saved preference. Call once during app startup (before runApp).
-  /// No saved choice (first launch) → Georgian by default; users who picked a
-  /// language keep it (setGeorgian persists the key).
+  ///
+  /// First launch follows the device language: a Georgian phone opens in
+  /// Georgian, everything else opens in English. English is the app's primary
+  /// language — the map, station names and filters are English-only — and a
+  /// fresh install on a non-Georgian device must reflect that. Users who picked
+  /// a language explicitly keep it (setGeorgian persists the key), and the
+  /// toggle in the profile screen stays available either way.
   static Future<void> load() async {
     final p = await SharedPreferences.getInstance();
-    notifier.value = p.getBool(_prefsKey) ?? true;
+    notifier.value = p.getBool(_prefsKey) ?? _deviceIsGeorgian();
   }
 
   /// Switch language and persist the choice.
