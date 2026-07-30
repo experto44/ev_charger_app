@@ -160,7 +160,8 @@ h1,h2,h3{letter-spacing:-.02em;text-wrap:balance}
   border-bottom:1px solid rgba(255,255,255,.07)}
 .hdr-in{max-width:var(--wrap);margin:0 auto;padding:0 clamp(16px,4vw,48px);height:66px;
   display:flex;align-items:center;justify-content:space-between;gap:16px}
-.nav{display:flex;align-items:center;gap:clamp(16px,2.2vw,28px)}
+.hdr-in>a:first-child,.d-only,.m-only{flex-shrink:0}
+.nav{display:flex;align-items:center;gap:clamp(12px,1.7vw,26px);min-width:0}
 .nav a{color:var(--on-dark-2);text-decoration:none;font-size:14.5px;font-weight:500;white-space:nowrap}
 .nav a:hover{color:#fff}
 .lang{display:flex;border:1px solid #39434C;border-radius:999px;overflow:hidden}
@@ -378,7 +379,6 @@ footer{background:var(--dark-2);color:#8B98A1}
       <a href="#how">როგორ მუშაობს</a>
       <a href="#tesla">Tesla</a>
       <a href="#faq">კითხვები</a>
-      <a href="#download">ჩამოტვირთვა</a>
     </nav>
     <div class="d-only">
       <div class="lang" role="group" aria-label="ენა">
@@ -406,7 +406,6 @@ footer{background:var(--dark-2);color:#8B98A1}
     <a href="#how">როგორ მუშაობს</a>
     <a href="#tesla">Tesla</a>
     <a href="#faq">კითხვები</a>
-    <a href="#download">ჩამოტვირთვა</a>
     <a class="btn" href="#download" data-cta>ჩამოტვირთვა</a>
   </nav>
 </header>
