@@ -110,6 +110,60 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://geocharge.ge/blog/amerikuli-importi/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/amerikuli-importi/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/blog/amerikuli-importi/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/blog/amerikuli-importi/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/blog/amerikuli-importi/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/amerikuli-importi/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/blog/amerikuli-importi/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/blog/amerikuli-importi/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/blog/chinuri-importi/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/chinuri-importi/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/blog/chinuri-importi/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/blog/chinuri-importi/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/blog/chinuri-importi/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/chinuri-importi/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/blog/chinuri-importi/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/blog/chinuri-importi/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/blog/zamtari/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/zamtari/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/blog/zamtari/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/blog/zamtari/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/blog/zamtari/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/zamtari/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/blog/zamtari/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/blog/zamtari/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://geocharge.ge/privacy-policy.html</loc>
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/privacy-policy.html"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/privacy-policy.html"/>

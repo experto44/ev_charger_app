@@ -190,7 +190,7 @@ const GE_BBOX = { minLat: 41.0, maxLat: 43.65, minLng: 39.9, maxLng: 46.8 };
 const AM_BBOX = { minLat: 38.8, maxLat: 41.30, minLng: 43.4, maxLng: 46.7 };
 
 const inBox = (s, b) => s.lat >= b.minLat && s.lat <= b.maxLat && s.lng >= b.minLng && s.lng <= b.maxLng;
-const inGeorgia = (s) => inBox(s, GE_BBOX) && !inBox(s, AM_BBOX);
+export const inGeorgia = (s) => inBox(s, GE_BBOX) && !inBox(s, AM_BBOX);
 
 function haversineKm(aLat, aLng, bLat, bLng) {
   const R = 6371, r = Math.PI / 180;
@@ -200,7 +200,7 @@ function haversineKm(aLat, aLng, bLat, bLng) {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-function assignCity(s) {
+export function assignCity(s) {
   let best = null, bestD = Infinity;
   for (const c of CITIES) {
     const d = haversineKm(s.lat, s.lng, c[3], c[4]);
@@ -1156,7 +1156,8 @@ ${ROUTES.map((r) => {
 /* ── sitemap ─────────────────────────────────────────────────────────────── */
 function sitemap(pairs, today) {
   // Hand-written guides live in tools/build-articles.mjs; keep the slugs in sync.
-  const ARTICLE_SLUGS = ['datenvis-fasi', 'konektorebi', 'ac-da-dc', 'shori-mgzavroba'];
+  const ARTICLE_SLUGS = ['datenvis-fasi', 'konektorebi', 'ac-da-dc', 'shori-mgzavroba',
+    'amerikuli-importi', 'chinuri-importi', 'zamtari'];
   const fixed = [
     ['https://geocharge.ge/', 'https://geocharge.ge/en/', '1.0', 'weekly'],
     ['https://geocharge.ge/blog/', 'https://geocharge.ge/en/blog/', '0.8', 'monthly'],

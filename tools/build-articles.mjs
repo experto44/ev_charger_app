@@ -3,19 +3,61 @@
 //
 //   node tools/build-articles.mjs
 //
-// Unlike build-pages.mjs, the prose here is AUTHORED, not derived from data.
-// Rerunning this does not refresh anything by itself; edit the text below.
-// Figures quoted in the articles were taken from the gist on 2026-07-30 and
-// are stated as approximate ranges on purpose, so they age gracefully.
+// Unlike build-pages.mjs, the prose here is AUTHORED, not derived from data:
+// to change what an article says, edit the text below. Exact station and
+// connector counts ARE injected from the live gist (see liveNumbers), so an
+// article can never contradict the catalogue it links to. Anything written as
+// a round approximation stays a round approximation.
 
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CSS, shell } from './build-pages.mjs';
+import { CSS, shell, inGeorgia, assignCity } from './build-pages.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = path.join(ROOT, 'site');
 const ORIGIN = 'https://geocharge.ge';
+const CACHE = path.join(ROOT, 'tools', '.cache', 'chargers.json');
+const GIST = 'https://gist.githubusercontent.com/experto44/36f39392ce7a4abe14ab065aa8e846bd/raw/chargers.json';
+
+// Figures quoted in the prose come from here, so an article cannot drift away
+// from the catalogue it links to. Anything stated as a round approximation in
+// the text stays approximate; only the exact counts are injected.
+async function liveNumbers() {
+  let raw;
+  if (existsSync(CACHE)) raw = JSON.parse(await readFile(CACHE, 'utf8'));
+  else raw = await (await fetch(GIST)).json();
+  const ge = raw.filter(inGeorgia);
+  const has = (s, c) => (s.connectors || []).includes(c);
+  const count = (c) => ge.filter((s) => has(s, c)).length;
+  const gbt = ge.filter((s) => has(s, 'GB/T'));
+  const usSpec = ge.filter((s) => has(s, 'CCS1') || has(s, 'NACS') || has(s, 'Type 1'));
+  const byProv = (list) => {
+    const m = {};
+    for (const s of list) m[s.provider] = (m[s.provider] || 0) + 1;
+    return Object.entries(m).sort((a, b) => b[1] - a[1]);
+  };
+  const atCity = (name) => ge.filter((s) => {
+    const c = assignCity(s);
+    return c && c[0] === name;
+  });
+  const town = (name) => {
+    const l = atCity(name);
+    return { n: l.length, dc: l.filter((s) => s.type === 'Fast DC').length };
+  };
+  return {
+    total: ge.length,
+    ccs2: count('CCS2'), gbt: gbt.length, type2: count('Type 2'),
+    chademo: count('CHAdeMO'), type1: count('Type 1'), nacs: count('NACS'), ccs1: count('CCS1'),
+    gbtDc: gbt.filter((s) => s.type === 'Fast DC').length,
+    gbtAc: gbt.filter((s) => s.type !== 'Fast DC').length,
+    gbtWithCcs2: gbt.filter((s) => has(s, 'CCS2')).length,
+    usSpec: usSpec.length,
+    usTopProvider: byProv(usSpec)[0],
+    gudauri: town('Gudauri'), bakuriani: town('Bakuriani'), kazbegi: town('Stepantsminda'),
+  };
+}
 
 const PROSE = `
 .prose{max-width:760px}
@@ -42,7 +84,7 @@ const PROSE = `
 .acard span{display:block;color:var(--ink-2);font-size:14.5px;line-height:1.6}
 `.trim();
 
-const ARTICLES = [
+const buildArticles = (N) => [
   {
     slug: 'datenvis-fasi',
     ka: {
@@ -435,6 +477,356 @@ const ARTICLES = [
       ],
     },
   },
+
+  {
+    slug: 'amerikuli-importi',
+    ka: {
+      title: 'ამერიკიდან ჩამოყვანილი ელექტრომობილი: სად დატენავთ საქართველოში',
+      metaTitle: 'ამერიკული ელექტრომობილი საქართველოში: დატენვა',
+      desc: `ამერიკული სპეციფიკაციის მანქანას CCS1, NACS ან Type 1 აქვს. საქართველოში ასეთი დამტენი სულ ${N.usSpec}-ია. რა ვქნათ ადაპტერით და რა შევამოწმოთ ყიდვამდე.`,
+      key: [
+        `ამერიკული სპეციფიკაციის ელექტრომობილს ევროპულისგან განსხვავებული კონექტორი აქვს. საქართველოში CCS1 მხოლოდ ${N.ccs1} სადგურზეა, NACS ${N.nacs}-ზე, Type 1 კი ${N.type1}-ზე. შედარებისთვის, ევროპული CCS2 ${N.ccs2} სადგურზეა.`,
+        `უფრო მნიშვნელოვანი: ამ დამტენების უმეტესობა ერთ ქსელს ეკუთვნის, ${N.usTopProvider[0]}-ს. ანუ პრაქტიკულად ერთ ოპერატორზე ხართ დამოკიდებული.`,
+      ],
+      body: `
+<h2>ვის ეხება ეს</h2>
+<p>საქართველოში ბევრი ელექტრომობილი ამერიკული აუქციონებიდან შემოდის. ამერიკული ბაზრისთვის აწყობილ მანქანას კი სხვა შტეფსელი აქვს, ვიდრე ევროპულს. ეს არ არის მცირე დეტალი, ეს განსაზღვრავს, საერთოდ დატენავთ თუ არა მანქანას.</p>
+<p>ყველაზე ხშირად შემდეგი მოდელები გვხვდება:</p>
+<ul>
+<li><strong>Tesla Model 3 და Model Y ამერიკული ბაზრიდან.</strong> NACS კონექტორი, რომელსაც Tesla-ს საკუთარ სტანდარტს ეძახიან.</li>
+<li><strong>Chevrolet Bolt, Ford Mustang Mach-E, Volkswagen ID.4 ამერიკული ვერსია.</strong> CCS1 სწრაფი დატენვისთვის და Type 1 ნელისთვის.</li>
+<li><strong>Nissan Leaf ამერიკული ვერსია.</strong> CHAdeMO სწრაფი დატენვისთვის, Type 1 ნელისთვის.</li>
+</ul>
+
+<h2>რეალური ციფრები საქართველოში</h2>
+<p>ქვემოთ იმდენი სადგურია, რამდენზეც შესაბამისი კონექტორი ფიზიკურად არსებობს:</p>
+<ul>
+<li><strong>CCS1:</strong> ${N.ccs1} სადგური მთელ ქვეყანაში.</li>
+<li><strong>NACS:</strong> ${N.nacs} სადგური.</li>
+<li><strong>Type 1:</strong> ${N.type1} სადგური, ნელი AC დატენვისთვის.</li>
+<li><strong>CHAdeMO:</strong> ${N.chademo} სადგური.</li>
+</ul>
+<p>ჯამში ${N.usSpec} სადგური, საქართველოს ${N.total} საჯარო დამტენიდან. ევროპული CCS2 კი ${N.ccs2}-ზეა.</p>
+
+<h2>მთავარი, რაც უნდა იცოდეთ</h2>
+<p>ეს დამტენები თანაბრად არ არის გადანაწილებული ოპერატორებს შორის. Type 1 კონექტორის ყველა სადგური და NACS-ის დიდი ნაწილი ${N.usTopProvider[0]}-ს ეკუთვნის.</p>
+<p>ეს ნიშნავს, რომ ამერიკული მანქანით საქართველოში პრაქტიკულად ერთი ქსელის კლიენტი ხდებით. თუ იმ ქსელს რომელიმე ქალაქში დამტენი არ აქვს, ალტერნატივა არ გრჩებათ.</p>
+
+<h2>ადაპტერი: რა მუშაობს და რა არა</h2>
+<h3>ნელი AC დატენვა</h3>
+<p>Type 1 კონექტორიდან Type 2-ზე ადაპტერი მარტივია, იაფია და საიმედოდ მუშაობს. AC დატენვისას მანქანასა და დამტენს შორის რთული მოლაპარაკება არ ხდება, ამიტომ ფიზიკური გადაყვანა საკმარისია. ასეთი ადაპტერით ქვეყნის ყველა Type 2 სადგური გეხსნებათ, რომელიც ${N.type2} სადგურზეა.</p>
+<p>პრაქტიკულად ეს ყველაზე მარტივი გამოსავალია და ღირს ყიდვამდე გათვალისწინება.</p>
+<h3>სწრაფი DC დატენვა</h3>
+<p>აქ სიტუაცია სხვაა. სწრაფი დატენვისას მანქანა და დამტენი ერთმანეთს პროტოკოლით ესაუბრებიან და ადაპტერმა ეს კომუნიკაციაც უნდა გაატაროს. CCS1-დან CCS2-ზე ადაპტერები არსებობს, მაგრამ ძვირია, ყველა მანქანა არ უჭერს მხარს და მწარმოებლები ხშირად არ იძლევიან გარანტიას.</p>
+<p>Tesla-ს NACS-იდან CCS2-ზე ადაპტერი უფრო ხელმისაწვდომია, თუმცა აქაც კონკრეტული მოდელისა და პროგრამული ვერსიის შემოწმებაა საჭირო.</p>
+<p>ამიტომ ადაპტერზე დაყრდნობა სწრაფი დატენვისთვის რისკია. ჯერ დარწმუნდით, რომ კონკრეტულ მოდელზე მუშაობს, მერე იყიდეთ.</p>
+
+<h2>პრაქტიკული სტრატეგია</h2>
+<p>თუ ამერიკული მანქანა უკვე გყავთ ან აპირებთ ყიდვას, რეალისტური გეგმა ასეთია.</p>
+<ul>
+<li><strong>სახლის დატენვა აუცილებელი ხდება, არა სასურველი.</strong> ევროპული მანქანის მფლობელს საჯარო ქსელი აქვს სარეზერვოდ, თქვენ ის თითქმის არ გაქვთ.</li>
+<li><strong>Type 1 ადაპტერი იყიდეთ პირველივე დღეს.</strong> ის ნელი დატენვის პრობლემას მთლიანად ხსნის.</li>
+<li><strong>შორი მგზავრობა წინასწარ დაგეგმეთ.</strong> სწრაფი დამტენი, რომელიც თქვენ გამოგადგებათ, თითებზე ჩამოსათვლელია.</li>
+<li><strong>გაითვალისწინეთ გადაყიდვის ფასი.</strong> ქართულ ბაზარზე ევროპული სპეციფიკაციის მანქანა უფრო ადვილად იყიდება, სწორედ ამ მიზეზით.</li>
+</ul>
+
+<h2>რა შეამოწმოთ ყიდვამდე</h2>
+<ul>
+<li>რომელი ბაზრისთვისაა მანქანა აწყობილი და რომელი კონექტორი აქვს ფიზიკურად.</li>
+<li>აქვს თუ არა ცალკე AC პორტი და რომელი ტიპის.</li>
+<li>არსებობს თუ არა ამ კონკრეტული მოდელისთვის დამოწმებული DC ადაპტერი.</li>
+<li>რამდენ კილოვატს იღებს მანქანა AC-ზე, რადგან ეს განსაზღვრავს, ღამით რამდენს დატენავთ.</li>
+</ul>
+<p>რომელი კონექტორი როგორ გამოიყურება და რომელ მანქანას რა აქვს, ცალკე გვაქვს აღწერილი: <a href="/blog/konektorebi/">კონექტორების გზამკვლევი</a>. კონკრეტული სადგურების კონექტორები კი <a href="/damtenebi/">დამტენების სიაშია</a>.</p>
+`,
+      faq: [
+        [`შემიძლია ამერიკული ელექტრომობილის დატენვა საქართველოში?`,
+          `დიახ, მაგრამ შეზღუდულად. CCS1 კონექტორი ${N.ccs1} სადგურზეა, NACS ${N.nacs}-ზე, Type 1 კი ${N.type1}-ზე, სულ ${N.usSpec} სადგური საქართველოს ${N.total}-დან. Type 1-დან Type 2-ზე ადაპტერით ნელი დატენვის ბევრად მეტი ვარიანტი გეხსნებათ.`],
+        [`მუშაობს თუ არა CCS1-დან CCS2-ზე ადაპტერი?`,
+          `ასეთი ადაპტერები არსებობს, მაგრამ ძვირია, ყველა მანქანა არ უჭერს მხარს და მწარმოებლები ხშირად არ იძლევიან გარანტიას. ნელი AC დატენვისთვის Type 1-დან Type 2-ზე ადაპტერი კი მარტივი და საიმედოა.`],
+        [`რომელი ქსელი ემსახურება ამერიკულ მანქანებს საქართველოში?`,
+          `ძირითადად ${N.usTopProvider[0]}. Type 1 კონექტორის სადგურების უმეტესობა და NACS-ის დიდი ნაწილი სწორედ ამ ქსელს ეკუთვნის, ამიტომ პრაქტიკულად ერთ ოპერატორზე ხართ დამოკიდებული.`],
+      ],
+    },
+    en: {
+      title: 'Importing an EV from the US: where you will charge it in Georgia',
+      metaTitle: 'US-spec EVs in Georgia: the charging problem',
+      desc: `A US-spec car has CCS1, NACS or Type 1. Georgia has ${N.usSpec} such stations in total. What adapters do and what to check before you buy.`,
+      key: [
+        `A US-market EV uses different plugs from a European one. In Georgia CCS1 is on just ${N.ccs1} stations, NACS on ${N.nacs} and Type 1 on ${N.type1}. European CCS2, for comparison, is on ${N.ccs2}.`,
+        `More to the point, most of those chargers belong to one network, ${N.usTopProvider[0]}. In practice you depend on a single operator.`,
+      ],
+      body: `
+<h2>Who this affects</h2>
+<p>A lot of the EVs arriving in Georgia come from US auctions, and a car built for the US market carries a different plug from a European one. This is not a detail. It decides whether you can charge at all.</p>
+<p>The models that turn up most often:</p>
+<ul>
+<li><strong>Tesla Model 3 and Model Y from the US market.</strong> The NACS connector, Tesla's own standard.</li>
+<li><strong>Chevrolet Bolt, Ford Mustang Mach-E, US-version Volkswagen ID.4.</strong> CCS1 for fast charging, Type 1 for slow.</li>
+<li><strong>US-version Nissan Leaf.</strong> CHAdeMO for fast charging, Type 1 for slow.</li>
+</ul>
+
+<h2>The real numbers in Georgia</h2>
+<ul>
+<li><strong>CCS1:</strong> ${N.ccs1} stations in the whole country.</li>
+<li><strong>NACS:</strong> ${N.nacs} stations.</li>
+<li><strong>Type 1:</strong> ${N.type1} stations, for slow AC charging.</li>
+<li><strong>CHAdeMO:</strong> ${N.chademo} stations.</li>
+</ul>
+<p>That is ${N.usSpec} stations out of Georgia's ${N.total}. European CCS2 sits on ${N.ccs2}.</p>
+
+<h2>The part most people miss</h2>
+<p>These chargers are not spread evenly across operators. Every Type 1 station and most of the NACS ones belong to ${N.usTopProvider[0]}.</p>
+<p>So with a US car you effectively become one network's customer. Where that network has no charger, you have no alternative.</p>
+
+<h2>Adapters: what works and what does not</h2>
+<h3>Slow AC charging</h3>
+<p>A Type 1 to Type 2 adapter is simple, cheap and reliable. AC charging involves no complex negotiation between car and charger, so converting the plug is enough. With one of these, every Type 2 station in the country opens up, and that is ${N.type2} stations.</p>
+<p>This is the easiest fix available and worth budgeting for before you buy.</p>
+<h3>Fast DC charging</h3>
+<p>Here it is different. Fast charging involves the car and the charger talking over a protocol, and the adapter has to carry that conversation too. CCS1 to CCS2 adapters exist, but they are expensive, not every car supports them, and manufacturers often will not warrant them.</p>
+<p>A Tesla NACS to CCS2 adapter is easier to come by, though you still need to check your specific model and software version.</p>
+<p>Relying on an adapter for fast charging is therefore a risk. Confirm it works on your exact model before you spend money on it.</p>
+
+<h2>A realistic plan</h2>
+<ul>
+<li><strong>Home charging becomes essential, not a nice to have.</strong> A European car has the public network as a fallback. You largely do not.</li>
+<li><strong>Buy the Type 1 adapter on day one.</strong> It removes the slow charging problem entirely.</li>
+<li><strong>Plan long trips in advance.</strong> The fast chargers that will work for you can be counted on your fingers.</li>
+<li><strong>Factor in resale.</strong> European-spec cars sell more easily on the Georgian market, for exactly this reason.</li>
+</ul>
+
+<h2>What to check before buying</h2>
+<ul>
+<li>Which market the car was built for and which connector it physically has.</li>
+<li>Whether it has a separate AC port and of which type.</li>
+<li>Whether a proven DC adapter exists for that exact model.</li>
+<li>How many kW the car accepts on AC, since that decides how much you gain overnight.</li>
+</ul>
+<p>What each connector looks like and which car uses which is covered separately in the <a href="/en/blog/konektorebi/">connector guide</a>. The connectors at individual stations are in the <a href="/en/chargers/">charger list</a>.</p>
+`,
+      faq: [
+        [`Can I charge a US-spec EV in Georgia?`,
+          `Yes, but with limits. CCS1 is on ${N.ccs1} stations, NACS on ${N.nacs} and Type 1 on ${N.type1}, which is ${N.usSpec} out of Georgia's ${N.total}. A Type 1 to Type 2 adapter opens up far more options for slow charging.`],
+        [`Does a CCS1 to CCS2 adapter work?`,
+          `Such adapters exist, but they are expensive, not every car supports them and manufacturers often will not warrant them. For slow AC charging, a Type 1 to Type 2 adapter is simple and reliable.`],
+        [`Which network serves US cars in Georgia?`,
+          `Mainly ${N.usTopProvider[0]}. Most Type 1 stations and a large share of the NACS ones belong to that network, so you effectively depend on a single operator.`],
+      ],
+    },
+  },
+
+  {
+    slug: 'chinuri-importi',
+    ka: {
+      title: 'ჩინური ელექტრომობილი საქართველოში: GB/T კონექტორი და დატენვა',
+      metaTitle: 'ჩინური ელექტრომობილი და GB/T საქართველოში',
+      desc: `GB/T კონექტორი საქართველოში ${N.gbt} სადგურზეა, თითქმის იმდენზე, რამდენზეც ევროპული CCS2. რატომ არის ეს კარგი ამბავი ჩინური მანქანის მფლობელისთვის.`,
+      key: [
+        `GB/T საქართველოში ${N.gbt} სადგურზეა, ევროპული CCS2 კი ${N.ccs2}-ზე. ევროპაში GB/T პრაქტიკულად არ არსებობს, აქ კი თითქმის თანაბარია.`,
+        `${N.gbt}-დან ${N.gbtWithCcs2} იმავე აპარატზეა CCS2-თან ერთად. ანუ ეს ცალკე ინფრასტრუქტურა არ არის, ერთი და იგივე სწრაფი დამტენები ორივე შტეფსელს ატარებს.`,
+      ],
+      body: `
+<h2>რომელ მანქანებს ეხება</h2>
+<p>GB/T ჩინური ეროვნული სტანდარტია და მას ატარებს ჩინეთის ბაზრისთვის აწყობილი თითქმის ყველა ელექტრომობილი: BYD, Zeekr, Li Auto, NIO, Xpeng, Wuling, Chery, Changan და სხვები.</p>
+<p>საქართველოში ასეთი მანქანები ბოლო წლებში მასობრივად შემოვიდა, დამტენების ოპერატორებმა კი ამას ინფრასტრუქტურა მოარგეს.</p>
+
+<h2>GB/T-ს ორი სახე აქვს</h2>
+<p>ეს ის ადგილია, სადაც ყველაზე ხშირად ერევათ. GB/T ერთი კონექტორი არ არის, ორია: ერთი ნელი AC დატენვისთვის, მეორე სწრაფი DC-სთვის. ისინი ერთმანეთს ჰგვანან, მაგრამ სხვადასხვა ფიზიკური შტეფსელია და ურთიერთშენაცვლებადი არ არის.</p>
+<p>ბევრ ჩინურ ელექტრომობილს ორივე პორტი აქვს, ხშირად მანქანის სხვადასხვა მხარეს. თუ ახალი მფლობელი ხართ, ჯერ გაარკვიეთ, რომელი პორტი რომელია.</p>
+<p>საქართველოში GB/T ძირითადად სწრაფი დატენვისთვის დგას: ${N.gbtDc} სადგური DC-ია და მხოლოდ ${N.gbtAc} AC.</p>
+
+<h2>რატომ არის ეს კარგი ამბავი</h2>
+<p>ჩინური მანქანის მფლობელს ხშირად ეშინია, რომ ცალკე, იშვიათ ინფრასტრუქტურაზე იქნება დამოკიდებული. საქართველოში ეს ასე არ არის.</p>
+<p>GB/T-ს ${N.gbt} სადგურიდან ${N.gbtWithCcs2} სწორედ იმ აპარატებზეა, სადაც CCS2-იც დგას. ეს ორთოფიანი სწრაფი დამტენებია: ერთ კაბინეტს ორი კაბელი აქვს, ერთი ევროპული, მეორე ჩინური. ანუ იმავე სადგურებზე ტენით, სადაც ევროპული მანქანები.</p>
+<p>პრაქტიკული დასკვნა: ჩინური მანქანით საქართველოში დაფარვის პრობლემა თითქმის არ გაქვთ.</p>
+
+<h2>რა სიმძლავრეს მიიღებთ</h2>
+<p>GB/T სადგურების უმეტესობა საქართველოში 120 კილოვატიანია. საკმაოდ ბევრია 30 და 47 კილოვატიანიც, რომლებიც შესამჩნევად ნელია, ხოლო ყველაზე მძლავრი აპარატები 160 კილოვატამდე ადის.</p>
+<p>გახსოვდეთ, რომ ჭერს მანქანაც აწესებს. თუ თქვენი მოდელი 60 კილოვატს იღებს, 120 კილოვატიან დამტენზეც 60-ს მიიღებთ.</p>
+
+<h2>AC დატენვა და Type 2</h2>
+<p>ევროპისთვის ოფიციალურად შემოტანილ ჩინურ მანქანებს ჩვეულებრივ Type 2 AC პორტი აქვთ, ჩინეთის ბაზრიდან ჩამოყვანილებს კი GB/T AC. ეს განსხვავება მნიშვნელოვანია, რადგან საქართველოში Type 2 ${N.type2} სადგურზეა, GB/T AC კი მხოლოდ ${N.gbtAc}-ზე.</p>
+<p>თუ ჩინეთიდან ჩამოყვანილი მანქანა გყავთ და სახლში დატენვას გეგმავთ, კედლის დამტენი სწორედ თქვენს AC პორტს უნდა შეესაბამებოდეს.</p>
+
+<h2>რა შეამოწმოთ ყიდვამდე</h2>
+<ul>
+<li>რომელი ბაზრისთვისაა მანქანა აწყობილი, ჩინეთისთვის თუ ევროპისთვის.</li>
+<li>რომელი AC პორტი აქვს, Type 2 თუ GB/T AC. ეს განსაზღვრავს სახლის დამტენს.</li>
+<li>რამდენ კილოვატს იღებს DC-ზე, რომ სწრაფი დამტენის რჩევა აზრიანი იყოს.</li>
+<li>არის თუ არა მანქანის პროგრამული უზრუნველყოფა ინგლისურად ან ქართულად, რაც ჩინეთის ბაზრის ვერსიებში ხშირად პრობლემაა.</li>
+</ul>
+<p>კონექტორების საერთო სურათი ცალკე გვაქვს: <a href="/blog/konektorebi/">რომელი კონექტორი გჭირდებათ</a>. კონკრეტული სადგურების სია კი <a href="/damtenebi/">დამტენების კატალოგშია</a>.</p>
+`,
+      faq: [
+        [`GB/T კონექტორი გვაქვს საქართველოში?`,
+          `დიახ, ${N.gbt} სადგურზე, რაც თითქმის იმდენია, რამდენზეც ევროპული CCS2 (${N.ccs2}). ევროპაში GB/T პრაქტიკულად არ არსებობს, საქართველოში კი ფართოდაა.`],
+        [`ჩინური ელექტრომობილით პრობლემა მექნება დატენვაში?`,
+          `არა. GB/T-ს ${N.gbt} სადგურიდან ${N.gbtWithCcs2} იმავე აპარატებზეა, სადაც CCS2 დგას, ანუ ორთოფიან სწრაფ დამტენებზე. იმავე სადგურებს იყენებთ, რასაც ევროპული მანქანები.`],
+        [`რა განსხვავებაა GB/T AC-სა და GB/T DC-ს შორის?`,
+          `ეს ორი სხვადასხვა ფიზიკური კონექტორია, ერთი ნელი AC დატენვისთვის, მეორე სწრაფი DC-სთვის, და ისინი ურთიერთშენაცვლებადი არ არის. ბევრ ჩინურ მანქანას ორივე პორტი აქვს. საქართველოში GB/T ძირითადად DC-ია: ${N.gbtDc} სადგური DC და მხოლოდ ${N.gbtAc} AC.`],
+      ],
+    },
+    en: {
+      title: 'Chinese EVs in Georgia: the GB/T connector and where to charge',
+      metaTitle: 'Chinese EVs and GB/T charging in Georgia',
+      desc: `GB/T is on ${N.gbt} stations in Georgia, almost as many as European CCS2. Why that is good news if you drive a Chinese import.`,
+      key: [
+        `GB/T is on ${N.gbt} stations in Georgia against ${N.ccs2} for European CCS2. In Europe GB/T barely exists; here the two are nearly level.`,
+        `${N.gbtWithCcs2} of those ${N.gbt} sit on the same cabinet as a CCS2 gun. This is not separate infrastructure, it is the same fast chargers carrying both plugs.`,
+      ],
+      body: `
+<h2>Which cars this covers</h2>
+<p>GB/T is the Chinese national standard, carried by almost every EV built for the Chinese market: BYD, Zeekr, Li Auto, NIO, Xpeng, Wuling, Chery, Changan and others.</p>
+<p>Georgia has taken in a lot of these cars in recent years, and charger operators built for them.</p>
+
+<h2>GB/T comes in two forms</h2>
+<p>This is where people most often get confused. GB/T is not one connector but two: one for slow AC charging, one for fast DC. They look similar, but they are different physical plugs and are not interchangeable.</p>
+<p>Many Chinese EVs have both ports, often on opposite sides of the car. If you are a new owner, work out which port is which first.</p>
+<p>In Georgia GB/T is mostly there for fast charging: ${N.gbtDc} stations are DC and only ${N.gbtAc} are AC.</p>
+
+<h2>Why this is good news</h2>
+<p>Owners of Chinese cars often worry they will depend on separate, rare infrastructure. In Georgia that is not the case.</p>
+<p>Of the ${N.gbt} GB/T stations, ${N.gbtWithCcs2} are on cabinets that also carry CCS2. These are dual-gun fast chargers: one cabinet, two cables, one European and one Chinese. You charge at the same stations European cars do.</p>
+<p>The practical conclusion is that a Chinese car has almost no coverage problem in Georgia.</p>
+
+<h2>What power you will get</h2>
+<p>Most GB/T stations in Georgia are 120 kW. There are also a good number of 30 and 47 kW units, which are noticeably slower, while the most powerful cabinets reach 160 kW.</p>
+<p>Remember the car sets a ceiling too. If your model accepts 60 kW, a 120 kW charger still gives you 60.</p>
+
+<h2>AC charging and Type 2</h2>
+<p>Chinese cars imported officially for Europe usually have a Type 2 AC port, while cars brought in from the Chinese market have GB/T AC. The difference matters: Type 2 is on ${N.type2} stations in Georgia, GB/T AC on only ${N.gbtAc}.</p>
+<p>If your car came from China and you plan to charge at home, the wallbox has to match your actual AC port.</p>
+
+<h2>What to check before buying</h2>
+<ul>
+<li>Which market the car was built for, China or Europe.</li>
+<li>Which AC port it has, Type 2 or GB/T AC. This decides your home charger.</li>
+<li>How many kW it accepts on DC, so fast charger advice actually means something.</li>
+<li>Whether the car's software is available in English, which is often a problem on Chinese market versions.</li>
+</ul>
+<p>The overall connector picture is covered separately in the <a href="/en/blog/konektorebi/">connector guide</a>, and individual stations are in the <a href="/en/chargers/">charger catalogue</a>.</p>
+`,
+      faq: [
+        [`Is the GB/T connector available in Georgia?`,
+          `Yes, on ${N.gbt} stations, which is almost as many as European CCS2 (${N.ccs2}). GB/T barely exists in Europe but is widespread in Georgia.`],
+        [`Will I have trouble charging a Chinese EV in Georgia?`,
+          `No. ${N.gbtWithCcs2} of the ${N.gbt} GB/T stations sit on the same cabinets as CCS2, meaning dual-gun fast chargers. You use the same stations European cars do.`],
+        [`What is the difference between GB/T AC and GB/T DC?`,
+          `They are two different physical connectors, one for slow AC and one for fast DC, and they are not interchangeable. Many Chinese cars have both ports. In Georgia GB/T is mostly DC: ${N.gbtDc} stations against only ${N.gbtAc} on AC.`],
+      ],
+    },
+  },
+
+  {
+    slug: 'zamtari',
+    ka: {
+      title: 'ელექტრომობილი ზამთარში საქართველოში: გარბენი, დატენვა და მთა',
+      metaTitle: 'ელექტრომობილი ზამთარში საქართველოში',
+      desc: `ცივ ამინდში გარბენი მესამედამდე ეცემა. ბაკურიანში ${N.bakuriani.n} დამტენია და არცერთი სწრაფი, სტეფანწმინდაში ${N.kazbegi.n}. როგორ დავგეგმოთ ზამთარი.`,
+      key: [
+        'ცივ ამინდში ელექტრომობილის რეალური გარბენი ჩვეულებრივ 20-დან 35 პროცენტამდე ეცემა. მიზეზი ორია: ბატარეა ცივზე ნაკლებ ენერგიას იძლევა, გათბობა კი დამატებით ხარჯავს.',
+        `საქართველოს სპეციფიკა ისაა, რომ სასრიალო კურორტებში სწრაფი დამტენი თითქმის არ არის. ბაკურიანში ${N.bakuriani.n} სადგურია და არცერთი სწრაფი, სტეფანწმინდაში ${N.kazbegi.n}, გუდაურში კი ${N.gudauri.n}, აქედან ${N.gudauri.dc} სწრაფი.`,
+      ],
+      body: `
+<h2>რატომ ეცემა გარბენი</h2>
+<p>ორი დამოუკიდებელი მიზეზია და ისინი ერთმანეთს ემატება.</p>
+<p>პირველი: ლითიუმის ბატარეაში ქიმიური რეაქციები ცივზე ნელდება. ბატარეა იმავე ენერგიას ინახავს, მაგრამ მისი გაცემა უჭირს. ეს ზოგჯერ დროებითია და გათბობის შემდეგ ნაწილობრივ ბრუნდება.</p>
+<p>მეორე და უფრო მნიშვნელოვანი: ბენზინის მანქანაში სალონს ძრავის ნარჩენი სითბო ათბობს, ანუ უფასოდ. ელექტრომობილს ეს სითბო არ აქვს და გათბობა პირდაპირ ბატარეიდან იკვებება. ცივ დღეს ეს რამდენიმე კილოვატია, რაც გარბენს შესამჩნევად ჭამს.</p>
+
+<h2>დატენვაც ნელდება</h2>
+<p>ცივი ბატარეა სწრაფად ვერ იტენება. თუ ზამთარში სწრაფ დამტენზე მიხვედით და მანქანა ცივია, დაპირებული 20 წუთის ნაცვლად შეიძლება 40 დაგჭირდეთ.</p>
+<p>ბევრ თანამედროვე მოდელს აქვს ბატარეის წინასწარი გახურების ფუნქცია. თუ ნავიგაციაში დამტენს მიუთითებთ, მანქანა გზაში ბატარეას ამზადებს და მისვლისას ის უკვე სწორ ტემპერატურაზეა. თუ ეს ფუნქცია გაქვთ, ზამთარში აუცილებლად გამოიყენეთ.</p>
+
+<h2>საქართველოს მთავარი პრობლემა ზამთარში</h2>
+<p>აქ საქმე მხოლოდ სიცივეში არ არის. საქართველოში ზამთრის მთავარი მიმართულებები სწორედ ის ადგილებია, სადაც სწრაფი დატენვა ყველაზე ნაკლებადაა.</p>
+<ul>
+<li><strong>ბაკურიანი:</strong> ${N.bakuriani.n} დამტენი და არცერთი სწრაფი. ყველა ნელი AC, 22 კილოვატამდე.</li>
+<li><strong>სტეფანწმინდა, ყაზბეგის მიმართულება:</strong> ${N.kazbegi.n} დამტენი, სწრაფი არცერთი.</li>
+<li><strong>გუდაური:</strong> ${N.gudauri.n} დამტენი, აქედან ${N.gudauri.dc} სწრაფი. ეს ერთადერთი ზამთრის კურორტია, სადაც სწრაფად დატენვა შეგიძლიათ.</li>
+</ul>
+<p>ანუ სწორედ მაშინ, როცა გარბენი ყველაზე დაბალია, ინფრასტრუქტურაც ყველაზე თხელია. ეს ორი გარემოება ერთად უნდა გაითვალისწინოთ.</p>
+
+<h2>რას ნიშნავს ეს პრაქტიკულად</h2>
+<p>ნელი AC დამტენი კურორტზე არ არის ცუდი ამბავი, თუ ღამით ტენით. 22 კილოვატიან დამტენზე 60 კილოვატსაათიანი ბატარეა 20-დან 80 პროცენტამდე დაახლოებით ორ საათში ივსება, 7 კილოვატიანზე კი ხუთში. ორივე შემთხვევაში ღამე საკმარისია.</p>
+<p>პრობლემა მაშინ ჩნდება, თუ სასტუმროში დამტენი დაკავებულია ან საერთოდ არ არის და დაბრუნების ენერგია არ გაქვთ.</p>
+
+<h2>ზამთრის წესები</h2>
+<ul>
+<li><strong>დაგეგმეთ 30 პროცენტით მეტი მარაგი.</strong> ზაფხულის გამოცდილება ზამთარში არ მუშაობს.</li>
+<li><strong>გახურდით ჩართულ კაბელზე.</strong> თუ სალონს გასვლამდე ათბობთ მაშინ, როცა მანქანა დამტენზეა, ენერგია ქსელიდან მიდის და არა ბატარეიდან.</li>
+<li><strong>ბოლო სწრაფი დამტენი დაიმახსოვრეთ.</strong> გუდაურის შემდეგ ყაზბეგის მიმართულებით სწრაფი აღარაა, ბორჯომის შემდეგ ბაკურიანისკენ იგივე.</li>
+<li><strong>დატენეთ 90 პროცენტამდე მთაში ასვლის წინ.</strong> ჩვეულებრივ 80 პროცენტზე გაჩერება სწორია, მაგრამ აღმართი და სიცივე ერთად გამონაკლისს ამართლებს.</li>
+<li><strong>დახურულ პარკინგში დატოვება ეხმარება.</strong> ღამით გარეთ გაყინული ბატარეა დილით შესამჩნევად ნაკლებ გარბენს აჩვენებს.</li>
+</ul>
+
+<h2>რა არ არის პრობლემა</h2>
+<p>სიცივე ბატარეას მუდმივად არ აზიანებს. გარბენის დაცემა დროებითია და გაზაფხულზე ბრუნდება. ასევე, ელექტრომობილი ცივ ამინდში უფრო საიმედოდ იშვება, ვიდრე ბენზინის მანქანა, რადგან სტარტერიც და ცივი ძრავის პრობლემაც არ აქვს.</p>
+<p>მთის მარშრუტების დეტალური სურათი ცალკე გვაქვს: <a href="/marshruti/tbilisi-kazbegi/">თბილისი ყაზბეგი</a> და <a href="/marshruti/tbilisi-bakuriani/">თბილისი ბაკურიანი</a>. რატომ ტენის AC ნელა, აქ არის ახსნილი: <a href="/blog/ac-da-dc/">AC თუ DC</a>.</p>
+`,
+      faq: [
+        [`რამდენით მცირდება ელექტრომობილის გარბენი ზამთარში?`,
+          'ჩვეულებრივ 20-დან 35 პროცენტამდე. მიზეზი ორია: ცივი ბატარეა ნაკლებ ენერგიას იძლევა, სალონის გათბობა კი პირდაპირ ბატარეიდან იკვებება, რადგან ძრავის ნარჩენი სითბო ელექტრომობილს არ აქვს.'],
+        [`არის თუ არა სწრაფი დამტენი ბაკურიანსა და ყაზბეგში?`,
+          `არა. ბაკურიანში ${N.bakuriani.n} დამტენია და ყველა ნელი AC, სტეფანწმინდაში ${N.kazbegi.n}, ისიც AC. გუდაური ერთადერთი ზამთრის კურორტია სწრაფი დამტენებით, სადაც ${N.gudauri.n} სადგურიდან ${N.gudauri.dc} სწრაფია.`],
+        [`ზიანდება თუ არა ბატარეა სიცივისგან?`,
+          'მუდმივად არა. გარბენის დაცემა დროებითია და თბილ ამინდში ბრუნდება. ცივ ბატარეაზე სწრაფი დატენვა კი ნელა მიდის, ამიტომ ღირს წინასწარი გახურების ფუნქციის გამოყენება, თუ მანქანას აქვს.'],
+      ],
+    },
+    en: {
+      title: 'Driving an EV through a Georgian winter: range, charging and the mountains',
+      metaTitle: 'EVs in winter in Georgia',
+      desc: `Cold weather costs up to a third of your range. Bakuriani has ${N.bakuriani.n} chargers and none of them fast, Stepantsminda ${N.kazbegi.n}. How to plan for it.`,
+      key: [
+        'In cold weather real range typically drops by 20 to 35 percent. Two things cause it: a cold battery delivers less, and cabin heating draws power on top.',
+        `What is specific to Georgia is that the ski destinations have almost no fast charging. Bakuriani has ${N.bakuriani.n} stations and none are fast, Stepantsminda ${N.kazbegi.n}, and Gudauri ${N.gudauri.n} of which ${N.gudauri.dc} are fast.`,
+      ],
+      body: `
+<h2>Why range falls</h2>
+<p>There are two separate causes and they stack.</p>
+<p>First, the chemical reactions in a lithium battery slow down in the cold. The battery holds the same energy but struggles to deliver it. Some of this is temporary and comes back once the pack warms.</p>
+<p>Second, and more significant: a petrol car heats the cabin with waste heat from the engine, essentially for free. An EV has no such heat, so heating draws straight from the battery. On a cold day that is several kilowatts, and it eats range noticeably.</p>
+
+<h2>Charging slows down too</h2>
+<p>A cold battery cannot take a fast charge. Arrive at a fast charger in winter with a cold car and the promised 20 minutes can turn into 40.</p>
+<p>Many modern models can precondition the battery. Set the charger as your navigation destination and the car warms the pack on the way, so it is at the right temperature when you arrive. If your car has this, use it in winter.</p>
+
+<h2>Georgia's particular winter problem</h2>
+<p>This is not only about the cold. In Georgia the main winter destinations happen to be exactly the places with the least fast charging.</p>
+<ul>
+<li><strong>Bakuriani:</strong> ${N.bakuriani.n} chargers, none of them fast. All slow AC up to 22 kW.</li>
+<li><strong>Stepantsminda, on the Kazbegi road:</strong> ${N.kazbegi.n} chargers, none fast.</li>
+<li><strong>Gudauri:</strong> ${N.gudauri.n} chargers, ${N.gudauri.dc} of them fast. It is the only winter resort where you can charge quickly.</li>
+</ul>
+<p>So exactly when range is at its lowest, the infrastructure is at its thinnest. Those two facts have to be planned for together.</p>
+
+<h2>What this means in practice</h2>
+<p>A slow AC charger at a resort is not a bad thing if you charge overnight. On a 22 kW charger a 60 kWh battery goes from 20 to 80 percent in about two hours, on a 7 kW one in about five. Either way, a night is enough.</p>
+<p>The problem appears when the hotel charger is occupied or absent and you have no energy left to get back.</p>
+
+<h2>Winter rules</h2>
+<ul>
+<li><strong>Plan 30 percent more margin.</strong> Summer experience does not transfer.</li>
+<li><strong>Preheat while still plugged in.</strong> Warming the cabin before you leave while the car is on the charger draws from the grid, not the battery.</li>
+<li><strong>Know your last fast charger.</strong> Past Gudauri towards Kazbegi there is none, and the same past Borjomi towards Bakuriani.</li>
+<li><strong>Charge to 90 percent before a climb.</strong> Stopping at 80 is normally right, but altitude plus cold together justify the exception.</li>
+<li><strong>Park indoors where you can.</strong> A pack left out overnight in the freezing cold shows noticeably less range in the morning.</li>
+</ul>
+
+<h2>What is not a problem</h2>
+<p>Cold does not permanently damage the battery. The range loss is temporary and returns in spring. An EV also starts more reliably in the cold than a petrol car, having neither a starter motor nor a cold engine to deal with.</p>
+<p>The mountain routes are covered in detail separately: <a href="/en/routes/tbilisi-kazbegi/">Tbilisi to Kazbegi</a> and <a href="/en/routes/tbilisi-bakuriani/">Tbilisi to Bakuriani</a>. Why AC charging is slow is explained in <a href="/en/blog/ac-da-dc/">AC or DC</a>.</p>
+`,
+      faq: [
+        [`How much range does an EV lose in winter?`,
+          'Typically 20 to 35 percent. Two causes: a cold battery delivers less energy, and cabin heating draws straight from the pack because an EV has no engine waste heat to use.'],
+        [`Are there fast chargers in Bakuriani and Kazbegi?`,
+          `No. Bakuriani has ${N.bakuriani.n} chargers, all slow AC, and Stepantsminda has ${N.kazbegi.n}, also AC. Gudauri is the only winter resort with fast charging, where ${N.gudauri.dc} of its ${N.gudauri.n} stations are fast.`],
+        [`Does cold damage the battery?`,
+          'Not permanently. The range loss is temporary and returns in warmer weather. Fast charging a cold pack is slow, though, so use the preconditioning function if your car has one.'],
+      ],
+    },
+  },
 ];
 
 const L = {
@@ -471,7 +863,7 @@ const breadcrumbLd = (items) => ({
   })),
 });
 
-function articlePage(lang, art) {
+function articlePage(lang, art, ARTICLES) {
   const t = L[lang], a = art[lang];
   const o = L[lang === 'ka' ? 'en' : 'ka'];
   const url = `${ORIGIN}${t.base}/${t.dir}/${art.slug}/`;
@@ -530,7 +922,7 @@ ${others.map((x) => `<a class="acard" href="${t.base}/${t.dir}/${x.slug}/"><b>${
   };
 }
 
-function indexPage(lang) {
+function indexPage(lang, ARTICLES) {
   const t = L[lang], o = L[lang === 'ka' ? 'en' : 'ka'];
   const url = `${ORIGIN}${t.base}/${t.dir}/`;
   const alt = `${ORIGIN}${o.base}/${o.dir}/`;
@@ -566,10 +958,13 @@ ${ARTICLES.map((x) => `<a class="acard" href="${t.base}/${t.dir}/${x.slug}/"><b>
 }
 
 async function main() {
+  const N = await liveNumbers();
+  const ARTICLES = buildArticles(N);
+  console.log(`· live figures: ${N.total} stations, CCS2 ${N.ccs2}, GB/T ${N.gbt}, US-spec ${N.usSpec}`);
   const pages = [];
   for (const lang of ['ka', 'en']) {
-    pages.push(indexPage(lang));
-    for (const art of ARTICLES) pages.push(articlePage(lang, art));
+    pages.push(indexPage(lang, ARTICLES));
+    for (const art of ARTICLES) pages.push(articlePage(lang, art, ARTICLES));
   }
   for (const p of pages) {
     await mkdir(path.dirname(p.file), { recursive: true });
