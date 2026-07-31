@@ -164,6 +164,60 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://geocharge.ge/blog/sakhlis-damteni/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/sakhlis-damteni/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/blog/sakhlis-damteni/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/blog/sakhlis-damteni/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/blog/sakhlis-damteni/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/sakhlis-damteni/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/blog/sakhlis-damteni/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/blog/sakhlis-damteni/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/blog/100-km-fasi/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/100-km-fasi/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/blog/100-km-fasi/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/blog/100-km-fasi/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/blog/100-km-fasi/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/100-km-fasi/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/blog/100-km-fasi/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/blog/100-km-fasi/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/blog/batarea/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/batarea/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/blog/batarea/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/blog/batarea/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/blog/batarea/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/batarea/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/blog/batarea/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/blog/batarea/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://geocharge.ge/privacy-policy.html</loc>
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/privacy-policy.html"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/privacy-policy.html"/>
@@ -249,6 +303,24 @@
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/kalkulatori/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/calculator/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/kalkulatori/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/ganbajeba/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/ganbajeba/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/customs/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/ganbajeba/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/customs/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/ganbajeba/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/customs/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/ganbajeba/"/>
     <lastmod>2026-07-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -470,6 +542,24 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://geocharge.ge/damtenebi/rustavi/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/damtenebi/rustavi/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/chargers/rustavi/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/damtenebi/rustavi/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/chargers/rustavi/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/damtenebi/rustavi/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/chargers/rustavi/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/damtenebi/rustavi/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://geocharge.ge/damtenebi/bakuriani/</loc>
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/damtenebi/bakuriani/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/chargers/bakuriani/"/>
@@ -501,24 +591,6 @@
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/damtenebi/poti/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/chargers/poti/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/damtenebi/poti/"/>
-    <lastmod>2026-07-31</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://geocharge.ge/damtenebi/rustavi/</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/damtenebi/rustavi/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/chargers/rustavi/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/damtenebi/rustavi/"/>
-    <lastmod>2026-07-31</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://geocharge.ge/en/chargers/rustavi/</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/damtenebi/rustavi/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/chargers/rustavi/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/damtenebi/rustavi/"/>
     <lastmod>2026-07-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cost per 100 km: electric versus petrol | GeoCharge</title>
+<meta name="description" content="100 km on a fast charger is 14.04 GEL against 28.72 on petrol. Where that gap comes from and what the calculation leaves out.">
+<meta name="theme-color" content="#11161A">
+<link rel="canonical" href="https://geocharge.ge/en/blog/100-km-fasi/">
+<link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/100-km-fasi/">
+<link rel="alternate" hreflang="en" href="https://geocharge.ge/en/blog/100-km-fasi/">
+<link rel="alternate" hreflang="x-default" href="https://geocharge.ge/blog/100-km-fasi/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GeoCharge">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://geocharge.ge/en/blog/100-km-fasi/">
+<meta property="og:title" content="Cost per 100 km: electric versus petrol | GeoCharge">
+<meta property="og:description" content="100 km on a fast charger is 14.04 GEL against 28.72 on petrol. Where that gap comes from and what the calculation leaves out.">
+<meta property="og:image" content="https://geocharge.ge/assets/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Cost per 100 km: electric versus petrol | GeoCharge">
+<meta name="twitter:description" content="100 km on a fast charger is 14.04 GEL against 28.72 on petrol. Where that gap comes from and what the calculation leaves out.">
+<meta name="twitter:image" content="https://geocharge.ge/assets/og-image.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
+<link rel="apple-touch-icon" href="/assets/icon-1024.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&amp;family=Noto+Sans+Georgian:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "BreadcrumbList",
+   "itemListElement": [
+    {
+     "@type": "ListItem",
+     "position": 1,
+     "name": "Home",
+     "item": "https://geocharge.ge/en/"
+    },
+    {
+     "@type": "ListItem",
+     "position": 2,
+     "name": "Guides",
+     "item": "https://geocharge.ge/en/blog/"
+    },
+    {
+     "@type": "ListItem",
+     "position": 3,
+     "name": "Electric or petrol: what 100 km actually costs in Georgia"
+    }
+   ]
+  },
+  {
+   "@type": "Article",
+   "@id": "https://geocharge.ge/en/blog/100-km-fasi/#article",
+   "headline": "Electric or petrol: what 100 km actually costs in Georgia",
+   "description": "100 km on a fast charger is 14.04 GEL against 28.72 on petrol. Where that gap comes from and what the calculation leaves out.",
+   "url": "https://geocharge.ge/en/blog/100-km-fasi/",
+   "inLanguage": "en",
+   "datePublished": "2026-07-30",
+   "dateModified": "2026-07-30",
+   "author": {
+    "@type": "Organization",
+    "@id": "https://geocharge.ge/#org",
+    "name": "GeoCharge"
+   },
+   "publisher": {
+    "@id": "https://geocharge.ge/#org"
+   },
+   "image": "https://geocharge.ge/assets/og-image.png",
+   "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://geocharge.ge/#website"
+   }
+  },
+  {
+   "@type": "FAQPage",
+   "inLanguage": "en",
+   "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "How much does 100 km cost in an electric car in Georgia?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "About 14.04 GEL on a public fast DC charger, 11.70 on a slow AC one, and usually under 5 GEL at home. The figures assume 18 kWh per 100 km and the median tariffs across Georgia's chargers."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "How much cheaper is an EV than petrol?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "100 km in a petrol car using 8 litres costs 28.72 GEL, against 14.04 in an EV on a fast charger, roughly 2 times less. Charging at home widens the gap further."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Is an EV still cheaper in winter?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Yes. Cold weather raises consumption by 20 to 35 percent, so 100 km costs about a third more. The gap against petrol narrows but does not close."
+     }
+    }
+   ]
+  }
+ ]
+}
+</script>
+<style>
+:root{--ink:#11161A;--ink-2:#5A6671;--dark:#11161A;--dark-2:#0D1115;
+--accent:#2BD594;--accent-d:#17995F;--on-accent:#0D1A13;--mint:#ECFAF3;--mint-b:#C8EFDD;
+--soft:#F6FAF8;--line:#E3EEE8;--on-dark:#A7B4BD;--on-dark-2:#B9C4CB}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font-family:'Poppins','Noto Sans Georgian',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+::selection{background:var(--accent);color:var(--ink)}
+a{color:inherit}
+.hdr{position:sticky;top:0;z-index:60;background:rgba(17,22,26,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.07)}
+.hdr-in{max-width:1100px;margin:0 auto;padding:0 clamp(16px,4vw,40px);height:64px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.lang{display:flex;border:1px solid #39434C;border-radius:999px;overflow:hidden}
+.lang a{padding:7px 13px;font-weight:600;font-size:12.5px;text-decoration:none;color:#B9C4CB}
+.lang a[aria-current="true"]{background:var(--accent);color:var(--on-accent)}
+.hnav{display:flex;align-items:center;gap:clamp(12px,1.6vw,24px);flex-shrink:0}
+.hnav a{color:var(--on-dark-2);text-decoration:none;font-size:clamp(13px,1.05vw,14px);font-weight:500;white-space:nowrap}
+.hnav a:hover{color:#fff}
+@media (max-width:899px){.hnav{display:none}}
+main{max-width:1100px;margin:0 auto;padding:clamp(28px,5vw,48px) clamp(20px,5vw,40px) clamp(56px,8vw,90px)}
+.crumbs{font-size:13.5px;color:#8B98A1;margin:0 0 18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.crumbs a{color:var(--accent-d);text-decoration:none}
+.crumbs a:hover{text-decoration:underline}
+h1{font-size:clamp(28px,4.4vw,42px);font-weight:700;letter-spacing:-.02em;margin:0 0 14px;text-wrap:balance}
+h2{font-size:clamp(21px,2.6vw,26px);font-weight:700;letter-spacing:-.02em;margin:44px 0 16px}
+.intro{color:var(--ink-2);font-size:17px;line-height:1.7;margin:0;max-width:760px;text-wrap:pretty}
+.upd{color:#8B98A1;font-size:13px;margin:16px 0 0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:28px 0 0}
+.stat{background:var(--mint);border:1px solid var(--mint-b);border-radius:16px;padding:20px 18px;text-align:center}
+.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em}
+.stat span{display:block;font-size:13.5px;font-weight:500;color:#3D4A52;margin-top:6px;line-height:1.35}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14.5px}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--soft);font-weight:600;font-size:13px;color:#3D4A52;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td a{color:var(--accent-d);text-decoration:none;font-weight:500}
+td a:hover{text-decoration:underline}
+.tag{display:inline-block;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+.dc{background:var(--mint);color:var(--mint-ink,#137A4C);border:1px solid var(--mint-b)}
+.ac{background:#F1F4F6;color:#5A6671;border:1px solid #E1E7EB}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:0}
+.chip{background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:8px 15px;font-size:14px;font-weight:500}
+.chip b{color:var(--accent-d);font-weight:700}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin:0}
+.links a{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:9px 14px;
+font-size:14px;font-weight:500;text-decoration:none;color:var(--ink)}
+.links a:hover{border-color:var(--accent);color:var(--accent-d)}
+.cta{background-color:var(--dark);background-image:radial-gradient(600px 400px at 50% 0%,rgba(43,213,148,.16),transparent 65%);
+border-radius:20px;padding:clamp(28px,5vw,44px);margin:48px 0 0;text-align:center;color:#fff}
+.cta h2{color:#fff;margin:0 0 12px}
+.cta p{color:var(--on-dark);font-size:16px;line-height:1.65;margin:0 auto 24px;max-width:560px;text-wrap:pretty}
+.cta .row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.cta a{background:var(--accent);color:var(--on-accent);text-decoration:none;border-radius:11px;
+padding:13px 22px;font-size:15px;font-weight:600}
+.cta a:hover{background:#25C486}
+.faq details{border:1px solid var(--line);border-radius:14px;padding:0 20px;margin-bottom:10px;background:#fff}
+.faq summary{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:16px 0;
+cursor:pointer;font-size:15.5px;font-weight:600;list-style:none}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";color:var(--accent-d);font-size:20px;flex-shrink:0}
+.faq details[open] summary::after{content:"–"}
+.faq details p{color:var(--ink-2);font-size:15px;line-height:1.68;margin:0;padding:0 0 16px;text-wrap:pretty}
+footer{background:var(--dark-2);color:#8B98A1}
+.f-in{max-width:1100px;margin:0 auto;padding:26px clamp(20px,5vw,40px);display:flex;flex-wrap:wrap;
+gap:12px 26px;justify-content:space-between;align-items:center;font-size:13px}
+.f-in a{color:#B9C4CB;text-decoration:none;font-weight:500}
+.f-in a:hover{color:var(--accent)}
+.note{color:#8B98A1;font-size:13px;margin:12px 0 0}
+.calc{display:grid;grid-template-columns:minmax(260px,1fr) minmax(240px,320px);gap:24px;
+background:var(--soft);border:1px solid var(--line);border-radius:20px;padding:clamp(20px,3vw,30px);margin:28px 0 0}
+.calc-in{display:grid;gap:14px;align-content:start}
+.calc-in label{display:grid;gap:6px;font-size:14px;font-weight:600;color:var(--ink)}
+.calc-in input,.calc-in select{width:100%;padding:11px 14px;border:1px solid #D7E0DB;border-radius:11px;
+font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#fff;outline:none}
+.calc-in input:focus,.calc-in select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(43,213,148,.18)}
+.calc-out{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;align-self:start}
+.calc-big b{display:block;font-size:clamp(30px,4.5vw,40px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em;line-height:1.1}
+.calc-big span{display:block;font-size:13.5px;color:#5A6671;margin-top:4px}
+.calc-small{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.calc-small b{display:block;font-size:19px;font-weight:700;color:var(--ink)}
+.calc-small span{display:block;font-size:12.5px;color:#77848C;margin-top:3px;line-height:1.35}
+.calc-time{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:#77848C}
+.calc-time b{display:block;color:var(--ink);font-weight:600;margin-top:4px;line-height:1.6}
+@media (max-width:700px){.calc{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="hdr-in">
+    <a href="/en/" aria-label="GeoCharge"><img src="/assets/logo-dark.svg" alt="GeoCharge" height="28" style="height:28px;display:block"></a>
+    <nav class="hnav" aria-label="Navigation">
+      <a href="/en/chargers/">Chargers</a>
+      <a href="/en/tariffs/">Tariffs</a>
+      <a href="/en/calculator/">Calculator</a>
+      <a href="/en/customs/">Import duty</a>
+      <a href="/en/routes/">Routes</a>
+      <a href="/en/blog/">Guides</a>
+    </nav>
+    <div class="lang" role="group" aria-label="Language">
+      <a href="/blog/100-km-fasi/" hreflang="ka">ქარ</a>
+      <a href="/en/blog/100-km-fasi/" aria-current="true" hreflang="en">ENG</a>
+    </div>
+  </div>
+</header>
+<main>
+<style>.prose{max-width:760px}
+.prose p{color:var(--ink-2);font-size:17px;line-height:1.75;margin:0 0 18px;text-wrap:pretty}
+.prose h2{font-size:clamp(21px,2.6vw,27px);margin:40px 0 14px}
+.prose h3{font-size:19px;font-weight:600;margin:28px 0 10px}
+.prose ul{margin:0 0 18px;padding:0;list-style:none;display:grid;gap:12px}
+/* NOT display:flex — that turns a leading <strong> into its own flex column and
+   strands the rest of the sentence in a second one. Keep the li a block so the
+   bold lead-in stays inline, and float the bullet out with absolute positioning. */
+.prose li{position:relative;padding-left:20px;color:var(--ink-2);font-size:16.5px;line-height:1.7;text-wrap:pretty}
+.prose li::before{content:"";position:absolute;left:0;top:.6em;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.prose strong{color:var(--ink);font-weight:600}
+.prose a{color:var(--accent-d);font-weight:500;text-decoration:none}
+.prose a:hover{text-decoration:underline}
+.key{background:var(--mint);border:1px solid var(--mint-b);border-radius:16px;padding:22px 24px;margin:0 0 28px}
+.key p{margin:0;color:#1B5E42;font-size:16.5px;line-height:1.7}
+.key p+p{margin-top:10px}
+.meta{color:#8B98A1;font-size:13.5px;margin:0 0 28px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:16px;margin:0}
+.acard{display:block;background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px;text-decoration:none}
+.acard:hover{border-color:var(--accent);box-shadow:0 12px 32px -18px rgba(23,153,95,.35)}
+.acard b{display:block;font-size:17.5px;font-weight:600;color:var(--ink);line-height:1.4;margin-bottom:8px}
+.acard span{display:block;color:var(--ink-2);font-size:14.5px;line-height:1.6}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin:0}</style>
+<nav class="crumbs" aria-label="breadcrumb"><a href="/en/">Home</a><span aria-hidden="true">›</span><a href="/en/blog/">Guides</a><span aria-hidden="true">›</span><span>Electric or petrol: what 100 km actually costs in Georgia</span></nav>
+<div class="prose">
+<h1>Electric or petrol: what 100 km actually costs in Georgia</h1>
+<p class="meta">Updated July 2026</p>
+<div class="key"><p>Short answer: 100 km in an EV costs about 14.04 GEL on a public fast charger and 11.70 on a slow one. The same distance in a petrol car using 8 litres costs 28.72.</p><p>So even on the most expensive public charging, an EV is roughly 2 times cheaper. Charge at home and the gap roughly doubles again.</p></div>
+<h2>Where these numbers come from</h2>
+<p>The two sides come from two different sources and both can be checked.</p>
+<p>The charging tariff is the median of Georgia's catalogue of 609 public chargers: 0.78 GEL per kWh on fast DC and 0.65 on slow AC. It is the same data the app runs on.</p>
+<p>The fuel price is the median across Georgia's 8 chains as of 2026-07-31: regular at 3.59 GEL a litre and diesel at 3.97. The median, because the cheapest station in the country is not where an ordinary driver fills up.</p>
+<p>Consumption is taken as 18 kWh per 100 km for the EV and 8 litres for the petrol car, both mixed driving averages.</p>
+
+<h2>What 100 km costs</h2>
+<div class="tw"><table>
+<thead><tr><th>How it is filled</th><th>Per 100 km</th><th>Tariff</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><td>At home, at an illustrative tariff</td><td>18 kWh</td><td>0.25 GEL</td><td><strong>4.50 GEL</strong></td></tr>
+<tr><td>Public slow AC charger</td><td>18 kWh</td><td>0.65 GEL</td><td><strong>11.70 GEL</strong></td></tr>
+<tr><td>Public fast DC charger</td><td>18 kWh</td><td>0.78 GEL</td><td><strong>14.04 GEL</strong></td></tr>
+<tr><td>Petrol, economical car</td><td>6 L</td><td>3.59 GEL</td><td><strong>21.54 GEL</strong></td></tr>
+<tr><td>Petrol, mid size car</td><td>8 L</td><td>3.59 GEL</td><td><strong>28.72 GEL</strong></td></tr>
+<tr><td>Petrol, SUV or heavy city traffic</td><td>11 L</td><td>3.59 GEL</td><td><strong>39.49 GEL</strong></td></tr>
+<tr><td>Diesel</td><td>6 L</td><td>3.97 GEL</td><td><strong>23.82 GEL</strong></td></tr>
+</tbody></table></div>
+<p>The 0.25 GEL on the home row is an illustration, not a quoted tariff. Household electricity is tiered and an EV will normally push you into the top band, so take the exact figure from your own bill and multiply it by 18.</p>
+<p>For your battery and your tariff, the same sum takes two seconds in the <a href="/en/calculator/">calculator</a>.</p>
+
+<h2>What changes the picture</h2>
+<ul>
+<li><strong>Winter.</strong> In cold weather an EV uses 20 to 35 percent more, so 18 kWh becomes about 23. Petrol cars also get worse in winter, but less so. The gap narrows without closing.</li>
+<li><strong>City against highway.</strong> Here it works the other way. In traffic a petrol car burns litres while an EV uses almost nothing and recovers part of what it does use when braking. The gap is widest in town.</li>
+<li><strong>How full the battery is.</strong> It does not change the cost, only the time. Above 80 percent a fast charger slows down sharply.</li>
+<li><strong>Free charging.</strong> Some of Georgia's 609 chargers belong to hotels and shopping centres, where charging is often free for customers. None of that is in the table.</li>
+</ul>
+
+<h2>What this calculation leaves out</h2>
+<p>Fuel is not the whole cost, and it is only honest to say so.</p>
+<ul>
+<li><strong>Servicing.</strong> An EV has no oil, filters, plugs or exhaust. Brake pads last far longer because the motor does most of the slowing.</li>
+<li><strong>Tyres.</strong> The other way round: an EV is heavier and goes through tyres faster.</li>
+<li><strong>The battery.</strong> Pack wear belongs in any long term figure. That is its own subject and has <a href="/en/blog/batarea/">its own guide</a>.</li>
+<li><strong>Import duty.</strong> Here the EV has a large advantage: excise and import duty are both zero. <a href="/en/customs/">The figures and the comparison</a>.</li>
+</ul>
+
+<h2>When it does not pay off</h2>
+<p>There are two cases where this arithmetic stops working.</p>
+<p>First, if you drive less than 5000 km a year. The fuel saving is then so small that it never covers the difference in purchase price.</p>
+<p>Second, if you have no way to charge at home and use only fast chargers. At 14.04 GEL per 100 km that is still cheaper than petrol, but three times what home charging costs. Anyone living in a flat should work that out before buying, not after. The options are covered in <a href="/en/blog/sakhlis-damteni/">home charger installation</a>.</p>
+
+<h2>Frequently asked questions</h2>
+<div class="faq">
+<details><summary>How much does 100 km cost in an electric car in Georgia?</summary><p>About 14.04 GEL on a public fast DC charger, 11.70 on a slow AC one, and usually under 5 GEL at home. The figures assume 18 kWh per 100 km and the median tariffs across Georgia's chargers.</p></details>
+<details><summary>How much cheaper is an EV than petrol?</summary><p>100 km in a petrol car using 8 litres costs 28.72 GEL, against 14.04 in an EV on a fast charger, roughly 2 times less. Charging at home widens the gap further.</p></details>
+<details><summary>Is an EV still cheaper in winter?</summary><p>Yes. Cold weather raises consumption by 20 to 35 percent, so 100 km costs about a third more. The gap against petrol narrows but does not close.</p></details>
+</div>
+</div>
+
+<h2>More guides</h2>
+<div class="cards">
+<a class="acard" href="/en/blog/datenvis-fasi/"><b>How much does it cost to charge an EV in Georgia</b><span>Fast charging runs 0.50 to 1.00 GEL per kWh, slow charging from 0.35. How to work out what one charge will cost you.</span></a>
+<a class="acard" href="/en/blog/konektorebi/"><b>CCS2, GB/T, Type 2: which connector do you need in Georgia</b><span>CCS2 and GB/T dominate Georgian charging. Which one matches your car, and how many stations of each exist in the country.</span></a>
+<a class="acard" href="/en/blog/ac-da-dc/"><b>AC or DC: what actually separates slow and fast charging</b><span>Of Georgia’s 600 plus chargers, roughly 390 are fast DC and 220 are slow AC. When to use which, and how long each takes.</span></a>
+<a class="acard" href="/en/blog/shori-mgzavroba/"><b>Driving long distance in Georgia by EV: a practical guide</b><span>Tbilisi to Batumi needs one stop. Where the chargers are on the main routes, and how to plan the drive.</span></a>
+<a class="acard" href="/en/blog/amerikuli-importi/"><b>Importing an EV from the US: where you will charge it in Georgia</b><span>A US-spec car has CCS1, NACS or Type 1. Georgia has 29 such stations in total. What adapters do and what to check before you buy.</span></a>
+<a class="acard" href="/en/blog/chinuri-importi/"><b>Chinese EVs in Georgia: the GB/T connector and where to charge</b><span>GB/T is on 347 stations in Georgia, almost as many as European CCS2. Why that is good news if you drive a Chinese import.</span></a>
+<a class="acard" href="/en/blog/zamtari/"><b>Driving an EV through a Georgian winter: range, charging and the mountains</b><span>Cold weather costs up to a third of your range. Bakuriani has 6 chargers and none of them fast, Stepantsminda 2. How to plan for it.</span></a>
+<a class="acard" href="/en/blog/sakhlis-damteni/"><b>Home charger installation: what it needs and what drives the price</b><span>A normal socket, a 7 kW wallbox or three phase. What a flat and a house each need, what to insist on from the electrician, and when a wallbox is not worth buying.</span></a>
+<a class="acard" href="/en/blog/batarea/"><b>Battery degradation: what actually happens, and what it means in Georgia</b><span>A battery loses roughly 1 to 2 percent a year. Why Georgian summers and living in a flat are the two real risks here, and what to check when buying used.</span></a>
+</div>
+
+<h2>See also</h2>
+<div class="links">
+<a href="/en/chargers/">Charger list</a><a href="/en/tariffs/">Tariff comparison</a><a href="/en/calculator/">Charging cost calculator</a><a href="/en/routes/">Routes</a><a href="/en/networks/">Networks</a>
+</div>
+<section class="cta">
+  <h2>Map and live status — in the app</h2>
+  <p>This page shows which chargers exist and where. The map, exact locations, real-time availability and route planning live in the free app.</p>
+  <div class="row">
+    <a href="https://play.google.com/store/apps/details?id=ge.geocharge.app" target="_blank" rel="noopener">Get it on Google Play</a>
+    <a href="https://apps.apple.com/ge/app/geocharge/id6785467389" target="_blank" rel="noopener">Download on the App Store</a>
+  </div>
+</section>
+</main>
+<footer>
+  <div class="f-in">
+    <p style="margin:0">© 2026 GeoCharge</p>
+    <a href="/en/">← geocharge.ge</a>
+  </div>
+</footer>
+</body>
+</html>

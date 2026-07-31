@@ -10,7 +10,7 @@
 // buildStationRows() is the only place station fields are emitted — keep it that way.
 
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -250,6 +250,7 @@ const L = {
     priceNote: 'ტარიფები ინფორმაციული ხასიათისაა და პროვაიდერის მიერაა გამოქვეყნებული.',
     tariffsDir: 'tarifebi', routesDir: 'marshruti', calcDir: 'kalkulatori', calc: 'კალკულატორი',
     tariffs: 'ტარიფები', routes: 'მარშრუტები',
+    customsDir: 'ganbajeba', customs: 'განბაჟება',
     thDc: 'DC ₾/kWh', thAc: 'AC ₾/kWh', thNoPrice: 'ფასის გარეშე', thCities: 'ქალაქი',
     thKm: 'კმ თბილისიდან', thStop: 'გაჩერება', median: 'მედიანა',
     cheapestDc: 'ყველაზე იაფი DC', cheapestAc: 'ყველაზე იაფი AC', dearestDc: 'ყველაზე ძვირი DC',
@@ -277,6 +278,7 @@ const L = {
     priceNote: 'Tariffs are indicative and published by the provider.',
     tariffsDir: 'tariffs', routesDir: 'routes', calcDir: 'calculator', calc: 'Calculator',
     tariffs: 'Tariffs', routes: 'Routes',
+    customsDir: 'customs', customs: 'Import duty',
     thDc: 'DC GEL/kWh', thAc: 'AC GEL/kWh', thNoPrice: 'No price', thCities: 'Cities',
     thKm: 'km from Tbilisi', thStop: 'Stop', median: 'median',
     cheapestDc: 'Cheapest DC', cheapestAc: 'Cheapest AC', dearestDc: 'Most expensive DC',
@@ -422,6 +424,7 @@ ${CSS}
       <a href="${t.base}/${t.chargersDir}/">${esc(t.catalog)}</a>
       <a href="${t.base}/${t.tariffsDir}/">${esc(t.tariffs)}</a>
       <a href="${t.base}/${t.calcDir}/">${esc(t.calc)}</a>
+      <a href="${t.base}/${t.customsDir}/">${esc(t.customs)}</a>
       <a href="${t.base}/${t.routesDir}/">${esc(t.routes)}</a>
       <a href="${t.base}/blog/">${lang === 'ka' ? 'სტატიები' : 'Guides'}</a>
     </nav>
@@ -465,6 +468,17 @@ const breadcrumbLd = (items) => ({
   })),
 });
 
+/* ── the ONLY place that decides whether a city is linkable ──────────────────
+   A network reaches towns that hold one or two chargers between them, and those
+   towns are deliberately given no page of their own (see MIN_CITY_STATIONS).
+   Linking them anyway is how this file used to emit 44 dead links, so every
+   city link in the build goes through here. Filled by main() before any page
+   is rendered; a city missing from it is printed as plain text. */
+const CITY_PAGES = new Set();
+const cityCell = (lang, key, label) => (CITY_PAGES.has(key)
+  ? `<a href="${L[lang].base}/${L[lang].chargersDir}/${slug(key)}/">${esc(label)}</a>`
+  : esc(label));
+
 /* ── the ONLY place station fields reach the page ────────────────────────── */
 function buildStationRows(list, lang, { showCity = false, showProvider = true } = {}) {
   const t = L[lang];
@@ -478,7 +492,7 @@ function buildStationRows(list, lang, { showCity = false, showProvider = true } 
     }
     if (showCity) {
       cells.push(s._city
-        ? `<td><a href="${t.base}/${t.chargersDir}/${slug(s._city[0])}/">${esc(lang === 'ka' ? s._city[1] : s._city[0])}</a></td>`
+        ? `<td>${cityCell(lang, s._city[0], lang === 'ka' ? s._city[1] : s._city[0])}</td>`
         : '<td>—</td>');
     }
     const dc = s.type === 'Fast DC';
@@ -774,7 +788,7 @@ ${statBlock(sum, lang)}
 <div class="tw"><table>
 <thead><tr><th>${esc(t.thCity)}</th><th>${esc(t.thCount)}</th></tr></thead>
 <tbody>
-${cities.map(([c, l]) => `<tr><td><a href="${t.base}/${t.chargersDir}/${slug(c)}/">${esc(lang === 'ka' ? l[0]._city[1] : c)}</a></td><td>${l.length}</td></tr>`).join('\n')}
+${cities.map(([c, l]) => `<tr><td>${cityCell(lang, c, lang === 'ka' ? l[0]._city[1] : c)}</td><td>${l.length}</td></tr>`).join('\n')}
 </tbody></table></div>
 
 <h2>${esc(t.allStations)}</h2>
@@ -830,7 +844,7 @@ function priceOf(s) {
   const v = parseFloat(m[1]);
   return v > 0 && v <= 2 ? v : null;
 }
-const median = (v) => {
+export const median = (v) => {
   const a = v.slice().sort((x, y) => x - y);
   return a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2;
 };
@@ -839,7 +853,7 @@ const range = (v, t) => (v.length
   ? `${fmt(Math.min(...v))} .. ${fmt(Math.max(...v))} <span style="color:#8A97A0">(${t.median} ${fmt(median(v))})</span>`
   : '—');
 
-function tariffStats(list) {
+export function tariffStats(list) {
   const dc = [], ac = [];
   let noPrice = 0;
   for (const s of list) {
@@ -1130,6 +1144,349 @@ ${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></de
   };
 }
 
+/* ── customs clearance, straight from the Revenue Service ────────────────────
+   Tax rules change and a wrong number here costs more trust than the page can
+   ever earn back, so nothing on the customs page is written by hand. Every
+   figure is what rs.ge's own calculator answers at build time, and the fee list
+   is parsed out of the script rs.ge serves to its own visitors. Rebuild and the
+   page is current; if rs.ge is unreachable the cache from the last successful
+   build is used and the page says when that was. */
+const RSGE = 'https://rs.ge';
+const RSGE_PAGE = `${RSGE}/CarClearance?cat=2&tab=1`;
+const RSGE_CACHE = path.join(ROOT, 'tools', '.cache', 'rsge-clearance.json');
+const EXTRA_DAY = 5;   // GEL per day, rs.ge charges this past the declaration deadline
+
+// Years are relative to the build, never hard coded, so "a ten year old car"
+// stays a ten year old car in 2030.
+function clearanceCases() {
+  const y = new Date().getFullYear();
+  return {
+    evNew:    { Celi: y,      Zravismoculoba: 0.1, elektroCar: true },
+    evUsed:   { Celi: y - 10, Zravismoculoba: 0.1, elektroCar: true },
+    evRhd:    { Celi: y,      Zravismoculoba: 2.0, elektroCar: true, sWheel: true },
+    ice16New: { Celi: y,      Zravismoculoba: 1.6 },
+    ice16Old: { Celi: y - 10, Zravismoculoba: 1.6 },
+    ice20New: { Celi: y,      Zravismoculoba: 2.0 },
+    ice20Old: { Celi: y - 10, Zravismoculoba: 2.0 },
+    hyb20New: { Celi: y,      Zravismoculoba: 2.0, hybridCar: true },
+  };
+}
+
+async function fetchClearance() {
+  const page = await fetch(RSGE_PAGE);
+  if (!page.ok) throw new Error(`rs.ge page: HTTP ${page.status}`);
+  const cookie = page.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');
+  const html = await page.text();
+  const token = (/name="__RequestVerificationToken" type="hidden" value="([^"]+)"/.exec(html) || [])[1];
+  if (!token) throw new Error('rs.ge: no request verification token in the page');
+
+  // The service fees live in a plain object literal in their own script. Read
+  // them from there rather than retyping them, so a fee change lands on the
+  // next build instead of being noticed months later.
+  const js = await (await fetch(`${RSGE}/Modules/RsGe.Module/scripts/CarClearance.js`)).text();
+  const block = (/pricesForCar\s*=\s*\{([^}]*)\}/.exec(js) || [])[1];
+  if (!block) throw new Error('rs.ge: could not read the service fee list');
+  const fees = {};
+  for (const m of block.matchAll(/(\w+)\s*:\s*([\d.]+)/g)) fees[m[1]] = parseFloat(m[2]);
+
+  const ask = async (params) => {
+    const body = new URLSearchParams({
+      hybridCar: false, elektroCar: false, sWheel: false, SportCar: false, ClassicCar: false,
+      ...params, __RequestVerificationToken: token,
+    });
+    const r = await fetch(`${RSGE}/RsGe.Module/CarClearance/Calculate`, {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', cookie }, body,
+    });
+    if (!r.ok) throw new Error(`rs.ge calculate: HTTP ${r.status}`);
+    const j = await r.json();
+    return { excise: parseFloat(j.Aqcizi), duty: parseFloat(j.Sabgad) };
+  };
+
+  const cases = clearanceCases();
+  const results = {};
+  for (const [k, v] of Object.entries(cases)) results[k] = { ...await ask(v), ...v };
+  return { checked: new Date().toISOString().slice(0, 10), fees, cases: results };
+}
+
+async function clearanceData(offline) {
+  const cached = existsSync(RSGE_CACHE) ? JSON.parse(await readFile(RSGE_CACHE, 'utf8')) : null;
+  if (offline && cached) {
+    console.log(`· rs.ge: using cached clearance figures from ${cached.checked}`);
+    return cached;
+  }
+  try {
+    const fresh = await fetchClearance();
+    await mkdir(path.dirname(RSGE_CACHE), { recursive: true });
+    await writeFile(RSGE_CACHE, JSON.stringify(fresh, null, 1), 'utf8');
+    const ev = fresh.cases.evNew;
+    console.log(`· rs.ge: checked ${fresh.checked}, electric excise ${ev.excise}, import duty ${ev.duty}`);
+    return fresh;
+  } catch (e) {
+    if (!cached) throw new Error(`rs.ge unreachable and no cache to fall back on: ${e.message}`);
+    console.warn(`  !! rs.ge unreachable (${e.message}), falling back to ${cached.checked}`);
+    return cached;
+  }
+}
+
+const CUSTOMS_CSS = `
+.answer{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:16px;margin:28px 0 0}
+.answer div{background:linear-gradient(180deg,var(--mint),#fff);border:1px solid var(--mint-b);border-radius:20px;padding:26px 24px}
+.answer b{display:block;font-size:clamp(40px,6vw,56px);font-weight:800;color:var(--accent-d);letter-spacing:-.03em;line-height:1}
+.answer span{display:block;font-size:15px;font-weight:600;color:#1B5E42;margin-top:10px}
+.answer i{display:block;font-style:normal;font-size:13.5px;color:#4C6B5C;margin-top:6px;line-height:1.5}
+.ledger{background:#fff;border:1px solid var(--line);border-radius:20px;padding:8px 24px;margin:24px 0 0;max-width:620px}
+.ledger label{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.ledger label:last-of-type{border-bottom:none}
+.ledger input{width:18px;height:18px;accent-color:var(--accent-d);flex-shrink:0;margin:0}
+.ledger label span{flex:1;font-size:15px;color:var(--ink-2);line-height:1.45}
+.ledger label b{font-size:15px;font-weight:600;color:var(--ink);white-space:nowrap}
+.ledger .days{display:flex;align-items:center;gap:14px;padding:14px 0;border-top:1px solid var(--line)}
+.ledger .days span{flex:1;font-size:15px;color:var(--ink-2);line-height:1.45}
+.ledger .days input[type=number]{width:76px;height:auto;padding:9px 11px;border:1px solid #D7E0DB;border-radius:10px;
+font-size:15px;font-family:inherit;font-weight:600;color:var(--ink);background:#fff;outline:none;accent-color:auto}
+.ledger .days input[type=number]:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(43,213,148,.18)}
+.total{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between;
+background:var(--dark);color:#fff;border-radius:16px;padding:20px 24px;margin:16px 0 0;max-width:620px}
+.total span{font-size:15px;font-weight:500;color:var(--on-dark-2)}
+.total b{font-size:clamp(28px,4vw,36px);font-weight:800;color:var(--accent);letter-spacing:-.02em}
+.warn{background:#FFF7EC;border:1px solid #F2DFC0;border-radius:16px;padding:22px 24px;margin:24px 0 0;max-width:760px}
+.warn b{display:block;font-size:16px;color:#7A4E10;margin-bottom:8px}
+.warn p{margin:0;color:#6B5533;font-size:15.5px;line-height:1.65}
+.src{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;background:var(--soft);border:1px solid var(--line);
+border-radius:14px;padding:14px 18px;margin:28px 0 0;font-size:13.5px;color:#5A6671;max-width:760px;line-height:1.55}
+.src a{color:var(--accent-d);font-weight:600;text-decoration:none}
+.src a:hover{text-decoration:underline}
+.zero{color:var(--accent-d);font-weight:700}
+`.trim();
+
+function customsPage(lang, C) {
+  const t = L[lang];
+  const o = L[lang === 'ka' ? 'en' : 'ka'];
+  const url = `${ORIGIN}${t.base}/${t.customsDir}/`;
+  const alt = `${ORIGIN}${o.base}/${o.customsDir}/`;
+  const bc = [{ name: t.home, href: `${t.base}/` }, { name: t.customs }];
+  const c = C.cases;
+  const cur = lang === 'ka' ? '₾' : 'GEL';
+  const n = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(2));
+  const money = (v) => (lang === 'ka' ? `${n(v)} ₾` : `${n(v)} GEL`);
+  const evAge = new Date().getFullYear() - c.evUsed.Celi;
+
+  // The order the fees are listed in on rs.ge, with their labels. Amounts come
+  // from rs.ge; only the wording is ours.
+  const FEE_ORDER = ['purchaseValue', 'customsDeclaration', 'exportInspectionAct',
+    'issuanceOfTransitNumber', 'registrationCertificate', 'stateNumber', 'actOfBrowsing'];
+  const FEE_LABEL = {
+    ka: {
+      purchaseValue: 'სატრანსპორტო საშუალების გაფორმება',
+      customsDeclaration: 'საბაჟო დეკლარაციის შევსება',
+      exportInspectionAct: 'საექსპერტო შემოწმების აქტი',
+      issuanceOfTransitNumber: 'შიდა ტრანზიტული ნომრის გაცემა',
+      registrationCertificate: 'სარეგისტრაციო მოწმობა',
+      stateNumber: 'სახელმწიფო ნომერი',
+      actOfBrowsing: 'დათვალიერების აქტი',
+    },
+    en: {
+      purchaseValue: 'Vehicle clearance',
+      customsDeclaration: 'Filing the customs declaration',
+      exportInspectionAct: 'Expert inspection certificate',
+      issuanceOfTransitNumber: 'Internal transit plate',
+      registrationCertificate: 'Registration certificate',
+      stateNumber: 'Number plate',
+      actOfBrowsing: 'Inspection certificate',
+    },
+  }[lang];
+  const feeList = FEE_ORDER.filter((k) => C.fees[k] != null);
+  const feeTotal = feeList.reduce((s, k) => s + C.fees[k], 0);
+
+  const S = lang === 'ka' ? {
+    h1: 'ელექტრომობილის განბაჟება საქართველოში',
+    intro: `ელექტრომობილს საქართველოში არც აქციზი ერიცხება და არც იმპორტის გადასახადი. რჩება მხოლოდ გაფორმების ფიქსირებული საფასურები, სულ ${money(feeTotal)}. ყველა ციფრი შემოსავლების სამსახურის ოფიციალური კალკულატორიდანაა აღებული და ყოველ განახლებაზე თავიდან მოწმდება.`,
+    exciseL: 'აქციზი', dutyL: 'იმპორტის გადასახადი',
+    exciseNote: `ნებისმიერ გამოშვების წელზე. ${evAge} წლის ელექტრომობილზეც ${money(c.evUsed.excise)}.`,
+    dutyNote: 'ბენზინის მანქანაზე ეს ძრავის ყოველ კუბურ სანტიმეტრზე ითვლება. ელექტროძრავას მოცულობა არ აქვს.',
+    feesH: 'რას იხდით სინამდვილეში',
+    feesP: 'გადასახადი ნული რომ იყოს, ეს არ ნიშნავს, რომ განბაჟება უფასოა. საბაჟოსა და შსს მომსახურების სააგენტოში ფიქსირებული საფასურები მაინც წარმოიშობა. მონიშნეთ, რომელი გჭირდებათ.',
+    daysL: 'დეკლარირების ვადის გადაცილება, დღე',
+    daysNote: `თითო დღე ${money(EXTRA_DAY)}`,
+    totalL: 'სულ გადასახდელი',
+    cmpH: 'რამდენს ზოგავს ელექტრომობილი',
+    cmpP: `ერთი და იმავე ასაკის მანქანები, სხვაობა მხოლოდ ძრავაშია. ციფრები rs.ge-ის კალკულატორის პასუხია ${C.checked}-ის მდგომარეობით.`,
+    thCar: 'მანქანა', thExcise: 'აქციზი', thDuty: 'იმპორტის გადასახადი', thSum: 'სულ გადასახადი',
+    rhdH: 'ერთი გამონაკლისი, რომელიც ძვირი ჯდება',
+    rhdP: `მარჯვენასაჭიან ან გადატანილსაჭიან ელექტრომობილს აქციზი უკვე ერიცხება და ის ${money(c.evRhd.excise)}-ია, ასაკის მიუხედავად. იმპორტის გადასახადი ასეთ შემთხვევაშიც ${money(c.evRhd.duty)} რჩება. თუ იაპონიიდან ან დიდი ბრიტანეთიდან ჩამოტანას გეგმავთ, ეს თანხა წინასწარ ჩადეთ ანგარიშში.`,
+    notH: 'რა არ შედის ამ ციფრებში',
+    srcPre: 'წყარო:', srcCalc: 'შემოსავლების სამსახურის განბაჟების კალკულატორი',
+    srcPost: `ბოლოს შემოწმდა ${C.checked}. ციფრები ავტომატურად ახლდება საიტის ყოველ აწყობაზე, ხელით არაფერია ჩაწერილი.`,
+  } : {
+    h1: 'Importing an electric car into Georgia',
+    intro: `An electric car in Georgia pays no excise and no import duty. What remains is the fixed clearance fees, ${money(feeTotal)} in total. Every figure here comes from the Revenue Service's own calculator and is re-checked on every rebuild.`,
+    exciseL: 'Excise', dutyL: 'Import duty',
+    exciseNote: `Whatever the year of manufacture. A ${evAge} year old electric car is also ${money(c.evUsed.excise)}.`,
+    dutyNote: 'On a petrol car this is charged per cubic centimetre of engine. An electric motor has no displacement.',
+    feesH: 'What you actually pay',
+    feesP: 'Zero tax does not mean clearance is free. Fixed fees still arise at customs and at the Public Service Hall. Tick the ones that apply to you.',
+    daysL: 'Days past the declaration deadline',
+    daysNote: `${money(EXTRA_DAY)} per day`,
+    totalL: 'Total payable',
+    cmpH: 'What the exemption is worth',
+    cmpP: `Cars of the same age, differing only in what drives them. The figures are what the rs.ge calculator answered on ${C.checked}.`,
+    thCar: 'Car', thExcise: 'Excise', thDuty: 'Import duty', thSum: 'Total tax',
+    rhdH: 'The one exception, and it is expensive',
+    rhdP: `A right hand drive or converted electric car does pay excise, and it is ${money(c.evRhd.excise)} regardless of age. Import duty stays at ${money(c.evRhd.duty)} even then. If you are planning to bring one in from Japan or the UK, budget for it up front.`,
+    notH: 'What these figures do not include',
+    srcPre: 'Source:', srcCalc: "the Revenue Service's clearance calculator",
+    srcPost: `Last checked ${C.checked}. The figures refresh on every site build; none of them are typed in by hand.`,
+  };
+
+  const cmpRows = lang === 'ka' ? [
+    ['ელექტრომობილი, ახალი', c.evNew],
+    [`ელექტრომობილი, ${evAge} წლის`, c.evUsed],
+    ['ჰიბრიდი 2.0, ახალი', c.hyb20New],
+    ['ბენზინი 1.6, ახალი', c.ice16New],
+    [`ბენზინი 1.6, ${evAge} წლის`, c.ice16Old],
+    ['ბენზინი 2.0, ახალი', c.ice20New],
+    [`ბენზინი 2.0, ${evAge} წლის`, c.ice20Old],
+  ] : [
+    ['Electric, new', c.evNew],
+    [`Electric, ${evAge} years old`, c.evUsed],
+    ['Hybrid 2.0, new', c.hyb20New],
+    ['Petrol 1.6, new', c.ice16New],
+    [`Petrol 1.6, ${evAge} years old`, c.ice16Old],
+    ['Petrol 2.0, new', c.ice20New],
+    [`Petrol 2.0, ${evAge} years old`, c.ice20Old],
+  ];
+
+  const notIncluded = lang === 'ka' ? [
+    'თავად მანქანის ფასი და ტრანსპორტირება საქართველოში.',
+    'ავტოსატრანსპორტო საშუალების ტექნიკური ინსპექტირება, თუ ის ცალკე გჭირდებათ.',
+    'დაზღვევა და საბროკერო მომსახურება, თუ განბაჟებას შუამავლით აკეთებთ.',
+    'იურიდიული პირის სახელით იმპორტი. rs.ge-ის ეს კალკულატორი ფიზიკური პირის მსუბუქ ავტომობილზეა გათვლილი, კომპანიის შემთხვევაში პირობები განსხვავდება და ცალკე უნდა დააზუსტოთ.',
+  ] : [
+    'The price of the car itself and shipping it to Georgia.',
+    'Roadworthiness inspection, if you need it separately.',
+    'Insurance and broker fees, if you clear the car through an agent.',
+    'Importing in a company name. This rs.ge calculator covers a passenger car imported by an individual; for a legal entity the terms differ and need checking separately.',
+  ];
+
+  const faq = lang === 'ka' ? [
+    ['რამდენი ღირს ელექტრომობილის განბაჟება საქართველოში?',
+      `აქციზი და იმპორტის გადასახადი ელექტრომობილზე ნულია. გადასახდელი რჩება მხოლოდ გაფორმების ფიქსირებული საფასურები, სულ ${money(feeTotal)}. ეს თანხა არ არის დამოკიდებული არც მანქანის ფასზე და არც გამოშვების წელზე.`],
+    ['ერიცხება თუ არა ელექტრომობილს აქციზი?',
+      `არა. შემოსავლების სამსახურის კალკულატორი ელექტროძრავიან მსუბუქ ავტომობილზე აქციზს ${money(c.evNew.excise)}-ს აჩვენებს ნებისმიერ გამოშვების წელზე. გამონაკლისია მარჯვენასაჭიანი და გადატანილსაჭიანი მანქანა, სადაც აქციზი ${money(c.evRhd.excise)}-ია.`],
+    ['ძველ ელექტრომობილზე მეტი ხომ არ გადამახდევინებენ?',
+      `არა. ბენზინის მანქანაზე ასაკს დიდი მნიშვნელობა აქვს, ელექტრომობილზე კი არა. ${evAge} წლის ელექტრომობილზეც გადასახადი იგივე ${money(c.evUsed.excise + c.evUsed.duty)}-ია, რაც ახალზე.`],
+    ['რამდენს იხდის ბენზინის მანქანა იმავე პირობებში?',
+      `ახალ 2.0 ლიტრიან ბენზინის მანქანაზე აქციზი და იმპორტის გადასახადი ერთად ${money(c.ice20New.excise + c.ice20New.duty)}-ია, ${evAge} წლისაზე კი ${money(c.ice20Old.excise + c.ice20Old.duty)}. ელექტრომობილზე ორივე ნულია.`],
+    ['ეს ციფრები რამდენად ახალია?',
+      `ბოლოს ${C.checked}-ს გადამოწმდა უშუალოდ rs.ge-ის კალკულატორზე. საიტის ყოველი განახლებისას ისინი თავიდან მოითხოვება, ამიტომ აქ ხელით ჩაწერილი ციფრი არ არის. მიუხედავად ამისა, გადახდამდე გირჩევთ rs.ge-ზე თავად შეამოწმოთ.`],
+  ] : [
+    ['How much does it cost to import an electric car into Georgia?',
+      `Excise and import duty on an electric car are both zero. What remains is the fixed clearance fees, ${money(feeTotal)} in total. That amount depends neither on the price of the car nor on its year.`],
+    ['Do electric cars pay excise in Georgia?',
+      `No. The Revenue Service calculator returns ${money(c.evNew.excise)} of excise on an electric passenger car for any year of manufacture. The exception is a right hand drive or converted car, where excise is ${money(c.evRhd.excise)}.`],
+    ['Is an older electric car taxed more?',
+      `No. Age matters a great deal for a petrol car and not at all for an electric one. A ${evAge} year old electric car is taxed the same ${money(c.evUsed.excise + c.evUsed.duty)} as a new one.`],
+    ['What would a petrol car pay instead?',
+      `A new 2.0 litre petrol car pays ${money(c.ice20New.excise + c.ice20New.duty)} in excise and import duty combined, and a ${evAge} year old one pays ${money(c.ice20Old.excise + c.ice20Old.duty)}. On an electric car both are zero.`],
+    ['How current are these figures?',
+      `They were last verified against the rs.ge calculator on ${C.checked}. They are requested again on every site build, so nothing here is typed in by hand. Even so, check rs.ge yourself before you pay.`],
+  ];
+
+  const title = lang === 'ka'
+    ? 'ელექტრომობილის განბაჟება საქართველოში 2026 | GeoCharge'
+    : 'Importing an electric car into Georgia: duty and fees | GeoCharge';
+  const desc = lang === 'ka'
+    ? `ელექტრომობილზე აქციზი ${money(c.evNew.excise)} და იმპორტის გადასახადი ${money(c.evNew.duty)}. რჩება მხოლოდ გაფორმების საფასურები, სულ ${money(feeTotal)}. ციფრები rs.ge-ის ოფიციალური კალკულატორიდან.`
+    : `Excise ${money(c.evNew.excise)} and import duty ${money(c.evNew.duty)} on an electric car. Only the clearance fees remain, ${money(feeTotal)} in total. Figures from the official rs.ge calculator.`;
+
+  const body = `${crumbs(bc)}
+<style>${CUSTOMS_CSS}</style>
+<h1>${esc(S.h1)}</h1>
+<p class="intro">${esc(S.intro)}</p>
+
+<div class="answer">
+  <div><b>${esc(money(c.evNew.excise))}</b><span>${esc(S.exciseL)}</span><i>${esc(S.exciseNote)}</i></div>
+  <div><b>${esc(money(c.evNew.duty))}</b><span>${esc(S.dutyL)}</span><i>${esc(S.dutyNote)}</i></div>
+</div>
+
+<h2>${esc(S.feesH)}</h2>
+<p class="intro">${esc(S.feesP)}</p>
+<div class="ledger">
+${feeList.map((k) => `  <label><input type="checkbox" class="f" data-v="${C.fees[k]}" checked><span>${esc(FEE_LABEL[k])}</span><b>${esc(money(C.fees[k]))}</b></label>`).join('\n')}
+  <div class="days"><span>${esc(S.daysL)}<br><small style="color:#8B98A1">${esc(S.daysNote)}</small></span><input type="number" id="f-days" value="0" min="0" max="30" step="1"></div>
+</div>
+<div class="total"><span>${esc(S.totalL)}</span><b id="f-total">${esc(money(feeTotal))}</b></div>
+
+<div class="warn">
+  <b>${esc(S.rhdH)}</b>
+  <p>${esc(S.rhdP)}</p>
+</div>
+
+<h2>${esc(S.cmpH)}</h2>
+<p class="intro" style="margin-bottom:16px">${esc(S.cmpP)}</p>
+<div class="tw"><table>
+<thead><tr><th>${esc(S.thCar)}</th><th>${esc(S.thExcise)}</th><th>${esc(S.thDuty)}</th><th>${esc(S.thSum)}</th></tr></thead>
+<tbody>
+${cmpRows.map(([label, r]) => {
+    const z = r.excise + r.duty === 0 ? ' class="zero"' : '';
+    return `<tr><td>${esc(label)}</td><td>${esc(money(r.excise))}</td><td>${esc(money(r.duty))}</td><td${z}>${esc(money(r.excise + r.duty))}</td></tr>`;
+  }).join('\n')}
+</tbody></table></div>
+
+<h2>${esc(S.notH)}</h2>
+<ul class="intro" style="padding-left:20px">
+${notIncluded.map((x) => `<li style="margin-bottom:8px">${esc(x)}</li>`).join('\n')}
+</ul>
+
+<div class="src"><span>${esc(S.srcPre)} <a href="${RSGE_PAGE}" target="_blank" rel="nofollow noopener">${esc(S.srcCalc)}</a>. ${esc(S.srcPost)}</span></div>
+
+<h2>${esc(t.faq)}</h2>
+<div class="faq">
+${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('\n')}
+</div>
+
+<h2>${lang === 'ka' ? 'შემდეგი ნაბიჯი' : 'Next step'}</h2>
+<p class="intro">${lang === 'ka'
+    ? 'მანქანა რომ ჩამოიყვანთ, დატენვა მოგიწევთ.'
+    : 'Once the car is here, you will need to charge it.'} <a href="${t.base}/${t.chargersDir}/" style="color:var(--accent-d);font-weight:500;text-decoration:none">${lang === 'ka' ? 'საქართველოს დამტენების სია' : "Georgia's charger list"}</a>, <a href="${t.base}/${t.calcDir}/" style="color:var(--accent-d);font-weight:500;text-decoration:none">${lang === 'ka' ? 'დატენვის ხარჯის კალკულატორი' : 'the charging cost calculator'}</a>${lang === 'ka' ? ' და ' : ' and '}<a href="${t.base}/blog/100-km-fasi/" style="color:var(--accent-d);font-weight:500;text-decoration:none">${lang === 'ka' ? '100 კილომეტრის რეალური ღირებულება' : 'what 100 km really costs'}</a>.</p>
+
+<script>
+(function(){
+  var boxes=[].slice.call(document.querySelectorAll('.ledger .f'));
+  var days=document.getElementById('f-days'), out=document.getElementById('f-total');
+  function upd(){
+    var sum=0;
+    boxes.forEach(function(b){ if(b.checked) sum+=parseFloat(b.getAttribute('data-v'))||0; });
+    sum+=(parseFloat(days.value)||0)*${EXTRA_DAY};
+    out.textContent=(sum%1?sum.toFixed(2):sum)+' ${cur}';
+  }
+  boxes.forEach(function(b){ b.addEventListener('change',upd); });
+  days.addEventListener('input',upd);
+  upd();
+})();
+</script>`;
+
+  return {
+    file: path.join(SITE, t.base.replace('/', ''), t.customsDir, 'index.html'),
+    url,
+    html: shell({
+      lang, title, desc, canonical: url, altHref: alt, body,
+      jsonld: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          breadcrumbLd(bc),
+          { '@type': 'WebPage', '@id': url + '#page', name: title, url, inLanguage: t.code,
+            description: desc, dateModified: C.checked,
+            isPartOf: { '@type': 'WebSite', '@id': `${ORIGIN}/#website` },
+            citation: { '@type': 'WebPage', name: 'Revenue Service of Georgia', url: RSGE_PAGE } },
+          { '@type': 'FAQPage', inLanguage: t.code,
+            mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+        ],
+      },
+    }),
+  };
+}
+
 /* ── networks index ──────────────────────────────────────────────────────── */
 function networksIndexPage(lang, byProvider, updated) {
   const t = L[lang];
@@ -1372,7 +1729,7 @@ ${ROUTES.map((r) => {
 function sitemap(pairs, today) {
   // Hand-written guides live in tools/build-articles.mjs; keep the slugs in sync.
   const ARTICLE_SLUGS = ['datenvis-fasi', 'konektorebi', 'ac-da-dc', 'shori-mgzavroba',
-    'amerikuli-importi', 'chinuri-importi', 'zamtari'];
+    'amerikuli-importi', 'chinuri-importi', 'zamtari', 'sakhlis-damteni', '100-km-fasi', 'batarea'];
   const fixed = [
     ['https://geocharge.ge/', 'https://geocharge.ge/en/', '1.0', 'weekly'],
     ['https://geocharge.ge/blog/', 'https://geocharge.ge/en/blog/', '0.8', 'monthly'],
@@ -1424,6 +1781,8 @@ async function main() {
     console.log(`· fetched gist (${raw.length} records)`);
   }
 
+  const clearance = await clearanceData(offline);
+
   const ge = raw.filter(inGeorgia);
   console.log(`· ${ge.length} in Georgia, ${raw.length - ge.length} outside (not published)`);
 
@@ -1453,6 +1812,9 @@ async function main() {
   const today = new Date().toISOString().slice(0, 10);
 
   const cityList = [...byCity.entries()].sort((a, b) => b[1].length - a[1].length);
+  // Everything that renders a city link reads CITY_PAGES, so it has to be
+  // filled before any page is built.
+  for (const c of byCity.keys()) CITY_PAGES.add(c);
   const provList = [...byProvider.entries()].sort((a, b) => b[1].length - a[1].length);
 
   const pages = [];
@@ -1461,6 +1823,7 @@ async function main() {
     pages.push(tariffPage(lang, ge, byProvider, updated));
     pages.push(networksIndexPage(lang, byProvider, updated));
     pages.push(calculatorPage(lang, ge, byProvider, updated));
+    pages.push(customsPage(lang, clearance));
     pages.push(routesIndexPage(lang, byCity, byCityAll, raw, updated));
     for (const [c, list] of cityList) pages.push(cityPage(lang, list[0]._city, list, cityList, updated));
     for (const [p, list] of provList) pages.push(providerPage(lang, p, list, provList, updated));
@@ -1515,6 +1878,41 @@ async function main() {
   if (leaks) throw new Error(`${leaks} leak(s) detected, aborting before deploy`);
   console.log('· leak check passed: no coordinates, no live status in output');
 
+  // Every internal link must land on a file that exists. Pages here are
+  // generated from the station data while some of their link targets are
+  // suppressed by thresholds like MIN_CITY_STATIONS, so a link can rot without
+  // anyone touching it. Checked across the whole of site/, because the guides
+  // written by build-articles.mjs and these pages link to each other.
+  const htmlFiles = [];
+  (function walk(dir) {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (e.name.endsWith('.html')) htmlFiles.push(p);
+    }
+  })(SITE);
+  const dead = new Map();
+  for (const f of htmlFiles) {
+    const html = await readFile(f, 'utf8');
+    for (const m of html.matchAll(/href="(\/[^"#?]*)"/g)) {
+      const href = m[1];
+      const target = href.endsWith('/')
+        ? path.join(SITE, href, 'index.html')
+        : path.join(SITE, href);
+      if (existsSync(target)) continue;
+      if (!dead.has(href)) dead.set(href, []);
+      dead.get(href).push(path.relative(ROOT, f));
+    }
+  }
+  if (dead.size) {
+    console.error(`  !! ${dead.size} internal link(s) point at pages that do not exist:`);
+    for (const [href, from] of [...dead].slice(0, 12)) {
+      console.error(`     ${href}  <- ${from.slice(0, 2).join(', ')}${from.length > 2 ? ` (+${from.length - 2})` : ''}`);
+    }
+    throw new Error('link check failed');
+  }
+  console.log(`· link check passed: ${htmlFiles.length} files, every internal link resolves`);
+
   // House style: no dashes as punctuation in Georgian copy. Checked on prose
   // elements only, so the "—" placeholder in a table cell (meaning "no data")
   // and hyphens inside names like E-Space are left alone.
@@ -1533,7 +1931,7 @@ async function main() {
   console.log('· dash check passed: no dashes as punctuation in Georgian copy');
 
   const pairs = [];
-  const kaPrefixes = ['/damtenebi', '/qselebi', '/tarifebi', '/marshruti', '/kalkulatori'];
+  const kaPrefixes = ['/damtenebi', '/qselebi', '/tarifebi', '/marshruti', '/kalkulatori', '/ganbajeba'];
   const kaPages = pages.filter((p) => kaPrefixes.some((k) => p.url.startsWith(ORIGIN + k)));
   for (const p of kaPages) {
     const en = p.url
@@ -1541,8 +1939,9 @@ async function main() {
       .replace('/qselebi/', '/en/networks/')
       .replace('/tarifebi/', '/en/tariffs/')
       .replace('/marshruti/', '/en/routes/')
-      .replace('/kalkulatori/', '/en/calculator/');
-    const top = ['/damtenebi/', '/tarifebi/', '/qselebi/', '/marshruti/', '/kalkulatori/'].some((k) => p.url === ORIGIN + k);
+      .replace('/kalkulatori/', '/en/calculator/')
+      .replace('/ganbajeba/', '/en/customs/');
+    const top = ['/damtenebi/', '/tarifebi/', '/qselebi/', '/marshruti/', '/kalkulatori/', '/ganbajeba/'].some((k) => p.url === ORIGIN + k);
     pairs.push({ ka: p.url, en, priority: top ? '0.9' : '0.7' });
   }
   const xml = sitemap(pairs, today);

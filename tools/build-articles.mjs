@@ -13,13 +13,45 @@ import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CSS, shell, inGeorgia, assignCity } from './build-pages.mjs';
+import { CSS, shell, inGeorgia, assignCity, median, tariffStats } from './build-pages.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = path.join(ROOT, 'site');
 const ORIGIN = 'https://geocharge.ge';
 const CACHE = path.join(ROOT, 'tools', '.cache', 'chargers.json');
 const GIST = 'https://gist.githubusercontent.com/experto44/36f39392ce7a4abe14ab065aa8e846bd/raw/chargers.json';
+const FUEL_CACHE = path.join(ROOT, 'tools', '.cache', 'fuel.json');
+const FUEL_SRC = 'https://tarifebi.ge/fuel';
+
+// Comparing an EV against petrol is only worth publishing if the petrol side is
+// today's price, so it is read at build time from tarifebi.ge, which lists every
+// chain. The median of the chains is what goes in the prose: the cheapest
+// station in the country is not what an ordinary driver pays.
+async function fuelPrices() {
+  try {
+    const html = await (await fetch(FUEL_SRC)).text();
+    const raw = (/var priceData=(\[[\s\S]*?\]);/.exec(html) || [])[1];
+    if (!raw) throw new Error('priceData block not found');
+    const data = JSON.parse(raw);
+    const cat = (c) => {
+      const items = (data.find((d) => d.cat === c) || {}).items || [];
+      if (!items.length) throw new Error(`no prices for ${c}`);
+      return { med: median(items.map((i) => i.price)), n: items.length,
+        min: Math.min(...items.map((i) => i.price)), max: Math.max(...items.map((i) => i.price)) };
+    };
+    const out = { checked: new Date().toISOString().slice(0, 10),
+      regular: cat('regular'), premium: cat('premium'), diesel: cat('diesel') };
+    await mkdir(path.dirname(FUEL_CACHE), { recursive: true });
+    await writeFile(FUEL_CACHE, JSON.stringify(out, null, 1), 'utf8');
+    console.log(`· fuel: regular median ${out.regular.med.toFixed(2)} across ${out.regular.n} chains (${out.checked})`);
+    return out;
+  } catch (e) {
+    if (!existsSync(FUEL_CACHE)) throw new Error(`fuel prices unavailable and no cache: ${e.message}`);
+    const cached = JSON.parse(await readFile(FUEL_CACHE, 'utf8'));
+    console.warn(`  !! fuel prices unavailable (${e.message}), falling back to ${cached.checked}`);
+    return cached;
+  }
+}
 
 // Figures quoted in the prose come from here, so an article cannot drift away
 // from the catalogue it links to. Anything stated as a round approximation in
@@ -46,8 +78,12 @@ async function liveNumbers() {
     const l = atCity(name);
     return { n: l.length, dc: l.filter((s) => s.type === 'Fast DC').length };
   };
+  const tar = tariffStats(ge);
   return {
     total: ge.length,
+    dcMed: median(tar.dc), acMed: median(tar.ac),
+    dcMin: Math.min(...tar.dc), dcMax: Math.max(...tar.dc),
+    acMin: Math.min(...tar.ac),
     ccs2: count('CCS2'), gbt: gbt.length, type2: count('Type 2'),
     chademo: count('CHAdeMO'), type1: count('Type 1'), nacs: count('NACS'), ccs1: count('CCS1'),
     gbtDc: gbt.filter((s) => s.type === 'Fast DC').length,
@@ -85,7 +121,7 @@ const PROSE = `
 .links{display:flex;flex-wrap:wrap;gap:10px;margin:0}
 `.trim();
 
-const buildArticles = (N) => [
+const buildArticles = (N, F) => [
   {
     slug: 'datenvis-fasi',
     ka: {
@@ -830,6 +866,453 @@ const buildArticles = (N) => [
       ],
     },
   },
+  {
+    slug: 'sakhlis-damteni',
+    ka: {
+      title: 'სახლის დამტენი: რა სჭირდება და რაზეა დამოკიდებული ფასი',
+      metaTitle: 'სახლის დამტენის დაყენება საქართველოში',
+      desc: 'ჩვეულებრივი როზეტი, შვიდკილოვატიანი კედლის დამტენი თუ სამფაზიანი. რა სჭირდება ბინას და კერძო სახლს, რა მოსთხოვოთ ელექტრიკს და როდის არ ღირს დამტენის ყიდვა.',
+      key: [
+        'მოკლე პასუხი: თუ დღეში 50 კილომეტრამდე დადიხართ, ჩვეულებრივი როზეტიც კმარა. კედლის დამტენი მაშინაა საჭირო, როცა ერთ ღამეში ბატარეის ნახევარზე მეტის შევსება გჭირდებათ.',
+        'ხარჯში მთავარი თავად დამტენი არ არის. კაბელის გაყვანა მრიცხველიდან სადგომამდე და, საჭიროების შემთხვევაში, სიმძლავრის გაზრდა ხშირად აპარატზე ძვირი ჯდება. სწორედ ამიტომ განსხვავდება ბინისა და კერძო სახლის ფასი რამდენჯერმე.',
+      ],
+      body: `
+<h2>სამი რეალური ვარიანტი</h2>
+<p>არჩევანი სამ დონეზეა და მათ შორის სხვაობა მხოლოდ სისწრაფეა. ქვემოთ ნაჩვენებია, რამდენი დასჭირდება 60 კილოვატსაათიან ბატარეას 20-დან 80 პროცენტამდე, ანუ 36 კილოვატსაათის შევსებას.</p>
+<div class="tw"><table>
+<thead><tr><th>მიერთება</th><th>სიმძლავრე</th><th>20-დან 80 პროცენტამდე</th></tr></thead>
+<tbody>
+<tr><td>ჩვეულებრივი საყოფაცხოვრებო როზეტი</td><td>2.3 kW</td><td>დაახლოებით 16 საათი</td></tr>
+<tr><td>გაძლიერებული როზეტი, მანქანის კომპლექტის კაბელი</td><td>3.5 kW</td><td>დაახლოებით 10 საათი</td></tr>
+<tr><td>ერთფაზიანი კედლის დამტენი</td><td>7.4 kW</td><td>დაახლოებით 5 საათი</td></tr>
+<tr><td>სამფაზიანი კედლის დამტენი</td><td>11 kW</td><td>დაახლოებით 3 საათი 20 წუთი</td></tr>
+<tr><td>სამფაზიანი კედლის დამტენი</td><td>22 kW</td><td>დაახლოებით 1 საათი 40 წუთი</td></tr>
+</tbody></table></div>
+<p>ღამე რვა საათია. ცხრილიდან ჩანს, რომ შვიდკილოვატიანი დამტენი ამ დროში თითქმის ნებისმიერ ბატარეას ავსებს. სწორედ ამიტომ არის 7.4 კილოვატი სახლისთვის ყველაზე გავრცელებული არჩევანი და არა იმიტომ, რომ უფრო ძლიერი არ არსებობს.</p>
+
+<h2>რამდენ კილოვატს იღებს თქვენი მანქანა</h2>
+<p>დამტენის ყიდვამდე ერთი რამ შეამოწმეთ: რამდენ კილოვატს იღებს მანქანა ნელ დატენვაზე. ეს ბორტზე მყოფი დამმუხტველის ლიმიტია და ის დამტენზე არ არის დამოკიდებული.</p>
+<p>ბევრი მოდელი მაქსიმუმ 7.4 კილოვატს იღებს, ნაწილი 11-ს, 22 კილოვატი კი შედარებით იშვიათია. თუ თქვენი მანქანა 7.4-ზე ჩერდება, 22 კილოვატიან დამტენზეც 7.4-ს მიიღებთ. ანუ გადაიხდით იმაში, რასაც ვერასოდეს გამოიყენებთ.</p>
+<p>იგივე ეხება ფაზას. სამფაზიან დამტენს სამფაზიანი შემოყვანა სჭირდება. თუ ბინაში ერთი ფაზაა, სამფაზიანი აპარატი უბრალოდ ერთ ფაზაზე იმუშავებს და 7.4 კილოვატს მოგცემთ.</p>
+
+<h2>კერძო სახლი და ბინა ორი სხვადასხვა ამბავია</h2>
+<p>კერძო სახლში საქმე მარტივია. მრიცხველი თქვენია, სადგომი თქვენია, კაბელის მანძილი მოკლეა და სამი ფაზა ხშირად უკვე შემოყვანილია. აქ დამტენის დაყენება ჩვეულებრივი ელექტროსამონტაჟო სამუშაოა.</p>
+<p>ბინაში სამი დამოუკიდებელი დაბრკოლებაა და თითოეული მათგანი ცალკე წყდება.</p>
+<ul>
+<li><strong>სადგომის სტატუსი.</strong> ეზო და მიწისქვეშა პარკინგი ჩვეულებრივ საერთო ქონებაა. კედელზე აპარატის დამაგრებას და საერთო სივრცეში კაბელის გაყვანას მესაკუთრეთა ამხანაგობის თანხმობა სჭირდება. ეს პირველი ნაბიჯია და არა ბოლო.</li>
+<li><strong>ცალკე აღრიცხვა.</strong> თუ დამტენი საერთო ხაზზე ჩაერთვება, დენს მთელი სადარბაზო გადაიხდის. საჭიროა თქვენი ბინის მრიცხველიდან ცალკე ხაზი ან დამტენისთვის ცალკე მრიცხველი.</li>
+<li><strong>შენობის მარაგი.</strong> ძველ კორპუსებში სადარბაზოს შემოყვანას თავისუფალი სიმძლავრე ხშირად საერთოდ არ აქვს. ამ შემთხვევაში დამტენამდე სიმძლავრის გაზრდაა საჭირო, რაც განაწილების კომპანიის ოფიციალური სერვისია და განცხადებით იწყება.</li>
+</ul>
+<p>ამ სამიდან მესამე ყველაზე ხშირად აჩერებს პროექტს. ამიტომ სანამ აპარატს შეარჩევთ, ჯერ გაარკვიეთ, რამდენი ამპერია თქვენს მრიცხველზე დაშვებული და რამდენს იკავებს უკვე ბინა.</p>
+
+<h2>რას მოსთხოვოთ ელექტრიკს</h2>
+<p>დამტენი ერთადერთი მოწყობილობაა სახლში, რომელიც საათობით მუშაობს სრულ დატვირთვაზე. ჩვეულებრივი საყოფაცხოვრებო გაყვანილობა ამაზე გათვლილი არ არის.</p>
+<ul>
+<li><strong>ცალკე ხაზი მრიცხველიდან.</strong> დამტენი არ უნდა ჩაერთოს არსებულ როზეტების ხაზში, სამზარეულოს ხაზში ან დამატებით სოკეტში. ცალკე კაბელი, ცალკე ავტომატი.</li>
+<li><strong>კაბელის კვეთა დენზე გათვლილი.</strong> კვეთას ორი რამ განსაზღვრავს: დამტენის დენი და მანძილი. გრძელ ტრასაზე იმავე დენისთვის უფრო სქელი კაბელი სჭირდება. ეს ის ადგილია, სადაც დაზოგვა ყველაზე საშიშია.</li>
+<li><strong>დიფავტომატი, რომელიც მუდმივ დენს ხედავს.</strong> ჩვეულებრივი დიფავტომატი მუდმივი დენის გაჟონვას ვერ ამჩნევს, დამტენში კი სწორედ ასეთი შეიძლება გაჩნდეს. საჭიროა B ტიპის დიფავტომატი ან დამტენი, რომელსაც ეს დაცვა შიგნით აქვს ჩაშენებული.</li>
+<li><strong>რეალური მიწისმიმართვა.</strong> ძველ თბილისურ კორპუსებში დამცავი მიწა ხშირად საერთოდ არ არის ან ნულთანაა შეერთებული. დამტენი ასეთ ქსელში ან საერთოდ არ ჩაირთვება, ან ჩაირთვება და დაცვის გარეშე იმუშავებს. ეს ცალკე შესამოწმებელი პუნქტია და არა თავისთავად ცხადი.</li>
+<li><strong>დენის შეზღუდვის შესაძლებლობა.</strong> კარგი დამტენი საშუალებას გაძლევთ მაქსიმალური დენი პროგრამულად შეზღუდოთ. თუ შემოყვანა სუსტია, 7.4 კილოვატიანი აპარატი 3.7-ზე დააყენეთ და ღამით მაინც სრულად დაიტენება.</li>
+</ul>
+
+<h2>რაზეა დამოკიდებული ფასი</h2>
+<p>ხარჯი ოთხ ნაწილად იშლება და მათი წონა ერთმანეთისგან ძალიან განსხვავდება.</p>
+<ul>
+<li><strong>თავად დამტენი.</strong> ყველაზე პროგნოზირებადი პუნქტი. მარტივი აპარატი და ეკრანიანი, აპლიკაციით მართვადი მოდელი რამდენჯერმე განსხვავდება, ფუნქციონალურად კი ორივე ერთსა და იმავეს აკეთებს.</li>
+<li><strong>კაბელი და მისი გაყვანა.</strong> აქ იმალება მთავარი გაურკვევლობა. ხუთი მეტრი კედლის გასწვრივ და ორმოცი მეტრი მიწისქვეშა პარკინგში ერთი და იგივე სამუშაო არ არის.</li>
+<li><strong>დამცავი აპარატურა და ფარი.</strong> ავტომატი, დიფავტომატი და საჭიროების შემთხვევაში ცალკე მრიცხველი.</li>
+<li><strong>სიმძლავრის გაზრდა.</strong> ეს პუნქტი ან საერთოდ არ არსებობს, ან ყველაზე დიდი აღმოჩნდება. დამოკიდებულია იმაზე, რა მარაგი აქვს თქვენს შემოყვანას.</li>
+</ul>
+<p>კონკრეტულ ციფრებს განზრახ არ ვწერთ. აპარატის ფასი ბაზარზე იცვლება, მონტაჟი კი ყოველ შემთხვევაში ინდივიდუალურად ითვლება და ერთი და იმავე დამტენის დაყენება ორ სხვადასხვა ბინაში სამჯერ განსხვავებული შეიძლება იყოს. სამაგიეროდ იცით, რომელი ოთხი პუნქტი უნდა იყოს ხარჯთაღრიცხვაში ჩაშლილი. თუ ელექტრიკი ერთ ჯამურ ციფრს გეუბნებათ, სთხოვეთ დაშალოს.</p>
+
+<h2>ღირს თუ არა საერთოდ</h2>
+<p>ეს ის კითხვაა, რომელსაც ყველაზე იშვიათად სვამენ. თუ დღეში 50 კილომეტრს გადიხართ, ეს დაახლოებით 9 კილოვატსაათია. ჩვეულებრივი როზეტი მას ოთხ საათში ავსებს. კედლის დამტენი ამ შემთხვევაში სისწრაფეს ყიდულობს, რომელიც არ გჭირდებათ.</p>
+<p>დამტენს აზრი მაშინ აქვს, თუ დღეში 150 კილომეტრზე მეტს გადიხართ, თუ სახლში მხოლოდ რამდენიმე საათით ჩერდებით, ან თუ ორი ელექტრომობილი გყავთ.</p>
+<p>ფულადი მხარე კი მარტივად ითვლება. საჯარო ნელ დამტენზე კილოვატსაათი მედიანურად ${N.acMed.toFixed(2)} ლარია, სწრაფზე ${N.dcMed.toFixed(2)}. სახლის ტარიფი ამაზე დაბალია და ზუსტ ციფრს თქვენივე ქვითრიდან აიღებთ, რადგან ის საფეხურებრივია და ელექტრომობილი ჩვეულებრივ ზედა საფეხურზე გადაგიყვანთ. სხვაობა ერთ კილოვატსაათზე გაამრავლეთ თვეში დახარჯულ კილოვატსაათებზე და დანაზოგი ხელთაა.</p>
+
+<h2>რა არ გააკეთოთ</h2>
+<ul>
+<li><strong>დამაგრძელებელი.</strong> ჩვეულებრივი დამაგრძელებელი საათობით 10 ამპერზე არ არის გათვლილი და ის თბება. თუ როზეტიდან ტენით, პირდაპირ ჩართეთ.</li>
+<li><strong>საერთო როზეტი.</strong> ის, რასაც ერთდროულად ბოილერი ან გამათბობელი იყენებს, დამტენს არ გამოადგება.</li>
+<li><strong>ღია ცის ქვეშ დაუცველი როზეტი.</strong> გარეთ მიერთებას ტენისგან დაცვა და შესაბამისი კლასის სოკეტი სჭირდება.</li>
+<li><strong>მაქსიმალური დენი ძველ გაყვანილობაზე.</strong> თუ კაბელი ძველია, დამტენში დენი შეზღუდეთ და არა პირიქით.</li>
+</ul>
+<p>რას ნიშნავს AC და DC და რატომ ტენის ნელი დამტენი ასე დიდხანს, ცალკე გვაქვს ახსნილი: <a href="/blog/ac-da-dc/">AC თუ DC</a>. საჯარო დამტენების ტარიფები კი <a href="/tarifebi/">ტარიფების გვერდზეა</a>.</p>
+`,
+      faq: [
+        ['რამდენ ხანში იტენება ელექტრომობილი სახლის როზეტიდან?',
+          'ჩვეულებრივი როზეტი დაახლოებით 2.3 კილოვატს იძლევა. 60 კილოვატსაათიანი ბატარეის 20-დან 80 პროცენტამდე შევსებას ეს დაახლოებით 16 საათს ანდომებს. ერთი დღის ჩვეულებრივი გარბენი, დაახლოებით 9 კილოვატსაათი, ოთხ საათში ივსება.',
+        ],
+        ['შემიძლია თუ არა ბინაში დამტენის დაყენება?',
+          'შესაძლებელია, მაგრამ სამი პირობა უნდა შესრულდეს: სადგომზე მესაკუთრეთა ამხანაგობის თანხმობა, თქვენი მრიცხველიდან ცალკე ხაზი და შემოყვანაზე თავისუფალი სიმძლავრე. სამივე ცალკე მოგვარებადია, თუმცა სწორედ მესამე აჩერებს პროექტს ყველაზე ხშირად.',
+        ],
+        ['სამფაზიანი დამტენი უკეთესია თუ ერთფაზიანი?',
+          'უკეთესია მხოლოდ მაშინ, თუ სამი ფაზა შემოყვანილი გაქვთ და მანქანაც 11 ან 22 კილოვატს იღებს. ერთფაზიან შემოყვანაზე სამფაზიანი აპარატი იმავე 7.4 კილოვატს მოგცემთ, რასაც ერთფაზიანი.',
+        ],
+      ],
+    },
+    en: {
+      title: 'Home charger installation: what it needs and what drives the price',
+      metaTitle: 'Installing a home EV charger in Georgia',
+      desc: 'A normal socket, a 7 kW wallbox or three phase. What a flat and a house each need, what to insist on from the electrician, and when a wallbox is not worth buying.',
+      key: [
+        'Short answer: if you drive up to 50 km a day, an ordinary socket is enough. A wallbox earns its place only when you need to put back more than half a battery in one night.',
+        'The charger itself is not the main cost. Running the cable from the meter to the parking space, and raising your supply capacity if it comes to that, often costs more than the unit. That is why a flat and a house are priced nothing alike.',
+      ],
+      body: `
+<h2>Three real options</h2>
+<p>The choice comes in three levels and the only thing separating them is speed. Below is how long each takes to put 36 kWh into a 60 kWh battery, which is 20 to 80 percent.</p>
+<div class="tw"><table>
+<thead><tr><th>Connection</th><th>Power</th><th>20 to 80 percent</th></tr></thead>
+<tbody>
+<tr><td>Ordinary household socket</td><td>2.3 kW</td><td>about 16 hours</td></tr>
+<tr><td>Heavy duty socket, the cable that came with the car</td><td>3.5 kW</td><td>about 10 hours</td></tr>
+<tr><td>Single phase wallbox</td><td>7.4 kW</td><td>about 5 hours</td></tr>
+<tr><td>Three phase wallbox</td><td>11 kW</td><td>about 3 hours 20 minutes</td></tr>
+<tr><td>Three phase wallbox</td><td>22 kW</td><td>about 1 hour 40 minutes</td></tr>
+</tbody></table></div>
+<p>A night is eight hours. As the table shows, a 7 kW unit fills almost any battery in that window. That, and not the absence of anything stronger, is why 7.4 kW is the usual home choice.</p>
+
+<h2>How much your car can actually take</h2>
+<p>Before buying anything, check one number: how many kilowatts your car accepts on AC. That is a limit of its onboard charger and no wallbox can raise it.</p>
+<p>Many models stop at 7.4 kW, some take 11, and 22 is rare. If your car stops at 7.4, a 22 kW wallbox will still give it 7.4. You would be paying for capacity you can never use.</p>
+<p>The same goes for phases. A three phase charger needs a three phase supply. On a single phase supply it simply runs on one phase and gives you 7.4 kW.</p>
+
+<h2>A house and a flat are two different projects</h2>
+<p>In a house it is straightforward. The meter is yours, the parking is yours, the cable run is short and three phase is often already there. Installing a charger is ordinary electrical work.</p>
+<p>In a flat there are three separate obstacles, each solved on its own.</p>
+<ul>
+<li><strong>Who owns the parking.</strong> Yards and underground car parks are normally common property. Fixing a unit to the wall and running cable through shared space needs the owners' association to agree. That is the first step, not the last.</li>
+<li><strong>Separate metering.</strong> Wired into a communal circuit, your charging appears on everyone's bill. You need a dedicated run from your own meter, or a separate meter for the charger.</li>
+<li><strong>What the building can spare.</strong> Older blocks frequently have no headroom at the supply point at all. Then the job starts with a capacity increase, which is a formal service from the distribution company and begins with an application.</li>
+</ul>
+<p>Of the three, the last is what stops most projects. So before choosing a unit, find out how many amps your meter is rated for and how much of that the flat already uses.</p>
+
+<h2>What to insist on from the electrician</h2>
+<p>A charger is the only appliance in a home that runs at full load for hours. Ordinary domestic wiring is not designed for that.</p>
+<ul>
+<li><strong>A dedicated run from the meter.</strong> Not spliced into an existing socket circuit, not off the kitchen ring, not through an added outlet. Its own cable and its own breaker.</li>
+<li><strong>Cable sized for the current.</strong> Two things set the cross section: the charger's current and the distance. A long run needs thicker cable for the same current. This is the worst possible place to economise.</li>
+<li><strong>Residual current protection that sees DC.</strong> A standard RCD cannot detect a DC leakage fault, and a charger is exactly where one can appear. You need a type B device, or a charger with that protection built in.</li>
+<li><strong>Real earthing.</strong> In older Tbilisi blocks the protective earth is often absent, or bonded to neutral. On such a supply a charger either refuses to start or starts and runs unprotected. Treat it as something to verify, not to assume.</li>
+<li><strong>Adjustable current.</strong> A good charger lets you cap its maximum current in software. If the supply is weak, set a 7.4 kW unit to 3.7 and it will still fill the car overnight.</li>
+</ul>
+
+<h2>What drives the price</h2>
+<p>The bill splits into four parts, and their weights differ wildly.</p>
+<ul>
+<li><strong>The charger itself.</strong> The most predictable line. A plain unit and a screened, app controlled one differ several times over while doing functionally the same job.</li>
+<li><strong>Cable and the run.</strong> This is where the uncertainty hides. Five metres along a wall and forty metres across an underground car park are not the same work.</li>
+<li><strong>Protective gear and the board.</strong> Breaker, residual current device, and a separate meter if you need one.</li>
+<li><strong>Capacity increase.</strong> This line is either absent entirely or the largest one on the page, depending on what headroom your supply has.</li>
+</ul>
+<p>We deliberately publish no figures. Hardware prices move, installation is quoted case by case, and the same charger can cost three times as much to fit in two different flats. What you do have is the four lines that should appear on the quote. If an electrician gives you a single number, ask for it broken down.</p>
+
+<h2>Do you even need one</h2>
+<p>This is the question asked least often. Driving 50 km a day uses roughly 9 kWh. An ordinary socket replaces that in four hours. In that case a wallbox buys speed you have no use for.</p>
+<p>It starts to make sense above about 150 km a day, if the car is only home for a few hours at a time, or if there are two EVs in the household.</p>
+<p>The money side is simple arithmetic. The median public AC tariff is ${N.acMed.toFixed(2)} GEL per kWh and the median DC tariff is ${N.dcMed.toFixed(2)}. Your home tariff is lower than both, and the exact figure belongs on your own bill, because it is tiered and an EV will usually push you into the top band. Multiply the difference per kWh by the kilowatt hours you use in a month and you have the saving.</p>
+
+<h2>What not to do</h2>
+<ul>
+<li><strong>Extension leads.</strong> An ordinary extension lead is not rated for 10 amps for hours on end, and it gets hot. If you charge from a socket, plug straight into it.</li>
+<li><strong>A shared socket.</strong> Anything that also feeds a water heater or a fan heater is not a charging point.</li>
+<li><strong>An unprotected outdoor socket.</strong> Connecting outside needs weather protection and a socket rated for it.</li>
+<li><strong>Maximum current on old wiring.</strong> If the cable is old, turn the current down in the charger rather than hoping.</li>
+</ul>
+<p>What AC and DC mean, and why slow charging takes as long as it does, is covered separately in <a href="/en/blog/ac-da-dc/">AC or DC</a>. Public tariffs are on the <a href="/en/tariffs/">tariffs page</a>.</p>
+`,
+      faq: [
+        ['How long does it take to charge an EV from a household socket?',
+          'An ordinary socket delivers about 2.3 kW. Taking a 60 kWh battery from 20 to 80 percent takes roughly 16 hours on it. A normal day of driving, around 9 kWh, goes back in about four.',
+        ],
+        ['Can I install a charger at a flat?',
+          'You can, but three conditions have to be met: the owners’ association has to agree to the parking space, you need a dedicated run from your own meter, and the supply has to have spare capacity. All three are solvable, though the third is what stops most projects.',
+        ],
+        ['Is a three phase charger better than single phase?',
+          'Only if you actually have a three phase supply and a car that accepts 11 or 22 kW. On a single phase supply a three phase unit gives you the same 7.4 kW a single phase one would.',
+        ],
+      ],
+    },
+  },
+
+  {
+    slug: '100-km-fasi',
+    ka: {
+      title: 'ელექტრომობილი თუ ბენზინი: 100 კილომეტრის რეალური ღირებულება',
+      metaTitle: '100 კილომეტრი ელექტრომობილით და ბენზინით',
+      desc: `100 კილომეტრი სწრაფ დამტენზე ${(18 * N.dcMed).toFixed(2)} ლარია, ბენზინის მანქანით კი ${(8 * F.regular.med).toFixed(2)}. სად ჩერდება ეს სხვაობა და რა არ შედის ამ ანგარიშში.`,
+      key: [
+        `მოკლე პასუხი: 100 კილომეტრი ელექტრომობილით საჯარო სწრაფ დამტენზე დაახლოებით ${(18 * N.dcMed).toFixed(2)} ლარია, ნელ დამტენზე ${(18 * N.acMed).toFixed(2)}. იმავე გზას ბენზინის მანქანა რვალიტრიანი ხარჯით ${(8 * F.regular.med).toFixed(2)} ლარად გადის.`,
+        `ანუ ყველაზე ძვირ საჯარო დატენვაზეც ელექტრომობილი ბენზინზე დაახლოებით ${((8 * F.regular.med) / (18 * N.dcMed)).toFixed(1).replace(/\.0$/, '')}-ჯერ იაფია. სახლში დატენვისას სხვაობა კიდევ ორჯერ იზრდება.`,
+      ],
+      body: `
+<h2>საიდან მოდის ეს ციფრები</h2>
+<p>ორი მხარე ორი სხვადასხვა წყაროდან მოდის და ორივე შემოწმებადია.</p>
+<p>დატენვის ტარიფი საქართველოს ${N.total} საჯარო დამტენის კატალოგის მედიანაა: სწრაფ DC დამტენზე ${N.dcMed.toFixed(2)} ლარი კილოვატსაათზე, ნელ AC დამტენზე ${N.acMed.toFixed(2)}. ეს იგივე მონაცემია, რომელზეც აპლიკაცია მუშაობს.</p>
+<p>საწვავის ფასი საქართველოს ${F.regular.n} ქსელის მედიანაა და ${F.checked}-ის მდგომარეობითაა აღებული: რეგულარი ${F.regular.med.toFixed(2)} ლარი ლიტრზე, დიზელი ${F.diesel.med.toFixed(2)}. მედიანა იმიტომ, რომ ქვეყანაში ყველაზე იაფი გასამართი სადგური არ არის ის, სადაც ჩვეულებრივი მძღოლი ამართავს.</p>
+<p>ხარჯად აღებულია 18 კილოვატსაათი 100 კილომეტრზე ელექტრომობილისთვის და 8 ლიტრი ბენზინის მანქანისთვის. ეს საშუალო ციფრებია შერეულ რეჟიმში.</p>
+
+<h2>100 კილომეტრის ღირებულება</h2>
+<div class="tw"><table>
+<thead><tr><th>როგორ ივსება</th><th>ხარჯი 100 კმ-ზე</th><th>ტარიფი</th><th>ღირებულება</th></tr></thead>
+<tbody>
+<tr><td>სახლში, მაგალითისთვის აღებულ ტარიფზე</td><td>18 kWh</td><td>0.25 ₾</td><td><strong>4.50 ₾</strong></td></tr>
+<tr><td>საჯარო ნელი AC დამტენი</td><td>18 kWh</td><td>${N.acMed.toFixed(2)} ₾</td><td><strong>${(18 * N.acMed).toFixed(2)} ₾</strong></td></tr>
+<tr><td>საჯარო სწრაფი DC დამტენი</td><td>18 kWh</td><td>${N.dcMed.toFixed(2)} ₾</td><td><strong>${(18 * N.dcMed).toFixed(2)} ₾</strong></td></tr>
+<tr><td>ბენზინი, ეკონომიური მანქანა</td><td>6 ლ</td><td>${F.regular.med.toFixed(2)} ₾</td><td><strong>${(6 * F.regular.med).toFixed(2)} ₾</strong></td></tr>
+<tr><td>ბენზინი, საშუალო მანქანა</td><td>8 ლ</td><td>${F.regular.med.toFixed(2)} ₾</td><td><strong>${(8 * F.regular.med).toFixed(2)} ₾</strong></td></tr>
+<tr><td>ბენზინი, ჯიპი ან ქალაქის საცობი</td><td>11 ლ</td><td>${F.regular.med.toFixed(2)} ₾</td><td><strong>${(11 * F.regular.med).toFixed(2)} ₾</strong></td></tr>
+<tr><td>დიზელი</td><td>6 ლ</td><td>${F.diesel.med.toFixed(2)} ₾</td><td><strong>${(6 * F.diesel.med).toFixed(2)} ₾</strong></td></tr>
+</tbody></table></div>
+<p>სახლის ხაზში 0.25 ლარი მაგალითია და არა ციტირებული ტარიფი. საყოფაცხოვრებო ტარიფი საფეხურებრივია და ელექტრომობილი ჩვეულებრივ ზედა საფეხურზე გადაგიყვანთ, ამიტომ ზუსტი ციფრი თქვენივე ქვითრიდან აიღეთ და 18-ზე გაამრავლეთ.</p>
+<p>თქვენს ბატარეაზე და თქვენს ტარიფზე იგივე გამოთვლა <a href="/kalkulatori/">კალკულატორში</a> ორ წამში კეთდება.</p>
+
+<h2>რა ცვლის ამ სურათს</h2>
+<ul>
+<li><strong>ზამთარი.</strong> ცივ ამინდში ელექტრომობილის ხარჯი 20-დან 35 პროცენტამდე იზრდება, ანუ 18 კილოვატსაათი 23-მდე ადის. ბენზინის მანქანაც უარესდება ზამთარში, მაგრამ ნაკლებად. სხვაობა ზამთარში იკლებს, თუმცა არ ქრება.</li>
+<li><strong>ქალაქი და ტრასა.</strong> აქ პირიქითაა. საცობში ბენზინის მანქანა ლიტრებს წვავს, ელექტრომობილი კი თითქმის არაფერს ხარჯავს და დამუხრუჭებისას ენერგიის ნაწილს იბრუნებს. ქალაქში სხვაობა ყველაზე დიდია.</li>
+<li><strong>რამდენად სავსე ბატარეიდან ტენით.</strong> ღირებულებაზე არ მოქმედებს, დროზე კი მოქმედებს. 80 პროცენტის შემდეგ სწრაფი დამტენი მკვეთრად ანელებს.</li>
+<li><strong>უფასო დატენვა.</strong> საქართველოს ${N.total} დამტენიდან ნაწილი სასტუმროებისა და სავაჭრო ცენტრების დამტენია, სადაც კლიენტისთვის დატენვა ხშირად უფასოა. ეს ცხრილში არ არის.</li>
+</ul>
+
+<h2>რა არ შედის ამ ანგარიშში</h2>
+<p>საწვავი მთელი ხარჯი არ არის და ამის თქმა პატიოსანია.</p>
+<ul>
+<li><strong>მომსახურება.</strong> ელექტრომობილს ზეთი, ფილტრები, სანთლები და გამონაბოლქვის სისტემა არ აქვს. სამუხრუჭე ხუნდები ბევრად ნელა ცვდება, რადგან შენელების დიდ ნაწილს ძრავა აკეთებს.</li>
+<li><strong>საბურავები.</strong> პირიქით, ელექტრომობილი უფრო მძიმეა და საბურავი უფრო სწრაფად ცვდება.</li>
+<li><strong>ბატარეა.</strong> გრძელვადიან ხარჯში ბატარეის ცვეთა შედის. ეს ცალკე თემაა და <a href="/blog/batarea/">ცალკე გვაქვს გარჩეული</a>.</li>
+<li><strong>განბაჟება.</strong> აქ ელექტრომობილს დიდი უპირატესობა აქვს: აქციზი და იმპორტის გადასახადი ნულია. <a href="/ganbajeba/">ციფრები და შედარება</a>.</li>
+</ul>
+
+<h2>როდის არ იხდის თავს</h2>
+<p>ორი შემთხვევაა, როცა ეს ანგარიში აღარ მუშაობს.</p>
+<p>პირველი: თუ წელიწადში 5000 კილომეტრზე ნაკლებს გადიხართ. საწვავზე დანაზოგი ამ დროს იმდენად მცირეა, რომ მანქანის ფასის სხვაობას ვერასოდეს დაფარავს.</p>
+<p>მეორე: თუ სახლში დატენვის საშუალება საერთოდ არ გაქვთ და მხოლოდ სწრაფ დამტენს იყენებთ. ${(18 * N.dcMed).toFixed(2)} ლარი ასი კილომეტრისთვის ჯერ კიდევ ბენზინზე იაფია, მაგრამ სახლის ტარიფთან შედარებით სამჯერ ძვირი. ბინაში მცხოვრებმა ეს წინასწარ უნდა გაითვალისწინოს, სანამ ელექტრომობილს იყიდის. <a href="/blog/sakhlis-damteni/">სახლის დამტენის ვარიანტები</a> ცალკე გვაქვს აღწერილი.</p>
+`,
+      faq: [
+        ['რამდენი ჯდება 100 კილომეტრი ელექტრომობილით საქართველოში?',
+          `საჯარო სწრაფ DC დამტენზე დაახლოებით ${(18 * N.dcMed).toFixed(2)} ლარი, ნელ AC დამტენზე ${(18 * N.acMed).toFixed(2)}, სახლში კი ჩვეულებრივ 5 ლარამდე. გამოთვლა 18 კილოვატსაათია 100 კილომეტრზე და საქართველოს დამტენების მედიანური ტარიფი.`],
+        ['რამდენად იაფია ელექტრომობილი ბენზინზე?',
+          `100 კილომეტრი რვალიტრიანი ბენზინის მანქანით ${(8 * F.regular.med).toFixed(2)} ლარია, ელექტრომობილით სწრაფ დამტენზე ${(18 * N.dcMed).toFixed(2)}. ანუ დაახლოებით ${((8 * F.regular.med) / (18 * N.dcMed)).toFixed(1).replace(/\.0$/, '')}-ჯერ იაფი. სახლში დატენვისას სხვაობა კიდევ იზრდება.`],
+        ['ზამთარში რჩება თუ არა ელექტრომობილი უფრო იაფი?',
+          'რჩება. ცივ ამინდში ხარჯი 20-დან 35 პროცენტამდე იზრდება, ანუ 100 კილომეტრი დაახლოებით მესამედით ძვირდება. ბენზინის მანქანასთან სხვაობა მცირდება, მაგრამ არ ქრება.'],
+      ],
+    },
+    en: {
+      title: 'Electric or petrol: what 100 km actually costs in Georgia',
+      metaTitle: 'Cost per 100 km: electric versus petrol',
+      desc: `100 km on a fast charger is ${(18 * N.dcMed).toFixed(2)} GEL against ${(8 * F.regular.med).toFixed(2)} on petrol. Where that gap comes from and what the calculation leaves out.`,
+      key: [
+        `Short answer: 100 km in an EV costs about ${(18 * N.dcMed).toFixed(2)} GEL on a public fast charger and ${(18 * N.acMed).toFixed(2)} on a slow one. The same distance in a petrol car using 8 litres costs ${(8 * F.regular.med).toFixed(2)}.`,
+        `So even on the most expensive public charging, an EV is roughly ${((8 * F.regular.med) / (18 * N.dcMed)).toFixed(1).replace(/\.0$/, '')} times cheaper. Charge at home and the gap roughly doubles again.`,
+      ],
+      body: `
+<h2>Where these numbers come from</h2>
+<p>The two sides come from two different sources and both can be checked.</p>
+<p>The charging tariff is the median of Georgia's catalogue of ${N.total} public chargers: ${N.dcMed.toFixed(2)} GEL per kWh on fast DC and ${N.acMed.toFixed(2)} on slow AC. It is the same data the app runs on.</p>
+<p>The fuel price is the median across Georgia's ${F.regular.n} chains as of ${F.checked}: regular at ${F.regular.med.toFixed(2)} GEL a litre and diesel at ${F.diesel.med.toFixed(2)}. The median, because the cheapest station in the country is not where an ordinary driver fills up.</p>
+<p>Consumption is taken as 18 kWh per 100 km for the EV and 8 litres for the petrol car, both mixed driving averages.</p>
+
+<h2>What 100 km costs</h2>
+<div class="tw"><table>
+<thead><tr><th>How it is filled</th><th>Per 100 km</th><th>Tariff</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><td>At home, at an illustrative tariff</td><td>18 kWh</td><td>0.25 GEL</td><td><strong>4.50 GEL</strong></td></tr>
+<tr><td>Public slow AC charger</td><td>18 kWh</td><td>${N.acMed.toFixed(2)} GEL</td><td><strong>${(18 * N.acMed).toFixed(2)} GEL</strong></td></tr>
+<tr><td>Public fast DC charger</td><td>18 kWh</td><td>${N.dcMed.toFixed(2)} GEL</td><td><strong>${(18 * N.dcMed).toFixed(2)} GEL</strong></td></tr>
+<tr><td>Petrol, economical car</td><td>6 L</td><td>${F.regular.med.toFixed(2)} GEL</td><td><strong>${(6 * F.regular.med).toFixed(2)} GEL</strong></td></tr>
+<tr><td>Petrol, mid size car</td><td>8 L</td><td>${F.regular.med.toFixed(2)} GEL</td><td><strong>${(8 * F.regular.med).toFixed(2)} GEL</strong></td></tr>
+<tr><td>Petrol, SUV or heavy city traffic</td><td>11 L</td><td>${F.regular.med.toFixed(2)} GEL</td><td><strong>${(11 * F.regular.med).toFixed(2)} GEL</strong></td></tr>
+<tr><td>Diesel</td><td>6 L</td><td>${F.diesel.med.toFixed(2)} GEL</td><td><strong>${(6 * F.diesel.med).toFixed(2)} GEL</strong></td></tr>
+</tbody></table></div>
+<p>The 0.25 GEL on the home row is an illustration, not a quoted tariff. Household electricity is tiered and an EV will normally push you into the top band, so take the exact figure from your own bill and multiply it by 18.</p>
+<p>For your battery and your tariff, the same sum takes two seconds in the <a href="/en/calculator/">calculator</a>.</p>
+
+<h2>What changes the picture</h2>
+<ul>
+<li><strong>Winter.</strong> In cold weather an EV uses 20 to 35 percent more, so 18 kWh becomes about 23. Petrol cars also get worse in winter, but less so. The gap narrows without closing.</li>
+<li><strong>City against highway.</strong> Here it works the other way. In traffic a petrol car burns litres while an EV uses almost nothing and recovers part of what it does use when braking. The gap is widest in town.</li>
+<li><strong>How full the battery is.</strong> It does not change the cost, only the time. Above 80 percent a fast charger slows down sharply.</li>
+<li><strong>Free charging.</strong> Some of Georgia's ${N.total} chargers belong to hotels and shopping centres, where charging is often free for customers. None of that is in the table.</li>
+</ul>
+
+<h2>What this calculation leaves out</h2>
+<p>Fuel is not the whole cost, and it is only honest to say so.</p>
+<ul>
+<li><strong>Servicing.</strong> An EV has no oil, filters, plugs or exhaust. Brake pads last far longer because the motor does most of the slowing.</li>
+<li><strong>Tyres.</strong> The other way round: an EV is heavier and goes through tyres faster.</li>
+<li><strong>The battery.</strong> Pack wear belongs in any long term figure. That is its own subject and has <a href="/en/blog/batarea/">its own guide</a>.</li>
+<li><strong>Import duty.</strong> Here the EV has a large advantage: excise and import duty are both zero. <a href="/en/customs/">The figures and the comparison</a>.</li>
+</ul>
+
+<h2>When it does not pay off</h2>
+<p>There are two cases where this arithmetic stops working.</p>
+<p>First, if you drive less than 5000 km a year. The fuel saving is then so small that it never covers the difference in purchase price.</p>
+<p>Second, if you have no way to charge at home and use only fast chargers. At ${(18 * N.dcMed).toFixed(2)} GEL per 100 km that is still cheaper than petrol, but three times what home charging costs. Anyone living in a flat should work that out before buying, not after. The options are covered in <a href="/en/blog/sakhlis-damteni/">home charger installation</a>.</p>
+`,
+      faq: [
+        ['How much does 100 km cost in an electric car in Georgia?',
+          `About ${(18 * N.dcMed).toFixed(2)} GEL on a public fast DC charger, ${(18 * N.acMed).toFixed(2)} on a slow AC one, and usually under 5 GEL at home. The figures assume 18 kWh per 100 km and the median tariffs across Georgia's chargers.`],
+        ['How much cheaper is an EV than petrol?',
+          `100 km in a petrol car using 8 litres costs ${(8 * F.regular.med).toFixed(2)} GEL, against ${(18 * N.dcMed).toFixed(2)} in an EV on a fast charger, roughly ${((8 * F.regular.med) / (18 * N.dcMed)).toFixed(1).replace(/\.0$/, '')} times less. Charging at home widens the gap further.`],
+        ['Is an EV still cheaper in winter?',
+          'Yes. Cold weather raises consumption by 20 to 35 percent, so 100 km costs about a third more. The gap against petrol narrows but does not close.'],
+      ],
+    },
+  },
+
+  {
+    slug: 'batarea',
+    ka: {
+      title: 'ბატარეის დეგრადაცია: რა ხდება რეალურად და რას ნიშნავს ეს საქართველოში',
+      metaTitle: 'ელექტრომობილის ბატარეის დეგრადაცია',
+      desc: 'ბატარეა წელიწადში დაახლოებით 1-2 პროცენტს კარგავს. რატომ არის საქართველოს სიცხე და ბინაში ცხოვრება ორი მთავარი რისკი და რა შეამოწმოთ მეორადი მანქანის ყიდვისას.',
+      key: [
+        'მოკლე პასუხი: თანამედროვე ელექტრომობილის ბატარეა წელიწადში დაახლოებით 1-დან 2 პროცენტამდე კარგავს და რვა წელში ჩვეულებრივ 85-დან 90 პროცენტამდე რჩება. ეს ჩვეულებრივი ცვეთაა და არა გაუმართაობა.',
+        'საქართველოში ორი გარემოება აჩქარებს ამ პროცესს: ზაფხულის სიცხე ქვემო ქართლსა და კახეთში, და ის, რომ ბინაში მცხოვრები მძღოლების უმეტესობა თითქმის მხოლოდ სწრაფ დამტენს იყენებს.',
+      ],
+      body: `
+<h2>რას ნიშნავს დეგრადაცია</h2>
+<p>ბატარეის ჯანმრთელობა იზომება იმით, თუ დღეს რამდენ ენერგიას იტევს ის ქარხნულთან შედარებით. თუ 60 კილოვატსაათიანი ბატარეა ახლა 54-ს იტევს, მისი მდგომარეობა 90 პროცენტია.</p>
+<p>პრაქტიკულად ეს ნიშნავს, რომ გარბენი პროპორციულად მცირდება და მეტი არაფერი. მანქანა არ უფუჭდება, სიმძლავრეს არ კარგავს და უცებ არ ჩერდება. უბრალოდ სავსე ბატარეით უფრო ნაკლებ კილომეტრს გადის, ვიდრე ახალი.</p>
+<p>მთავარი გასაგები ისაა, რომ დეგრადაცია ხაზოვანი არ არის. პირველ წელს ვარდნა ყველაზე შესამჩნევია, დაახლოებით 3-დან 5 პროცენტამდე, შემდეგ კი მრუდი ბრტყელდება და წელიწადში ერთ ან ორ პროცენტს აღწევს. ვინც პირველი წლის შემდეგ პანიკაში ვარდება, ჩვეულებრივ სწორედ ამ მრუდის ფორმას არ იცნობს.</p>
+
+<h2>ორი სხვადასხვა ცვეთა</h2>
+<p>ბატარეა ორი დამოუკიდებელი მიზეზით ცვდება და ისინი ერთმანეთს ემატება.</p>
+<p><strong>კალენდარული ცვეთა</strong> უბრალოდ დროზეა დამოკიდებული. ბატარეა ცვდება მაშინაც, როცა მანქანა გარაჟში დგას. ამ ცვეთას აჩქარებს ორი რამ: მაღალი ტემპერატურა და მაღალი მუხტის დონე. სავსე ბატარეა ცხელ დღეს იმაზე ბევრად სწრაფად ბერდება, ვიდრე ნახევრად სავსე გრილში.</p>
+<p><strong>ციკლური ცვეთა</strong> გარბენზეა დამოკიდებული, ანუ იმაზე, რამდენჯერ დაცალეთ და აავსეთ ბატარეა.</p>
+<p>საქართველოში მძღოლების უმეტესობისთვის პირველი უფრო მნიშვნელოვანია, ვიდრე მეორე. წლიური გარბენი აქ ჩვეულებრივ დაბალია, ზაფხულის ტემპერატურა კი მაღალი. ანუ თქვენი ბატარეა უფრო კალენდრისგან ცვდება, ვიდრე ტარებისგან.</p>
+
+<h2>რატომ არის საქართველო განსაკუთრებული შემთხვევა</h2>
+<p>ზოგადი რჩევები დეგრადაციაზე ევროპისა და ამერიკის პირობებზეა დაწერილი. აქ ორი განსხვავებაა და ორივე მნიშვნელოვანია.</p>
+<h3>სიცხე და ბატარეის გაგრილება</h3>
+<p>თანამედროვე ელექტრომობილების უმეტესობას ბატარეის თხევადი გაგრილება აქვს. ასეთი მანქანისთვის თბილისის ან რუსთავის ზაფხული პრობლემა არ არის.</p>
+<p>პრობლემა იმ მოდელებთანაა, სადაც ბატარეა მხოლოდ ჰაერით გრილდება. ყველაზე ცნობილი მაგალითი პირველი და მეორე თაობის Nissan Leaf-ია, რომელიც საქართველოში ერთ-ერთი ყველაზე გავრცელებული ელექტრომობილია. ასეთი მანქანა აგვისტოში მზეზე გაჩერებული მთელი დღე მაღალ ტემპერატურაზე რჩება და ბატარეას გაგრილების საშუალება არ აქვს. სწორედ ამიტომ ცვდება ცხელ კლიმატში ჩამოსული Leaf-ები იმაზე ბევრად სწრაფად, ვიდრე ჩრდილოეთ ევროპაში მოსიარულე იგივე მანქანა.</p>
+<p>ეს არ ნიშნავს, რომ ასეთი მანქანა არ უნდა იყიდოთ. ნიშნავს, რომ მისი ბატარეის მდგომარეობა ყიდვამდე უნდა შეამოწმოთ და ჩრდილში დგომას მნიშვნელობა უნდა მიანიჭოთ.</p>
+<h3>სწრაფი დატენვის წილი</h3>
+<p>დასავლეთში ელექტრომობილის მფლობელების უმეტესობა სახლში ტენის და სწრაფ დამტენს მხოლოდ მგზავრობისას იყენებს. თბილისში პირიქითაა: მძღოლების დიდი ნაწილი ბინაში ცხოვრობს, სახლის დამტენი არ აქვს და თითქმის მთელ ენერგიას საჯარო DC დამტენიდან იღებს.</p>
+<p>ცალკე აღებული, ერთი სწრაფი დატენვა ბატარეას არ აზიანებს. მაგრამ როცა ეს წლების განმავლობაში ერთადერთი მეთოდია, განსაკუთრებით გაუგრილებელ ბატარეაზე და ზაფხულში, ეფექტი გროვდება. თუ სახლში დატენვის მოწყობის საშუალება გაქვთ, ეს ბატარეისთვისაც სასარგებლოა და არა მხოლოდ ჯიბისთვის. <a href="/blog/sakhlis-damteni/">რა სჭირდება სახლის დამტენს</a>.</p>
+<h3>მთა</h3>
+<p>გუდაურის ან ყაზბეგის მიმართულება ბატარეისთვის საშიში არ არის. ასვლაზე ხარჯი დიდია, დაშვებაზე კი ენერგიის ნაწილი ბრუნდება. ეს ჩვეულებრივი რეჟიმია და დამატებით ცვეთას არ იწვევს. სიმაღლეც პრობლემა არ არის.</p>
+
+<h2>რა შეამოწმოთ მეორადი მანქანის ყიდვისას</h2>
+<p>ელექტრომობილზე გარბენი ბევრად ნაკლებს ამბობს, ვიდრე ბენზინის მანქანაზე. მთავარი ციფრი ბატარეის მდგომარეობაა.</p>
+<ul>
+<li><strong>მოითხოვეთ ბატარეის ჯანმრთელობის ჩვენება.</strong> ეს პროცენტული ციფრია და დიაგნოსტიკური აპარატით ან სპეციალური აპლიკაციით იკითხება. თუ გამყიდველი ამის ჩვენებაზე უარს ამბობს, ეს თავისთავად პასუხია.</li>
+<li><strong>Leaf-ზე შეხედეთ ჯანმრთელობის ზოლებს და სწრაფი დატენვების რაოდენობას.</strong> ეს მანქანა ორივეს პირდაპირ აჩვენებს და შედარებით ადვილად იკითხება.</li>
+<li><strong>სავსე ბატარეაზე ნაჩვენებ გარბენს ნუ დაუჯერებთ.</strong> ეს ციფრი ბოლო მგზავრობების ხარჯზეა გათვლილი და ადვილად შეიძლება მოტყუებით გამოიყურებოდეს. რეალურ სურათს მხოლოდ ჯანმრთელობის ჩვენება იძლევა.</li>
+<li><strong>იკითხეთ, სად იდგა მანქანა.</strong> ცხელი ქვეყნიდან ჩამოსული, გაუგრილებელი ბატარეის მქონე მანქანა და იმავე წლის ჩრდილოეთიდან ჩამოსული მანქანა ერთი და იგივე არ არის.</li>
+<li><strong>დაათვალიერეთ ნებისმიერი შეკეთების ისტორია.</strong> უკვე შეცვლილი ბატარეა ცუდი ამბავი არ არის, პირიქით.</li>
+</ul>
+<p>საიდან და როგორ შემოდის საქართველოში ეს მანქანები, ცალკე გვაქვს აღწერილი: <a href="/blog/amerikuli-importi/">ამერიკული იმპორტი</a> და <a href="/blog/chinuri-importi/">ჩინური იმპორტი</a>.</p>
+
+<h2>რას ფარავს გარანტია</h2>
+<p>მწარმოებლები ბატარეაზე ჩვეულებრივ რვაწლიან ან 160 000 კილომეტრიან გარანტიას იძლევიან და ის მოქმედებს მაშინ, თუ ბატარეის მდგომარეობა დადგენილ ზღვარზე, ხშირად 70 პროცენტზე, ქვემოთ ჩავარდა.</p>
+<p>ორი რამ უნდა გაითვალისწინოთ. პირველი: ეს ზღვარი დაბალია. 75 პროცენტიანი ბატარეა გარანტიაში არ ხვდება, თუმცა გარბენი უკვე მკვეთრად შემცირებულია. მეორე: კერძოდ შემოყვანილ მანქანაზე გარანტია იმ ბაზრისაა, სადაც ის თავდაპირველად გაიყიდა, და საქართველოში მისი გამოყენება ხშირად ვერ ხერხდება. ყიდვამდე ეს ცალკე დააზუსტეთ და ნუ ჩათვლით ნაგულისხმევად.</p>
+
+<h2>როგორ გავახანგრძლივოთ</h2>
+<ul>
+<li><strong>ყოველდღიურად 20-დან 80 პროცენტამდე.</strong> სავსე ბატარეა ყველაზე სწრაფად ბერდება. 100 პროცენტამდე მაშინ დატენეთ, როცა შორ გზაზე მიდიხართ.</li>
+<li><strong>დიდხანს არ დატოვოთ სავსე ან თითქმის ცარიელი.</strong> თუ მანქანა კვირებით ჩერდება, დაახლოებით ნახევრად სავსე დატოვეთ.</li>
+<li><strong>ზაფხულში ჩრდილში გააჩერეთ.</strong> გაუგრილებელი ბატარეისთვის ეს ყველაზე ეფექტური და ყველაზე იაფი ზომაა.</li>
+<li><strong>სადაც შეგიძლიათ, ნელა დატენეთ.</strong> ეს არ ნიშნავს სწრაფ დამტენზე უარის თქმას. ნიშნავს, რომ როცა ორივე ხელმისაწვდომია, ნელი ჯობია.</li>
+<li><strong>ცივი ბატარეა ჯერ გაათბეთ.</strong> თუ მანქანას ბატარეის წინასწარი გახურების ფუნქცია აქვს, ზამთარში სწრაფ დამტენამდე ჩართეთ.</li>
+</ul>
+
+<h2>რა არ არის პრობლემა</h2>
+<p>ბევრი შიში უსაფუძვლოა და მათზე ენერგიის დახარჯვა არ ღირს.</p>
+<ul>
+<li><strong>ერთეული სრული დატენვა.</strong> შორ გზაზე 100 პროცენტამდე დატენვა ჩვეულებრივი რამაა.</li>
+<li><strong>სიცივე.</strong> ზამთარში გარბენის დაცემა დროებითია და გაზაფხულზე ბრუნდება. ეს დეგრადაცია არ არის.</li>
+<li><strong>რეკუპერაცია.</strong> დამუხრუჭებისას ენერგიის დაბრუნება ბატარეას არ ტვირთავს.</li>
+<li><strong>მანქანის ყოველდღიური გამოყენება.</strong> გაჩერებული ელექტრომობილი უფრო ცუდად გრძნობს თავს, ვიდრე მოსიარულე.</li>
+</ul>
+`,
+      faq: [
+        ['რამდენ ხანს ძლებს ელექტრომობილის ბატარეა?',
+          'თანამედროვე ბატარეა წელიწადში დაახლოებით 1-დან 2 პროცენტამდე კარგავს და რვა წელში ჩვეულებრივ 85-დან 90 პროცენტამდე რჩება. პირველ წელს ვარდნა უფრო შესამჩნევია, დაახლოებით 3-დან 5 პროცენტამდე, შემდეგ კი მრუდი ბრტყელდება.'],
+        ['აზიანებს თუ არა სწრაფი დატენვა ბატარეას?',
+          'ცალკე აღებული დატენვა არა. პრობლემა მაშინ ჩნდება, როცა სწრაფი დამტენი წლების განმავლობაში ერთადერთი მეთოდია, განსაკუთრებით ისეთ მანქანაზე, სადაც ბატარეის თხევადი გაგრილება არ არის, და ცხელ ამინდში.'],
+        ['რა შევამოწმო მეორადი ელექტრომობილის ყიდვისას?',
+          'ბატარეის ჯანმრთელობის პროცენტული მაჩვენებელი, დიაგნოსტიკური აპარატით წაკითხული. გარბენი და სავსე ბატარეაზე ნაჩვენები კილომეტრები საკმარისი არ არის. ასევე იკითხეთ, რომელი ქვეყნიდან ჩამოვიდა მანქანა, რადგან ცხელ კლიმატში გატარებული წლები გაუგრილებელ ბატარეაზე შესამჩნევად აისახება.'],
+      ],
+    },
+    en: {
+      title: 'Battery degradation: what actually happens, and what it means in Georgia',
+      metaTitle: 'EV battery degradation',
+      desc: 'A battery loses roughly 1 to 2 percent a year. Why Georgian summers and living in a flat are the two real risks here, and what to check when buying used.',
+      key: [
+        'Short answer: a modern EV battery loses roughly 1 to 2 percent a year and is usually at 85 to 90 percent after eight years. That is normal wear, not a fault.',
+        'Two things accelerate it in Georgia: summer heat in Kvemo Kartli and Kakheti, and the fact that most drivers living in flats charge almost exclusively on fast chargers.',
+      ],
+      body: `
+<h2>What degradation means</h2>
+<p>Battery health is measured by how much energy the pack holds today against when it was new. A 60 kWh battery that now holds 54 is at 90 percent.</p>
+<p>In practice that means range falls proportionally and nothing else. The car does not break down, does not lose power and does not stop without warning. It simply covers fewer kilometres on a full charge than it once did.</p>
+<p>The important part is that degradation is not linear. The first year shows the steepest drop, roughly 3 to 5 percent, after which the curve flattens to one or two percent a year. People who panic after year one are usually just unfamiliar with the shape of that curve.</p>
+
+<h2>Two different kinds of wear</h2>
+<p>A battery ages for two independent reasons and they add up.</p>
+<p><strong>Calendar ageing</strong> depends only on time. The pack ages while the car sits in a garage. Two things speed it up: high temperature and a high state of charge. A full battery on a hot day ages far faster than a half full one somewhere cool.</p>
+<p><strong>Cycle ageing</strong> depends on distance, that is, on how many times you have emptied and refilled the pack.</p>
+<p>For most drivers in Georgia the first matters more than the second. Annual mileage here is typically low and summer temperatures are high. Your battery is ageing more from the calendar than from being driven.</p>
+
+<h2>Why Georgia is a particular case</h2>
+<p>General advice on degradation is written for European and American conditions. Two differences matter here.</p>
+<h3>Heat and battery cooling</h3>
+<p>Most modern EVs cool the pack with liquid. For such a car a Tbilisi or Rustavi summer is not a problem.</p>
+<p>The problem is models where the pack is only air cooled. The best known example is the first and second generation Nissan Leaf, one of the most common EVs in Georgia. Parked in the sun in August, such a car sits at high temperature all day with no way to cool the pack. That is why Leafs that have lived in hot climates degrade markedly faster than the same car driven in northern Europe.</p>
+<p>None of that means you should not buy one. It means checking the pack before you buy, and taking shade seriously afterwards.</p>
+<h3>The share of fast charging</h3>
+<p>In the West most EV owners charge at home and use fast chargers on trips. In Tbilisi it is the other way round: a large share of drivers live in flats, have no home charger, and take almost all their energy from public DC.</p>
+<p>Taken alone, one fast charge harms nothing. But when it is the only method for years, especially on an uncooled pack in summer, the effect accumulates. If you can arrange home charging, the battery benefits as much as your wallet does. <a href="/en/blog/sakhlis-damteni/">What a home charger needs</a>.</p>
+<h3>The mountains</h3>
+<p>The Gudauri and Kazbegi roads are not a threat to the battery. Climbing uses a lot and descending gives part of it back. That is ordinary operation and causes no extra wear. Altitude itself is not a problem either.</p>
+
+<h2>What to check when buying used</h2>
+<p>On an EV the odometer tells you far less than it does on a petrol car. The number that matters is battery health.</p>
+<ul>
+<li><strong>Ask to see the state of health.</strong> It is a percentage, read with a diagnostic tool or a dedicated app. A seller who will not show it has answered the question.</li>
+<li><strong>On a Leaf, look at the health bars and the quick charge count.</strong> That car reports both directly and they are comparatively easy to read.</li>
+<li><strong>Do not trust the range shown on a full charge.</strong> That figure is computed from recent consumption and can flatter the car badly. Only the health reading tells you the truth.</li>
+<li><strong>Ask where the car has lived.</strong> An uncooled pack that spent years in a hot country and the same model year from the north are not the same car.</li>
+<li><strong>Look at any repair history.</strong> A pack that has already been replaced is not bad news; it is the opposite.</li>
+</ul>
+<p>How these cars reach Georgia in the first place is covered separately: <a href="/en/blog/amerikuli-importi/">importing from America</a> and <a href="/en/blog/chinuri-importi/">importing from China</a>.</p>
+
+<h2>What the warranty covers</h2>
+<p>Manufacturers normally warrant the battery for eight years or 160,000 km, and it pays out only if health falls below a set threshold, frequently 70 percent.</p>
+<p>Two things follow. First, that threshold is low: a pack at 75 percent is outside the warranty while range is already well down. Second, on a privately imported car the warranty belongs to the market where it was originally sold and often cannot be used in Georgia at all. Check that specifically before buying rather than assuming it.</p>
+
+<h2>How to make it last</h2>
+<ul>
+<li><strong>Live between 20 and 80 percent.</strong> A full pack ages fastest. Charge to 100 when you are about to set off on a long trip.</li>
+<li><strong>Do not leave it full or nearly empty for long.</strong> If the car will sit for weeks, leave it around half.</li>
+<li><strong>Park in the shade in summer.</strong> For an uncooled pack this is the single most effective and cheapest measure there is.</li>
+<li><strong>Charge slowly where you can.</strong> This is not an argument against fast charging. It means that when both are available, slow is kinder.</li>
+<li><strong>Warm a cold pack first.</strong> If the car can precondition the battery, use it before a fast charger in winter.</li>
+</ul>
+
+<h2>What is not a problem</h2>
+<p>Plenty of the worry is misplaced and not worth spending energy on.</p>
+<ul>
+<li><strong>The occasional full charge.</strong> Charging to 100 percent before a long drive is entirely ordinary.</li>
+<li><strong>Cold.</strong> The winter drop in range is temporary and returns in spring. It is not degradation.</li>
+<li><strong>Regenerative braking.</strong> Recovering energy while slowing does not stress the pack.</li>
+<li><strong>Driving the car every day.</strong> A parked EV is worse off than a used one.</li>
+</ul>
+`,
+      faq: [
+        ['How long does an EV battery last?',
+          'A modern pack loses roughly 1 to 2 percent a year and is usually at 85 to 90 percent after eight years. The first year is steeper, around 3 to 5 percent, after which the curve flattens.'],
+        ['Does fast charging damage the battery?',
+          'A single fast charge does not. The problem appears when fast charging is the only method for years, particularly on a car without liquid battery cooling and in hot weather.'],
+        ['What should I check when buying a used EV?',
+          'The battery state of health as a percentage, read with a diagnostic tool. Mileage and the range shown on a full charge are not enough. Also ask which country the car came from, because years spent in a hot climate show up clearly on an uncooled pack.'],
+      ],
+    },
+  },
 ];
 
 const L = {
@@ -974,8 +1457,10 @@ ${t.related.map(([label, href]) => `<a href="${href}">${esc(label)}</a>`).join('
 
 async function main() {
   const N = await liveNumbers();
-  const ARTICLES = buildArticles(N);
+  const F = await fuelPrices();
+  const ARTICLES = buildArticles(N, F);
   console.log(`· live figures: ${N.total} stations, CCS2 ${N.ccs2}, GB/T ${N.gbt}, US-spec ${N.usSpec}`);
+  console.log(`· tariffs: DC median ${N.dcMed.toFixed(2)} ₾, AC median ${N.acMed.toFixed(2)} ₾`);
   const pages = [];
   for (const lang of ['ka', 'en']) {
     pages.push(indexPage(lang, ARTICLES));
