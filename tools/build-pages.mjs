@@ -158,7 +158,7 @@ const L = {
     byCity: 'დამტენები ქალაქების მიხედვით', byNetwork: 'დამტენები ქსელების მიხედვით',
     connectorMix: 'კონექტორების ტიპები', allStations: 'ყველა სადგური',
     updated: 'მონაცემები ავტომატურად ახლდება პროვაიდერებისგან. ბოლო განახლება:',
-    ctaTitle: 'რუკა და ცოცხალი სტატუსი — აპლიკაციაში',
+    ctaTitle: 'რუკა და ცოცხალი სტატუსი აპლიკაციაშია',
     ctaBody: 'ამ გვერდზე ხედავთ, რომელი დამტენები არსებობს და სად. რუკა, ზუსტი მდებარეობა, ცოცხალი სტატუსი (თავისუფალია თუ დაკავებული) და მარშრუტის დაგეგმვა უფასო აპლიკაციაშია.',
     ctaPlay: 'ჩამოტვირთვა Google Play-დან', ctaStore: 'ჩამოტვირთვა App Store-დან',
     otherCities: 'სხვა ქალაქები', otherNetworks: 'სხვა ქსელები', backToAll: 'ყველა დამტენი საქართველოში',
@@ -402,7 +402,7 @@ function catalogPage(lang, all, byCity, byProvider, updated) {
   const provs = [...byProvider.entries()].sort((a, b) => b[1].length - a[1].length);
 
   const title = lang === 'ka'
-    ? `ელექტრო მანქანის დამტენები საქართველოში — ${sum.total} სადგური | GeoCharge`
+    ? `ელექტრო მანქანის დამტენები საქართველოში, ${sum.total} სადგური | GeoCharge`
     : `EV charging stations in Georgia — ${sum.total} stations | GeoCharge`;
   const desc = lang === 'ka'
     ? `საქართველოს ${sum.total} საჯარო დამტენი სადგური ერთ სიაში: ${sum.dc} სწრაფი DC, ${sum.providers.length} ქსელი, ქალაქებისა და კონექტორის ტიპის მიხედვით.`
@@ -418,11 +418,11 @@ function catalogPage(lang, all, byCity, byProvider, updated) {
     [`რამდენი ელექტრო მანქანის დამტენია საქართველოში?`,
       `ამჟამად ${sum.total} საჯარო დამტენი სადგური, ${sum.providers.length} სხვადასხვა ქსელში. აქედან ${sum.dc} სწრაფი DC დამტენია.`],
     [`სად არის ყველაზე მეტი დამტენი?`,
-      `${cities[0] ? (lang === 'ka' ? cities[0][1][0]._city[1] : cities[0][0]) : ''}-ში — ${cities[0] ? cities[0][1].length : 0} სადგური. შემდეგ მოდის ${cities[1] ? cities[1][1][0]._city[1] : ''} (${cities[1] ? cities[1][1].length : 0}).`],
+      `${cities[0] ? cities[0][1][0]._city[2] : ''}, სულ ${cities[0] ? cities[0][1].length : 0} სადგური. შემდეგ მოდის ${cities[1] ? cities[1][1][0]._city[1] : ''} (${cities[1] ? cities[1][1].length : 0}).`],
     [`რომელი კონექტორები გვხვდება საქართველოში?`,
       `ყველაზე გავრცელებულია ${sum.connectors.slice(0, 3).map(([c, n]) => `${c} (${n})`).join(', ')}. სრული განაწილება ამ გვერდზეა.`],
     [`სად ვნახო, დამტენი თავისუფალია თუ არა?`,
-      `ცოცხალი სტატუსი და რუკა GeoCharge-ის უფასო აპლიკაციაშია — ამ გვერდზე მხოლოდ სადგურების კატალოგია.`],
+      `ცოცხალი სტატუსი და რუკა GeoCharge-ის უფასო აპლიკაციაშია. ამ გვერდზე მხოლოდ სადგურების კატალოგია.`],
   ] : [
     [`How many EV chargers are there in Georgia?`,
       `${sum.total} public charging stations right now, across ${sum.providers.length} different networks. ${sum.dc} of them are fast DC chargers.`],
@@ -508,14 +508,14 @@ function cityPage(lang, city, list, allCities, updated) {
     .sort((a, b) => b[1] - a[1]);
 
   const title = lang === 'ka'
-    ? `ელექტრო მანქანის დამტენები ${loc} — ${sum.total} სადგური | GeoCharge`
+    ? `ელექტრო მანქანის დამტენები ${loc}, ${sum.total} სადგური | GeoCharge`
     : `EV charging stations ${loc} — ${sum.total} stations | GeoCharge`;
   const desc = lang === 'ka'
     ? `${name}: ${sum.total} საჯარო დამტენი სადგური, ${sum.dc} სწრაფი DC. ქსელები: ${top.slice(0, 3).map((x) => x[0]).join(', ')}. სიმძლავრე, კონექტორები და ტარიფები.`
     : `${name}: ${sum.total} public EV chargers, ${sum.dc} fast DC. Networks: ${top.slice(0, 3).map((x) => x[0]).join(', ')}. Power, connectors and tariffs.`;
 
   const intro = lang === 'ka'
-    ? `${loc} ${sum.total} საჯარო დამტენი სადგურია — ${sum.dc} სწრაფი DC და ${sum.ac} ჩვეულებრივი AC. ისინი ${sum.providers.length} ქსელს ეკუთვნის, ყველაზე დიდი წილი ${PROVIDER_KA[top[0][0]] || top[0][0]}-ს აქვს (${top[0][1]} სადგური).${sum.maxKw ? ` ყველაზე მძლავრი დამტენი ${sum.maxKw} kW-ია.` : ''}`
+    ? `${loc} ${sum.total} საჯარო დამტენი სადგურია: ${sum.dc} სწრაფი DC და ${sum.ac} ჩვეულებრივი AC. ისინი ${sum.providers.length} ქსელს ეკუთვნის, ყველაზე დიდი წილი ${PROVIDER_KA[top[0][0]] || top[0][0]}-ს აქვს (${top[0][1]} სადგური).${sum.maxKw ? ` ყველაზე მძლავრი დამტენი ${sum.maxKw} kW-ია.` : ''}`
     : `${name} has ${sum.total} public charging stations — ${sum.dc} fast DC and ${sum.ac} standard AC. They belong to ${sum.providers.length} networks, with ${top[0][0]} operating the most (${top[0][1]} stations).${sum.maxKw ? ` The most powerful charger here delivers ${sum.maxKw} kW.` : ''}`;
 
   const bc = [{ name: t.home, href: `${t.base}/` },
@@ -526,11 +526,11 @@ function cityPage(lang, city, list, allCities, updated) {
   const faq = lang === 'ka' ? [
     [`რამდენი ელექტრო დამტენია ${loc}?`, `${sum.total} საჯარო დამტენი სადგური, აქედან ${sum.dc} სწრაფი DC.`],
     [`რომელი ქსელების დამტენებია ${loc}?`, `${top.map((x) => `${PROVIDER_KA[x[0]] || x[0]} (${x[1]})`).join(', ')}.`],
-    [`რომელი კონექტორები გვხვდება ${loc}?`, `${sum.connectors.map(([c, n]) => `${c} — ${n}`).join(', ')}.`],
+    [`რომელი კონექტორები გვხვდება ${loc}?`, `${sum.connectors.map(([c, n]) => `${c} (${n})`).join(', ')}.`],
   ] : [
     [`How many EV chargers are there ${loc}?`, `${sum.total} public charging stations, ${sum.dc} of them fast DC.`],
     [`Which networks operate ${loc}?`, `${top.map((x) => `${x[0]} (${x[1]})`).join(', ')}.`],
-    [`Which connectors are available ${loc}?`, `${sum.connectors.map(([c, n]) => `${c} — ${n}`).join(', ')}.`],
+    [`Which connectors are available ${loc}?`, `${sum.connectors.map(([c, n]) => `${c} (${n})`).join(', ')}.`],
   ];
 
   const body = `${crumbs(bc)}
@@ -602,14 +602,14 @@ function providerPage(lang, provider, list, allProviders, updated) {
     .sort((a, b) => b[1].length - a[1].length);
 
   const title = lang === 'ka'
-    ? `${provider} დამტენები საქართველოში — ${sum.total} სადგური | GeoCharge`
+    ? `${provider} დამტენები საქართველოში, ${sum.total} სადგური | GeoCharge`
     : `${provider} chargers in Georgia — ${sum.total} stations | GeoCharge`;
   const desc = lang === 'ka'
     ? `${name}: ${sum.total} დამტენი სადგური საქართველოში, ${sum.dc} სწრაფი DC. მდებარეობები, სიმძლავრე, კონექტორები და ტარიფები.`
     : `${provider}: ${sum.total} charging stations in Georgia, ${sum.dc} fast DC. Locations, power, connectors and tariffs.`;
 
   const intro = lang === 'ka'
-    ? `${name} საქართველოში ${sum.total} საჯარო დამტენ სადგურს ოპერირებს — ${sum.dc} სწრაფი DC და ${sum.ac} AC.${sum.maxKw ? ` ქსელის ყველაზე მძლავრი დამტენი ${sum.maxKw} kW-ია.` : ''} სადგურები ${cities.length} ქალაქშია განთავსებული.`
+    ? `${name} საქართველოში ${sum.total} საჯარო დამტენ სადგურს ოპერირებს: ${sum.dc} სწრაფი DC და ${sum.ac} AC.${sum.maxKw ? ` ქსელის ყველაზე მძლავრი დამტენი ${sum.maxKw} kW-ია.` : ''} სადგურები ${cities.length} ქალაქშია განთავსებული.`
     : `${provider} operates ${sum.total} public charging stations in Georgia — ${sum.dc} fast DC and ${sum.ac} AC.${sum.maxKw ? ` Its most powerful charger delivers ${sum.maxKw} kW.` : ''} The stations are spread across ${cities.length} cities.`;
 
   const bc = [{ name: t.home, href: `${t.base}/` },
@@ -620,11 +620,11 @@ function providerPage(lang, provider, list, allProviders, updated) {
   const faq = lang === 'ka' ? [
     [`რამდენი ${provider} დამტენია საქართველოში?`, `${sum.total} საჯარო დამტენი სადგური, აქედან ${sum.dc} სწრაფი DC.`],
     [`რომელ ქალაქებშია ${provider}-ის დამტენები?`, `${cities.slice(0, 8).map((c) => `${lang === 'ka' ? c[1][0]._city[1] : c[0]} (${c[1].length})`).join(', ')}${cities.length > 8 ? ' და სხვა.' : '.'}`],
-    [`რომელი კონექტორები აქვს ${provider}-ს?`, `${sum.connectors.map(([c, n]) => `${c} — ${n}`).join(', ')}.`],
+    [`რომელი კონექტორები აქვს ${provider}-ს?`, `${sum.connectors.map(([c, n]) => `${c} (${n})`).join(', ')}.`],
   ] : [
     [`How many ${provider} chargers are there in Georgia?`, `${sum.total} public charging stations, ${sum.dc} of them fast DC.`],
     [`Which cities have ${provider} chargers?`, `${cities.slice(0, 8).map((c) => `${c[0]} (${c[1].length})`).join(', ')}${cities.length > 8 ? ' and more.' : '.'}`],
-    [`Which connectors does ${provider} use?`, `${sum.connectors.map(([c, n]) => `${c} — ${n}`).join(', ')}.`],
+    [`Which connectors does ${provider} use?`, `${sum.connectors.map(([c, n]) => `${c} (${n})`).join(', ')}.`],
   ];
 
   const body = `${crumbs(bc)}
@@ -799,8 +799,25 @@ async function main() {
     for (const c of coords) if (p.html.includes(c)) { console.error(`  !! coordinate ${c} leaked into ${p.file}`); leaks++; }
     for (const w of banned) if (p.html.includes(w)) { console.error(`  !! live-status token ${JSON.stringify(w)} leaked into ${p.file}`); leaks++; }
   }
-  if (leaks) throw new Error(`${leaks} leak(s) detected — aborting before deploy`);
+  if (leaks) throw new Error(`${leaks} leak(s) detected, aborting before deploy`);
   console.log('· leak check passed: no coordinates, no live status in output');
+
+  // House style: no dashes as punctuation in Georgian copy. Checked on prose
+  // elements only, so the "—" placeholder in a table cell (meaning "no data")
+  // and hyphens inside names like E-Space are left alone.
+  const dashes = [];
+  for (const p of pages.filter((x) => !x.url.includes('/en/'))) {
+    const prose = [...p.html.matchAll(/<(title|h1|h2|p|summary|li)[^>]*>([\s\S]*?)<\/\1>/g)]
+      .map((m) => m[2]).join('\n')
+      + '\n' + (p.html.match(/name="description" content="([^"]*)"/) || [])[1];
+    for (const m of prose.matchAll(/\S{0,20}\s[—–]\s\S{0,20}/g)) dashes.push(`${p.file}: …${m[0]}…`);
+  }
+  if (dashes.length) {
+    console.error(`  !! ${dashes.length} dash(es) used as punctuation in Georgian copy:`);
+    for (const d of dashes.slice(0, 10)) console.error('     ' + d);
+    throw new Error('dash check failed');
+  }
+  console.log('· dash check passed: no dashes as punctuation in Georgian copy');
 
   const pairs = [];
   const kaPages = pages.filter((p) => p.url.startsWith(`${ORIGIN}/damtenebi`) || p.url.startsWith(`${ORIGIN}/qselebi`));

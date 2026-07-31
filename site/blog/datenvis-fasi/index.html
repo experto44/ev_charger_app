@@ -189,9 +189,12 @@ gap:12px 26px;justify-content:space-between;align-items:center;font-size:13px}
 .prose p{color:var(--ink-2);font-size:17px;line-height:1.75;margin:0 0 18px;text-wrap:pretty}
 .prose h2{font-size:clamp(21px,2.6vw,27px);margin:40px 0 14px}
 .prose h3{font-size:19px;font-weight:600;margin:28px 0 10px}
-.prose ul{margin:0 0 18px;padding:0 0 0 2px;list-style:none;display:grid;gap:11px}
-.prose li{display:flex;gap:12px;align-items:flex-start;color:var(--ink-2);font-size:16.5px;line-height:1.7}
-.prose li::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:10px}
+.prose ul{margin:0 0 18px;padding:0;list-style:none;display:grid;gap:12px}
+/* NOT display:flex — that turns a leading <strong> into its own flex column and
+   strands the rest of the sentence in a second one. Keep the li a block so the
+   bold lead-in stays inline, and float the bullet out with absolute positioning. */
+.prose li{position:relative;padding-left:20px;color:var(--ink-2);font-size:16.5px;line-height:1.7;text-wrap:pretty}
+.prose li::before{content:"";position:absolute;left:0;top:.6em;width:7px;height:7px;border-radius:50%;background:var(--accent)}
 .prose strong{color:var(--ink);font-weight:600}
 .prose a{color:var(--accent-d);font-weight:500;text-decoration:none}
 .prose a:hover{text-decoration:underline}
