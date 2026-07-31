@@ -1726,10 +1726,21 @@ ${ROUTES.map((r) => {
 }
 
 /* ── sitemap ─────────────────────────────────────────────────────────────── */
+// Hand-written guides live in tools/build-articles.mjs and are written by that
+// script, not this one. This file still has to know their URLs, because the
+// sitemap and the IndexNow submission are both built here. Keep in sync.
+const ARTICLE_SLUGS = ['datenvis-fasi', 'konektorebi', 'ac-da-dc', 'shori-mgzavroba',
+  'amerikuli-importi', 'chinuri-importi', 'zamtari', 'sakhlis-damteni', '100-km-fasi', 'batarea'];
+
+// Every indexable URL on geocharge.ge that this script does not itself render:
+// the two hand-written home pages and everything under /blog/.
+const unrenderedUrls = () => [
+  `${ORIGIN}/`, `${ORIGIN}/en/`,
+  `${ORIGIN}/blog/`, `${ORIGIN}/en/blog/`,
+  ...ARTICLE_SLUGS.flatMap((s) => [`${ORIGIN}/blog/${s}/`, `${ORIGIN}/en/blog/${s}/`]),
+];
+
 function sitemap(pairs, today) {
-  // Hand-written guides live in tools/build-articles.mjs; keep the slugs in sync.
-  const ARTICLE_SLUGS = ['datenvis-fasi', 'konektorebi', 'ac-da-dc', 'shori-mgzavroba',
-    'amerikuli-importi', 'chinuri-importi', 'zamtari', 'sakhlis-damteni', '100-km-fasi', 'batarea'];
   const fixed = [
     ['https://geocharge.ge/', 'https://geocharge.ge/en/', '1.0', 'weekly'],
     ['https://geocharge.ge/blog/', 'https://geocharge.ge/en/blog/', '0.8', 'monthly'],
@@ -1949,7 +1960,9 @@ async function main() {
   console.log(`· sitemap.xml: ${(xml.match(/<loc>/g) || []).length} urls`);
 
   if (ping) {
-    const urlList = [...new Set(pages.map((p) => p.url))].slice(0, 10000);
+    // The guides are the pages most worth announcing, and they are exactly the
+    // ones `pages` does not contain, so add them explicitly.
+    const urlList = [...new Set([...pages.map((p) => p.url), ...unrenderedUrls()])].slice(0, 10000);
     const res = await fetch('https://api.indexnow.org/indexnow', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
