@@ -99,6 +99,7 @@ const buildArticles = (N) => [
 <h2>როგორ გამოითვლება</h2>
 <p>ფასი მითითებულია ერთ კილოვატსაათზე, ანუ იმ ენერგიაზე, რომელიც ბატარეაში შედის. ფორმულა მარტივია: აიღეთ იმდენი კილოვატსაათი, რამდენიც ბატარეაში უნდა ჩაასხათ, და გაამრავლეთ ტარიფზე.</p>
 <p>მაგალითი. თუ თქვენს მანქანას 60 კილოვატსაათიანი ბატარეა აქვს და 20 პროცენტიდან 80 პროცენტამდე ტენით, ბატარეაში 36 კილოვატსაათი შედის. 0.78 ლარიან ტარიფზე ეს 28 ლარია.</p>
+<p>ხელით რომ არ ითვალოთ, ეს გამოთვლა <a href="/kalkulatori/">კალკულატორში</a> ორ წამში კეთდება: შეიყვანთ ბატარეის ტევადობას, მუხტის დონეს და ტარიფს.</p>
 <p>ამიტომ ერთი და იმავე მანქანის დატენვა სხვადასხვა ფასი ჯდება იმის მიხედვით, რამდენად ცარიელია ბატარეა. სრულიად ცარიელიდან სავსემდე დატენვა თითქმის ორჯერ მეტი ჯდება, ვიდრე ნახევრიდან.</p>
 
 <h2>რატომ განსხვავდება ტარიფები</h2>
@@ -141,6 +142,7 @@ const buildArticles = (N) => [
 <h2>How it is calculated</h2>
 <p>Prices are quoted per kilowatt hour, meaning the energy that goes into the battery. The formula is simple: take the number of kilowatt hours you need to put in and multiply by the tariff.</p>
 <p>An example. If your car has a 60 kWh battery and you charge from 20 percent to 80 percent, you are putting in 36 kWh. At 0.78 GEL that is 28 GEL.</p>
+<p>If you would rather not do the arithmetic, the <a href="/en/calculator/">calculator</a> does it in two seconds: enter the battery size, the charge levels and the tariff.</p>
 <p>So the same car costs different amounts depending on how empty the battery is. Charging from empty to full costs almost twice what charging from half costs.</p>
 
 <h2>Why tariffs differ</h2>

@@ -301,6 +301,10 @@ a{color:inherit}
 .lang{display:flex;border:1px solid #39434C;border-radius:999px;overflow:hidden}
 .lang a{padding:7px 13px;font-weight:600;font-size:12.5px;text-decoration:none;color:#B9C4CB}
 .lang a[aria-current="true"]{background:var(--accent);color:var(--on-accent)}
+.hnav{display:flex;align-items:center;gap:clamp(12px,1.6vw,24px);flex-shrink:0}
+.hnav a{color:var(--on-dark-2);text-decoration:none;font-size:clamp(13px,1.05vw,14px);font-weight:500;white-space:nowrap}
+.hnav a:hover{color:#fff}
+@media (max-width:899px){.hnav{display:none}}
 main{max-width:1100px;margin:0 auto;padding:clamp(28px,5vw,48px) clamp(20px,5vw,40px) clamp(56px,8vw,90px)}
 .crumbs{font-size:13.5px;color:#8B98A1;margin:0 0 18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .crumbs a{color:var(--accent-d);text-decoration:none}
@@ -414,6 +418,13 @@ ${CSS}
 <header class="hdr">
   <div class="hdr-in">
     <a href="${t.base}/" aria-label="GeoCharge"><img src="/assets/logo-dark.svg" alt="GeoCharge" height="28" style="height:28px;display:block"></a>
+    <nav class="hnav" aria-label="${lang === 'ka' ? 'ნავიგაცია' : 'Navigation'}">
+      <a href="${t.base}/${t.chargersDir}/">${esc(t.catalog)}</a>
+      <a href="${t.base}/${t.tariffsDir}/">${esc(t.tariffs)}</a>
+      <a href="${t.base}/${t.calcDir}/">${esc(t.calc)}</a>
+      <a href="${t.base}/${t.routesDir}/">${esc(t.routes)}</a>
+      <a href="${t.base}/blog/">${lang === 'ka' ? 'სტატიები' : 'Guides'}</a>
+    </nav>
     <div class="lang" role="group" aria-label="${lang === 'ka' ? 'ენა' : 'Language'}">
       <a href="${kaHref.replace(ORIGIN, '')}"${lang === 'ka' ? ' aria-current="true"' : ''} hreflang="ka">ქარ</a>
       <a href="${enHref.replace(ORIGIN, '')}"${lang === 'en' ? ' aria-current="true"' : ''} hreflang="en">ENG</a>
@@ -557,6 +568,13 @@ function catalogPage(lang, all, byCity, byProvider, updated) {
 <p class="intro">${intro}</p>
 ${statBlock(sum, lang)}
 <p class="upd">${esc(t.updated)} ${esc(updated)}</p>
+
+<div class="links" style="margin-top:22px">
+  <a href="${t.base}/${t.tariffsDir}/">${esc(t.tariffs)}</a>
+  <a href="${t.base}/${t.calcDir}/">${esc(t.calc)}</a>
+  <a href="${t.base}/${t.routesDir}/">${esc(t.routes)}</a>
+  <a href="${t.base}/${t.networksDir}/">${esc(t.networks)}</a>
+</div>
 
 <h2>${esc(t.byCity)}</h2>
 <div class="tw"><table>
@@ -890,6 +908,11 @@ function tariffPage(lang, ge, byProvider, updated) {
   <div class="stat"><b>${esc(nm(dearDc[0]))}</b><span>${esc(t.dearestDc)}</span></div>
 </div>
 <p class="upd">${esc(t.updated)} ${esc(updated)}</p>
+<div class="links" style="margin-top:22px">
+  <a href="${t.base}/${t.calcDir}/" style="background:var(--mint);border-color:var(--mint-b);color:var(--mint-ink,#137A4C);font-weight:600">${lang === 'ka' ? 'გამოთვალეთ თქვენი დატენვის ღირებულება' : 'Work out what your charge will cost'}</a>
+  <a href="${t.base}/${t.chargersDir}/">${esc(t.backToAll)}</a>
+  <a href="${t.base}/${t.networksDir}/">${esc(t.networks)}</a>
+</div>
 
 <h2>${lang === 'ka' ? 'ტარიფები ქსელების მიხედვით' : 'Tariffs by network'}</h2>
 <div class="tw"><table>
