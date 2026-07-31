@@ -704,24 +704,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://geocharge.ge/qselebi/ecocars/</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/qselebi/ecocars/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/networks/ecocars/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/qselebi/ecocars/"/>
-    <lastmod>2026-07-31</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://geocharge.ge/en/networks/ecocars/</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/qselebi/ecocars/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/networks/ecocars/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/qselebi/ecocars/"/>
-    <lastmod>2026-07-31</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://geocharge.ge/qselebi/da-tene/</loc>
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/qselebi/da-tene/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/networks/da-tene/"/>
@@ -735,6 +717,24 @@
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/qselebi/da-tene/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/networks/da-tene/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/qselebi/da-tene/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/qselebi/ecocars/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/qselebi/ecocars/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/networks/ecocars/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/qselebi/ecocars/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/networks/ecocars/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/qselebi/ecocars/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/networks/ecocars/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/qselebi/ecocars/"/>
     <lastmod>2026-07-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
