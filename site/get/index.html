@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ka">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>GeoCharge — ჩამოტვირთვა / Download</title>
+  <meta name="robots" content="noindex, follow">
+  <meta name="description" content="Download GeoCharge — every EV charger in Georgia, in one free app.">
+  <link rel="icon" href="/favicon.ico">
+
+  <!-- Store links (kept in sync with the homepage CTA) -->
+  <script>
+    (function () {
+      var PLAY = 'https://play.google.com/store/apps/details?id=ge.geocharge.app';
+      var APPSTORE = 'https://apps.apple.com/ge/app/geocharge/id6785467389';
+
+      function detectOs() {
+        try {
+          var ua = navigator.userAgent || '';
+          if (/android/i.test(ua)) return 'android';
+          if (/iPhone|iPad|iPod/i.test(ua)) return 'ios';
+          // iPadOS 13+ reports a desktop Safari UA; touch points give it away.
+          if (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1) return 'ios';
+        } catch (e) {}
+        return 'other';
+      }
+
+      var os = detectOs();
+      // Expose for the fallback UI below.
+      window.__geoStore = { play: PLAY, appstore: APPSTORE, os: os };
+
+      if (os === 'ios') {
+        window.location.replace(APPSTORE);
+      } else if (os === 'android') {
+        window.location.replace(PLAY);
+      } else {
+        // Desktop / unknown → send to the main site.
+        window.location.replace('https://geocharge.ge/');
+      }
+    })();
+  </script>
+
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: #0D1115;
+      color: #E6ECF0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px calc(32px + env(safe-area-inset-bottom, 0px));
+      text-align: center;
+    }
+    .wrap { width: 100%; max-width: 380px; }
+    .logo { height: 34px; width: auto; display: block; margin: 0 auto 28px; }
+    .spinner {
+      width: 42px; height: 42px; margin: 0 auto 22px;
+      border: 3px solid rgba(255, 255, 255, 0.12);
+      border-top-color: #2BD594;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    h1 { font-size: 19px; font-weight: 600; margin: 0 0 8px; }
+    p { font-size: 14.5px; line-height: 1.6; color: #8B98A1; margin: 0 0 26px; }
+    .badges { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 12px;
+      background: #000; border: 1px solid #46505A; border-radius: 12px;
+      padding: 11px 18px; text-decoration: none; color: #fff;
+      width: 220px; box-sizing: border-box; transition: border-color .2s;
+    }
+    .badge:hover { border-color: #2BD594; }
+    .badge svg { flex: 0 0 auto; }
+    .badge .l { text-align: left; line-height: 1.15; }
+    .badge .l small { display: block; font-size: 10px; color: #B9C4CB; letter-spacing: .04em; }
+    .badge .l span { display: block; font-size: 16px; font-weight: 600; }
+    .home { display: inline-block; margin-top: 26px; color: #6E7B85; font-size: 13px; text-decoration: none; }
+    .home:hover { color: #B9C4CB; }
+    /* Show picker only for desktop / unknown; on mobile we redirect instantly. */
+    .picker { display: none; }
+    @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2s; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <img class="logo" src="/assets/logo-dark.svg" alt="GeoCharge">
+
+    <!-- Redirecting state (mobile) -->
+    <div id="redir">
+      <div class="spinner" role="status" aria-label="Redirecting"></div>
+      <h1>გადამისამართება მაღაზიაში…</h1>
+      <p>Taking you to the store. If nothing happens, choose your platform below.</p>
+    </div>
+
+    <!-- Store picker (desktop / fallback) -->
+    <div id="picker" class="picker">
+      <h1>ჩამოტვირთე GeoCharge</h1>
+      <p>ელექტრომობილის ყველა დამტენი საქართველოში, ერთ უფასო აპლიკაციაში.</p>
+    </div>
+
+    <div class="badges">
+      <a class="badge" id="b-play" href="https://play.google.com/store/apps/details?id=ge.geocharge.app" rel="noopener" aria-label="Get it on Google Play">
+        <svg width="22" height="24" viewBox="0 0 512 512" aria-hidden="true"><path fill="#00D0FF" d="M47 24C40 28 36 36 36 47v418c0 11 4 19 11 23l243-232L47 24z"/><path fill="#00F076" d="M290 256L47 24c4-2 9-3 14-1l301 171-72 62z"/><path fill="#FFD500" d="M362 194l82 47c17 10 17 30 0 40l-82 47-72-62 72-62z"/><path fill="#FF3A44" d="M290 256l72 62-301 171c-5 2-10 1-14-1l243-232z"/></svg>
+        <span class="l"><small>GET IT ON</small><span>Google Play</span></span>
+      </a>
+      <a class="badge" id="b-ios" href="https://apps.apple.com/ge/app/geocharge/id6785467389" rel="noopener" aria-label="Download on the App Store">
+        <svg width="22" height="24" viewBox="0 0 384 512" fill="#fff" aria-hidden="true"><path d="M318 268c-1-58 47-86 49-87-27-39-68-45-83-45-35-4-69 21-86 21-18 0-45-20-74-20-38 1-73 22-93 56-40 69-10 171 28 227 19 27 41 58 70 57 28-1 39-18 73-18 33 0 43 18 73 17 30-1 49-28 67-55 21-31 30-61 30-63-1-1-58-22-58-90zM262 84c15-19 26-45 23-71-22 1-49 15-65 33-14 16-27 43-24 68 25 2 50-13 66-30z"/></svg>
+        <span class="l"><small>Download on the</small><span>App Store</span></span>
+      </a>
+    </div>
+
+    <a class="home" href="/">geocharge.ge</a>
+  </div>
+
+  <script>
+    (function () {
+      var os = (window.__geoStore || {}).os || 'other';
+      // On desktop / unknown, swap the redirecting message for the picker heading.
+      if (os === 'other') {
+        var r = document.getElementById('redir');
+        var p = document.getElementById('picker');
+        if (r) r.style.display = 'none';
+        if (p) p.style.display = 'block';
+        document.title = 'GeoCharge — ჩამოტვირთვა / Download';
+      }
+    })();
+  </script>
+
+  <noscript>
+    <p style="color:#8B98A1">
+      <a style="color:#2BD594" href="https://play.google.com/store/apps/details?id=ge.geocharge.app">Google Play</a>
+      &nbsp;·&nbsp;
+      <a style="color:#2BD594" href="https://apps.apple.com/ge/app/geocharge/id6785467389">App Store</a>
+    </p>
+  </noscript>
+</body>
+</html>

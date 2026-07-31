@@ -3,23 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>EV charging stations in Khelvachauri — 4 stations | GeoCharge</title>
-<meta name="description" content="Khelvachauri: 4 public EV chargers, 4 fast DC. Networks: Da-Tene, Tegeta. Power, connectors and tariffs.">
+<title>EV charging cost calculator for Georgia | GeoCharge</title>
+<meta name="description" content="Work out what one charge costs in Georgia. Tariffs from all 11 networks, updated automatically. A 60 kWh battery from 20 to 80 percent is about 28 GEL.">
 <meta name="theme-color" content="#11161A">
-<link rel="canonical" href="https://geocharge.ge/en/chargers/khelvachauri/">
-<link rel="alternate" hreflang="ka" href="https://geocharge.ge/damtenebi/khelvachauri/">
-<link rel="alternate" hreflang="en" href="https://geocharge.ge/en/chargers/khelvachauri/">
-<link rel="alternate" hreflang="x-default" href="https://geocharge.ge/damtenebi/khelvachauri/">
+<link rel="canonical" href="https://geocharge.ge/en/calculator/">
+<link rel="alternate" hreflang="ka" href="https://geocharge.ge/kalkulatori/">
+<link rel="alternate" hreflang="en" href="https://geocharge.ge/en/calculator/">
+<link rel="alternate" hreflang="x-default" href="https://geocharge.ge/kalkulatori/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="GeoCharge">
 <meta property="og:locale" content="en_US">
-<meta property="og:url" content="https://geocharge.ge/en/chargers/khelvachauri/">
-<meta property="og:title" content="EV charging stations in Khelvachauri — 4 stations | GeoCharge">
-<meta property="og:description" content="Khelvachauri: 4 public EV chargers, 4 fast DC. Networks: Da-Tene, Tegeta. Power, connectors and tariffs.">
+<meta property="og:url" content="https://geocharge.ge/en/calculator/">
+<meta property="og:title" content="EV charging cost calculator for Georgia | GeoCharge">
+<meta property="og:description" content="Work out what one charge costs in Georgia. Tariffs from all 11 networks, updated automatically. A 60 kWh battery from 20 to 80 percent is about 28 GEL.">
 <meta property="og:image" content="https://geocharge.ge/assets/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="EV charging stations in Khelvachauri — 4 stations | GeoCharge">
-<meta name="twitter:description" content="Khelvachauri: 4 public EV chargers, 4 fast DC. Networks: Da-Tene, Tegeta. Power, connectors and tariffs.">
+<meta name="twitter:title" content="EV charging cost calculator for Georgia | GeoCharge">
+<meta name="twitter:description" content="Work out what one charge costs in Georgia. Tariffs from all 11 networks, updated automatically. A 60 kWh battery from 20 to 80 percent is about 28 GEL.">
 <meta name="twitter:image" content="https://geocharge.ge/assets/og-image.png">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
@@ -49,20 +49,24 @@
     {
      "@type": "ListItem",
      "position": 3,
-     "name": "Khelvachauri"
+     "name": "Calculator"
     }
    ]
   },
   {
-   "@type": "CollectionPage",
-   "@id": "https://geocharge.ge/en/chargers/khelvachauri/#page",
-   "name": "EV charging stations in Khelvachauri — 4 stations | GeoCharge",
-   "url": "https://geocharge.ge/en/chargers/khelvachauri/",
+   "@type": "WebApplication",
+   "@id": "https://geocharge.ge/en/calculator/#app",
+   "name": "EV charging cost calculator for Georgia | GeoCharge",
+   "url": "https://geocharge.ge/en/calculator/",
+   "applicationCategory": "UtilitiesApplication",
+   "operatingSystem": "Any",
+   "browserRequirements": "Requires JavaScript",
    "inLanguage": "en",
-   "description": "Khelvachauri: 4 public EV chargers, 4 fast DC. Networks: Da-Tene, Tegeta. Power, connectors and tariffs.",
-   "about": {
-    "@type": "City",
-    "name": "Khelvachauri"
+   "description": "Work out what one charge costs in Georgia. Tariffs from all 11 networks, updated automatically. A 60 kWh battery from 20 to 80 percent is about 28 GEL.",
+   "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "GEL"
    },
    "isPartOf": {
     "@type": "WebSite",
@@ -75,26 +79,26 @@
    "mainEntity": [
     {
      "@type": "Question",
-     "name": "How many EV chargers are there in Khelvachauri?",
+     "name": "How do I calculate charging cost?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "4 public charging stations, 4 of them fast DC."
+      "text": "Multiply battery capacity by the share you are adding, then multiply the kilowatt hours by the tariff. A 60 kWh battery from 20 to 80 percent is 36 kWh, which at a 0.78 GEL DC tariff comes to 28.08 GEL."
      }
     },
     {
      "@type": "Question",
-     "name": "Which networks operate in Khelvachauri?",
+     "name": "What is the current tariff in Georgia?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "Da-Tene (3), Tegeta (1)."
+      "text": "The median fast DC tariff is 0.78 GEL per kWh and the median slow AC tariff is 0.65. The full picture by network is on the tariffs page."
      }
     },
     {
      "@type": "Question",
-     "name": "Which connectors are available in Khelvachauri?",
+     "name": "Why does the real receipt differ from the calculation?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "CCS2 (3), Type 2 (1), GB/T (1)."
+      "text": "Two reasons. The energy that reaches the battery is always slightly less than the charger draws, since some is lost as heat. And some operators bill separately for occupying the bay after charging ends."
      }
     }
    ]
@@ -188,75 +192,108 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
   <div class="hdr-in">
     <a href="/en/" aria-label="GeoCharge"><img src="/assets/logo-dark.svg" alt="GeoCharge" height="28" style="height:28px;display:block"></a>
     <div class="lang" role="group" aria-label="Language">
-      <a href="/damtenebi/khelvachauri/" hreflang="ka">ქარ</a>
-      <a href="/en/chargers/khelvachauri/" aria-current="true" hreflang="en">ENG</a>
+      <a href="/kalkulatori/" hreflang="ka">ქარ</a>
+      <a href="/en/calculator/" aria-current="true" hreflang="en">ENG</a>
     </div>
   </div>
 </header>
 <main>
-<nav class="crumbs" aria-label="breadcrumb"><a href="/en/">Home</a><span aria-hidden="true">›</span><a href="/en/chargers/">Chargers</a><span aria-hidden="true">›</span><span>Khelvachauri</span></nav>
-<h1>EV charging stations in Khelvachauri</h1>
-<p class="intro">Khelvachauri has 4 public charging stations — 4 fast DC and 0 standard AC. They belong to 2 networks, with Da-Tene operating the most (3 stations). The most powerful charger here delivers 160 kW.</p>
-<div class="stats">
-  <div class="stat"><b>4</b><span>stations</span></div>
-  <div class="stat"><b>4</b><span>Fast (DC)</span></div>
-  <div class="stat"><b>0</b><span>Standard (AC)</span></div>
-  <div class="stat"><b>2</b><span>networks</span></div>
-  <div class="stat"><b>160 kW</b><span>Max power</span></div>
+<nav class="crumbs" aria-label="breadcrumb"><a href="/en/">Home</a><span aria-hidden="true">›</span><a href="/en/chargers/">Chargers</a><span aria-hidden="true">›</span><span>Calculator</span></nav>
+<h1>EV charging cost calculator</h1>
+<p class="intro">Enter your battery size and charge levels and the calculator works out how many kilowatt hours go in and what it costs. Tariffs come from live data across Georgia's 11 networks.</p>
+
+<div class="calc">
+  <div class="calc-in">
+    <label>Battery capacity (kWh)<input type="number" id="c-batt" value="60" min="5" max="250" step="1"></label>
+    <label>Current charge (%)<input type="number" id="c-from" value="20" min="0" max="100" step="1"></label>
+    <label>Target charge (%)<input type="number" id="c-to" value="80" min="0" max="100" step="1"></label>
+    <label>Pick a network<select id="c-preset">
+      <optgroup label="Fast DC">
+        <option value="0.80">mart EV 0.80 ₾</option>
+        <option value="0.75">E-Space 0.75 ₾</option>
+        <option value="0.76">EV Power GE 0.76 ₾</option>
+        <option value="0.78">EcoCars 0.78 ₾</option>
+        <option value="0.69">Da-Tene 0.69 ₾</option>
+        <option value="1.00">Tegeta 1.00 ₾</option>
+        <option value="0.55">Electrify Georgia 0.55 ₾</option>
+        <option value="0.70">Solar Station 0.70 ₾</option>
+        <option value="0.80">MOVEO 0.80 ₾</option>
+        <option value="0.78">Gadatene 0.78 ₾</option>
+      </optgroup>
+      <optgroup label="Slow AC">
+        <option value="0.65">mart EV 0.65 ₾</option>
+        <option value="0.60">E-Space 0.60 ₾</option>
+        <option value="0.71">EcoCars 0.71 ₾</option>
+        <option value="0.69">Da-Tene 0.69 ₾</option>
+        <option value="0.60">Tegeta 0.60 ₾</option>
+        <option value="0.45">Electrify Georgia 0.45 ₾</option>
+        <option value="0.70">Solar Station 0.70 ₾</option>
+      </optgroup>
+      <option value="">Other, enter manually</option>
+    </select></label>
+    <label>Tariff (GEL / kWh)<input type="number" id="c-price" value="0.78" min="0" max="5" step="0.01"></label>
+    <label>Consumption (kWh / 100 km)<input type="number" id="c-cons" value="18" min="5" max="40" step="0.5"></label>
+  </div>
+  <div class="calc-out">
+    <div class="calc-big"><b id="c-cost">—</b><span>Cost</span></div>
+    <div class="calc-small">
+      <div><b id="c-kwh">—</b><span>Energy added</span></div>
+      <div><b id="c-100">—</b><span>Per 100 km</span></div>
+    </div>
+    <p class="calc-time"><span>How long it takes:</span> <b id="c-time">—</b></p>
+  </div>
 </div>
+<p class="note">The result is an estimate. The real amount differs slightly because some energy is lost as heat.</p>
+
+<h2>What a typical charge costs</h2>
+<p class="intro" style="margin-bottom:16px">Below is the cost of one charge from 20 to 80 percent at the median tariffs of 0.78 GEL on DC and 0.65 GEL on AC.</p>
+<div class="tw"><table>
+<thead><tr><th>Battery</th><th>Added</th><th>DC cost</th><th>AC cost</th></tr></thead>
+<tbody>
+<tr><td>40 kWh</td><td>24 kWh</td><td>18.72 ₾</td><td>15.60 ₾</td></tr>
+<tr><td>60 kWh</td><td>36 kWh</td><td>28.08 ₾</td><td>23.40 ₾</td></tr>
+<tr><td>75 kWh</td><td>45 kWh</td><td>35.10 ₾</td><td>29.25 ₾</td></tr>
+<tr><td>100 kWh</td><td>60 kWh</td><td>46.80 ₾</td><td>39.00 ₾</td></tr>
+</tbody></table></div>
 <p class="upd">Data refreshes automatically from the providers. Last update: 2026-07-31 07:02</p>
 
-<h2>Chargers by network</h2>
-<div class="tw"><table>
-<thead><tr><th>Network</th><th>chargers</th></tr></thead>
-<tbody>
-<tr><td><a href="/en/networks/da-tene/">Da-Tene</a></td><td>3</td></tr>
-<tr><td><a href="/en/networks/tegeta/">Tegeta</a></td><td>1</td></tr>
-</tbody></table></div>
-
-<h2>All stations</h2>
-<div class="tw"><table>
-<thead><tr><th>Station</th><th>Network</th><th>Type</th><th>Power</th><th>Connectors</th><th>Tariff</th></tr></thead>
-<tbody>
-<tr><td>ბათუმი ფრიდონ ხალვაშის N45ა ნ2</td><td><a href="/en/networks/da-tene/">Da-Tene</a></td><td><span class="tag dc">DC</span></td><td>160 kW</td><td>CCS2</td><td>0.69 ₾/kWh</td></tr>
-<tr><td>ბათუმი ფრიდონ ხალვაშის N45ა ნ1</td><td><a href="/en/networks/da-tene/">Da-Tene</a></td><td><span class="tag dc">DC</span></td><td>160 kW</td><td>GB/T</td><td>0.69 ₾/kWh</td></tr>
-<tr><td>ბათუმი ფრიდონ ხალვაშის N45ა ნ3</td><td><a href="/en/networks/da-tene/">Da-Tene</a></td><td><span class="tag dc">DC</span></td><td>160 kW</td><td>CCS2</td><td>0.69 ₾/kWh</td></tr>
-<tr><td>Tegeta Batumi</td><td><a href="/en/networks/tegeta/">Tegeta</a></td><td><span class="tag dc">DC</span></td><td>—</td><td>CCS2, Type 2</td><td>0.60–1.00 ₾/kWh</td></tr>
-</tbody></table></div>
-<p class="note">Tariffs are indicative and published by the provider.</p>
-
-<h2>Connector types</h2>
-<div class="chips"><span class="chip"><b>3</b> CCS2</span><span class="chip"><b>1</b> Type 2</span><span class="chip"><b>1</b> GB/T</span></div>
+<h2>How it is calculated</h2>
+<p class="intro">The formula is one step: battery capacity times the share you are adding, then the kilowatt hours times the tariff. The only complication is that fast chargers slow down sharply above 80 percent, so the time estimate is optimistic beyond that point.</p>
+<p class="intro">More on why tariffs differ and what home charging costs: <a href="/en/blog/datenvis-fasi/" style="color:var(--accent-d);font-weight:500;text-decoration:none">how much charging costs</a>. Tariffs by network: <a href="/en/tariffs/" style="color:var(--accent-d);font-weight:500;text-decoration:none">Tariffs</a>.</p>
 
 <h2>Frequently asked questions</h2>
 <div class="faq">
-<details><summary>How many EV chargers are there in Khelvachauri?</summary><p>4 public charging stations, 4 of them fast DC.</p></details>
-<details><summary>Which networks operate in Khelvachauri?</summary><p>Da-Tene (3), Tegeta (1).</p></details>
-<details><summary>Which connectors are available in Khelvachauri?</summary><p>CCS2 (3), Type 2 (1), GB/T (1).</p></details>
+<details><summary>How do I calculate charging cost?</summary><p>Multiply battery capacity by the share you are adding, then multiply the kilowatt hours by the tariff. A 60 kWh battery from 20 to 80 percent is 36 kWh, which at a 0.78 GEL DC tariff comes to 28.08 GEL.</p></details>
+<details><summary>What is the current tariff in Georgia?</summary><p>The median fast DC tariff is 0.78 GEL per kWh and the median slow AC tariff is 0.65. The full picture by network is on the tariffs page.</p></details>
+<details><summary>Why does the real receipt differ from the calculation?</summary><p>Two reasons. The energy that reaches the battery is always slightly less than the charger draws, since some is lost as heat. And some operators bill separately for occupying the bay after charging ends.</p></details>
 </div>
 
-<h2>Other cities</h2>
-<div class="links">
-<a href="/en/chargers/">All chargers in Georgia</a>
-<a href="/en/chargers/tbilisi/">Tbilisi (370)</a>
-<a href="/en/chargers/mtskheta/">Mtskheta (36)</a>
-<a href="/en/chargers/batumi/">Batumi (25)</a>
-<a href="/en/chargers/terjola/">Terjola (18)</a>
-<a href="/en/chargers/gori/">Gori (17)</a>
-<a href="/en/chargers/kutaisi/">Kutaisi (12)</a>
-<a href="/en/chargers/kobuleti/">Kobuleti (9)</a>
-<a href="/en/chargers/samtredia/">Samtredia (9)</a>
-<a href="/en/chargers/gudauri/">Gudauri (7)</a>
-<a href="/en/chargers/telavi/">Telavi (7)</a>
-<a href="/en/chargers/zugdidi/">Zugdidi (7)</a>
-<a href="/en/chargers/bakuriani/">Bakuriani (6)</a>
-<a href="/en/chargers/poti/">Poti (6)</a>
-<a href="/en/chargers/rustavi/">Rustavi (6)</a>
-<a href="/en/chargers/borjomi/">Borjomi (5)</a>
-<a href="/en/chargers/akhaltsikhe/">Akhaltsikhe (4)</a>
-<a href="/en/chargers/chakvi/">Chakvi (4)</a>
-<a href="/en/chargers/khashuri/">Khashuri (3)</a>
-</div>
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i);};
+  var batt=$('c-batt'),from=$('c-from'),to=$('c-to'),price=$('c-price'),cons=$('c-cons'),preset=$('c-preset');
+  var POWERS=[7,22,60,120];
+  function calc(){
+    var b=parseFloat(batt.value)||0,f=parseFloat(from.value)||0,tt=parseFloat(to.value)||0;
+    var p=parseFloat(price.value)||0,c=parseFloat(cons.value)||0;
+    var share=Math.max(0,Math.min(100,tt)-Math.max(0,f))/100;
+    var kwh=b*share, cost=kwh*p;
+    $('c-kwh').textContent=kwh?kwh.toFixed(1)+' kWh':'—';
+    $('c-cost').textContent=kwh?cost.toFixed(2)+' ₾':'—';
+    $('c-100').textContent=(c&&p)?(c*p).toFixed(2)+' ₾':'—';
+    $('c-time').textContent=kwh?POWERS.map(function(w){
+      var h=kwh/w, m=Math.round(h*60);
+      var H='h',M='m';
+      if(m<60) return w+' kW: '+m+M;
+      var hh=Math.floor(m/60),mm=m%60;
+      return w+' kW: '+hh+H+(mm?' '+mm+M:'');
+    }).join('  ·  '):'—';
+  }
+  preset.addEventListener('change',function(){ if(preset.value) price.value=preset.value; calc(); });
+  [batt,from,to,price,cons].forEach(function(el){ el.addEventListener('input',calc); });
+  calc();
+})();
+</script>
 <section class="cta">
   <h2>Map and live status — in the app</h2>
   <p>This page shows which chargers exist and where. The map, exact locations, real-time availability and route planning live in the free app.</p>

@@ -82,6 +82,7 @@ const PROSE = `
 .acard:hover{border-color:var(--accent);box-shadow:0 12px 32px -18px rgba(23,153,95,.35)}
 .acard b{display:block;font-size:17.5px;font-weight:600;color:var(--ink);line-height:1.4;margin-bottom:8px}
 .acard span{display:block;color:var(--ink-2);font-size:14.5px;line-height:1.6}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin:0}
 `.trim();
 
 const buildArticles = (N) => [
@@ -834,7 +835,9 @@ const L = {
     idxTitle: 'სტატიები ელექტრომობილებზე', catalog: 'დამტენების სია', catalogHref: '/damtenebi/',
     idxDesc: 'პრაქტიკული გზამკვლევები ელექტრომობილის მფლობელებისთვის საქართველოში: დატენვის ფასი, კონექტორები, სწრაფი და ნელი დატენვა, შორი მგზავრობა.',
     idxIntro: 'მოკლე და პირდაპირი პასუხები კითხვებზე, რომლებიც ელექტრომობილის მფლობელს საქართველოში ყველაზე ხშირად უჩნდება. ყველა ციფრი აღებულია იმავე მონაცემებიდან, რაზეც აპლიკაცია მუშაობს.',
-    faqH: 'ხშირად დასმული კითხვები', more: 'სხვა სტატიები',
+    faqH: 'ხშირად დასმული კითხვები', more: 'სხვა სტატიები', seeAlso: 'იხილეთ ასევე',
+    related: [['დამტენების სია', '/damtenebi/'], ['ტარიფების შედარება', '/tarifebi/'],
+      ['დატენვის კალკულატორი', '/kalkulatori/'], ['მარშრუტები', '/marshruti/'], ['ქსელები', '/qselebi/']],
     ctaTitle: 'იპოვე დამტენი ერთ აპლიკაციაში',
     ctaBody: 'საქართველოს ყველა ქსელი ერთ რუკაზე, ცოცხალი სტატუსით და მარშრუტის დაგეგმვით. უფასოდ.',
     play: 'ჩამოტვირთვა Google Play-დან', store: 'ჩამოტვირთვა App Store-დან' },
@@ -842,7 +845,9 @@ const L = {
     idxTitle: 'EV guides for Georgia', catalog: 'Charger list', catalogHref: '/en/chargers/',
     idxDesc: 'Practical guides for EV drivers in Georgia: charging costs, connectors, fast versus slow charging, and long distance trips.',
     idxIntro: 'Short, direct answers to the questions EV drivers in Georgia actually ask. Every figure comes from the same data the app runs on.',
-    faqH: 'Frequently asked questions', more: 'More guides',
+    faqH: 'Frequently asked questions', more: 'More guides', seeAlso: 'See also',
+    related: [['Charger list', '/en/chargers/'], ['Tariff comparison', '/en/tariffs/'],
+      ['Charging cost calculator', '/en/calculator/'], ['Routes', '/en/routes/'], ['Networks', '/en/networks/']],
     ctaTitle: 'Find a charger in one app',
     ctaBody: 'Every network in Georgia on one map, with live status and route planning. Free.',
     play: 'Get it on Google Play', store: 'Download on the App Store' },
@@ -888,7 +893,11 @@ ${a.faq.map(([q, ans]) => `<details><summary>${esc(q)}</summary><p>${esc(ans)}</
 <h2>${esc(t.more)}</h2>
 <div class="cards">
 ${others.map((x) => `<a class="acard" href="${t.base}/${t.dir}/${x.slug}/"><b>${esc(x[lang].title)}</b><span>${esc(x[lang].desc)}</span></a>`).join('\n')}
-<a class="acard" href="${t.catalogHref}"><b>${esc(t.catalog)}</b><span>${lang === 'ka' ? 'საქართველოს ყველა საჯარო დამტენი, ქალაქებისა და ქსელების მიხედვით.' : 'Every public charger in Georgia, by city and by network.'}</span></a>
+</div>
+
+<h2>${esc(t.seeAlso)}</h2>
+<div class="links">
+${t.related.map(([label, href]) => `<a href="${href}">${esc(label)}</a>`).join('')}
 </div>`;
 
   return {
@@ -933,7 +942,11 @@ function indexPage(lang, ARTICLES) {
 <p class="intro" style="margin-bottom:36px">${esc(t.idxIntro)}</p>
 <div class="cards">
 ${ARTICLES.map((x) => `<a class="acard" href="${t.base}/${t.dir}/${x.slug}/"><b>${esc(x[lang].title)}</b><span>${esc(x[lang].desc)}</span></a>`).join('\n')}
-<a class="acard" href="${t.catalogHref}"><b>${esc(t.catalog)}</b><span>${lang === 'ka' ? 'საქართველოს ყველა საჯარო დამტენი, ქალაქებისა და ქსელების მიხედვით.' : 'Every public charger in Georgia, by city and by network.'}</span></a>
+</div>
+
+<h2>${esc(t.seeAlso)}</h2>
+<div class="links">
+${t.related.map(([label, href]) => `<a href="${href}">${esc(label)}</a>`).join('')}
 </div>`;
 
   return {

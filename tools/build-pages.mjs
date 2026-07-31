@@ -248,7 +248,7 @@ const L = {
     otherCities: 'სხვა ქალაქები', otherNetworks: 'სხვა ქსელები', backToAll: 'ყველა დამტენი საქართველოში',
     noPrice: '—', faq: 'ხშირად დასმული კითხვები',
     priceNote: 'ტარიფები ინფორმაციული ხასიათისაა და პროვაიდერის მიერაა გამოქვეყნებული.',
-    tariffsDir: 'tarifebi', routesDir: 'marshruti',
+    tariffsDir: 'tarifebi', routesDir: 'marshruti', calcDir: 'kalkulatori', calc: 'კალკულატორი',
     tariffs: 'ტარიფები', routes: 'მარშრუტები',
     thDc: 'DC ₾/kWh', thAc: 'AC ₾/kWh', thNoPrice: 'ფასის გარეშე', thCities: 'ქალაქი',
     thKm: 'კმ თბილისიდან', thStop: 'გაჩერება', median: 'მედიანა',
@@ -275,7 +275,7 @@ const L = {
     otherCities: 'Other cities', otherNetworks: 'Other networks', backToAll: 'All chargers in Georgia',
     noPrice: '—', faq: 'Frequently asked questions',
     priceNote: 'Tariffs are indicative and published by the provider.',
-    tariffsDir: 'tariffs', routesDir: 'routes',
+    tariffsDir: 'tariffs', routesDir: 'routes', calcDir: 'calculator', calc: 'Calculator',
     tariffs: 'Tariffs', routes: 'Routes',
     thDc: 'DC GEL/kWh', thAc: 'AC GEL/kWh', thNoPrice: 'No price', thCities: 'Cities',
     thKm: 'km from Tbilisi', thStop: 'Stop', median: 'median',
@@ -351,6 +351,22 @@ gap:12px 26px;justify-content:space-between;align-items:center;font-size:13px}
 .f-in a{color:#B9C4CB;text-decoration:none;font-weight:500}
 .f-in a:hover{color:var(--accent)}
 .note{color:#8B98A1;font-size:13px;margin:12px 0 0}
+.calc{display:grid;grid-template-columns:minmax(260px,1fr) minmax(240px,320px);gap:24px;
+background:var(--soft);border:1px solid var(--line);border-radius:20px;padding:clamp(20px,3vw,30px);margin:28px 0 0}
+.calc-in{display:grid;gap:14px;align-content:start}
+.calc-in label{display:grid;gap:6px;font-size:14px;font-weight:600;color:var(--ink)}
+.calc-in input,.calc-in select{width:100%;padding:11px 14px;border:1px solid #D7E0DB;border-radius:11px;
+font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#fff;outline:none}
+.calc-in input:focus,.calc-in select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(43,213,148,.18)}
+.calc-out{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;align-self:start}
+.calc-big b{display:block;font-size:clamp(30px,4.5vw,40px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em;line-height:1.1}
+.calc-big span{display:block;font-size:13.5px;color:#5A6671;margin-top:4px}
+.calc-small{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.calc-small b{display:block;font-size:19px;font-weight:700;color:var(--ink)}
+.calc-small span{display:block;font-size:12.5px;color:#77848C;margin-top:3px;line-height:1.35}
+.calc-time{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:#77848C}
+.calc-time b{display:block;color:var(--ink);font-weight:600;margin-top:4px;line-height:1.6}
+@media (max-width:700px){.calc{grid-template-columns:1fr}}
 `.trim();
 
 export function shell({ lang, title, desc, canonical, altHref, jsonld, body }) {
@@ -915,6 +931,182 @@ ${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></de
   };
 }
 
+/* ── charging cost calculator ────────────────────────────────────────────────
+   The widget is progressive enhancement. Crawlers and language models cannot
+   run it, so the same answers are also published as a static table below it,
+   which is what actually gets indexed and quoted. */
+function calculatorPage(lang, ge, byProvider, updated) {
+  const t = L[lang];
+  const o = L[lang === 'ka' ? 'en' : 'ka'];
+  const url = `${ORIGIN}${t.base}/${t.calcDir}/`;
+  const alt = `${ORIGIN}${o.base}/${o.calcDir}/`;
+  const nm = (p) => (lang === 'ka' ? (PROVIDER_KA[p] || p) : p);
+  const all = tariffStats(ge);
+  const dcMed = median(all.dc), acMed = median(all.ac);
+
+  const presets = [...byProvider.entries()]
+    .map(([p, list]) => [p, tariffStats(list)])
+    .sort((a, b) => b[1].total - a[1].total);
+
+  const SIZES = [40, 60, 75, 100];
+  const exampleRow = (kwh) => {
+    const added = kwh * 0.6;            // the usual 20 to 80 percent window
+    return `<tr><td>${kwh} kWh</td><td>${added.toFixed(0)} kWh</td><td>${(added * dcMed).toFixed(2)} ₾</td><td>${(added * acMed).toFixed(2)} ₾</td></tr>`;
+  };
+
+  const title = lang === 'ka'
+    ? 'დატენვის ხარჯის კალკულატორი | GeoCharge'
+    : 'EV charging cost calculator for Georgia | GeoCharge';
+  const desc = lang === 'ka'
+    ? `გამოთვალეთ, რამდენი დაგიჯდებათ ერთი დატენვა საქართველოში. ტარიფები 11 ქსელიდან, ავტომატურად განახლებადი. 60 kWh ბატარეა 20-დან 80%-მდე დაახლოებით ${(36 * dcMed).toFixed(0)} ლარია.`
+    : `Work out what one charge costs in Georgia. Tariffs from all 11 networks, updated automatically. A 60 kWh battery from 20 to 80 percent is about ${(36 * dcMed).toFixed(0)} GEL.`;
+
+  const bc = [{ name: t.home, href: `${t.base}/` },
+    { name: t.catalog, href: `${t.base}/${t.chargersDir}/` }, { name: t.calc }];
+
+  const faq = lang === 'ka' ? [
+    ['როგორ გამოვთვალო დატენვის ღირებულება?',
+      `ბატარეის ტევადობა გაამრავლეთ შესავსებ პროცენტზე და მიღებული კილოვატსაათები ტარიფზე. მაგალითად 60 kWh ბატარეა 20-დან 80 პროცენტამდე არის 36 kWh, რაც ${dcMed.toFixed(2)} ლარიან DC ტარიფზე ${(36 * dcMed).toFixed(2)} ლარია.`],
+    ['რა ტარიფია საქართველოში ახლა?',
+      `სწრაფ DC დამტენზე მედიანური ტარიფი ${dcMed.toFixed(2)} ლარია კილოვატსაათზე, ნელ AC დამტენზე ${acMed.toFixed(2)}. ქსელების მიხედვით სრული სურათი ტარიფების გვერდზეა.`],
+    ['რატომ არ ემთხვევა რეალური ჩეკი გამოთვლას?',
+      'ორი მიზეზით. ბატარეაში შესული ენერგია ყოველთვის ოდნავ ნაკლებია იმაზე, რასაც დამტენი ხარჯავს, რადგან ნაწილი სითბოდ იკარგება. ასევე ზოგი ოპერატორი დატენვის შემდეგ დგომას ცალკე ურიცხავს.'],
+  ] : [
+    ['How do I calculate charging cost?',
+      `Multiply battery capacity by the share you are adding, then multiply the kilowatt hours by the tariff. A 60 kWh battery from 20 to 80 percent is 36 kWh, which at a ${dcMed.toFixed(2)} GEL DC tariff comes to ${(36 * dcMed).toFixed(2)} GEL.`],
+    ['What is the current tariff in Georgia?',
+      `The median fast DC tariff is ${dcMed.toFixed(2)} GEL per kWh and the median slow AC tariff is ${acMed.toFixed(2)}. The full picture by network is on the tariffs page.`],
+    ['Why does the real receipt differ from the calculation?',
+      'Two reasons. The energy that reaches the battery is always slightly less than the charger draws, since some is lost as heat. And some operators bill separately for occupying the bay after charging ends.'],
+  ];
+
+  const S = lang === 'ka' ? {
+    h1: 'ელექტრომობილის დატენვის ხარჯის კალკულატორი',
+    intro: `შეიყვანეთ ბატარეის ტევადობა და მუხტის დონე, კალკულატორი გამოთვლის, რამდენი კილოვატსაათი შედის და რა დაგიჯდებათ. ტარიფები საქართველოს ${presets.length} ქსელის ცოცხალი მონაცემებიდან მოდის.`,
+    battery: 'ბატარეის ტევადობა (kWh)', from: 'მიმდინარე მუხტი (%)', to: 'სასურველი მუხტი (%)',
+    tariff: 'ტარიფი (₾ / kWh)', preset: 'აირჩიეთ ქსელი', custom: 'სხვა, ხელით',
+    added: 'ბატარეაში შედის', cost: 'ღირებულება', per100: '100 კილომეტრზე',
+    cons: 'ხარჯი (kWh / 100 კმ)', timeH: 'რამდენი ხანი დასჭირდება',
+    exampleH: 'ტიპური დატენვის ღირებულება', exampleP: `ქვემოთ ერთი დატენვის ღირებულებაა 20-დან 80 პროცენტამდე, ${dcMed.toFixed(2)} ლარიან DC და ${acMed.toFixed(2)} ლარიან AC მედიანურ ტარიფზე.`,
+    thBattery: 'ბატარეა', thAdded: 'შედის', thDc: 'DC ღირებულება', thAc: 'AC ღირებულება',
+    howH: 'როგორ ითვლება', dcOpt: 'სწრაფი DC', acOpt: 'ნელი AC',
+    note: 'შედეგი სავარაუდოა. რეალური თანხა ოდნავ განსხვავდება, რადგან ენერგიის ნაწილი სითბოდ იკარგება.',
+    more: 'დეტალურად, რატომ განსხვავდება ტარიფები და რა ჯდება სახლში დატენვა',
+  } : {
+    h1: 'EV charging cost calculator',
+    intro: `Enter your battery size and charge levels and the calculator works out how many kilowatt hours go in and what it costs. Tariffs come from live data across Georgia's ${presets.length} networks.`,
+    battery: 'Battery capacity (kWh)', from: 'Current charge (%)', to: 'Target charge (%)',
+    tariff: 'Tariff (GEL / kWh)', preset: 'Pick a network', custom: 'Other, enter manually',
+    added: 'Energy added', cost: 'Cost', per100: 'Per 100 km',
+    cons: 'Consumption (kWh / 100 km)', timeH: 'How long it takes',
+    exampleH: 'What a typical charge costs', exampleP: `Below is the cost of one charge from 20 to 80 percent at the median tariffs of ${dcMed.toFixed(2)} GEL on DC and ${acMed.toFixed(2)} GEL on AC.`,
+    thBattery: 'Battery', thAdded: 'Added', thDc: 'DC cost', thAc: 'AC cost',
+    howH: 'How it is calculated', dcOpt: 'Fast DC', acOpt: 'Slow AC',
+    note: 'The result is an estimate. The real amount differs slightly because some energy is lost as heat.',
+    more: 'More on why tariffs differ and what home charging costs',
+  };
+
+  const body = `${crumbs(bc)}
+<h1>${esc(S.h1)}</h1>
+<p class="intro">${esc(S.intro)}</p>
+
+<div class="calc">
+  <div class="calc-in">
+    <label>${esc(S.battery)}<input type="number" id="c-batt" value="60" min="5" max="250" step="1"></label>
+    <label>${esc(S.from)}<input type="number" id="c-from" value="20" min="0" max="100" step="1"></label>
+    <label>${esc(S.to)}<input type="number" id="c-to" value="80" min="0" max="100" step="1"></label>
+    <label>${esc(S.preset)}<select id="c-preset">
+      <optgroup label="${esc(S.dcOpt)}">
+${presets.filter((p) => p[1].dc.length).map(([p, s]) => `        <option value="${median(s.dc).toFixed(2)}">${esc(nm(p))} ${median(s.dc).toFixed(2)} ₾</option>`).join('\n')}
+      </optgroup>
+      <optgroup label="${esc(S.acOpt)}">
+${presets.filter((p) => p[1].ac.length).map(([p, s]) => `        <option value="${median(s.ac).toFixed(2)}">${esc(nm(p))} ${median(s.ac).toFixed(2)} ₾</option>`).join('\n')}
+      </optgroup>
+      <option value="">${esc(S.custom)}</option>
+    </select></label>
+    <label>${esc(S.tariff)}<input type="number" id="c-price" value="${dcMed.toFixed(2)}" min="0" max="5" step="0.01"></label>
+    <label>${esc(S.cons)}<input type="number" id="c-cons" value="18" min="5" max="40" step="0.5"></label>
+  </div>
+  <div class="calc-out">
+    <div class="calc-big"><b id="c-cost">—</b><span>${esc(S.cost)}</span></div>
+    <div class="calc-small">
+      <div><b id="c-kwh">—</b><span>${esc(S.added)}</span></div>
+      <div><b id="c-100">—</b><span>${esc(S.per100)}</span></div>
+    </div>
+    <p class="calc-time"><span>${esc(S.timeH)}:</span> <b id="c-time">—</b></p>
+  </div>
+</div>
+<p class="note">${esc(S.note)}</p>
+
+<h2>${esc(S.exampleH)}</h2>
+<p class="intro" style="margin-bottom:16px">${esc(S.exampleP)}</p>
+<div class="tw"><table>
+<thead><tr><th>${esc(S.thBattery)}</th><th>${esc(S.thAdded)}</th><th>${esc(S.thDc)}</th><th>${esc(S.thAc)}</th></tr></thead>
+<tbody>
+${SIZES.map(exampleRow).join('\n')}
+</tbody></table></div>
+<p class="upd">${esc(t.updated)} ${esc(updated)}</p>
+
+<h2>${esc(S.howH)}</h2>
+<p class="intro">${lang === 'ka'
+    ? 'ფორმულა ერთი ნაბიჯია. ბატარეის ტევადობა გაამრავლეთ იმ პროცენტზე, რასაც ავსებთ, და მიღებული კილოვატსაათები ტარიფზე. ერთადერთი, რაც ამას ართულებს, არის ის, რომ სწრაფი დამტენი 80 პროცენტის შემდეგ მკვეთრად ანელებს, ამიტომ დროის შეფასება ამ ზღვარს ზემოთ ოპტიმისტურია.'
+    : 'The formula is one step: battery capacity times the share you are adding, then the kilowatt hours times the tariff. The only complication is that fast chargers slow down sharply above 80 percent, so the time estimate is optimistic beyond that point.'}</p>
+<p class="intro">${esc(S.more)}: <a href="${t.base}/blog/datenvis-fasi/" style="color:var(--accent-d);font-weight:500;text-decoration:none">${lang === 'ka' ? 'რამდენი ღირს დატენვა' : 'how much charging costs'}</a>. ${lang === 'ka' ? 'ქსელების ტარიფები' : 'Tariffs by network'}: <a href="${t.base}/${t.tariffsDir}/" style="color:var(--accent-d);font-weight:500;text-decoration:none">${esc(t.tariffs)}</a>.</p>
+
+<h2>${esc(t.faq)}</h2>
+<div class="faq">
+${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('\n')}
+</div>
+
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i);};
+  var batt=$('c-batt'),from=$('c-from'),to=$('c-to'),price=$('c-price'),cons=$('c-cons'),preset=$('c-preset');
+  var POWERS=[7,22,60,120];
+  function calc(){
+    var b=parseFloat(batt.value)||0,f=parseFloat(from.value)||0,tt=parseFloat(to.value)||0;
+    var p=parseFloat(price.value)||0,c=parseFloat(cons.value)||0;
+    var share=Math.max(0,Math.min(100,tt)-Math.max(0,f))/100;
+    var kwh=b*share, cost=kwh*p;
+    $('c-kwh').textContent=kwh?kwh.toFixed(1)+' kWh':'—';
+    $('c-cost').textContent=kwh?cost.toFixed(2)+' ₾':'—';
+    $('c-100').textContent=(c&&p)?(c*p).toFixed(2)+' ₾':'—';
+    $('c-time').textContent=kwh?POWERS.map(function(w){
+      var h=kwh/w, m=Math.round(h*60);
+      var H='${lang === 'ka' ? 'სთ' : 'h'}',M='${lang === 'ka' ? 'წთ' : 'm'}';
+      if(m<60) return w+' kW: '+m+M;
+      var hh=Math.floor(m/60),mm=m%60;
+      return w+' kW: '+hh+H+(mm?' '+mm+M:'');
+    }).join('  ·  '):'—';
+  }
+  preset.addEventListener('change',function(){ if(preset.value) price.value=preset.value; calc(); });
+  [batt,from,to,price,cons].forEach(function(el){ el.addEventListener('input',calc); });
+  calc();
+})();
+</script>`;
+
+  return {
+    file: path.join(SITE, t.base.replace('/', ''), t.calcDir, 'index.html'),
+    url,
+    html: shell({
+      lang, title, desc, canonical: url, altHref: alt, body,
+      jsonld: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          breadcrumbLd(bc),
+          { '@type': 'WebApplication', '@id': url + '#app', name: title, url,
+            applicationCategory: 'UtilitiesApplication', operatingSystem: 'Any',
+            browserRequirements: 'Requires JavaScript', inLanguage: t.code, description: desc,
+            offers: { '@type': 'Offer', price: '0', priceCurrency: 'GEL' },
+            isPartOf: { '@type': 'WebSite', '@id': `${ORIGIN}/#website` } },
+          { '@type': 'FAQPage', inLanguage: t.code,
+            mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+        ],
+      },
+    }),
+  };
+}
+
 /* ── networks index ──────────────────────────────────────────────────────── */
 function networksIndexPage(lang, byProvider, updated) {
   const t = L[lang];
@@ -1245,6 +1437,7 @@ async function main() {
     pages.push(catalogPage(lang, ge, byCity, byProvider, updated));
     pages.push(tariffPage(lang, ge, byProvider, updated));
     pages.push(networksIndexPage(lang, byProvider, updated));
+    pages.push(calculatorPage(lang, ge, byProvider, updated));
     pages.push(routesIndexPage(lang, byCity, byCityAll, raw, updated));
     for (const [c, list] of cityList) pages.push(cityPage(lang, list[0]._city, list, cityList, updated));
     for (const [p, list] of provList) pages.push(providerPage(lang, p, list, provList, updated));
@@ -1317,15 +1510,16 @@ async function main() {
   console.log('· dash check passed: no dashes as punctuation in Georgian copy');
 
   const pairs = [];
-  const kaPrefixes = ['/damtenebi', '/qselebi', '/tarifebi', '/marshruti'];
+  const kaPrefixes = ['/damtenebi', '/qselebi', '/tarifebi', '/marshruti', '/kalkulatori'];
   const kaPages = pages.filter((p) => kaPrefixes.some((k) => p.url.startsWith(ORIGIN + k)));
   for (const p of kaPages) {
     const en = p.url
       .replace('/damtenebi/', '/en/chargers/')
       .replace('/qselebi/', '/en/networks/')
       .replace('/tarifebi/', '/en/tariffs/')
-      .replace('/marshruti/', '/en/routes/');
-    const top = ['/damtenebi/', '/tarifebi/', '/qselebi/', '/marshruti/'].some((k) => p.url === ORIGIN + k);
+      .replace('/marshruti/', '/en/routes/')
+      .replace('/kalkulatori/', '/en/calculator/');
+    const top = ['/damtenebi/', '/tarifebi/', '/qselebi/', '/marshruti/', '/kalkulatori/'].some((k) => p.url === ORIGIN + k);
     pairs.push({ ka: p.url, en, priority: top ? '0.9' : '0.7' });
   }
   const xml = sitemap(pairs, today);

@@ -86,7 +86,7 @@
      "name": "რომელ ქალაქებშია Solar Station-ის დამტენები?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "ბაკურიანი (4), თბილისი (2), მცხეთა (2), დედოფლისწყარო (1), რუსთავი (1), გუდაური (1), გორი (1), სამტრედია (1) და სხვა."
+      "text": "ბაკურიანი (4), თბილისი (2), მცხეთა (2), რუსთავი (1), დედოფლისწყარო (1), სამტრედია (1), ზუგდიდი (1), გორი (1) და სხვა."
      }
     },
     {
@@ -165,6 +165,22 @@ gap:12px 26px;justify-content:space-between;align-items:center;font-size:13px}
 .f-in a{color:#B9C4CB;text-decoration:none;font-weight:500}
 .f-in a:hover{color:var(--accent)}
 .note{color:#8B98A1;font-size:13px;margin:12px 0 0}
+.calc{display:grid;grid-template-columns:minmax(260px,1fr) minmax(240px,320px);gap:24px;
+background:var(--soft);border:1px solid var(--line);border-radius:20px;padding:clamp(20px,3vw,30px);margin:28px 0 0}
+.calc-in{display:grid;gap:14px;align-content:start}
+.calc-in label{display:grid;gap:6px;font-size:14px;font-weight:600;color:var(--ink)}
+.calc-in input,.calc-in select{width:100%;padding:11px 14px;border:1px solid #D7E0DB;border-radius:11px;
+font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#fff;outline:none}
+.calc-in input:focus,.calc-in select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(43,213,148,.18)}
+.calc-out{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;align-self:start}
+.calc-big b{display:block;font-size:clamp(30px,4.5vw,40px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em;line-height:1.1}
+.calc-big span{display:block;font-size:13.5px;color:#5A6671;margin-top:4px}
+.calc-small{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.calc-small b{display:block;font-size:19px;font-weight:700;color:var(--ink)}
+.calc-small span{display:block;font-size:12.5px;color:#77848C;margin-top:3px;line-height:1.35}
+.calc-time{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:#77848C}
+.calc-time b{display:block;color:var(--ink);font-weight:600;margin-top:4px;line-height:1.6}
+@media (max-width:700px){.calc{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -189,7 +205,7 @@ gap:12px 26px;justify-content:space-between;align-items:center;font-size:13px}
   <div class="stat"><b>1</b><span>ქსელი</span></div>
   <div class="stat"><b>160 kW</b><span>მაქს. სიმძლავრე</span></div>
 </div>
-<p class="upd">მონაცემები ავტომატურად ახლდება პროვაიდერებისგან. ბოლო განახლება: 2026-07-31 07:23</p>
+<p class="upd">მონაცემები ავტომატურად ახლდება პროვაიდერებისგან. ბოლო განახლება: 2026-07-31 07:02</p>
 
 <h2>დამტენები ქალაქების მიხედვით</h2>
 <div class="tw"><table>
@@ -198,13 +214,13 @@ gap:12px 26px;justify-content:space-between;align-items:center;font-size:13px}
 <tr><td><a href="/damtenebi/bakuriani/">ბაკურიანი</a></td><td>4</td></tr>
 <tr><td><a href="/damtenebi/tbilisi/">თბილისი</a></td><td>2</td></tr>
 <tr><td><a href="/damtenebi/mtskheta/">მცხეთა</a></td><td>2</td></tr>
-<tr><td><a href="/damtenebi/dedoplistskaro/">დედოფლისწყარო</a></td><td>1</td></tr>
 <tr><td><a href="/damtenebi/rustavi/">რუსთავი</a></td><td>1</td></tr>
-<tr><td><a href="/damtenebi/gudauri/">გუდაური</a></td><td>1</td></tr>
-<tr><td><a href="/damtenebi/gori/">გორი</a></td><td>1</td></tr>
+<tr><td><a href="/damtenebi/dedoplistskaro/">დედოფლისწყარო</a></td><td>1</td></tr>
 <tr><td><a href="/damtenebi/samtredia/">სამტრედია</a></td><td>1</td></tr>
-<tr><td><a href="/damtenebi/oni/">ონი</a></td><td>1</td></tr>
 <tr><td><a href="/damtenebi/zugdidi/">ზუგდიდი</a></td><td>1</td></tr>
+<tr><td><a href="/damtenebi/gori/">გორი</a></td><td>1</td></tr>
+<tr><td><a href="/damtenebi/gudauri/">გუდაური</a></td><td>1</td></tr>
+<tr><td><a href="/damtenebi/oni/">ონი</a></td><td>1</td></tr>
 </tbody></table></div>
 
 <h2>ყველა სადგური</h2>
@@ -212,21 +228,21 @@ gap:12px 26px;justify-content:space-between;align-items:center;font-size:13px}
 <thead><tr><th>სადგური</th><th>ქალაქი</th><th>ტიპი</th><th>სიმძლავრე</th><th>კონექტორები</th><th>ტარიფი</th></tr></thead>
 <tbody>
 <tr><td>Guramishvili</td><td><a href="/damtenebi/tbilisi/">თბილისი</a></td><td><span class="tag dc">DC</span></td><td>160 kW</td><td>CCS2, GB/T</td><td>0.70 ₾/kWh</td></tr>
-<tr><td>Restaurant antre batono ubisa</td><td>—</td><td><span class="tag dc">DC</span></td><td>160 kW</td><td>CCS2, GB/T</td><td>0.70 ₾/kWh</td></tr>
 <tr><td>Samtredia</td><td><a href="/damtenebi/samtredia/">სამტრედია</a></td><td><span class="tag dc">DC</span></td><td>160 kW</td><td>CCS2, GB/T</td><td>0.70 ₾/kWh</td></tr>
+<tr><td>Restaurant antre batono ubisa</td><td>—</td><td><span class="tag dc">DC</span></td><td>160 kW</td><td>CCS2, GB/T</td><td>0.70 ₾/kWh</td></tr>
+<tr><td>Rustavi Highway</td><td><a href="/damtenebi/rustavi/">რუსთავი</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>0.70 ₾/kWh</td></tr>
 <tr><td>Koda</td><td><a href="/damtenebi/tbilisi/">თბილისი</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>0.70 ₾/kWh</td></tr>
 <tr><td>Batonishvili 120 KW</td><td><a href="/damtenebi/mtskheta/">მცხეთა</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>0.70 ₾/kWh</td></tr>
-<tr><td>Rustavi Highway</td><td><a href="/damtenebi/rustavi/">რუსთავი</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>0.70 ₾/kWh</td></tr>
-<tr><td>Gudauri</td><td><a href="/damtenebi/gudauri/">გუდაური</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>0.70 ₾/kWh</td></tr>
-<tr><td>Gori</td><td><a href="/damtenebi/gori/">გორი</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>0.70 ₾/kWh</td></tr>
 <tr><td>Zugdidi</td><td><a href="/damtenebi/zugdidi/">ზუგდიდი</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>0.70 ₾/kWh</td></tr>
+<tr><td>Gori</td><td><a href="/damtenebi/gori/">გორი</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>0.70 ₾/kWh</td></tr>
+<tr><td>Gudauri</td><td><a href="/damtenebi/gudauri/">გუდაური</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>0.70 ₾/kWh</td></tr>
 <tr><td>Batonishvili 60 KW</td><td><a href="/damtenebi/mtskheta/">მცხეთა</a></td><td><span class="tag dc">DC</span></td><td>60 kW</td><td>GB/T</td><td>0.70 ₾/kWh</td></tr>
 <tr><td>DedoplisTskaro</td><td><a href="/damtenebi/dedoplistskaro/">დედოფლისწყარო</a></td><td><span class="tag dc">DC</span></td><td>40 kW</td><td>GB/T</td><td>—</td></tr>
 <tr><td>Racha</td><td><a href="/damtenebi/oni/">ონი</a></td><td><span class="tag dc">DC</span></td><td>40 kW</td><td>GB/T</td><td>0.70 ₾/kWh</td></tr>
-<tr><td>Bakuriani Inn</td><td><a href="/damtenebi/bakuriani/">ბაკურიანი</a></td><td><span class="tag ac">AC</span></td><td>11 kW</td><td>Type 2</td><td>0.70 ₾/kWh</td></tr>
 <tr><td>Bakuriani Appartments</td><td><a href="/damtenebi/bakuriani/">ბაკურიანი</a></td><td><span class="tag ac">AC</span></td><td>11 kW</td><td>Type 2</td><td>0.70 ₾/kWh</td></tr>
-<tr><td>Bakuriani Inn</td><td><a href="/damtenebi/bakuriani/">ბაკურიანი</a></td><td><span class="tag ac">AC</span></td><td>7 kW</td><td>GB/T</td><td>0.70 ₾/kWh</td></tr>
+<tr><td>Bakuriani Inn</td><td><a href="/damtenebi/bakuriani/">ბაკურიანი</a></td><td><span class="tag ac">AC</span></td><td>11 kW</td><td>Type 2</td><td>0.70 ₾/kWh</td></tr>
 <tr><td>Bakuriani Appartments</td><td><a href="/damtenebi/bakuriani/">ბაკურიანი</a></td><td><span class="tag ac">AC</span></td><td>7 kW</td><td>GB/T</td><td>0.70 ₾/kWh</td></tr>
+<tr><td>Bakuriani Inn</td><td><a href="/damtenebi/bakuriani/">ბაკურიანი</a></td><td><span class="tag ac">AC</span></td><td>7 kW</td><td>GB/T</td><td>0.70 ₾/kWh</td></tr>
 </tbody></table></div>
 <p class="note">ტარიფები ინფორმაციული ხასიათისაა და პროვაიდერის მიერაა გამოქვეყნებული.</p>
 
@@ -236,7 +252,7 @@ gap:12px 26px;justify-content:space-between;align-items:center;font-size:13px}
 <h2>ხშირად დასმული კითხვები</h2>
 <div class="faq">
 <details><summary>რამდენი Solar Station დამტენია საქართველოში?</summary><p>16 საჯარო დამტენი სადგური, აქედან 12 სწრაფი DC.</p></details>
-<details><summary>რომელ ქალაქებშია Solar Station-ის დამტენები?</summary><p>ბაკურიანი (4), თბილისი (2), მცხეთა (2), დედოფლისწყარო (1), რუსთავი (1), გუდაური (1), გორი (1), სამტრედია (1) და სხვა.</p></details>
+<details><summary>რომელ ქალაქებშია Solar Station-ის დამტენები?</summary><p>ბაკურიანი (4), თბილისი (2), მცხეთა (2), რუსთავი (1), დედოფლისწყარო (1), სამტრედია (1), ზუგდიდი (1), გორი (1) და სხვა.</p></details>
 <details><summary>რომელი კონექტორები აქვს Solar Station-ს?</summary><p>GB/T (14), CCS2 (9), Type 2 (2).</p></details>
 </div>
 
