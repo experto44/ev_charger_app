@@ -102,6 +102,90 @@ const CITIES = [
   ['Oni',             'ონი',            'ონში',            42.5800, 43.4400, 10],
 ];
 
+/* ── Routes ──────────────────────────────────────────────────────────────────
+   `km` is road distance from the start, not great-circle. Stops naming a city
+   from CITIES reuse that city's bucket, so a route page and the city page always
+   agree. Stops outside Georgia carry their own coords and are counted by radius
+   from the unfiltered dataset, because the catalogue itself is Georgia only. */
+const ROUTES = [
+  {
+    slug: 'tbilisi-batumi', km: 370,
+    stops: [['Tbilisi', 0], ['Gori', 86], ['Khashuri', 125], ['Terjola', 180],
+      ['Kutaisi', 225], ['Samtredia', 255], ['Kobuleti', 340], ['Batumi', 370]],
+    ka: {
+      from: 'თბილისი', to: 'ბათუმი', fromAbl: 'თბილისიდან', toLoc: 'ბათუმში',
+      note: 'ეს საქართველოს ყველაზე კარგად დაფარული მარშრუტია. რიკოთის მონაკვეთი თერჯოლასთან ცალკე კვანძია, სადაც ყველაზე მძლავრი დამტენები დგას, ამიტომ ერთი გაჩერება აქ თითქმის ყოველთვის საკმარისია.',
+      advice: 'ხაშური და ქობულეთი შედარებით სუსტი წერტილებია, ამიტომ მათზე დაყრდნობა არ ღირს. ქუთაისი და თერჯოლა უფრო საიმედოა.',
+    },
+    en: {
+      from: 'Tbilisi', to: 'Batumi',
+      note: 'This is the best covered route in Georgia. The Rikoti stretch around Terjola is a hub in its own right and holds the most powerful chargers on the way, so one stop there is almost always enough.',
+      advice: 'Khashuri and Kobuleti are the weaker points, so it is better not to depend on them. Kutaisi and Terjola are the safer bets.',
+    },
+  },
+  {
+    slug: 'tbilisi-kazbegi', km: 155,
+    stops: [['Tbilisi', 0], ['Mtskheta', 20], ['Gudauri', 120], ['Stepantsminda', 155]],
+    ka: {
+      from: 'თბილისი', to: 'ყაზბეგი', fromAbl: 'თბილისიდან', toLoc: 'ყაზბეგში',
+      note: 'ჯვრის უღელტეხილი 2379 მეტრზეა და აღმართი ბატარეას შესამჩნევად ხარჯავს. ზამთარში დანახარჯი კიდევ იზრდება, რადგან სალონისა და ბატარეის გათბობა ენერგიას იღებს.',
+      advice: 'სტეფანწმინდაში სწრაფი დამტენი არ არის, მხოლოდ ნელი AC. ეს ნიშნავს, რომ თბილისში დაბრუნების მარაგი წინასწარ უნდა გქონდეთ, ან ღამის განმავლობაში დატენოთ. გუდაური ბოლო წერტილია, სადაც სწრაფად დატენვა შეგიძლიათ.',
+    },
+    en: {
+      from: 'Tbilisi', to: 'Kazbegi',
+      note: 'The Jvari Pass sits at 2379 metres and the climb costs noticeably more battery. In winter it costs more still, since heating the cabin and the battery draws power too.',
+      advice: 'Stepantsminda has no fast charger, only slow AC. That means you need the range to get back to Gudauri or Tbilisi already in the battery, or an overnight charge. Gudauri is the last point where you can charge quickly.',
+    },
+  },
+  {
+    slug: 'tbilisi-bakuriani', km: 185,
+    stops: [['Tbilisi', 0], ['Gori', 86], ['Khashuri', 125], ['Borjomi', 155], ['Bakuriani', 185]],
+    ka: {
+      from: 'თბილისი', to: 'ბაკურიანი', fromAbl: 'თბილისიდან', toLoc: 'ბაკურიანში',
+      note: 'ბორჯომიდან ბაკურიანამდე 30 კილომეტრი სულ აღმართია, დაახლოებით 1700 მეტრამდე. ეს მოკლე მონაკვეთი ბატარეას იმაზე მეტს ხარჯავს, ვიდრე კილომეტრაჟით ჩანს.',
+      advice: 'ბაკურიანში სწრაფი დამტენი არ არის, მხოლოდ ნელი AC 22 კილოვატამდე. სასრიალო სეზონზე ეს დამტენები დაკავებულია, ამიტომ ჯობია ბორჯომში ან გორში დატენოთ და ბაკურიანში მარაგით ახვიდეთ.',
+    },
+    en: {
+      from: 'Tbilisi', to: 'Bakuriani',
+      note: 'The 30 km from Borjomi up to Bakuriani is a continuous climb to about 1700 metres. That short stretch costs more battery than the distance suggests.',
+      advice: 'Bakuriani has no fast charger, only slow AC up to 22 kW, and in ski season those are busy. Better to charge in Borjomi or Gori and arrive with margin.',
+    },
+  },
+  {
+    slug: 'tbilisi-mestia', km: 465,
+    stops: [['Tbilisi', 0], ['Gori', 86], ['Kutaisi', 225], ['Samtredia', 255],
+      ['Zugdidi', 335], ['Mestia', 465]],
+    ka: {
+      from: 'თბილისი', to: 'მესტია', fromAbl: 'თბილისიდან', toLoc: 'მესტიაში',
+      note: 'ეს საქართველოს ყველაზე რთული მარშრუტია ელექტრომობილისთვის. ზუგდიდიდან მესტიამდე 130 კილომეტრია და ამ მონაკვეთზე დამტენი პრაქტიკულად არ არსებობს, გზა კი მუდმივ აღმართზე მიდის 1500 მეტრამდე.',
+      advice: 'ზუგდიდი ბოლო სერიოზული წერტილია. იქიდან სავსე ბატარეით უნდა გახვიდეთ და გაითვალისწინოთ, რომ აღმართზე რეალური გარბენი დეკლარირებულის ნახევრამდე ეცემა. მესტიაში დაბრუნების ენერგია ან ღამის დატენვით უნდა მოაგროვოთ.',
+    },
+    en: {
+      from: 'Tbilisi', to: 'Mestia',
+      note: 'This is the hardest route in Georgia for an EV. From Zugdidi to Mestia is 130 km with essentially no chargers on the way, and the road climbs continuously to about 1500 metres.',
+      advice: 'Zugdidi is the last serious point. Leave it full and expect real range on the climb to fall to about half the rated figure. The energy to come back has to come from an overnight charge in Mestia.',
+    },
+  },
+  {
+    slug: 'tbilisi-erevani', km: 275,
+    stops: [['Tbilisi', 0], ['Marneuli', 45],
+      [{ ka: 'სადახლო, საზღვარი', en: 'Sadakhlo, border', lat: 41.2150, lng: 44.8100, r: 12 }, 75],
+      [{ ka: 'ვანაძორი', en: 'Vanadzor', lat: 40.8128, lng: 44.4883, r: 14 }, 165],
+      [{ ka: 'დილიჟანი', en: 'Dilijan', lat: 40.7400, lng: 44.8600, r: 12 }, 190],
+      [{ ka: 'ერევანი', en: 'Yerevan', lat: 40.1792, lng: 44.4991, r: 25 }, 275]],
+    ka: {
+      from: 'თბილისი', to: 'ერევანი', fromAbl: 'თბილისიდან', toLoc: 'ერევანში',
+      note: 'ერევანში დატენვის ინფრასტრუქტურა მკვრივია, გზაში კი თითქმის არაფერია. საზღვრიდან ვანაძორამდე 90 კილომეტრი პრაქტიკულად ცარიელია.',
+      advice: 'თბილისიდან სავსე ბატარეით გადით. საზღვართან, სადახლოს მხარეს, სწრაფი დამტენებია, ანუ ეს ბოლო საიმედო წერტილია საქართველოში. GeoCharge სომხეთის სადგურებსაც აჩვენებს, ამიტომ იმავე აპლიკაციით დაგეგმავთ მთელ გზას.',
+    },
+    en: {
+      from: 'Tbilisi', to: 'Yerevan',
+      note: 'Yerevan itself is densely covered, but there is almost nothing on the way. The 90 km from the border to Vanadzor is essentially empty.',
+      advice: 'Leave Tbilisi full. There are fast chargers on the Georgian side near Sadakhlo, and that is the last reliable point before the border. GeoCharge shows Armenian stations too, so the whole trip plans in one app.',
+    },
+  },
+];
+
 const GE_BBOX = { minLat: 41.0, maxLat: 43.65, minLng: 39.9, maxLng: 46.8 };
 const AM_BBOX = { minLat: 38.8, maxLat: 41.30, minLng: 43.4, maxLng: 46.7 };
 
@@ -164,6 +248,15 @@ const L = {
     otherCities: 'სხვა ქალაქები', otherNetworks: 'სხვა ქსელები', backToAll: 'ყველა დამტენი საქართველოში',
     noPrice: '—', faq: 'ხშირად დასმული კითხვები',
     priceNote: 'ტარიფები ინფორმაციული ხასიათისაა და პროვაიდერის მიერაა გამოქვეყნებული.',
+    tariffsDir: 'tarifebi', routesDir: 'marshruti',
+    tariffs: 'ტარიფები', routes: 'მარშრუტები',
+    thDc: 'DC ₾/kWh', thAc: 'AC ₾/kWh', thNoPrice: 'ფასის გარეშე', thCities: 'ქალაქი',
+    thKm: 'კმ თბილისიდან', thStop: 'გაჩერება', median: 'მედიანა',
+    cheapestDc: 'ყველაზე იაფი DC', cheapestAc: 'ყველაზე იაფი AC', dearestDc: 'ყველაზე ძვირი DC',
+    routeTable: 'დამტენები მარშრუტზე', routeNotes: 'რაზე მიაქციოთ ყურადღება',
+    generalRules: 'შორი მგზავრობის ზოგადი წესები ცალკე გვაქვს აღწერილი',
+    howToCalc: 'როგორ ითვლება დატენვის ღირებულება, ცალკე სტატიაშია ახსნილი',
+    allRoutes: 'ყველა მარშრუტი', noFast: 'სწრაფი დამტენი არ არის',
   },
   en: {
     code: 'en', base: '/en', chargersDir: 'chargers', networksDir: 'networks',
@@ -182,6 +275,15 @@ const L = {
     otherCities: 'Other cities', otherNetworks: 'Other networks', backToAll: 'All chargers in Georgia',
     noPrice: '—', faq: 'Frequently asked questions',
     priceNote: 'Tariffs are indicative and published by the provider.',
+    tariffsDir: 'tariffs', routesDir: 'routes',
+    tariffs: 'Tariffs', routes: 'Routes',
+    thDc: 'DC GEL/kWh', thAc: 'AC GEL/kWh', thNoPrice: 'No price', thCities: 'Cities',
+    thKm: 'km from Tbilisi', thStop: 'Stop', median: 'median',
+    cheapestDc: 'Cheapest DC', cheapestAc: 'Cheapest AC', dearestDc: 'Most expensive DC',
+    routeTable: 'Chargers along the route', routeNotes: 'What to watch for',
+    generalRules: 'The general rules for long trips are covered separately',
+    howToCalc: 'How a charge is priced is explained in its own guide',
+    allRoutes: 'All routes', noFast: 'no fast charger',
   },
 };
 
@@ -685,6 +787,372 @@ ${allProviders.filter(([p]) => p !== provider).map(([p, l]) => `<a href="${t.bas
   };
 }
 
+/* ── tariffs ─────────────────────────────────────────────────────────────── */
+// Prices above 2 GEL/kWh are provider data errors (one EcoCars row reads 50.02),
+// not premium tariffs. Excluded so the medians stay honest.
+function priceOf(s) {
+  const m = /^([\d.]+)\s*₾/.exec(String(s.price || ''));
+  if (!m) return null;
+  const v = parseFloat(m[1]);
+  return v > 0 && v <= 2 ? v : null;
+}
+const median = (v) => {
+  const a = v.slice().sort((x, y) => x - y);
+  return a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2;
+};
+const fmt = (n) => n.toFixed(2);
+const range = (v, t) => (v.length
+  ? `${fmt(Math.min(...v))} .. ${fmt(Math.max(...v))} <span style="color:#8A97A0">(${t.median} ${fmt(median(v))})</span>`
+  : '—');
+
+function tariffStats(list) {
+  const dc = [], ac = [];
+  let noPrice = 0;
+  for (const s of list) {
+    const p = priceOf(s);
+    if (p === null) { noPrice++; continue; }
+    (s.type === 'Fast DC' ? dc : ac).push(p);
+  }
+  return { dc, ac, noPrice, total: list.length };
+}
+
+function tariffPage(lang, ge, byProvider, updated) {
+  const t = L[lang];
+  const o = L[lang === 'ka' ? 'en' : 'ka'];
+  const url = `${ORIGIN}${t.base}/${t.tariffsDir}/`;
+  const alt = `${ORIGIN}${o.base}/${o.tariffsDir}/`;
+  const rows = [...byProvider.entries()]
+    .map(([p, list]) => [p, tariffStats(list)])
+    .sort((a, b) => b[1].total - a[1].total);
+  const all = tariffStats(ge);
+  const withDc = rows.filter((r) => r[1].dc.length);
+  const withAc = rows.filter((r) => r[1].ac.length);
+  const cheapDc = withDc.slice().sort((a, b) => median(a[1].dc) - median(b[1].dc))[0];
+  const dearDc = withDc.slice().sort((a, b) => median(b[1].dc) - median(a[1].dc))[0];
+  const cheapAc = withAc.slice().sort((a, b) => median(a[1].ac) - median(b[1].ac))[0];
+  const nm = (p) => (lang === 'ka' ? (PROVIDER_KA[p] || p) : p);
+
+  const title = lang === 'ka'
+    ? 'დატენვის ტარიფები საქართველოში, ქსელების შედარება | GeoCharge'
+    : 'EV charging tariffs in Georgia, network by network | GeoCharge';
+  const desc = lang === 'ka'
+    ? `რომელი ქსელი რა ტარიფს იღებს საქართველოში. DC ${fmt(Math.min(...all.dc))} ლარიდან, AC ${fmt(Math.min(...all.ac))} ლარიდან. ცხრილი ავტომატურად ახლდება.`
+    : `What each charging network in Georgia charges. DC from ${fmt(Math.min(...all.dc))} GEL, AC from ${fmt(Math.min(...all.ac))} GEL. The table updates automatically.`;
+
+  const bc = [{ name: t.home, href: `${t.base}/` },
+    { name: t.catalog, href: `${t.base}/${t.chargersDir}/` }, { name: t.tariffs }];
+
+  const faq = lang === 'ka' ? [
+    ['რომელი ქსელია ყველაზე იაფი საქართველოში?',
+      `სწრაფ DC დატენვაზე ${nm(cheapDc[0])}, მედიანური ტარიფით ${fmt(median(cheapDc[1].dc))} ლარი. ნელ AC დატენვაზე ${nm(cheapAc[0])}, ${fmt(median(cheapAc[1].ac))} ლარი.`],
+    ['რატომ არ აქვს ზოგიერთ დამტენს მითითებული ფასი?',
+      `საქართველოს ${all.total} სადგურიდან ${all.noPrice} ტარიფს არ აქვეყნებს საჯარო API-ში. ეს ჩვეულებრივ სასტუმროების, სავაჭრო ცენტრებისა და რესტორნების დამტენებია, სადაც დატენვა კლიენტისთვის უფასოა, ან ფასი ადგილზე ჩანს.`],
+    ['რამდენად ხშირად იცვლება ეს ციფრები?',
+      'ცხრილი უშუალოდ პროვაიდერების მონაცემებიდან ახლდება, ყოველდღიურად. ტარიფებს ოპერატორები რამდენიმე თვეში ერთხელ ცვლიან.'],
+    ['DC თუ AC, რომელი ჯობია ფასის მიხედვით?',
+      `AC საშუალოდ იაფია: მედიანა ${fmt(median(all.ac))} ლარი, DC-ზე კი ${fmt(median(all.dc))}. სამაგიეროდ AC-ზე დატენვას საათები სჭირდება.`],
+  ] : [
+    ['Which network is cheapest in Georgia?',
+      `For fast DC it is ${cheapDc[0]}, with a median tariff of ${fmt(median(cheapDc[1].dc))} GEL. For slow AC it is ${cheapAc[0]} at ${fmt(median(cheapAc[1].ac))} GEL.`],
+    ['Why do some chargers show no price?',
+      `Of Georgia's ${all.total} stations, ${all.noPrice} publish no tariff in their public API. These are typically at hotels, shopping centres and restaurants, where charging is free for customers or the price is shown on site.`],
+    ['How often do these figures change?',
+      'The table refreshes daily, straight from the providers. Operators themselves change tariffs every few months.'],
+    ['DC or AC, which is better value?',
+      `AC is cheaper on average: a median of ${fmt(median(all.ac))} GEL against ${fmt(median(all.dc))} for DC. AC charging takes hours, though.`],
+  ];
+
+  const body = `${crumbs(bc)}
+<h1>${lang === 'ka' ? 'ელექტრომობილის დატენვის ტარიფები საქართველოში' : 'EV charging tariffs in Georgia'}</h1>
+<p class="intro">${lang === 'ka'
+    ? `ქვემოთ მოცემულია, რა ტარიფს იღებს საქართველოს თითოეული დამტენი ქსელი. ციფრები უშუალოდ პროვაიდერების საჯარო მონაცემებიდან მოდის და ყოველდღიურად ახლდება. ამჟამად ტარიფი გამოქვეყნებული აქვს ${all.total - all.noPrice} სადგურს ${all.total}-დან.`
+    : `Below is what each charging network in Georgia charges. The figures come straight from the providers' public data and refresh daily. Right now ${all.total - all.noPrice} of ${all.total} stations publish a tariff.`}</p>
+<div class="stats">
+  <div class="stat"><b>${fmt(median(all.dc))} ₾</b><span>${lang === 'ka' ? 'DC მედიანა' : 'DC median'}</span></div>
+  <div class="stat"><b>${fmt(median(all.ac))} ₾</b><span>${lang === 'ka' ? 'AC მედიანა' : 'AC median'}</span></div>
+  <div class="stat"><b>${esc(nm(cheapDc[0]))}</b><span>${esc(t.cheapestDc)}</span></div>
+  <div class="stat"><b>${esc(nm(dearDc[0]))}</b><span>${esc(t.dearestDc)}</span></div>
+</div>
+<p class="upd">${esc(t.updated)} ${esc(updated)}</p>
+
+<h2>${lang === 'ka' ? 'ტარიფები ქსელების მიხედვით' : 'Tariffs by network'}</h2>
+<div class="tw"><table>
+<thead><tr><th>${esc(t.thProvider)}</th><th>${esc(t.thCount)}</th><th>${esc(t.thDc)}</th><th>${esc(t.thAc)}</th><th>${esc(t.thNoPrice)}</th></tr></thead>
+<tbody>
+${rows.map(([p, s]) => `<tr><td><a href="${t.base}/${t.networksDir}/${slug(p)}/">${esc(nm(p))}</a></td><td>${s.total}</td><td>${range(s.dc, t)}</td><td>${range(s.ac, t)}</td><td>${s.noPrice || '—'}</td></tr>`).join('\n')}
+</tbody></table></div>
+<p class="note">${esc(t.priceNote)} ${lang === 'ka'
+    ? '2 ლარზე მაღალი ერთეული მნიშვნელობები მონაცემთა შეცდომაა და გამოთვლაში არ მონაწილეობს.'
+    : 'Isolated values above 2 GEL are data errors and are excluded from the figures.'}</p>
+
+<h2>${lang === 'ka' ? 'როგორ წავიკითხოთ ეს ცხრილი' : 'How to read this table'}</h2>
+<p class="intro" style="margin-bottom:14px">${lang === 'ka'
+    ? 'დიაპაზონი აჩვენებს ყველაზე დაბალ და ყველაზე მაღალ ტარიფს ქსელის შიგნით, მედიანა კი იმას, რასაც ყველაზე ხშირად შეხვდებით. ერთ ქსელს სხვადასხვა სადგურზე სხვადასხვა ფასი შეიძლება ჰქონდეს, რადგან ტარიფი დამოკიდებულია იმაზეც, თუ ვის ეკუთვნის ადგილი, სადაც დამტენი დგას.'
+    : 'The range shows the lowest and highest tariff inside a network, and the median shows what you will most often meet. One network can price differently across its stations, because the tariff also depends on who owns the site the charger sits on.'}</p>
+<p class="intro">${esc(t.howToCalc)}: <a href="${t.base}/blog/datenvis-fasi/" style="color:var(--accent-d);font-weight:500;text-decoration:none">${lang === 'ka' ? 'რამდენი ღირს ელექტრომობილის დატენვა' : 'how much does it cost to charge an EV'}</a>.</p>
+
+<h2>${esc(t.faq)}</h2>
+<div class="faq">
+${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('\n')}
+</div>`;
+
+  return {
+    file: path.join(SITE, t.base.replace('/', ''), t.tariffsDir, 'index.html'),
+    url,
+    html: shell({
+      lang, title, desc, canonical: url, altHref: alt, body,
+      jsonld: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          breadcrumbLd(bc),
+          { '@type': 'CollectionPage', '@id': url + '#page', name: title, url, inLanguage: t.code, description: desc,
+            isPartOf: { '@type': 'WebSite', '@id': `${ORIGIN}/#website` } },
+          { '@type': 'FAQPage', inLanguage: t.code,
+            mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+        ],
+      },
+    }),
+  };
+}
+
+/* ── networks index ──────────────────────────────────────────────────────── */
+function networksIndexPage(lang, byProvider, updated) {
+  const t = L[lang];
+  const o = L[lang === 'ka' ? 'en' : 'ka'];
+  const url = `${ORIGIN}${t.base}/${t.networksDir}/`;
+  const alt = `${ORIGIN}${o.base}/${o.networksDir}/`;
+  const nm = (p) => (lang === 'ka' ? (PROVIDER_KA[p] || p) : p);
+  const rows = [...byProvider.entries()].map(([p, list]) => {
+    const s = summarise(list);
+    const cities = new Set(list.filter((x) => x._city).map((x) => x._city[0]));
+    return { p, s, cities: cities.size, price: tariffStats(list) };
+  }).sort((a, b) => b.s.total - a.s.total);
+
+  const widest = rows[0];
+  const fastest = rows.slice().sort((a, b) => b.s.maxKw - a.s.maxKw)[0];
+  const mostCities = rows.slice().sort((a, b) => b.cities - a.cities)[0];
+
+  const title = lang === 'ka'
+    ? 'ელექტრომობილის დამტენი ქსელები საქართველოში | GeoCharge'
+    : 'EV charging networks in Georgia | GeoCharge';
+  const desc = lang === 'ka'
+    ? `საქართველოს ${rows.length} დამტენი ქსელი ერთ ცხრილში: დაფარვა, სიმძლავრე, კონექტორები და ტარიფები.`
+    : `All ${rows.length} EV charging networks in Georgia in one table: coverage, power, connectors and tariffs.`;
+
+  const bc = [{ name: t.home, href: `${t.base}/` },
+    { name: t.catalog, href: `${t.base}/${t.chargersDir}/` }, { name: t.networks }];
+
+  const faq = lang === 'ka' ? [
+    ['რომელ ქსელს აქვს ყველაზე ბევრი დამტენი საქართველოში?',
+      `${nm(widest.p)}, ${widest.s.total} სადგურით. ქალაქების მიხედვით ყველაზე ფართოდ ${nm(mostCities.p)} არის გაშლილი, ${mostCities.cities} ქალაქში.`],
+    ['რომელ ქსელს აქვს ყველაზე მძლავრი დამტენები?',
+      `${nm(fastest.p)}, ${fastest.s.maxKw} კილოვატამდე.`],
+    ['მჭირდება თითოეული ქსელის ცალკე აპლიკაცია?',
+      'დამტენის გასაშვებად ჩვეულებრივ პროვაიდერის აპლიკაცია ან ბარათი გჭირდებათ. GeoCharge გიჩვენებთ, სად რომელი ქსელია და რა პირობებით, რომ წინასწარ იცოდეთ, რომელი დაგჭირდებათ.'],
+  ] : [
+    ['Which network has the most chargers in Georgia?',
+      `${widest.p}, with ${widest.s.total} stations. The widest spread across cities is ${mostCities.p}, present in ${mostCities.cities} cities.`],
+    ['Which network has the most powerful chargers?',
+      `${fastest.p}, up to ${fastest.s.maxKw} kW.`],
+    ['Do I need a separate app for every network?',
+      'To start a charge you normally need the provider’s own app or card. GeoCharge shows you which network is where and on what terms, so you know in advance which one you will need.'],
+  ];
+
+  const body = `${crumbs(bc)}
+<h1>${lang === 'ka' ? 'ელექტრომობილის დამტენი ქსელები საქართველოში' : 'EV charging networks in Georgia'}</h1>
+<p class="intro">${lang === 'ka'
+    ? `საქართველოში ${rows.length} საჯარო დამტენი ქსელი მუშაობს. ქვემოთ თითოეულის დაფარვა, სიმძლავრე, კონექტორები და ტარიფია, ერთ ცხრილში, რომ ერთმანეთს შეადაროთ.`
+    : `${rows.length} public charging networks operate in Georgia. Below is each one’s coverage, power, connectors and tariff, in a single table so you can compare them.`}</p>
+<p class="upd">${esc(t.updated)} ${esc(updated)}</p>
+
+<div class="tw"><table>
+<thead><tr><th>${esc(t.thProvider)}</th><th>${esc(t.thCount)}</th><th>${esc(t.thCities)}</th><th>${esc(t.fast)}</th><th>${esc(t.maxPower)}</th><th>${esc(t.thConnectors)}</th><th>${esc(t.thDc)}</th></tr></thead>
+<tbody>
+${rows.map((r) => `<tr><td><a href="${t.base}/${t.networksDir}/${slug(r.p)}/">${esc(nm(r.p))}</a></td><td>${r.s.total}</td><td>${r.cities}</td><td>${r.s.dc}</td><td>${r.s.maxKw ? r.s.maxKw + ' kW' : '—'}</td><td>${esc(r.s.connectors.slice(0, 4).map(([c]) => c).join(', '))}</td><td>${r.price.dc.length ? `${fmt(median(r.price.dc))}` : '—'}</td></tr>`).join('\n')}
+</tbody></table></div>
+<p class="note">${lang === 'ka'
+    ? 'ტარიფის სვეტში მედიანური DC ფასია. სრული დიაპაზონები'
+    : 'The tariff column shows the median DC price. Full ranges are on the'} <a href="${t.base}/${t.tariffsDir}/" style="color:var(--accent-d);font-weight:500;text-decoration:none">${lang === 'ka' ? 'ტარიფების გვერდზეა' : 'tariffs page'}</a>.</p>
+
+<h2>${esc(t.faq)}</h2>
+<div class="faq">
+${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('\n')}
+</div>`;
+
+  return {
+    file: path.join(SITE, t.base.replace('/', ''), t.networksDir, 'index.html'),
+    url,
+    html: shell({
+      lang, title, desc, canonical: url, altHref: alt, body,
+      jsonld: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          breadcrumbLd(bc),
+          { '@type': 'CollectionPage', '@id': url + '#page', name: title, url, inLanguage: t.code, description: desc,
+            isPartOf: { '@type': 'WebSite', '@id': `${ORIGIN}/#website` } },
+          { '@type': 'FAQPage', inLanguage: t.code,
+            mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+        ],
+      },
+    }),
+  };
+}
+
+/* ── routes ──────────────────────────────────────────────────────────────── */
+function routeStops(route, byCity, byCityAll, raw) {
+  return route.stops.map(([ref, km]) => {
+    if (typeof ref === 'string') {
+      const city = CITIES.find((c) => c[0] === ref);
+      const list = byCityAll.get(ref) || [];
+      return { city, list, km, linked: byCity.has(ref), name: (l) => (l === 'ka' ? city[1] : city[0]) };
+    }
+    // stop outside Georgia: count by radius from the unfiltered dataset
+    const list = raw.filter((s) => haversineKm(ref.lat, ref.lng, s.lat, s.lng) <= ref.r);
+    return { city: null, list, km, linked: false, name: (l) => ref[l] };
+  });
+}
+
+function routePage(lang, route, byCity, byCityAll, raw, updated) {
+  const t = L[lang], a = route[lang];
+  const o = L[lang === 'ka' ? 'en' : 'ka'];
+  const url = `${ORIGIN}${t.base}/${t.routesDir}/${route.slug}/`;
+  const alt = `${ORIGIN}${o.base}/${o.routesDir}/${route.slug}/`;
+  const stops = routeStops(route, byCity, byCityAll, raw);
+  const onWay = stops.slice(1);   // leaving the origin, its own chargers do not count
+  const enRoute = onWay.reduce((n, s) => n + s.list.length, 0);
+  const dcOnRoute = onWay.reduce((n, s) => n + s.list.filter((x) => x.type === 'Fast DC').length, 0);
+  const dest = stops[stops.length - 1];
+  const destDc = dest.list.filter((x) => x.type === 'Fast DC').length;
+
+  const title = lang === 'ka'
+    ? `${a.from} ${a.to} ელექტრომობილით, სად დავტენოთ | GeoCharge`
+    : `${a.from} to ${a.to} by EV, where to charge | GeoCharge`;
+  const desc = lang === 'ka'
+    ? `${a.from} ${a.to} ${route.km} კილომეტრია. მარშრუტზე ${enRoute} დამტენი სადგურია, აქედან ${dcOnRoute} სწრაფი. სად გავჩერდეთ და რაზე მივაქციოთ ყურადღება.`
+    : `${a.from} to ${a.to} is ${route.km} km. There are ${enRoute} charging stations along the way, ${dcOnRoute} of them fast. Where to stop and what to watch for.`;
+
+  const bc = [{ name: t.home, href: `${t.base}/` },
+    { name: t.routes, href: `${t.base}/${t.routesDir}/` }, { name: `${a.from} ${a.to}` }];
+
+  const faq = lang === 'ka' ? [
+    [`შემიძლია ${a.fromAbl} ${a.toLoc} ელექტრომობილით?`,
+      `${route.km} კილომეტრია და მარშრუტზე ${enRoute} დამტენი სადგურია, აქედან ${dcOnRoute} სწრაფი DC. ${a.advice}`],
+    [`სად არის დამტენები ${a.from} ${a.to} მარშრუტზე?`,
+      onWay.filter((s) => s.list.length).map((s) => `${s.name('ka')} ${s.list.length}`).join(', ') + '.'],
+    [`არის თუ არა სწრაფი დამტენი ${a.toLoc}?`,
+      destDc ? `დიახ, ${destDc} სწრაფი DC სადგური.` : `არა. ${a.toLoc} მხოლოდ ნელი AC დამტენებია, ამიტომ დაბრუნების ენერგია წინასწარ უნდა დაგეგმოთ.`],
+  ] : [
+    [`Can I drive from ${a.from} to ${a.to} in an EV?`,
+      `It is ${route.km} km with ${enRoute} charging stations along the way, ${dcOnRoute} of them fast DC. ${a.advice}`],
+    [`Where are the chargers between ${a.from} and ${a.to}?`,
+      onWay.filter((s) => s.list.length).map((s) => `${s.name('en')} ${s.list.length}`).join(', ') + '.'],
+    [`Is there a fast charger in ${a.to}?`,
+      destDc ? `Yes, ${destDc} fast DC stations.` : `No. ${a.to} has only slow AC chargers, so the energy to get back has to be planned in advance.`],
+  ];
+
+  const body = `${crumbs(bc)}
+<h1>${lang === 'ka' ? `${esc(a.from)} ${esc(a.to)} ელექტრომობილით` : `${esc(a.from)} to ${esc(a.to)} by EV`}</h1>
+<p class="intro">${esc(a.note)}</p>
+<div class="stats">
+  <div class="stat"><b>${route.km} km</b><span>${lang === 'ka' ? 'მანძილი' : 'distance'}</span></div>
+  <div class="stat"><b>${enRoute}</b><span>${lang === 'ka' ? 'დამტენი გზაში' : 'chargers on the way'}</span></div>
+  <div class="stat"><b>${dcOnRoute}</b><span>${esc(t.fast)}</span></div>
+  <div class="stat"><b>${destDc || esc(t.noFast)}</b><span>${lang === 'ka' ? `სწრაფი ${esc(a.toLoc)}` : `fast in ${esc(a.to)}`}</span></div>
+</div>
+<p class="upd">${esc(t.updated)} ${esc(updated)}</p>
+
+<h2>${esc(t.routeTable)}</h2>
+<div class="tw"><table>
+<thead><tr><th>${esc(t.thStop)}</th><th>${esc(t.thKm)}</th><th>${esc(t.thCount)}</th><th>${esc(t.fast)}</th><th>${esc(t.maxPower)}</th></tr></thead>
+<tbody>
+${stops.map((s) => {
+    const sum = summarise(s.list);
+    const label = esc(s.name(lang));
+    const cell = s.linked
+      ? `<a href="${t.base}/${t.chargersDir}/${slug(s.city[0])}/">${label}</a>` : label;
+    return `<tr><td>${cell}</td><td>${s.km}</td><td>${sum.total || '—'}</td><td>${sum.dc || '—'}</td><td>${sum.maxKw ? sum.maxKw + ' kW' : '—'}</td></tr>`;
+  }).join('\n')}
+</tbody></table></div>
+
+<h2>${esc(t.routeNotes)}</h2>
+<p class="intro">${esc(a.advice)}</p>
+<p class="intro" style="margin-top:14px">${esc(t.generalRules)}: <a href="${t.base}/blog/shori-mgzavroba/" style="color:var(--accent-d);font-weight:500;text-decoration:none">${lang === 'ka' ? 'შორი მგზავრობა ელექტრომობილით' : 'driving long distance by EV'}</a>.</p>
+
+<h2>${esc(t.faq)}</h2>
+<div class="faq">
+${faq.map(([q, ans]) => `<details><summary>${esc(q)}</summary><p>${esc(ans)}</p></details>`).join('\n')}
+</div>
+
+<h2>${esc(t.allRoutes)}</h2>
+<div class="links">
+<a href="${t.base}/${t.routesDir}/">${esc(t.allRoutes)}</a>
+${ROUTES.filter((r) => r.slug !== route.slug).map((r) => `<a href="${t.base}/${t.routesDir}/${r.slug}/">${esc(r[lang].from)} ${esc(r[lang].to)}</a>`).join('\n')}
+</div>`;
+
+  return {
+    file: path.join(SITE, t.base.replace('/', ''), t.routesDir, route.slug, 'index.html'),
+    url,
+    html: shell({
+      lang, title, desc, canonical: url, altHref: alt, body,
+      jsonld: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          breadcrumbLd(bc),
+          { '@type': 'CollectionPage', '@id': url + '#page', name: title, url, inLanguage: t.code, description: desc,
+            isPartOf: { '@type': 'WebSite', '@id': `${ORIGIN}/#website` } },
+          { '@type': 'FAQPage', inLanguage: t.code,
+            mainEntity: faq.map(([q, ans]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: ans } })) },
+        ],
+      },
+    }),
+  };
+}
+
+function routesIndexPage(lang, byCity, byCityAll, raw, updated) {
+  const t = L[lang];
+  const o = L[lang === 'ka' ? 'en' : 'ka'];
+  const url = `${ORIGIN}${t.base}/${t.routesDir}/`;
+  const alt = `${ORIGIN}${o.base}/${o.routesDir}/`;
+  const title = lang === 'ka'
+    ? 'მარშრუტები ელექტრომობილით საქართველოში | GeoCharge'
+    : 'EV routes in Georgia | GeoCharge';
+  const desc = lang === 'ka'
+    ? 'სად დავტენოთ საქართველოს მთავარ მარშრუტებზე: ბათუმი, ყაზბეგი, ბაკურიანი, მესტია და ერევანი.'
+    : 'Where to charge on Georgia’s main routes: Batumi, Kazbegi, Bakuriani, Mestia and Yerevan.';
+  const bc = [{ name: t.home, href: `${t.base}/` }, { name: t.routes }];
+
+  const body = `${crumbs(bc)}
+<h1>${lang === 'ka' ? 'მარშრუტები ელექტრომობილით საქართველოში' : 'EV routes in Georgia'}</h1>
+<p class="intro" style="margin-bottom:32px">${lang === 'ka'
+    ? 'თითოეულ მარშრუტზე ნაჩვენებია, სად არის დამტენები, რამდენია სწრაფი და სად შეიძლება პრობლემა შეგხვდეთ. ციფრები ცოცხალი მონაცემებიდან მოდის.'
+    : 'Each route shows where the chargers are, how many are fast, and where you may run into trouble. The figures come from live data.'}</p>
+<div class="tw"><table>
+<thead><tr><th>${esc(t.routes)}</th><th>km</th><th>${esc(t.thCount)}</th><th>${esc(t.fast)}</th></tr></thead>
+<tbody>
+${ROUTES.map((r) => {
+    const stops = routeStops(r, byCity, byCityAll, raw);
+    const n = stops.slice(1).reduce((x, s) => x + s.list.length, 0);
+    const dc = stops.slice(1).reduce((x, s) => x + s.list.filter((y) => y.type === 'Fast DC').length, 0);
+    return `<tr><td><a href="${t.base}/${t.routesDir}/${r.slug}/">${esc(r[lang].from)} ${esc(r[lang].to)}</a></td><td>${r.km}</td><td>${n}</td><td>${dc}</td></tr>`;
+  }).join('\n')}
+</tbody></table></div>
+<p class="upd">${esc(t.updated)} ${esc(updated)}</p>`;
+
+  return {
+    file: path.join(SITE, t.base.replace('/', ''), t.routesDir, 'index.html'),
+    url,
+    html: shell({
+      lang, title, desc, canonical: url, altHref: alt, body,
+      jsonld: {
+        '@context': 'https://schema.org',
+        '@graph': [breadcrumbLd(bc),
+          { '@type': 'CollectionPage', '@id': url + '#page', name: title, url, inLanguage: t.code, description: desc,
+            isPartOf: { '@type': 'WebSite', '@id': `${ORIGIN}/#website` } }],
+      },
+    }),
+  };
+}
+
 /* ── sitemap ─────────────────────────────────────────────────────────────── */
 function sitemap(pairs, today) {
   // Hand-written guides live in tools/build-articles.mjs; keep the slugs in sync.
@@ -747,13 +1215,16 @@ async function main() {
   const unassigned = ge.filter((s) => !s._city).length;
   console.log(`· ${ge.length - unassigned} matched to a city, ${unassigned} on highways / outside city radii`);
 
-  const byCity = new Map();
+  // byCityAll keeps every city, however small, because a route still passes
+  // through a town with two chargers even when that town gets no page.
+  const byCityAll = new Map();
   for (const s of ge) {
     if (!s._city) continue;
     const k = s._city[0];
-    if (!byCity.has(k)) byCity.set(k, []);
-    byCity.get(k).push(s);
+    if (!byCityAll.has(k)) byCityAll.set(k, []);
+    byCityAll.get(k).push(s);
   }
+  const byCity = new Map(byCityAll);
   for (const [k, v] of byCity) if (v.length < MIN_CITY_STATIONS) byCity.delete(k);
 
   const byProvider = new Map();
@@ -771,8 +1242,33 @@ async function main() {
   const pages = [];
   for (const lang of ['ka', 'en']) {
     pages.push(catalogPage(lang, ge, byCity, byProvider, updated));
+    pages.push(tariffPage(lang, ge, byProvider, updated));
+    pages.push(networksIndexPage(lang, byProvider, updated));
+    pages.push(routesIndexPage(lang, byCity, byCityAll, raw, updated));
     for (const [c, list] of cityList) pages.push(cityPage(lang, list[0]._city, list, cityList, updated));
     for (const [p, list] of provList) pages.push(providerPage(lang, p, list, provList, updated));
+    for (const r of ROUTES) pages.push(routePage(lang, r, byCity, byCityAll, raw, updated));
+  }
+
+  // Daily snapshot. Growth over time is the one thing the catalogue cannot show
+  // today, so start recording now; a history page becomes possible once there
+  // are enough rows to plot. Append-only, one row per date.
+  const histFile = path.join(ROOT, 'tools', 'history', 'stations.jsonl');
+  await mkdir(path.dirname(histFile), { recursive: true });
+  const prev = existsSync(histFile) ? await readFile(histFile, 'utf8') : '';
+  if (!prev.includes(`"date":"${today}"`)) {
+    const row = {
+      date: today,
+      total: ge.length,
+      dc: ge.filter((s) => s.type === 'Fast DC').length,
+      ac: ge.filter((s) => s.type !== 'Fast DC').length,
+      byProvider: Object.fromEntries(provList.map(([p, l]) => [p, l.length])),
+      byCity: Object.fromEntries(cityList.map(([c, l]) => [c, l.length])),
+    };
+    await writeFile(histFile, prev + JSON.stringify(row) + '\n', 'utf8');
+    console.log(`· history: appended ${today} (${ge.length} stations)`);
+  } else {
+    console.log(`· history: ${today} already recorded`);
   }
 
   for (const p of pages) {
@@ -820,10 +1316,16 @@ async function main() {
   console.log('· dash check passed: no dashes as punctuation in Georgian copy');
 
   const pairs = [];
-  const kaPages = pages.filter((p) => p.url.startsWith(`${ORIGIN}/damtenebi`) || p.url.startsWith(`${ORIGIN}/qselebi`));
+  const kaPrefixes = ['/damtenebi', '/qselebi', '/tarifebi', '/marshruti'];
+  const kaPages = pages.filter((p) => kaPrefixes.some((k) => p.url.startsWith(ORIGIN + k)));
   for (const p of kaPages) {
-    const en = p.url.replace('/damtenebi/', '/en/chargers/').replace('/qselebi/', '/en/networks/');
-    pairs.push({ ka: p.url, en, priority: p.url.endsWith('/damtenebi/') ? '0.9' : '0.7' });
+    const en = p.url
+      .replace('/damtenebi/', '/en/chargers/')
+      .replace('/qselebi/', '/en/networks/')
+      .replace('/tarifebi/', '/en/tariffs/')
+      .replace('/marshruti/', '/en/routes/');
+    const top = ['/damtenebi/', '/tarifebi/', '/qselebi/', '/marshruti/'].some((k) => p.url === ORIGIN + k);
+    pairs.push({ ka: p.url, en, priority: top ? '0.9' : '0.7' });
   }
   const xml = sitemap(pairs, today);
   await writeFile(path.join(SITE, 'sitemap.xml'), xml, 'utf8');
@@ -842,7 +1344,9 @@ async function main() {
     console.log(`· IndexNow: HTTP ${res.status} for ${urlList.length} urls`);
   }
 
-  console.log(`\n  ${cityList.length} cities × 2 langs + ${provList.length} networks × 2 langs + 2 catalogues = ${pages.length} pages`);
+  console.log(`\n  per language: 1 catalogue + 1 tariffs + 1 networks index + 1 routes index`
+    + ` + ${cityList.length} cities + ${provList.length} networks + ${ROUTES.length} routes`
+    + ` = ${pages.length / 2}, × 2 langs = ${pages.length} pages`);
 }
 
 // Only run the build when invoked directly; build-articles.mjs imports CSS/shell.

@@ -146,6 +146,60 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://geocharge.ge/tarifebi/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/tarifebi/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/tariffs/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/tarifebi/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/tariffs/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/tarifebi/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/tariffs/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/tarifebi/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/qselebi/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/qselebi/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/networks/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/qselebi/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/networks/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/qselebi/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/networks/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/qselebi/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/marshruti/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/marshruti/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/routes/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/marshruti/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/routes/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/marshruti/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/routes/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/marshruti/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://geocharge.ge/damtenebi/tbilisi/</loc>
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/damtenebi/tbilisi/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/chargers/tbilisi/"/>
@@ -699,6 +753,96 @@
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/qselebi/gadatene/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/networks/gadatene/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/qselebi/gadatene/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/marshruti/tbilisi-batumi/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/marshruti/tbilisi-batumi/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/routes/tbilisi-batumi/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/marshruti/tbilisi-batumi/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/routes/tbilisi-batumi/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/marshruti/tbilisi-batumi/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/routes/tbilisi-batumi/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/marshruti/tbilisi-batumi/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/marshruti/tbilisi-kazbegi/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/marshruti/tbilisi-kazbegi/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/routes/tbilisi-kazbegi/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/marshruti/tbilisi-kazbegi/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/routes/tbilisi-kazbegi/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/marshruti/tbilisi-kazbegi/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/routes/tbilisi-kazbegi/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/marshruti/tbilisi-kazbegi/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/marshruti/tbilisi-bakuriani/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/marshruti/tbilisi-bakuriani/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/routes/tbilisi-bakuriani/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/marshruti/tbilisi-bakuriani/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/routes/tbilisi-bakuriani/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/marshruti/tbilisi-bakuriani/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/routes/tbilisi-bakuriani/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/marshruti/tbilisi-bakuriani/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/marshruti/tbilisi-mestia/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/marshruti/tbilisi-mestia/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/routes/tbilisi-mestia/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/marshruti/tbilisi-mestia/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/routes/tbilisi-mestia/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/marshruti/tbilisi-mestia/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/routes/tbilisi-mestia/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/marshruti/tbilisi-mestia/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/marshruti/tbilisi-erevani/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/marshruti/tbilisi-erevani/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/routes/tbilisi-erevani/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/marshruti/tbilisi-erevani/"/>
+    <lastmod>2026-07-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/routes/tbilisi-erevani/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/marshruti/tbilisi-erevani/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/routes/tbilisi-erevani/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/marshruti/tbilisi-erevani/"/>
     <lastmod>2026-07-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
