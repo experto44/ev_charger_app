@@ -86,7 +86,7 @@ jobs:
           # MAX_FAILS iterations in a row) still exits non-zero so the run turns
           # red and notifies us, instead of staying silently green forever.
           if python3 << 'PYEOF'
-          import json, os, requests, time
+          import json, os, re, requests, time
           from datetime import datetime, timezone
 
           GIST_ID = "36f39392ce7a4abe14ab065aa8e846bd"
@@ -1488,6 +1488,24 @@ jobs:
                   stations = [s for s in stations if s.get("provider") != pname]
                   stations += fresh
                   fresh_providers.add(pname)
+
+          # ── Drop provider test stations ────────────────────────────────────
+          # Several providers leave internal test rigs in their public API
+          # (names like "TEST", "Test Location", "555 TEST GEORGIA NEW"). They
+          # carry bogus data/coords and don't exist for drivers, so hide any
+          # station whose name contains the standalone word "test" (any case).
+          # Self-correcting: the moment a provider promotes a test rig to a real
+          # station it renames it (drops "TEST"), so it reappears with no code
+          # change. Word-boundary match avoids false hits like "Contest"/"Latest".
+          # One central pass over the merged list => covers every provider, the
+          # bundled fallback rows, and keeps test rigs out of the freed-up alerts.
+          _TEST_RE = re.compile(r"\btest\b", re.IGNORECASE)
+          _before = len(stations)
+          stations = [s for s in stations
+                      if not _TEST_RE.search(str(s.get("name") or ""))]
+          _dropped = _before - len(stations)
+          if _dropped:
+              print(f"Dropped {_dropped} provider test station(s) by name")
 
           # Stamp every station with the current UTC time so the app shows
           # a meaningful "last verified" timestamp after each gist refresh.
