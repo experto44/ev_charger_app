@@ -240,7 +240,10 @@ h1 span{color:var(--accent)}
 .stat b{display:block;font-size:clamp(32px,4.5vw,44px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em}
 .stat span{display:block;font-size:14px;font-weight:500;color:#3D4A52;margin-top:8px;line-height:1.4}
 .nets{max-width:var(--wrap);margin:0 auto;padding:0 var(--pad) var(--sec)}
-.net-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.net-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+@media (max-width:1000px){.net-grid{grid-template-columns:repeat(4,1fr)}}
+@media (max-width:720px){.net-grid{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:520px){.net-grid{grid-template-columns:repeat(2,1fr)}}
 .net{background:#fff;border:1px solid var(--line);border-radius:14px;min-height:136px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px 14px 13px;text-align:center}
 .net:hover{border-color:var(--accent);box-shadow:0 10px 30px -20px rgba(23,153,95,.4)}
@@ -250,9 +253,14 @@ h1 span{color:var(--accent)}
 .net .ct{font-size:12px;line-height:1}
 .net .ct b{color:var(--accent-d);font-weight:700}
 .net .ct span{color:#77848C;font-weight:500}
-.net-more{background:#fff;border:1px dashed #C1DBCE;border-radius:14px;min-height:136px;
-  display:flex;align-items:center;justify-content:center;padding:16px 20px;
-  color:var(--accent-d);font-weight:600;font-size:15px;text-align:center}
+.cities{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:780px;margin:0 auto}
+.cities a{display:flex;align-items:center;justify-content:center;text-align:center;
+  background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+  font-size:14px;font-weight:500;color:var(--ink);text-decoration:none}
+.cities a:hover{border-color:var(--accent);color:var(--accent-d)}
+.cities a.all{grid-column:1/-1;background:var(--mint);border-color:var(--mint-b);
+  color:var(--mint-ink);font-weight:600;font-size:14.5px}
+@media (max-width:640px){.cities{grid-template-columns:repeat(2,1fr)}}
 
 /* steps */
 .step{background:#fff;border:1px solid var(--line);border-radius:18px;padding:30px 26px}
@@ -506,21 +514,20 @@ footer{background:var(--dark-2);color:#8B98A1}
         <div class="net"><span class="logo"><img loading="lazy" src="/assets/providers/moveo.png" alt="MOVEO (მოვეო) დამტენების ქსელი"></span><span class="nm">MOVEO</span><span class="ct"><b>8+</b> <span>დამტენი</span></span></div>
         <div class="net"><span class="logo"><img loading="lazy" src="/assets/providers/gadatene-dark.svg" alt="Gadatene (გადატენე) დამტენების ქსელი"></span><span class="nm">Gadatene</span><span class="ct"><b>7+</b> <span>დამტენი</span></span></div>
         <div class="net"><span class="logo"><img loading="lazy" src="/assets/providers/socar.png" alt="SOCAR (სოკარი) სადგურების დამტენები"></span><span class="nm">SOCAR</span></div>
-        <div class="net-more">და სხვები</div>
       </div>
       <p style="color:#8A97A0;font-size:13.5px;line-height:1.5;margin:22px 0 0;text-align:center">∗ E-Space დამტენები განთავსებულია SOCAR-ის სადგურებზე. რაოდენობები მოიცავს მეზობელი რეგიონის სადგურებსაც; მხოლოდ საქართველოს ციფრები <a href="/damtenebi/" style="color:#17995F;font-weight:600">დამტენების სიაშია</a>.</p>
 
       <h3 style="font-size:12.5px;font-weight:700;color:#17995F;letter-spacing:.12em;text-transform:uppercase;text-align:center;margin:44px 0 18px">დამტენების სია ქალაქების მიხედვით</h3>
-      <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center">
-        <a href="/damtenebi/" style="background:#ECFAF3;border:1px solid #C8EFDD;border-radius:10px;padding:10px 16px;font-size:14.5px;font-weight:600;color:#137A4C;text-decoration:none">ყველა დამტენი საქართველოში</a>
-        <a href="/damtenebi/tbilisi/" style="background:#F6FAF8;border:1px solid #E3EEE8;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:500;color:#11161A;text-decoration:none">თბილისი</a>
-        <a href="/damtenebi/batumi/" style="background:#F6FAF8;border:1px solid #E3EEE8;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:500;color:#11161A;text-decoration:none">ბათუმი</a>
-        <a href="/damtenebi/kutaisi/" style="background:#F6FAF8;border:1px solid #E3EEE8;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:500;color:#11161A;text-decoration:none">ქუთაისი</a>
-        <a href="/damtenebi/rustavi/" style="background:#F6FAF8;border:1px solid #E3EEE8;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:500;color:#11161A;text-decoration:none">რუსთავი</a>
-        <a href="/damtenebi/gori/" style="background:#F6FAF8;border:1px solid #E3EEE8;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:500;color:#11161A;text-decoration:none">გორი</a>
-        <a href="/damtenebi/zugdidi/" style="background:#F6FAF8;border:1px solid #E3EEE8;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:500;color:#11161A;text-decoration:none">ზუგდიდი</a>
-        <a href="/damtenebi/telavi/" style="background:#F6FAF8;border:1px solid #E3EEE8;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:500;color:#11161A;text-decoration:none">თელავი</a>
-        <a href="/damtenebi/gudauri/" style="background:#F6FAF8;border:1px solid #E3EEE8;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:500;color:#11161A;text-decoration:none">გუდაური</a>
+      <div class="cities">
+        <a class="all" href="/damtenebi/">ყველა დამტენი საქართველოში</a>
+        <a href="/damtenebi/tbilisi/">თბილისი</a>
+        <a href="/damtenebi/batumi/">ბათუმი</a>
+        <a href="/damtenebi/kutaisi/">ქუთაისი</a>
+        <a href="/damtenebi/rustavi/">რუსთავი</a>
+        <a href="/damtenebi/gori/">გორი</a>
+        <a href="/damtenebi/zugdidi/">ზუგდიდი</a>
+        <a href="/damtenebi/telavi/">თელავი</a>
+        <a href="/damtenebi/gudauri/">გუდაური</a>
       </div>
     </div>
   </section>
