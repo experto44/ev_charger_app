@@ -34,8 +34,28 @@ workflows:
       branch_patterns:
         - pattern: main
           include: true
-      # Skip CI for commits that only touch Android/docs to save build minutes.
-      # (Remove this block if you want every push to build iOS.)
+      # Several site commits often land within minutes of each other; only the
+      # last one needs to reach TestFlight.
+      cancel_previous_builds: true
+
+    # Only build iOS when something that actually ships inside the app changed.
+    # Without this, every push to main built an IPA — including the nightly
+    # `chore(site): refresh charger catalogue pages` commit that the
+    # rebuild_charger_pages workflow pushes, and every site/ or tools/ edit.
+    # `includes` is an allow-list: anything not listed here never triggers a
+    # build. Applies to webhook-triggered builds only — a manual build from the
+    # Codemagic UI always runs, whatever changed.
+    when:
+      changeset:
+        includes:
+          - 'lib'
+          - 'ios'
+          - 'assets'
+          - 'pubspec.yaml'
+          - 'pubspec.lock'
+          - 'codemagic.yaml'
+        excludes:
+          - '**/*.md'
 
     scripts:
       - name: Fetch / create signing files
