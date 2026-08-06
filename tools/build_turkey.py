@@ -180,18 +180,22 @@ def display_name(raw, tariffs):
     return name or "Unknown"
 
 
-def tr_title(s):
+def tr_title(s, turkish=False):
     """Title-case that survives Turkish orthography: str.title() turns "İ" into
     "i̇" (i + combining dot) and lowercases "I" wrongly, which mangles brands
-    like "PİRİM" and "EN YAKIT"."""
+    like "PİRİM" and "EN YAKIT".
+
+    Brand names are a mixed bag — plenty are English — so by default the
+    Turkish I rules apply only to words that carry a Turkish letter, keeping
+    "MINUS ENERGY" from becoming "Mınus". Pass turkish=True where the input is
+    known to be Turkish (province names), so "AYDIN" comes out "Aydın".
+    """
     out = []
     for word in re.split(r"(\s+)", s):
         if not word.strip():
             out.append(word)
             continue
-        # Only apply the dotted/dotless I rules to words that actually look
-        # Turkish; "MINUS ENERGY" should title-case as English, not "Mınus".
-        if re.search(r"[şŞğĞüÜöÖçÇİı]", word):
+        if turkish or re.search(r"[şŞğĞüÜöÖçÇİı]", word):
             head = "İ" if word[0] == "i" else word[0].upper()
             tail = word[1:].replace("I", "ı").replace("İ", "i").lower()
             out.append(head + tail)
@@ -371,8 +375,10 @@ def parse_city(address):
     city = re.sub(r"\s+", " ", city)
     if city.isupper():
         # tr_title, not str.title(): the latter turns "İZMİR" into "İzmi̇r",
-        # with a stray combining dot after the i.
-        city = tr_title(city)
+        # with a stray combining dot after the i. Provinces are always Turkish,
+        # so the dotted/dotless I rules apply unconditionally here — otherwise
+        # "AYDIN" comes out "Aydin" and splits one province into two labels.
+        city = tr_title(city, turkish=True)
     return city[:40]
 
 
