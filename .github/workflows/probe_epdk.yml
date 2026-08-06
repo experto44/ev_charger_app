@@ -1,0 +1,49 @@
+name: Probe EPDK filters
+
+# TEMPORARY. The EPDK gateway answers an empty body `{}` with HTTP 200 and
+# numRows 0, so the query needs at least one real criterion — and its per-IP
+# quota allows about one call per window, which makes probing from a single
+# machine impractical. Each matrix leg runs on its own runner (its own IP) and
+# makes exactly ONE request, so a handful of candidate filters can be compared
+# in a single dispatch. Delete this file once the working filter is known.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        body:
+          - '{"hizmetSekli":"HALKA_ACIK"}'
+          - '{"sarjIstasyonuAdi":"%"}'
+          - '{"markaAdi":"%"}'
+          - '{"yesilSarjIstasyonuMu":"H"}'
+          - '{"sarjIstasyonuNo":"%"}'
+    steps:
+      - name: Query
+        run: |
+          echo "body: ${{ matrix.body }}"
+          code=$(curl -sS -m 300 -X GET \
+            -H 'Content-Type: application/json' \
+            -d '${{ matrix.body }}' \
+            'https://apigateway.epdk.gov.tr/sarjIstasyonlari' \
+            -o out.json -w '%{http_code}')
+          echo "http: $code  bytes: $(wc -c < out.json)"
+          python3 - <<'PY'
+          import json
+          try:
+              d = json.load(open("out.json", encoding="utf-8"))
+          except Exception as e:
+              print("unparseable:", e, open("out.json", encoding="utf-8").read()[:300])
+              raise SystemExit
+          if "fault" in d:
+              print("FAULT:", d["fault"].get("faultString"))
+              raise SystemExit
+          rows = d.get("result") or []
+          print("numRows:", d.get("numRows"), "len(result):", len(rows))
+          if rows:
+              print("FIRST ROW:", json.dumps(rows[0], ensure_ascii=False)[:1200])
+          PY
