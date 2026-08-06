@@ -5,7 +5,15 @@ import { initAnalytics } from './analytics.js';
 import { loginEmail, loginGoogle, logout } from './auth.js';
 import { startGate } from './gate.js';
 import { getTurkeyStations, loadTurkey, startFeed } from './data.js';
-import { TURKEY_BOUNDS } from './config.js';
+import {
+  COUNTRIES,
+  boundsVisible,
+  countryCentre,
+  isSelected,
+  selectedCountries,
+  stationCountry,
+  toggleCountry,
+} from './countries.js';
 import {
   loadMapsApi,
   initMap,
@@ -35,66 +43,101 @@ let drawerBuilt = false;
 
 // ── Turkish chargers on the map ──────────────────────────────────────────────
 // The Turkish registry is ~13k stations. A Tesla's browser will not carry that
-// many map markers, so Turkish pins are drawn only for the current viewport,
-// only once zoomed in past the country-overview level, and capped. The trip
-// planner is unaffected — it searches the whole list in memory, where the cost
-// is nothing, because only MARKERS are expensive.
-const TR_MIN_ZOOM = 9;
+// many map markers, so the set is capped. Over the cap we keep fast DC first
+// and then thin the rest out evenly, which matters at country zoom: picking the
+// ones nearest the screen centre would bunch every pin in the middle and leave
+// the edges looking empty. The trip planner is unaffected — it searches the
+// whole list in memory, where only MARKERS are expensive.
 const TR_MAX_PINS = 900;
 let turkeyRequested = false;
 
-function viewportTouchesTurkey() {
-  const b = getMap()?.getBounds();
-  if (!b) return false;
-  const sw = b.getSouthWest();
-  const ne = b.getNorthEast();
-  return (
-    ne.lat() >= TURKEY_BOUNDS.south &&
-    sw.lat() <= TURKEY_BOUNDS.north &&
-    ne.lng() >= TURKEY_BOUNDS.west &&
-    sw.lng() <= TURKEY_BOUNDS.east
-  );
+function capForDisplay(list) {
+  if (list.length <= TR_MAX_PINS) return list;
+  const dc = list.filter((s) => s.isDC);
+  const pool = dc.length >= TR_MAX_PINS ? dc : [...dc, ...list.filter((s) => !s.isDC)];
+  if (pool.length <= TR_MAX_PINS) return pool;
+  const stride = pool.length / TR_MAX_PINS;
+  const out = [];
+  for (let i = 0; out.length < TR_MAX_PINS && Math.floor(i) < pool.length; i += stride) {
+    out.push(pool[Math.floor(i)]);
+  }
+  return out;
 }
 
 function turkeyPinsForViewport() {
+  if (!isSelected('TR')) return [];
   const map = getMap();
-  if (!map || map.getZoom() < TR_MIN_ZOOM) return [];
-  const b = map.getBounds();
+  const b = map?.getBounds();
   if (!b) return [];
-  const inView = getTurkeyStations().filter((s) =>
-    b.contains({ lat: s.lat, lng: s.lng }),
+  return capForDisplay(
+    getTurkeyStations().filter((s) => b.contains({ lat: s.lat, lng: s.lng })),
   );
-  if (inView.length <= TR_MAX_PINS) return inView;
-
-  // İstanbul alone holds ~3k stations in one screen. When the viewport has more
-  // than the browser can carry, keep the ones a driver would actually pick —
-  // fast DC first, then closest to the middle of the screen — instead of an
-  // arbitrary slice of the array.
-  const c = map.getCenter();
-  const cLat = c.lat();
-  const cLng = c.lng();
-  const d2 = (s) => (s.lat - cLat) ** 2 + ((s.lng - cLng) * 0.75) ** 2;
-  return inView
-    .sort((a, z) => Number(z.isDC) - Number(a.isDC) || d2(a) - d2(z))
-    .slice(0, TR_MAX_PINS);
 }
 
 function repaint() {
-  const visible = applyFilters([...allStations, ...turkeyPinsForViewport()]);
+  // Georgia and Armenia share the Georgian feed and are told apart by
+  // coordinates; Turkey identifies itself.
+  const local = allStations.filter((s) => isSelected(stationCountry(s)));
+  const visible = applyFilters([...local, ...turkeyPinsForViewport()]);
   renderMarkers(visible, showStation);
   setCount(visible.length);
 }
 
-// Pull the Turkish file in the first time the driver looks at Turkey, then
-// repaint so its pins appear. Failure is silent: the Georgian map keeps working.
+// Pull the Turkish file in the first time it is needed, then repaint so its
+// pins appear. Failure is silent: the rest of the map keeps working.
 function maybeLoadTurkey() {
-  if (turkeyRequested || !viewportTouchesTurkey()) return;
+  if (turkeyRequested || !isSelected('TR')) return;
   turkeyRequested = true;
   loadTurkey()
     .then(repaint)
     .catch(() => {
       turkeyRequested = false;
     });
+}
+
+// ── Country picker ───────────────────────────────────────────────────────────
+function renderCountryMenu() {
+  const menu = document.getElementById('country-menu');
+  const counts = new Map();
+  for (const s of allStations) {
+    const c = stationCountry(s);
+    if (c) counts.set(c, (counts.get(c) ?? 0) + 1);
+  }
+  counts.set('TR', getTurkeyStations().length);
+
+  menu.innerHTML = '';
+  for (const c of COUNTRIES) {
+    const on = isSelected(c.code);
+    const btn = document.createElement('button');
+    btn.className = `country-item${on ? ' is-on' : ''}`;
+    btn.type = 'button';
+    btn.innerHTML =
+      `<span class="country-item__box">${on ? '☑' : '☐'}</span>` +
+      `<span class="country-item__flag">${c.flag}</span>` +
+      `<span class="country-item__name">${t(c.key)}</span>` +
+      `<span class="country-item__count">${counts.get(c.code) || ''}</span>`;
+    btn.addEventListener('click', () => selectCountry(c.code));
+    menu.appendChild(btn);
+  }
+
+  document.getElementById('country-label').textContent =
+    `${COUNTRIES.filter((c) => isSelected(c.code)).map((c) => c.flag).join(' ')} ${t('countries')}`;
+}
+
+function selectCountry(code) {
+  if (!toggleCountry(code)) return; // last country can't be switched off
+  renderCountryMenu();
+  if (isSelected(code)) {
+    maybeLoadTurkey();
+    // Switching a country on while looking somewhere else would appear to do
+    // nothing, so move the map there.
+    const map = getMap();
+    if (!boundsVisible(code, map?.getBounds())) {
+      const c = countryCentre(code);
+      if (c) panTo(c, 7);
+    }
+  }
+  repaint();
 }
 
 // ── Search result handlers ───────────────────────────────────────────────────
@@ -115,11 +158,24 @@ function openDestination(pos, name) {
 }
 
 function wireMapControls() {
-  // Turkish pins are viewport-scoped, so they have to be re-evaluated whenever
-  // the map settles. `idle` fires once after a pan/zoom finishes, not per frame.
+  // Turkish pins are viewport-scoped, so they are re-evaluated whenever the map
+  // settles. `idle` fires once after a pan/zoom finishes, not per frame.
   getMap().addListener('idle', () => {
-    maybeLoadTurkey();
-    if (getTurkeyStations().length) repaint();
+    if (isSelected('TR') && getTurkeyStations().length) repaint();
+  });
+
+  // Country dropdown.
+  const countryBtn = document.getElementById('btn-countries');
+  const countryMenu = document.getElementById('country-menu');
+  countryBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = countryMenu.classList.toggle('is-hidden');
+    countryBtn.setAttribute('aria-expanded', String(!open));
+  });
+  countryMenu.addEventListener('click', (e) => e.stopPropagation());
+  document.addEventListener('click', () => {
+    countryMenu.classList.add('is-hidden');
+    countryBtn.setAttribute('aria-expanded', 'false');
   });
 
   document.getElementById('btn-locate').addEventListener('click', async () => {
@@ -186,6 +242,9 @@ async function bootApp() {
           buildFilterDrawer(stations, repaint);
           drawerBuilt = true;
         }
+        // The picker shows a per-country station count, so it is rebuilt with
+        // every feed refresh.
+        renderCountryMenu();
         repaint();
       },
       onError: () => showToast(t('fetchError')),
@@ -193,6 +252,10 @@ async function bootApp() {
   } catch (e) {
     showToast(t('fetchError'), 60000);
   }
+
+  // A driver who left Turkey switched on last session gets it back without
+  // having to touch the picker again.
+  maybeLoadTurkey();
 
   document.getElementById('loading').classList.add('is-hidden');
   document.getElementById('btn-logout').classList.remove('is-hidden');

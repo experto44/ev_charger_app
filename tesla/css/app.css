@@ -95,6 +95,46 @@ button {
 }
 .lang-switch__btn.is-active { background: var(--accent); color: #0d1216; }
 
+/* ── Country picker (topbar) ─────────────────────────────────────── */
+/* Anchored dropdown rather than a native <select>: the driver picks several
+   countries at once, and Tesla's browser renders native select popups badly. */
+.country-select { position: relative; }
+.country-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  min-width: 240px;
+  padding: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+.country-menu.is-hidden { display: none; }
+.country-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: var(--touch);
+  padding: 0 12px;
+  font-size: 17px;
+  text-align: left;
+  border-radius: calc(var(--radius) - 4px);
+}
+.country-item:active { background: var(--border); }
+.country-item__box {
+  flex: 0 0 auto;
+  width: 22px;
+  font-size: 18px;
+  color: var(--text-dim);
+}
+.country-item.is-on .country-item__box { color: var(--accent); }
+.country-item__flag { flex: 0 0 auto; font-size: 19px; }
+.country-item__name { flex: 1 1 auto; }
+.country-item__count { flex: 0 0 auto; color: var(--text-dim); font-size: 14px; }
+
 /* ── Map stage ───────────────────────────────────────────────────── */
 .stage { position: relative; flex: 1; overflow: hidden; }
 #map   { position: absolute; inset: 0; }

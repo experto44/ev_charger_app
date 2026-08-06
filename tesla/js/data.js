@@ -21,6 +21,7 @@ import { CHARGERS_TR_URL, CHARGERS_URL, FETCH_TIMEOUT_MS, REFRESH_MS } from './c
  * @property {string[]} connectors
  * @property {Port[]} ports
  * @property {string} lastUpdated
+ * @property {string} country   'Turkey' for the EPDK dataset ('' = classify by coords)
  * @property {boolean} live      false = registry data, no real-time availability
  * @property {string} priceNote  where `price` came from ('' = live/per-station)
  */
@@ -71,6 +72,7 @@ function normalize(raw) {
     connectors,
     ports,
     lastUpdated: raw.last_updated ?? '',
+    country: raw.country ?? '',
     // Turkey's EPDK rows publish how many plugs EXIST, not how many are free.
     // Feeds without the flag (the Georgian gist) really are live.
     live: raw.live !== false,

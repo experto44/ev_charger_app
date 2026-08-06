@@ -43,15 +43,25 @@
     {
       "site": "geocharge-f6714",
       "public": "admin/build/web",
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
       "rewrites": [
-        { "source": "**", "destination": "/index.html" }
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
       ],
       "headers": [
         {
           "source": "/@(index.html|flutter_bootstrap.js|flutter.js|main.dart.js|flutter_service_worker.js|version.json)",
           "headers": [
-            { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
           ]
         }
       ]
@@ -69,7 +79,22 @@
     {
       "site": "geocharge-tesla",
       "public": "tesla",
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "headers": [
+        {
+          "source": "/@(index.html|**/*.js|**/*.css)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

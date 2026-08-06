@@ -78,6 +78,14 @@ jobs:
           i=1
           FAILS=0                 # consecutive failed iterations
           MAX_FAILS=5             # fail the whole run only after this many in a row
+          # Consecutive failures back off (180 → 360 → 720 → 1440, capped at
+          # 1800) instead of retrying on the normal cadence. Without this, five
+          # attempts burn through in ~12 minutes, so a GitHub blip or a
+          # secondary rate limit kills the run before the window has passed —
+          # and because the */5 cron is throttled, nothing restarts it for
+          # hours. That is exactly how the feed went stale for 6.5h on
+          # 2026-08-06. With backoff the same five attempts span ~50 minutes.
+          MAX_BACKOFF=1800
           while :; do
           echo "::group::Update iteration $i (elapsed $(( $(date +%s) - START ))s)"
           # One update attempt. A *transient* failure (a slow/blip gist API call,
@@ -1555,6 +1563,16 @@ jobs:
               json={"files": files},
               timeout=30,
           )
+          # raise_for_status() reports the status code and nothing else, so a
+          # failed run left no way to tell a dead token from a secondary rate
+          # limit (GitHub explains itself in the BODY). Two 15-minute failures
+          # on 2026-08-06 were undiagnosable for exactly this reason.
+          if not patch.ok:
+              print(f"gist PATCH failed: HTTP {patch.status_code}")
+              print("  x-ratelimit-remaining:",
+                    patch.headers.get("x-ratelimit-remaining"))
+              print("  retry-after:", patch.headers.get("retry-after"))
+              print("  body:", patch.text[:600])
           patch.raise_for_status()
 
           print(f"✅  Updated {len(stations)} stations — last_updated = {now}")
@@ -1576,6 +1594,13 @@ jobs:
             echo "Reached ${RUN_SECONDS}s of coverage — exiting so the next fire takes over."
             break
           fi
-          echo "Sleeping ${SLEEP_SECONDS}s before next update…"; sleep "$SLEEP_SECONDS"
+          # Healthy iteration → normal cadence. After a failure, wait longer
+          # each time so a transient outage is ridden out, not hammered.
+          NEXT_SLEEP=$SLEEP_SECONDS
+          if [ "$FAILS" -gt 0 ]; then
+            NEXT_SLEEP=$(( SLEEP_SECONDS * (1 << (FAILS - 1)) ))
+            [ "$NEXT_SLEEP" -gt "$MAX_BACKOFF" ] && NEXT_SLEEP=$MAX_BACKOFF
+          fi
+          echo "Sleeping ${NEXT_SLEEP}s before next update…"; sleep "$NEXT_SLEEP"
           i=$((i + 1))
           done
