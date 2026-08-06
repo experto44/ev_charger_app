@@ -370,7 +370,9 @@ def parse_city(address):
     city = (m.group(1) if m else str(address).split(",")[-1]).strip()
     city = re.sub(r"\s+", " ", city)
     if city.isupper():
-        city = city.title()
+        # tr_title, not str.title(): the latter turns "İZMİR" into "İzmi̇r",
+        # with a stray combining dot after the i.
+        city = tr_title(city)
     return city[:40]
 
 
@@ -494,6 +496,10 @@ def map_ocm(rows, operators, tariffs):
         ai = p.get("AddressInfo") or {}
         lat, lng = ai.get("Latitude"), ai.get("Longitude")
         if lat is None or lng is None:
+            continue
+        # A handful of OCM rows carry 0/0 placeholders, which would drop pins
+        # into the Gulf of Guinea. Same guard the EPDK mapper uses.
+        if float(lat) == 0 and float(lng) == 0:
             continue
         raw_brand = operators.get(p.get("OperatorID"), "")
         # OCM suffixes country to operator titles ("Eşarj (TR)"); strip it so the
