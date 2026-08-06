@@ -240,7 +240,12 @@ def fetch_epdk(max_wait_minutes=90):
         res = requests.get(
             EPDK_URL,
             headers={"Content-Type": "application/json"},
-            data=b"{}",                     # GET-with-body, as the API documents
+            # GET-with-body, as the API documents. An EMPTY body answers 200
+            # with numRows 0 — the query needs at least one real criterion —
+            # and `hizmetSekli` is the one that enumerates the whole registry.
+            # It also happens to be the filter we want: HALKA_ACIK is "open to
+            # the public", so private sites never enter the dataset.
+            data=json.dumps({"hizmetSekli": "HALKA_ACIK"}).encode(),
             timeout=300,
         )
         if res.status_code == 200:
@@ -248,6 +253,15 @@ def fetch_epdk(max_wait_minutes=90):
             rows = normalise_epdk_rows(payload)
             print(f"EPDK: {len(rows)} rows (attempt {attempt})")
             if rows:
+                # One line of shape diagnostics in every run's log: EPDK's field
+                # spelling is the thing most likely to drift under us, and a
+                # silent rename would quietly empty half the dataset.
+                sample = rows[0]
+                print("EPDK sample keys:", sorted(sample.keys()))
+                sockets = first(sample, "soketler", "soketListesi", "sockets")
+                print("EPDK sample socket:",
+                      json.dumps((sockets or [{}])[0], ensure_ascii=False)[:300]
+                      if isinstance(sockets, list) else repr(sockets)[:300])
                 return rows
             raise RuntimeError(f"EPDK returned no rows: {str(payload)[:400]}")
 
@@ -261,13 +275,15 @@ def fetch_epdk(max_wait_minutes=90):
 
 
 def normalise_epdk_rows(payload):
-    """The gateway answers {columnNames: [...], result: [...]}. `result` has
-    been seen both as a list of dicts and as a list of positional arrays, so
-    handle both and always hand back dicts."""
+    """The gateway answers
+    {statusCode, columnNames: [...], numRows: N, result: null, data: [...]}.
+    The rows live under `data`; `result` is null in every response seen so far
+    but is checked too in case that flips. Rows have been seen both as dicts
+    and as positional arrays, so handle both and always hand back dicts."""
     if isinstance(payload, list):
         return [r for r in payload if isinstance(r, dict)]
     cols = payload.get("columnNames") or []
-    rows = payload.get("result") or []
+    rows = payload.get("data") or payload.get("result") or []
     out = []
     for row in rows:
         if isinstance(row, dict):
