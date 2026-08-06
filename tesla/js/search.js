@@ -1,6 +1,9 @@
 // Unified search: local charger stations (by name/city) + Google Places
-// destinations. Mirrors the app's place autocomplete (GE-biased).
+// destinations. Mirrors the app's place autocomplete: biased to where the
+// driver is looking, but not restricted to one country — GeoCharge now covers
+// Turkey, and a hard country:ge filter meant "İstanbul" returned nothing.
 
+import { getMap } from './map.js';
 import { t } from './i18n.js';
 
 let acService = null;
@@ -17,9 +20,16 @@ function services() {
 
 function placePredictions(query) {
   const { acService: ac } = services();
+  // Rank around the map centre so local names still come first at home.
+  const centre = getMap()?.getCenter();
   return new Promise((resolve) => {
     ac.getPlacePredictions(
-      { input: query, componentRestrictions: { country: 'ge' } },
+      {
+        input: query,
+        ...(centre
+          ? { location: centre, radius: 300000 } // ~one country wide
+          : {}),
+      },
       (preds, status) =>
         resolve(status === google.maps.places.PlacesServiceStatus.OK ? preds.slice(0, 5) : []),
     );

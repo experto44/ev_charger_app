@@ -6,7 +6,12 @@ import { busyForLabel, formatVerified, providerLogo } from './format.js';
 import { startDrive } from './drive.js';
 import { track } from './analytics.js';
 
-const PORT_LABEL = { free: 'statusFree', busy: 'statusBusy', out: 'statusOut' };
+const PORT_LABEL = {
+  free: 'statusFree',
+  busy: 'statusBusy',
+  out: 'statusOut',
+  unknown: 'statusUnknown', // registry data (Turkey): plug count, not availability
+};
 
 // Shared with the app: canonical connector order + minimum-power presets.
 export const CONNECTOR_ORDER = ['CCS2', 'GB/T', 'CHAdeMO', 'Type 2', 'NACS', 'CCS1', 'Type 1'];
@@ -85,12 +90,20 @@ export function showStation(s) {
   };
 
   const badge = panel.querySelector('.panel__status');
-  badge.textContent = t(PORT_LABEL[status]);
+  // Registry stations show how many plugs EXIST; saying "Available" there would
+  // invent a live reading we never had.
+  badge.textContent =
+    status === 'unknown' && s.total > 0
+      ? `${s.total} ${t('plugsCount')} · ${t('statusUnknown')}`
+      : t(PORT_LABEL[status]);
   badge.className = `panel__status status--${status}`;
 
   panel.querySelector('.panel__power').textContent =
     s.kw ? `${s.kw} kW ${s.isDC ? 'DC' : 'AC'}` : '—';
-  panel.querySelector('.panel__price').textContent = s.price || '—';
+  // Price, plus where it came from when it is a brand tariff rather than this
+  // charger's own published rate (every Turkish station).
+  panel.querySelector('.panel__price').textContent =
+    s.price ? (s.priceNote ? `${s.price} · ${s.priceNote}` : s.price) : '—';
 
   const portsEl = panel.querySelector('.panel__ports');
   portsEl.innerHTML = '';

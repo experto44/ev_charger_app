@@ -9,6 +9,18 @@ export const MAPS_API_KEY = 'AIzaSyDYHSs4P--TUa-VVlS5DReotBtbjZK58No';
 export const CHARGERS_URL =
   'https://gist.githubusercontent.com/experto44/36f39392ce7a4abe14ab065aa8e846bd/raw/chargers.json';
 
+// Turkish chargers (EPDK registry), in their own gist and their own file: it is
+// ~5 MB and ~13k stations, so it is fetched ONLY when the driver actually looks
+// at Turkey or plans a route through it. No live status in it, so unlike the
+// Georgian feed it is fetched once per session and never polled.
+// Mirrors _url in lib/turkey_service.dart.
+export const CHARGERS_TR_URL =
+  'https://gist.githubusercontent.com/experto44/8cb62fc7ad6d86e3172eec6aedd4dba6/raw/chargers_tr.json';
+
+// Bounding box used to decide when Turkey is worth loading (matches the
+// CountryDef box in lib/app_constants.dart).
+export const TURKEY_BOUNDS = { south: 35.8, north: 42.1, west: 26.0, east: 44.8 };
+
 // Mobile app refreshes every 3 minutes (_kRefreshInterval) — keep in sync.
 export const REFRESH_MS = 3 * 60 * 1000;
 

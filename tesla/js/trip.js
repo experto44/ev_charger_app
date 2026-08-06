@@ -4,7 +4,8 @@
 
 import { planRoute } from './routing.js';
 import { getMap, panTo, setMarkersDimmed, locateMe } from './map.js';
-import { getStations } from './data.js';
+import { getStations, getTurkeyStations, loadTurkey } from './data.js';
+import { TURKEY_BOUNDS } from './config.js';
 import { startDrive } from './drive.js';
 import { track } from './analytics.js';
 import { MIN_POWER_STEPS, sortConnectors } from './ui.js';
@@ -56,9 +57,12 @@ function canPlan() {
   return state.stops[0].coords && state.stops[state.stops.length - 1].coords;
 }
 
+// Chargers the planner may use. The whole Turkish list joins in once loaded —
+// searching 13k objects in memory costs nothing; only map markers are expensive
+// (see turkeyPinsForViewport in main.js).
 function tripFilteredStations() {
   const conns = [...state.connectors].map((c) => c.toLowerCase());
-  return getStations().filter((s) => {
+  return [...getStations(), ...getTurkeyStations()].filter((s) => {
     if (conns.length && !s.connectors.some((c) => conns.includes(c.toLowerCase()))) return false;
     if (state.minKw > 0 && s.kw > 0 && s.kw < state.minKw) return false;
     return true;
@@ -84,10 +88,21 @@ function renderStops() {
     input.placeholder = stopLabel(i);
     input.value = stop.label;
 
-    // Places autocomplete on this input.
+    // Places autocomplete on this input. No country restriction — a trip to
+    // İstanbul has to be typeable — but biased to the previous stop (or the map
+    // centre) so short names still resolve nearby first.
+    const bias = state.stops.slice(0, i).reverse().find((p2) => p2.coords)?.coords
+      ?? getMap()?.getCenter()?.toJSON();
     const ac = new google.maps.places.Autocomplete(input, {
-      componentRestrictions: { country: 'ge' },
       fields: ['geometry', 'name'],
+      ...(bias
+        ? {
+            bounds: new google.maps.LatLngBounds(
+              { lat: bias.lat - 2.5, lng: bias.lng - 3 },
+              { lat: bias.lat + 2.5, lng: bias.lng + 3 },
+            ),
+          }
+        : {}),
     });
     ac.addListener('place_changed', () => {
       const g = ac.getPlace()?.geometry?.location;
@@ -236,10 +251,43 @@ function scheduleCompute() {
   state.debounce = setTimeout(compute, 500);
 }
 
+// True when a waypoint sits in Turkey, or a straight leg between two waypoints
+// crosses it — so Tbilisi → Sofia still picks up Turkish chargers. Coarse on
+// purpose: this runs before the Directions call, so there is no road geometry
+// yet, and a false positive only costs one cached download.
+function routeTouchesTurkey(points) {
+  const inTr = (lat, lng) =>
+    lat >= TURKEY_BOUNDS.south &&
+    lat <= TURKEY_BOUNDS.north &&
+    lng >= TURKEY_BOUNDS.west &&
+    lng <= TURKEY_BOUNDS.east;
+  for (let i = 0; i < points.length; i++) {
+    const a = points[i];
+    if (inTr(a.lat, a.lng)) return true;
+    const b = points[i + 1];
+    if (!b) break;
+    for (let k = 1; k < 24; k++) {
+      const t2 = k / 24;
+      if (inTr(a.lat + (b.lat - a.lat) * t2, a.lng + (b.lng - a.lng) * t2)) return true;
+    }
+  }
+  return false;
+}
+
 async function compute() {
   if (!canPlan()) return;
+  // A driver planning Tbilisi → İstanbul must not have to pan the map into
+  // Turkey first just to make its chargers exist.
+  const points = resolvedStops();
+  if (!getTurkeyStations().length && routeTouchesTurkey(points)) {
+    try {
+      await loadTurkey();
+    } catch {
+      /* keep planning with what we have */
+    }
+  }
   const res = await planRoute({
-    waypoints: resolvedStops(),
+    waypoints: points,
     currentBatteryPct: state.batteryPct,
     maxRangeKm: state.maxRangeKm,
     stations: tripFilteredStations(),

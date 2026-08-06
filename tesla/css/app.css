@@ -287,6 +287,8 @@ button {
 .status--free { background: rgba(43, 213, 148, 0.15); color: var(--accent); }
 .status--busy { background: rgba(245, 166, 35, 0.15); color: var(--busy); }
 .status--out  { background: rgba(107, 122, 133, 0.2);  color: var(--out); }
+/* Registry data (Turkey): no live availability, so neither green nor orange. */
+.status--unknown { background: rgba(79, 124, 158, 0.18); color: #8FB6D1; }
 
 .panel__meta {
   display: flex;

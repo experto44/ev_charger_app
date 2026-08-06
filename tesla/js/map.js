@@ -16,12 +16,21 @@ const NIGHT_STYLE = [
   { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#263038' }] },
 ];
 
-const STATUS_COLORS = { free: '#2bd594', busy: '#f5a623', out: '#6b7a85' };
+const STATUS_COLORS = {
+  free: '#2bd594',
+  busy: '#f5a623',
+  out: '#6b7a85',
+  unknown: '#4F7C9E', // no live availability published
+};
 
 // Marker pie colours — match the app's _AvailabilityPainter exactly.
 const PIN_FREE = '#00C896'; // emerald  (available portion)
 const PIN_BUSY = '#FFAB40'; // orangeAccent (busy portion)
 const PIN_OUT  = '#6B7A85'; // grey — fully out-of-order charger
+// Slate — the source publishes no real-time availability (Turkey's EPDK
+// registry). Drawing those green would claim the plugs are free when we simply
+// do not know. Matches _unknownSlate in lib/main.dart.
+const PIN_UNKNOWN = '#4F7C9E';
 
 // A station is fully out of order: no free plug and every published plug reads
 // "out" (neither free nor busy). Such pins are drawn grey, not busy-orange.
@@ -75,6 +84,7 @@ export function getMap() {
 
 /** Station-level colour: any free port → free; else any busy → busy; else out. */
 export function stationStatus(s) {
+  if (s.live === false) return 'unknown';
   if (s.available > 0) return 'free';
   if (s.ports.some((p) => p.status === 'busy')) return 'busy';
   return 'out';
@@ -96,7 +106,9 @@ function arcPoint(frac) {
 function markerIcon(s) {
   const f = freeFraction(s);
   let body;
-  if (stationOut(s)) {
+  if (s.live === false) {
+    body = `<circle cx="22" cy="22" r="15" fill="${PIN_UNKNOWN}"/>`;
+  } else if (stationOut(s)) {
     body = `<circle cx="22" cy="22" r="15" fill="${PIN_OUT}"/>`;
   } else if (f >= 1) {
     body = `<circle cx="22" cy="22" r="15" fill="${PIN_FREE}"/>`;
@@ -127,20 +139,26 @@ function markerIcon(s) {
 // stations (same green/orange split as a single pin), so a group of all-busy
 // chargers reads orange from far out instead of a misleading solid green.
 function clusterIcon(clustered) {
-  let avail = 0, tot = 0, count = 0, outCount = 0;
+  let avail = 0, tot = 0, count = 0, outCount = 0, unknownCount = 0;
   for (const m of clustered) {
     const s = m.__station;
     if (!s) continue;
     count++;
+    // Registry-only stations can't be counted free or busy — they would tint
+    // the whole bubble on a guess.
+    if (s.live === false) { unknownCount++; continue; }
     if (stationOut(s)) outCount++;
     avail += s.available;
     tot += s.total > 0 ? s.total : s.available > 0 ? s.available : 1;
   }
   const f = tot > 0 ? Math.min(1, Math.max(0, avail / tot)) : avail > 0 ? 1 : 0;
   const allOut = count > 0 && outCount === count; // grey only if every one is out
+  const allUnknown = count > 0 && unknownCount === count;
   const cx = 26, cy = 26, r = 20;
   let body;
-  if (allOut) {
+  if (allUnknown) {
+    body = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${PIN_UNKNOWN}"/>`;
+  } else if (allOut) {
     body = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${PIN_OUT}"/>`;
   } else if (f >= 1) {
     body = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${PIN_FREE}"/>`;

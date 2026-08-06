@@ -2,7 +2,7 @@
 // Station.fromJson in lib/routing_service.dart so both clients read the
 // gist identically (including the legacy schema fields).
 
-import { CHARGERS_URL, FETCH_TIMEOUT_MS, REFRESH_MS } from './config.js';
+import { CHARGERS_TR_URL, CHARGERS_URL, FETCH_TIMEOUT_MS, REFRESH_MS } from './config.js';
 
 /** @typedef {{type: string, status: string, since?: string}} Port */
 /**
@@ -21,6 +21,8 @@ import { CHARGERS_URL, FETCH_TIMEOUT_MS, REFRESH_MS } from './config.js';
  * @property {string[]} connectors
  * @property {Port[]} ports
  * @property {string} lastUpdated
+ * @property {boolean} live      false = registry data, no real-time availability
+ * @property {string} priceNote  where `price` came from ('' = live/per-station)
  */
 
 let stations = /** @type {Station[]} */ ([]);
@@ -69,11 +71,15 @@ function normalize(raw) {
     connectors,
     ports,
     lastUpdated: raw.last_updated ?? '',
+    // Turkey's EPDK rows publish how many plugs EXIST, not how many are free.
+    // Feeds without the flag (the Georgian gist) really are live.
+    live: raw.live !== false,
+    priceNote: raw.price_note ?? '',
   };
 }
 
-async function fetchStations() {
-  const res = await fetch(CHARGERS_URL, {
+async function fetchStations(url = CHARGERS_URL) {
+  const res = await fetch(url, {
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     cache: 'no-cache', // always revalidate (ETag) but reuse the cached body on 304
   });
@@ -110,6 +116,33 @@ export function startFeed({ onData, onError }) {
 
 export function getStations() {
   return stations;
+}
+
+// ── Turkey (EPDK registry) ───────────────────────────────────────────────────
+// Loaded on demand, once per session: several megabytes on a car's connection,
+// and irrelevant to a driver who never leaves Georgia. There is no live status
+// in it, so there is nothing to poll for either.
+let turkey = /** @type {Station[]} */ ([]);
+let turkeyPromise = null;
+
+/** Every Turkish station, fetching them the first time this is called. */
+export function loadTurkey() {
+  if (turkey.length) return Promise.resolve(turkey);
+  turkeyPromise ??= fetchStations(CHARGERS_TR_URL)
+    .then((list) => {
+      turkey = list;
+      return turkey;
+    })
+    .catch((err) => {
+      turkeyPromise = null; // let a later attempt retry
+      throw err;
+    });
+  return turkeyPromise;
+}
+
+/** Turkish stations already in memory ([] until loadTurkey resolves). */
+export function getTurkeyStations() {
+  return turkey;
 }
 
 export function stopFeed() {
