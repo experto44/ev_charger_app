@@ -1,0 +1,81 @@
+name: Update Turkey Chargers
+
+# ── Triggers ──────────────────────────────────────────────────────────────────
+# Once a day, plus a manual run. The EPDK registry is a licensing database: new
+# stations appear over days, never minutes, and it publishes no live
+# availability, so there is nothing to gain from a tighter cadence.
+#
+# CI COST GUARD (see CLAUDE.md): this workflow must never push a commit to the
+# repository. It writes to the Gist and nothing else — a push to `main` would
+# reach Codemagic through the GitHub webhook and start a billed iOS build.
+on:
+  schedule:
+    - cron: '20 2 * * *'          # 02:20 UTC daily
+  workflow_dispatch:
+
+concurrency:
+  group: update-turkey
+  cancel-in-progress: true
+
+jobs:
+  update-turkey:
+    runs-on: ubuntu-latest
+    # The EPDK gateway enforces a long per-IP quota window; build_turkey.py
+    # waits it out (up to 90 min) rather than giving up on a 429.
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Build chargers_tr.json
+        run: python tools/build_turkey.py build/chargers_tr.json
+
+      - name: Push chargers_tr.json to the Gist
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+        run: |
+          python - <<'PY'
+          import json, os, requests
+
+          # Turkey's OWN gist, separate from the Georgian one on purpose: the
+          # app downloads it only for drivers who actually look at Turkey, and
+          # update_gist.yml (which runs every 5 minutes) re-sends every other
+          # file in ITS gist on each patch — with GitHub truncating >1 MB file
+          # content on read, sharing a gist would corrupt this file.
+          # Matches _url in lib/turkey_service.dart.
+          gist_id = "8cb62fc7ad6d86e3172eec6aedd4dba6"
+          headers = {
+              "Authorization": f"token {os.environ['GIST_TOKEN']}",
+              "Accept": "application/vnd.github+json",
+          }
+
+          with open("build/chargers_tr.json", encoding="utf-8") as f:
+              content = f.read()
+          stations = json.loads(content)
+
+          # Refuse to publish a suspiciously small dataset: a partial EPDK
+          # response must never wipe out a good file the app is already serving.
+          if len(stations) < 2000:
+              raise SystemExit(
+                  f"refusing to publish only {len(stations)} stations")
+
+          # PATCH only our file — every other file in the gist (chargers.json,
+          # which the app loads at launch) is left exactly as it is.
+          res = requests.patch(
+              f"https://api.github.com/gists/{gist_id}",
+              headers=headers,
+              json={"files": {"chargers_tr.json": {"content": content}}},
+              timeout=120,
+          )
+          res.raise_for_status()
+          print(f"✅ published {len(stations)} Turkish stations")
+          PY

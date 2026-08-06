@@ -1,0 +1,473 @@
+{
+  "_comment": [
+    "Brand-level charging tariffs for Turkish networks, in TRY per kWh, VAT included.",
+    "Turkish operators publish one national tariff per socket class (AC / DC), so a",
+    "brand-level table is accurate for the great majority of stations. Where an operator",
+    "runs several tariffs the min and max are both recorded and the app shows a RANGE,",
+    "never an invented exact price. A brand with no verified figure gets no price at all.",
+    "",
+    "tools/build_turkey.py refreshes these numbers on every run from the dated public",
+    "tariff index at https://www.doviz.com/ev-sarj-fiyatlari and falls back to the values",
+    "committed here when that fetch fails, so a broken scrape can never blank out prices.",
+    "Operator-published cross-check: https://cms.esarj.com/api/pricing/tariffs (Eşarj).",
+    "",
+    "Keys are the NORMALISED brand: lowercase, Turkish letters folded to ASCII, spaces and",
+    "punctuation stripped, so they match EPDK's free-text 'marka' values. 'aliases'",
+    "carries the other spellings the same network is registered under.",
+    "",
+    "This file is pipeline INPUT, never a Flutter asset: assets/ is on the Codemagic iOS",
+    "build-trigger allow-list (see CLAUDE.md), and this file changes often."
+  ],
+  "updated": "2026-08-06",
+  "currency": "TRY",
+  "unit": "kWh",
+  "source": "https://www.doviz.com/ev-sarj-fiyatlari",
+  "brands": {
+    "trugo": {
+      "name": "Trugo",
+      "checked": "2026-08-07",
+      "ac": [
+        9.95,
+        9.95
+      ],
+      "dc": [
+        14.98,
+        14.98
+      ]
+    },
+    "zes": {
+      "name": "ZES",
+      "checked": "2026-08-07",
+      "ac": [
+        9.99,
+        9.99
+      ],
+      "dc": [
+        12.99,
+        16.49
+      ]
+    },
+    "esarj": {
+      "name": "Eşarj",
+      "checked": "2026-08-07",
+      "ac": [
+        9.9,
+        9.9
+      ],
+      "dc": [
+        9.9,
+        14.9
+      ]
+    },
+    "teslasupercharger": {
+      "name": "Tesla Supercharger",
+      "checked": "2026-06-04",
+      "dc": [
+        9.9,
+        12.3
+      ],
+      "aliases": [
+        "tesla"
+      ]
+    },
+    "astorsarj": {
+      "name": "Astor Şarj",
+      "checked": "2026-08-07",
+      "ac": [
+        9.89,
+        9.89
+      ],
+      "dc": [
+        13.99,
+        13.99
+      ],
+      "aliases": [
+        "astor"
+      ]
+    },
+    "beefull": {
+      "name": "Beefull",
+      "checked": "2026-08-07",
+      "ac": [
+        9.9,
+        9.9
+      ],
+      "dc": [
+        13.99,
+        13.99
+      ]
+    },
+    "voltrun": {
+      "name": "Voltrun",
+      "checked": "2026-08-07",
+      "ac": [
+        10.9,
+        10.9
+      ],
+      "dc": [
+        13.9,
+        13.9
+      ]
+    },
+    "oncharge": {
+      "name": "OnCharge",
+      "checked": "2026-08-07",
+      "ac": [
+        9.99,
+        9.99
+      ],
+      "dc": [
+        13.5,
+        13.5
+      ]
+    },
+    "nevasarj": {
+      "name": "Neva Şarj",
+      "checked": "2026-08-07",
+      "ac": [
+        9.9,
+        9.9
+      ],
+      "dc": [
+        13.9,
+        13.9
+      ],
+      "aliases": [
+        "neva"
+      ]
+    },
+    "5sarj": {
+      "name": "5Şarj",
+      "checked": "2026-06-05",
+      "ac": [
+        8.99,
+        8.99
+      ],
+      "dc": [
+        15.9,
+        15.9
+      ],
+      "aliases": [
+        "besmsarj"
+      ]
+    },
+    "petrolofisiepower": {
+      "name": "Petrol Ofisi e-Power",
+      "checked": "2026-08-07",
+      "ac": [
+        8.49,
+        8.49
+      ],
+      "dc": [
+        10.99,
+        10.99
+      ],
+      "aliases": [
+        "epower",
+        "po",
+        "petrolofisi",
+        "poepower"
+      ]
+    },
+    "shellrecharge": {
+      "name": "Shell Recharge",
+      "checked": "2026-07-27",
+      "ac": [
+        11.99,
+        11.99
+      ],
+      "dc": [
+        13.5,
+        15.99
+      ],
+      "aliases": [
+        "shell"
+      ]
+    },
+    "dcharge": {
+      "name": "D-Charge",
+      "checked": "2026-08-07",
+      "ac": [
+        10.9,
+        10.9
+      ],
+      "dc": [
+        14.9,
+        14.9
+      ]
+    },
+    "watmobilite": {
+      "name": "WAT Mobilite",
+      "checked": "2026-08-07",
+      "ac": [
+        9.99,
+        9.99
+      ],
+      "dc": [
+        10.99,
+        10.99
+      ],
+      "aliases": [
+        "wat"
+      ]
+    },
+    "otopriz": {
+      "name": "OtoPriz",
+      "checked": "2026-08-07",
+      "ac": [
+        9.9,
+        9.9
+      ],
+      "dc": [
+        13.9,
+        13.9
+      ]
+    },
+    "enyakit": {
+      "name": "En Yakıt",
+      "checked": "2026-08-07",
+      "dc": [
+        14.9,
+        14.9
+      ]
+    },
+    "otojet": {
+      "name": "Otojet",
+      "checked": "2026-08-07",
+      "ac": [
+        10.99,
+        10.99
+      ],
+      "dc": [
+        15.49,
+        15.49
+      ]
+    },
+    "sharz": {
+      "name": "Sharz.Net",
+      "checked": "2026-08-07",
+      "ac": [
+        9.49,
+        9.49
+      ],
+      "dc": [
+        11.99,
+        11.99
+      ],
+      "aliases": [
+        "sharznet",
+        "sharzn3t"
+      ]
+    },
+    "ovolt": {
+      "name": "Ovolt",
+      "checked": "2026-08-07",
+      "ac": [
+        9.99,
+        9.99
+      ],
+      "dc": [
+        11.49,
+        11.49
+      ]
+    },
+    "zeplinenerji": {
+      "name": "Zeplin",
+      "checked": "2026-08-07",
+      "ac": [
+        8.5,
+        8.5
+      ],
+      "dc": [
+        10.3,
+        10.3
+      ],
+      "aliases": [
+        "zeplin",
+        "zeplincarrental"
+      ]
+    },
+    "ksarj": {
+      "name": "K Şarj",
+      "checked": "2026-08-07",
+      "ac": [
+        9.15,
+        9.15
+      ],
+      "dc": [
+        11.65,
+        11.65
+      ]
+    },
+    "tuncmatikcharge": {
+      "name": "Tunçmatik",
+      "checked": "2026-08-07",
+      "ac": [
+        10.99,
+        10.99
+      ],
+      "dc": [
+        15.49,
+        15.49
+      ],
+      "aliases": [
+        "tuncmatik"
+      ]
+    },
+    "otowatt": {
+      "name": "otoWATT",
+      "checked": "2026-08-07",
+      "ac": [
+        10.99,
+        10.99
+      ],
+      "dc": [
+        13.99,
+        13.99
+      ],
+      "aliases": [
+        "otowat"
+      ]
+    },
+    "aostechnology": {
+      "name": "AOS Technology",
+      "checked": "2026-08-07",
+      "ac": [
+        10.9,
+        10.9
+      ],
+      "dc": [
+        14.9,
+        14.9
+      ],
+      "aliases": [
+        "aos"
+      ]
+    },
+    "aksasarj": {
+      "name": "Aksa Şarj",
+      "checked": "2026-06-23",
+      "ac": [
+        8.7,
+        10.9
+      ],
+      "dc": [
+        10.79,
+        13.49
+      ]
+    },
+    "cvcharging": {
+      "name": "CV Charging",
+      "checked": "2026-08-07",
+      "ac": [
+        9.99,
+        9.99
+      ],
+      "dc": [
+        13.49,
+        13.49
+      ]
+    },
+    "powersarj": {
+      "name": "Powerşarj",
+      "checked": "2026-08-07",
+      "ac": [
+        11.19,
+        11.19
+      ],
+      "dc": [
+        13.99,
+        13.99
+      ]
+    },
+    "toger": {
+      "name": "Toger",
+      "checked": "2026-08-07",
+      "ac": [
+        9.39,
+        9.39
+      ],
+      "dc": [
+        9.39,
+        11.39
+      ]
+    },
+    "miggo": {
+      "name": "Miggo",
+      "checked": "2026-08-07",
+      "ac": [
+        9.5,
+        9.5
+      ],
+      "dc": [
+        12.5,
+        12.5
+      ]
+    },
+    "geldol": {
+      "name": "GelDol",
+      "checked": "2026-08-07",
+      "ac": [
+        9.99,
+        9.99
+      ],
+      "dc": [
+        12.99,
+        12.99
+      ]
+    },
+    "rhgenerturk": {
+      "name": "RHG Enertürk",
+      "checked": "2026-08-07",
+      "ac": [
+        8.25,
+        10.99
+      ],
+      "dc": [
+        13.5,
+        13.5
+      ],
+      "aliases": [
+        "enerturk",
+        "enerturkrhgenerji",
+        "rhg"
+      ]
+    },
+    "greenscience": {
+      "name": "Green Science",
+      "checked": "2026-08-07",
+      "ac": [
+        8.9,
+        8.9
+      ],
+      "dc": [
+        11.9,
+        11.9
+      ]
+    },
+    "varr": {
+      "name": "Varr",
+      "checked": "2026-08-07",
+      "ac": [
+        9.9,
+        9.9
+      ],
+      "dc": [
+        13.9,
+        13.9
+      ]
+    },
+    "voltgo": {
+      "name": "Voltgo",
+      "checked": "2026-08-07",
+      "ac": [
+        9.5,
+        9.5
+      ],
+      "dc": [
+        12.4,
+        12.4
+      ]
+    }
+  }
+}
