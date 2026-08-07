@@ -25,3 +25,11 @@ already cost $50 in builds nobody wanted, so:
   downstream — GitHub webhooks reach Codemagic even for `github-actions[bot]` pushes.
 - Before adding or editing a build trigger, state in the PR/commit exactly which commits will now
   build. If the answer is "every push", that is a bug, not a default.
+- **`when.changeset` is not a safety net on its own.** Codemagic compares the watched paths against
+  the **last successful build**, not against the pushed commit. While builds are failing, no baseline
+  exists, so the filter never engages and every push rebuilds the accumulated diff — five needless
+  builds ran this way on 2026-08-07 (firebase.json, tesla/, and a .md file each started an iOS
+  build). A red pipeline is therefore also a billing problem. If iOS builds are failing, turn the
+  automatic trigger off until one goes green.
+- The automatic `push` trigger for `ios-release` is currently **commented out** for that reason;
+  iOS is built by hand from the Codemagic UI. Do not restore it before a build has succeeded.

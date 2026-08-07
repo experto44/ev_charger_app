@@ -28,15 +28,33 @@ workflows:
       xcode: latest
       cocoapods: default
 
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: main
-          include: true
-      # Several site commits often land within minutes of each other; only the
-      # last one needs to reach TestFlight.
-      cancel_previous_builds: true
+    # ── AUTOMATIC TRIGGER DISABLED (2026-08-07) ───────────────────────────
+    # iOS builds are billed per minute and five ran back-to-back on commits
+    # that touch nothing shipping inside the app (firebase.json, tesla/, a
+    # .md file). The `when.changeset` allow-list below did NOT stop them, and
+    # that is not a bug in it: Codemagic compares the watched paths against
+    # "the last successful build", so until ONE build goes green the filter
+    # never engages and every push rebuilds the whole accumulated diff.
+    # Those builds ran 2-8 minutes, far short of a real build+TestFlight, so
+    # they were failing — which is exactly why no baseline ever got set.
+    #
+    # Until the build failure is fixed and one green build exists, iOS is
+    # built by hand from the Codemagic UI ("Start new build"), which ignores
+    # both the trigger and the changeset. Nothing here can spend money on its
+    # own in the meantime.
+    #
+    # To restore: uncomment the block below. Do NOT restore it before a build
+    # has succeeded, or the same loop starts again.
+    #
+    # triggering:
+    #   events:
+    #     - push
+    #   branch_patterns:
+    #     - pattern: main
+    #       include: true
+    #   # Several site commits often land within minutes of each other; only
+    #   # the last one needs to reach TestFlight.
+    #   cancel_previous_builds: true
 
     # Only build iOS when something that actually ships inside the app changed.
     # Without this, every push to main built an IPA — including the nightly
