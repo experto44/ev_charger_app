@@ -75,6 +75,9 @@ function turkeyPinsForViewport() {
 }
 
 function repaint() {
+  // The picker is live before the Maps API finishes loading, so a country can
+  // be toggled while there is still nothing to draw on.
+  if (!getMap()) return;
   // Georgia and Armenia share the Georgian feed and are told apart by
   // coordinates; Turkey identifies itself.
   const local = allStations.filter((s) => isSelected(stationCountry(s)));
@@ -124,15 +127,39 @@ function renderCountryMenu() {
     `${COUNTRIES.filter((c) => isSelected(c.code)).map((c) => c.flag).join(' ')} ${t('countries')}`;
 }
 
+// Built and wired before anything else in bootApp. It used to be created
+// inside the feed's onData and wired inside wireMapControls, which meant the
+// button sat blank and inert until the first gist response arrived — and stayed
+// that way for the whole session if the feed or the Maps API failed.
+export function initCountryPicker() {
+  const btn = document.getElementById('btn-countries');
+  const menu = document.getElementById('country-menu');
+  if (!btn || !menu) return;
+
+  renderCountryMenu();
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const hidden = menu.classList.toggle('is-hidden');
+    btn.setAttribute('aria-expanded', String(!hidden));
+  });
+  // Clicks inside the menu must not reach the document handler that closes it.
+  menu.addEventListener('click', (e) => e.stopPropagation());
+  document.addEventListener('click', () => {
+    menu.classList.add('is-hidden');
+    btn.setAttribute('aria-expanded', 'false');
+  });
+}
+
 function selectCountry(code) {
   if (!toggleCountry(code)) return; // last country can't be switched off
   renderCountryMenu();
   if (isSelected(code)) {
     maybeLoadTurkey();
     // Switching a country on while looking somewhere else would appear to do
-    // nothing, so move the map there.
+    // nothing, so move the map there — once there is a map to move.
     const map = getMap();
-    if (!boundsVisible(code, map?.getBounds())) {
+    if (map && !boundsVisible(code, map.getBounds())) {
       const c = countryCentre(code);
       if (c) panTo(c, 7);
     }
@@ -162,20 +189,6 @@ function wireMapControls() {
   // settles. `idle` fires once after a pan/zoom finishes, not per frame.
   getMap().addListener('idle', () => {
     if (isSelected('TR') && getTurkeyStations().length) repaint();
-  });
-
-  // Country dropdown.
-  const countryBtn = document.getElementById('btn-countries');
-  const countryMenu = document.getElementById('country-menu');
-  countryBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const open = countryMenu.classList.toggle('is-hidden');
-    countryBtn.setAttribute('aria-expanded', String(!open));
-  });
-  countryMenu.addEventListener('click', (e) => e.stopPropagation());
-  document.addEventListener('click', () => {
-    countryMenu.classList.add('is-hidden');
-    countryBtn.setAttribute('aria-expanded', 'false');
   });
 
   document.getElementById('btn-locate').addEventListener('click', async () => {
@@ -221,6 +234,10 @@ function wireMapControls() {
 
 /** Boots the map + live feed. Runs once, the first time access is granted. */
 async function bootApp() {
+  // First, and outside the try: the picker must work even if the map or the
+  // feed does not.
+  initCountryPicker();
+
   try {
     await loadMapsApi();
     initMap(document.getElementById('map'));
@@ -275,6 +292,7 @@ function wireChrome() {
     btn.addEventListener('click', () => {
       setLang(btn.dataset.langBtn);
       if (drawerBuilt) buildFilterDrawer(allStations, repaint); // re-label chips
+      renderCountryMenu(); // country names + the button label are translated too
       relabelTrip();
       repaint();
     });
