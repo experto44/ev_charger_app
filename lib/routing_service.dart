@@ -72,6 +72,8 @@ class Station {
     this.connectors  = const [],
     this.ports       = const [],
     this.country     = '',
+    this.live        = true,
+    this.priceNote   = '',
   });
 
   /// Handles both the production format (available_spots / type / power / city)
@@ -115,6 +117,13 @@ class Station {
         connectors:  connectors,
         ports:       ports,
         country:     j['country']      as String? ?? '',
+        // Sources without real-time availability (EPDK's Turkish registry, OCM)
+        // set this false so the UI reports plug COUNTS instead of claiming that
+        // many plugs are free right now.
+        live:        j['live'] as bool? ?? true,
+        // Where a price came from, when it isn't a live per-station rate —
+        // e.g. "Operator tariff · 07.08.2026" for the Turkish registry.
+        priceNote:   j['price_note'] as String? ?? '',
       );
     }
     // Legacy schema
@@ -145,6 +154,8 @@ class Station {
   final List<String> connectors; // e.g. ["CCS2", "CHAdeMO"]
   final List<ConnectorPort> ports; // per-plug live status (empty if not published)
   final String country;          // country name for OCM stations ('' = derive from coords)
+  final bool   live;             // false = registry data, no real-time availability
+  final String priceNote;        // provenance of [price] ('' = live/per-station)
 
   /// Copy carrying a formatted [distance] label (e.g. "2.3 km"). Used by the
   /// home carousel to stamp each station's distance from the user before display.
@@ -152,7 +163,7 @@ class Station {
         name: name, location: location, available: available, lat: lat, lng: lng,
         isDC: isDC, kw: kw, price: price, id: id, total: total, distance: d,
         provider: provider, lastUpdated: lastUpdated, connectors: connectors,
-        ports: ports, country: country,
+        ports: ports, country: country, live: live, priceNote: priceNote,
       );
 }
 
@@ -374,18 +385,58 @@ class RoutingService {
         return true;
       }
 
+      // Done naively this is O(stations x segments), which is ruinous on a real
+      // international trip: Tbilisi → İstanbul is ~38,800 polyline points and,
+      // with Turkey loaded, ~14,100 stations — 549 MILLION segment projections
+      // on one thread (measured at ~21s on a desktop). So the segments go into
+      // a coarse lat/lng grid and each station is only measured against the
+      // segments in its own neighbourhood: same answer, ~35x faster.
+      //
+      // Exactness: the planner only ever uses chargers within corridorKm (8 km)
+      // and the neighbourhood searched here is ~25 km wide, so every station
+      // that can matter is measured against the same segments as before. One
+      // with no segment nearby is dropped — it was hundreds of km off-route.
+      const cellDeg = 0.15;   // ~16 km lat, ~12 km lng at these latitudes
+      const cellSpan = 2;     // +-2 cells => everything within ~25 km
+      String cellKey(double la, double ln) =>
+          '${(la / cellDeg).floor()},${(ln / cellDeg).floor()}';
+
+      final segGrid = <String, List<int>>{};
+      for (int i = 0; i < pts.length - 1; i++) {
+        // Register each segment in both endpoints' cells; a segment is far
+        // shorter than a cell, so it cannot skip over one.
+        final k0 = cellKey(pts[i].latitude, pts[i].longitude);
+        (segGrid[k0] ??= <int>[]).add(i);
+        final k1 = cellKey(pts[i + 1].latitude, pts[i + 1].longitude);
+        if (k1 != k0) { (segGrid[k1] ??= <int>[]).add(i); }
+      }
+
       final projected = <_StationProjection>[];
+      final seenSeg = <int>{};
       for (final s in stations) {
         if (!operational(s)) { continue; }
         final sp = LatLng(s.lat, s.lng);
+        final cy = (s.lat / cellDeg).floor();
+        final cx = (s.lng / cellDeg).floor();
         double bestDist = double.infinity, bestAlong = 0;
-        for (int i = 0; i < pts.length - 1; i++) {
-          final r = _projectToSegment(sp, pts[i], pts[i + 1]);
-          if (r[0] < bestDist) {
-            bestDist  = r[0];
-            bestAlong = cum[i] + r[1] * (cum[i + 1] - cum[i]);
+        var tested = 0;
+        seenSeg.clear();
+        for (int dy = -cellSpan; dy <= cellSpan; dy++) {
+          for (int dx = -cellSpan; dx <= cellSpan; dx++) {
+            final bucket = segGrid['${cy + dy},${cx + dx}'];
+            if (bucket == null) { continue; }
+            for (final i in bucket) {
+              if (!seenSeg.add(i)) { continue; } // a segment can sit in two cells
+              tested++;
+              final r = _projectToSegment(sp, pts[i], pts[i + 1]);
+              if (r[0] < bestDist) {
+                bestDist  = r[0];
+                bestAlong = cum[i] + r[1] * (cum[i + 1] - cum[i]);
+              }
+            }
           }
         }
+        if (tested == 0) { continue; }  // nowhere near the route
         projected.add(_StationProjection(s, bestDist, bestAlong));
       }
 
@@ -497,18 +548,38 @@ class RoutingService {
       //    a single "E-Space · N stations · 50–360 kW" block. Different providers
       //    are NEVER merged, so Terjola's EV Power GE and E-Space stay separate,
       //    each keeping its own correct Google Maps pin.
+      //    Comparing every station against every cluster is O(n^2) — ~170 ms on
+      //    a Tbilisi → İstanbul route — so candidate clusters come from a
+      //    provider + ~220 m grid. Only clusters that could be within 200 m are
+      //    ever measured, which yields exactly the same grouping.
       final clusters = <List<_StationProjection>>[];
+      const clusterDeg = 0.002;  // ~220 m, just over the 200 m merge radius
+      final clusterGrid = <String, List<List<_StationProjection>>>{};
       for (final p in onRoute) {
+        final st   = p.station;
+        final prov = st.provider.trim().toLowerCase();
+        final cy   = (st.lat / clusterDeg).floor();
+        final cx   = (st.lng / clusterDeg).floor();
         List<_StationProjection>? target;
-        for (final c in clusters) {
-          final anchor = c.first.station;
-          if (anchor.provider.trim().toLowerCase() !=
-              p.station.provider.trim().toLowerCase()) { continue; }
-          final m = _haversine(LatLng(anchor.lat, anchor.lng),
-                  LatLng(p.station.lat, p.station.lng)) * 1000.0;
-          if (m <= 200.0) { target = c; break; }
+        for (int dy = -1; dy <= 1 && target == null; dy++) {
+          for (int dx = -1; dx <= 1 && target == null; dx++) {
+            final list = clusterGrid['$prov|${cy + dy},${cx + dx}'];
+            if (list == null) { continue; }
+            for (final c in list) {
+              final anchor = c.first.station;
+              final m = _haversine(LatLng(anchor.lat, anchor.lng),
+                      LatLng(st.lat, st.lng)) * 1000.0;
+              if (m <= 200.0) { target = c; break; }
+            }
+          }
         }
-        if (target != null) { target.add(p); } else { clusters.add([p]); }
+        if (target != null) {
+          target.add(p);
+        } else {
+          final c = <_StationProjection>[p];
+          clusters.add(c);
+          (clusterGrid['$prov|$cy,$cx'] ??= <List<_StationProjection>>[]).add(c);
+        }
       }
 
       // Turns one cluster into an option, resolving carriageway / U-turn from

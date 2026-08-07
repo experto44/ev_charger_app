@@ -129,17 +129,66 @@ export async function planRoute({ waypoints, currentBatteryPct, maxRangeKm, stat
   };
 
   // Project every operational station onto the route.
+  //
+  // Done naively this is O(stations x segments), and on a real trip that is
+  // enormous: Tbilisi → İstanbul is ~38,800 polyline points against ~14,100
+  // stations once Turkey is loaded — 549 MILLION segment projections on the
+  // main thread, which froze the page for ~20s on a laptop and far longer in a
+  // car. So segments go into a coarse lat/lng grid first and each station is
+  // only measured against the segments in its own neighbourhood.
+  //
+  // The result is identical for every station that matters: the planner only
+  // ever uses chargers within `corridorKm` (8 km), and the neighbourhood
+  // searched here is much wider than that. Anything with no segment nearby is
+  // dropped outright — it is hundreds of kilometres off-route and was never a
+  // candidate.
+  const CELL_DEG = 0.15;              // ~16 km lat, ~12 km lng at these latitudes
+  const NEIGHBOURHOOD = 2;            // +-2 cells => everything within ~25 km
+  const cellKey = (la, ln) =>
+    `${Math.floor(la / CELL_DEG)},${Math.floor(ln / CELL_DEG)}`;
+
+  const segGrid = new Map();
+  const addSeg = (la, ln, i) => {
+    const k = cellKey(la, ln);
+    const bucket = segGrid.get(k);
+    if (bucket) bucket.push(i);
+    else segGrid.set(k, [i]);
+  };
+  for (let i = 0; i < pts.length - 1; i++) {
+    // Register the segment in both endpoints' cells; segments are far shorter
+    // than a cell, so they cannot skip over one.
+    addSeg(pts[i].lat, pts[i].lng, i);
+    const k1 = cellKey(pts[i + 1].lat, pts[i + 1].lng);
+    if (k1 !== cellKey(pts[i].lat, pts[i].lng)) {
+      addSeg(pts[i + 1].lat, pts[i + 1].lng, i);
+    }
+  }
+
   const projected = [];
+  const seen = new Set();
   for (const s of stations) {
     if (!operational(s)) continue;
-    let bestDist = Infinity, bestAlong = 0;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const [d, t] = projectToSegment({ lat: s.lat, lng: s.lng }, pts[i], pts[i + 1]);
-      if (d < bestDist) {
-        bestDist = d;
-        bestAlong = cum[i] + t * (cum[i + 1] - cum[i]);
+    const cy = Math.floor(s.lat / CELL_DEG);
+    const cx = Math.floor(s.lng / CELL_DEG);
+    let bestDist = Infinity, bestAlong = 0, tested = 0;
+    seen.clear();
+    for (let dy = -NEIGHBOURHOOD; dy <= NEIGHBOURHOOD; dy++) {
+      for (let dx = -NEIGHBOURHOOD; dx <= NEIGHBOURHOOD; dx++) {
+        const bucket = segGrid.get(`${cy + dy},${cx + dx}`);
+        if (!bucket) continue;
+        for (const i of bucket) {
+          if (seen.has(i)) continue;   // a segment can sit in two cells
+          seen.add(i);
+          tested++;
+          const [d, t] = projectToSegment({ lat: s.lat, lng: s.lng }, pts[i], pts[i + 1]);
+          if (d < bestDist) {
+            bestDist = d;
+            bestAlong = cum[i] + t * (cum[i + 1] - cum[i]);
+          }
+        }
       }
     }
+    if (!tested) continue;             // nowhere near the route
     projected.push({ station: s, detourKm: bestDist, alongKm: bestAlong });
   }
 
@@ -225,21 +274,45 @@ export async function planRoute({ waypoints, currentBatteryPct, maxRangeKm, stat
   //    "E-Space · N stations · 50–360 kW" block. Different providers are NEVER
   //    merged, so Terjola's EV Power GE and E-Space stay separate, each keeping
   //    its own correct Google Maps pin.
+  //    Scanning every cluster for every station is O(n^2) and cost ~170 ms on a
+  //    Tbilisi → İstanbul route (2,300 chargers, 2,000 clusters), so candidates
+  //    are looked up in a provider + ~220 m grid instead. Only clusters that
+  //    could possibly be within 200 m are ever compared, which gives exactly
+  //    the same grouping.
   const clusters = [];
+  const CLUSTER_DEG = 0.002;         // ~220 m, just over the 200 m merge radius
+  const clusterGrid = new Map();     // "provider|cy,cx" -> clusters anchored there
   for (const p of onRoute) {
+    const st = p.station;
+    const prov = (st.provider || '').trim().toLowerCase();
+    const cy = Math.floor(st.lat / CLUSTER_DEG);
+    const cx = Math.floor(st.lng / CLUSTER_DEG);
     let target = null;
-    for (const c of clusters) {
-      const anchor = c[0].station;
-      if ((anchor.provider || '').trim().toLowerCase() !==
-          (p.station.provider || '').trim().toLowerCase()) continue;
-      const m = haversineKm(
-        { lat: anchor.lat, lng: anchor.lng },
-        { lat: p.station.lat, lng: p.station.lng },
-      ) * 1000;
-      if (m <= 200) { target = c; break; }
+    search:
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const list = clusterGrid.get(`${prov}|${cy + dy},${cx + dx}`);
+        if (!list) continue;
+        for (const c of list) {
+          const anchor = c[0].station;
+          const m = haversineKm(
+            { lat: anchor.lat, lng: anchor.lng },
+            { lat: st.lat, lng: st.lng },
+          ) * 1000;
+          if (m <= 200) { target = c; break search; }
+        }
+      }
     }
-    if (target) target.push(p);
-    else clusters.push([p]);
+    if (target) {
+      target.push(p);
+    } else {
+      const c = [p];
+      clusters.push(c);
+      const k = `${prov}|${cy},${cx}`;
+      const bucket = clusterGrid.get(k);
+      if (bucket) bucket.push(c);
+      else clusterGrid.set(k, [c]);
+    }
   }
 
   // 3. Mark clusters holding a greedy-recommended charger (always shown/ticked);
