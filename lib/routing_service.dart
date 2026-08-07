@@ -458,25 +458,42 @@ class RoutingService {
             p.alongKm > coveredKm + 0.5 &&
             p.alongKm <= reachKm;
 
-        // Tier 1 — chargers DIRECTLY on the road (tiny detour). Always preferred:
-        // the driver should be recommended stops right on the highway, never a
-        // detour into a side town when a roadside charger is reachable.
-        var cands =
-            projected.where((p) => usable(p) && p.detourKm <= onRouteKm).toList();
-
-        // Tier 2 — nothing right on the road: widen to the highway corridor.
-        if (cands.isEmpty) {
-          cands = projected
-              .where((p) => usable(p) && p.detourKm <= corridorKm)
+        // DC before AC, always — and only within one of those groups do the
+        // distance tiers apply:
+        //   Tier 1 — chargers DIRECTLY on the road (tiny detour). Preferred, so
+        //            the driver isn't sent into a side town needlessly.
+        //   Tier 2 — nothing on the road: widen to the highway corridor.
+        //   Tier 3 — still nothing: any reachable free station ahead, so the
+        //            driver isn't stranded on a charger-sparse stretch.
+        //
+        // The DC-first rule matters because this loop only runs when the
+        // destination is out of reach on the current charge: every stop it
+        // picks is a stop on a genuinely long trip, and there an 11 kW AC
+        // socket is not a real option — arriving at 11% it would need 8-10
+        // hours against minutes at a DC unit. So a DC a few km off the road
+        // beats an AC one right on it. AC is still picked when no DC is
+        // reachable, and AC chargers stay in the options list either way, so
+        // the driver can always choose one deliberately.
+        List<_StationProjection> tiers(
+            bool Function(_StationProjection)? only) {
+          final pool = only == null
+              ? projected
+              : projected.where(only).toList();
+          var t = pool
+              .where((p) => usable(p) && p.detourKm <= onRouteKm)
               .toList();
+          if (t.isEmpty) {
+            t = pool
+                .where((p) => usable(p) && p.detourKm <= corridorKm)
+                .toList();
+          }
+          if (t.isEmpty) { t = pool.where(usable).toList(); }
+          return t;
         }
 
-        // Tier 3 — still nothing: any reachable free station ahead (least detour),
-        // so the driver isn't stranded on a charger-sparse stretch.
-        if (cands.isEmpty) {
-          cands = projected.where(usable).toList();
-          if (cands.isEmpty) { break; } // can't reach a free charger — leave rest unplanned
-        }
+        var cands = tiers((p) => p.station.isDC);
+        if (cands.isEmpty) { cands = tiers(null); }
+        if (cands.isEmpty) { break; } // can't reach a free charger — leave rest unplanned
 
         // Reward progress along the route, penalise detour off the highway,
         // so the chosen stop is far enough to minimise the number of stops

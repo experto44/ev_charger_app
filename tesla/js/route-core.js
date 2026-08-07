@@ -185,18 +185,28 @@ export function planFromRoute({
     const reachKm = coveredKm + currentKm - reserveKm;
 
     // Only currently-free chargers can be RECOMMENDED (a busy one still shows in
-    // the list, just isn't pre-picked). Tier 1 prefers chargers directly on the
-    // road, tier 2 the wider corridor, tier 3 any reachable free charger.
+    // the list, just isn't pre-picked).
+    //
+    // DC before AC, always, and only then by how close the charger is to the
+    // road. This loop only runs when the destination is out of reach on the
+    // current charge, so every stop it picks is a stop on a genuinely long
+    // trip — and there, an 11 kW AC socket is not a real option: arriving at
+    // 11% it would need 8-10 hours, against minutes at a DC unit. A DC a few
+    // kilometres off the road beats an AC one right on it. AC is still picked
+    // when no DC is reachable at all, and AC chargers stay in the options list
+    // either way, so the driver can always choose one deliberately.
     const usable = (p) =>
       p.station.available > 0 && p.alongKm > coveredKm + 0.5 && p.alongKm <= reachKm;
-    let cands = projected.filter((p) => usable(p) && p.detourKm <= onRouteKm);
-    if (!cands.length) {
-      cands = projected.filter((p) => usable(p) && p.detourKm <= corridorKm);
-    }
-    if (!cands.length) {
-      cands = projected.filter(usable);
-      if (!cands.length) { reachable = false; break; } // can't reach a free charger
-    }
+    const tiers = (only) => {
+      const pool = only ? projected.filter(only) : projected;
+      let t = pool.filter((p) => usable(p) && p.detourKm <= onRouteKm);
+      if (!t.length) t = pool.filter((p) => usable(p) && p.detourKm <= corridorKm);
+      if (!t.length) t = pool.filter(usable);
+      return t;
+    };
+    let cands = tiers((p) => p.station.isDC);
+    if (!cands.length) cands = tiers(null);
+    if (!cands.length) { reachable = false; break; } // can't reach a free charger
 
     // Reward progress, penalise detour.
     cands.sort((a, b) => (b.alongKm - 3 * b.detourKm) - (a.alongKm - 3 * a.detourKm));
