@@ -115,8 +115,13 @@ List<CountryDef> _buildCountries() {
     const CountryDef('Spain', '🇪🇸', 'ES'),
     const CountryDef('Sweden', '🇸🇪', 'SE'),
     const CountryDef('Switzerland', '🇨🇭', 'CH'),
+    // Turkey is localCovered: TurkeyService ships the EPDK registry (≈5x the
+    // stations OCM has, with real brand names and tariffs) and the builder has
+    // already merged in the OCM rows that EPDK doesn't list, so fetching OCM
+    // here again would only duplicate pins.
     const CountryDef('Turkey', '🇹🇷', 'TR',
-        latMin: 35.8, latMax: 42.1, lngMin: 26.0, lngMax: 44.8),
+        latMin: 35.8, latMax: 42.1, lngMin: 26.0, lngMax: 44.8,
+        localCovered: true),
     const CountryDef('Ukraine', '🇺🇦', 'UA'),
     const CountryDef('United Kingdom', '🇬🇧', 'GB'),
   ]..sort((a, b) => a.name.compareTo(b.name));

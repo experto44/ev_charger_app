@@ -34,6 +34,7 @@ import 'route_planner_screen.dart';
 import 'routing_service.dart';
 import 'services/ad_service.dart';
 import 'services/purchase_service.dart';
+import 'turkey_service.dart';
 import 'services/user_activity_service.dart';
 import 'settings_screen.dart';
 
@@ -124,7 +125,8 @@ const _tbilisi = LatLng(41.7151, 44.8271);
 // Map networks (so international chargers never clutter the local provider list).
 const _kAllProviders = [
   'E-Space', 'mart EV', 'MOVEO', 'Electrify Georgia', 'EV Power GE', 'Da-Tene', 'Gadatene', 'EcoCars', 'Solar Station', 'Tegeta', 'Charger Plus',
-  OcmService.kProvider, // 'International'
+  TurkeyService.kProvider,  // 'Turkey'        — the EPDK registry, one row for ~200 brands
+  OcmService.kProvider,     // 'International' — every other OCM network
 ];
 
 // CartoDB basemaps (free, retina-capable, great coverage for Georgia).
@@ -208,6 +210,13 @@ class _MapScreenState extends State<MapScreen>
   // "International" provider chip checked.
   bool get _internationalOn => _selectedProviders.contains(OcmService.kProvider);
 
+  // The Turkish (EPDK) dataset loads only when the user both selected Turkey in
+  // Settings and left its provider row checked — it's a multi-megabyte file, so
+  // we never pull it for someone who is not looking at Turkey.
+  bool get _turkeyOn =>
+      _selectedProviders.contains(TurkeyService.kProvider) &&
+      _activeCountries.contains(TurkeyService.kCountry);
+
   // Filter is "active" (badge shown) only for a proper, non-empty subset.
   // Empty set or all-selected both mean "show every provider".
   bool get _providerFilterActive =>
@@ -236,6 +245,12 @@ class _MapScreenState extends State<MapScreen>
   // loading flag drives the "Loading international stations…" pill.
   List<Station> _ocmStations = const [];
   bool          _ocmLoading  = false;
+
+  // Turkish stations from the EPDK registry (TurkeyService). Same pattern as
+  // the OCM list: loaded on demand, cleared when the user turns Turkey off.
+  List<Station> _trStations = const [];
+  bool          _trLoading  = false;
+  int           _trGen      = 0;
   StreamSubscription<MapEvent>? _mapEventSub;
   int           _ocmGen = 0;   // guards against stale / superseded responses
 
@@ -348,6 +363,11 @@ class _MapScreenState extends State<MapScreen>
       }
     });
     // OCM loads viewport-first; the map's onMapReady kicks off the initial load.
+    // Turkey has no viewport fallback, and this runs asynchronously against
+    // onMapReady, so kick its load off here too once the saved countries are
+    // in — otherwise a slow prefs read leaves Turkey empty until the user
+    // reopens Settings. Both entry points are idempotent (TurkeyService caches).
+    _loadTurkey();
   }
 
   // Re-read the profile-owned filters (min power + selected connectors) after
@@ -489,6 +509,7 @@ class _MapScreenState extends State<MapScreen>
           : (jsonDecode(raw) as List).map((e) => e as String).toSet();
     });
     _loadOcmCountries();
+    _loadTurkey();
   }
 
   // Track whether the map is centred on Georgia — the local station carousel is
@@ -542,6 +563,26 @@ class _MapScreenState extends State<MapScreen>
     setState(() {
       _ocmStations = [for (final list in results) ...list];
       _ocmLoading  = false;
+    });
+  }
+
+  // Load (or drop) the Turkish EPDK dataset for the current selection. Called
+  // alongside _loadOcmCountries on every country/provider change; cheap after
+  // the first call because TurkeyService caches in memory and on disk.
+  Future<void> _loadTurkey() async {
+    if (!_turkeyOn) {
+      if (mounted && (_trStations.isNotEmpty || _trLoading)) {
+        setState(() { _trStations = const []; _trLoading = false; });
+      }
+      return;
+    }
+    final gen = ++_trGen;
+    if (mounted) { setState(() => _trLoading = true); }
+    final list = await TurkeyService.fetchAll();
+    if (!mounted || gen != _trGen) { return; }  // superseded by a newer load
+    setState(() {
+      _trStations = list;
+      _trLoading  = false;
     });
   }
 
@@ -821,6 +862,9 @@ class _MapScreenState extends State<MapScreen>
               }
             });
             setSheet(() {});
+            // "Select all" covers the Turkey group too, so its dataset has to
+            // load (or clear) with it.
+            _loadTurkey();
           },
           onToggle: (p) {
             setState(() {
@@ -833,7 +877,8 @@ class _MapScreenState extends State<MapScreen>
             setSheet(() {});
             // Toggling "International" loads/clears the OCM stations for the
             // user's selected countries.
-            if (p == OcmService.kProvider) { _loadOcmCountries(); }
+            if (p == OcmService.kProvider)  { _loadOcmCountries(); }
+            if (p == TurkeyService.kProvider) { _loadTurkey(); }
           },
         ),
       ),
@@ -861,7 +906,10 @@ class _MapScreenState extends State<MapScreen>
       context,
       MaterialPageRoute(
         builder: (_) => RoutePlannerScreen(
-          stations:           _stations,
+          // Everything loaded, not just the Georgian feed: a route that crosses
+          // into Turkey has to see Turkish chargers (the planner pulls them in
+          // itself if they aren't loaded yet).
+          stations:           _allStations,
           initialOrigin:      _userPos,
           initialDestination: destination,
         ),
@@ -883,7 +931,10 @@ class _MapScreenState extends State<MapScreen>
       return;
     }
     _debounce = Timer(const Duration(milliseconds: 400), () async {
-      final r = await PlacesService.autocomplete(query);
+      // Rank around where the driver is (or is looking), now that search is no
+      // longer hard-limited to Georgia.
+      final r = await PlacesService.autocomplete(query,
+          bias: _userPos ?? _mapCtrl.camera.center);
       if (mounted) { setState(() => _suggestions = r); }
     });
   }
@@ -932,13 +983,17 @@ class _MapScreenState extends State<MapScreen>
     );
   }
 
-  // Local Gist stations + live OCM international stations (the per-country
-  // downloads plus the viewport top-up, deduped by OCM id).
+  // Local Gist stations + the Turkish EPDK registry + live OCM international
+  // stations (the per-country downloads plus the viewport top-up, deduped by
+  // OCM id).
   List<Station> get _allStations {
-    if (_ocmStations.isEmpty && _ocmViewport.isEmpty) { return _stations; }
+    if (_ocmStations.isEmpty && _ocmViewport.isEmpty && _trStations.isEmpty) {
+      return _stations;
+    }
     final seen = <String>{for (final s in _ocmStations) s.id};
     return [
       ..._stations,
+      ..._trStations,
       ..._ocmStations,
       for (final s in _ocmViewport.values)
         if (!seen.contains(s.id)) s,
@@ -962,8 +1017,14 @@ class _MapScreenState extends State<MapScreen>
       // Provider filter (applied first): empty OR all-selected => show all;
       // any non-empty subset => keep only those providers. "International" is
       // off by default, so OCM pins are hidden until the user opts in.
+      // Turkish stations carry their real brand ("ZES", "Eşarj", …) as the
+      // provider, but the filter sheet groups all ~200 of them under one
+      // "Turkey" row, so match them against that group instead of the brand.
+      final filterName = s.country == TurkeyService.kCountry
+          ? TurkeyService.kProvider
+          : s.provider;
       if (_selectedProviders.isNotEmpty &&
-          !_selectedProviders.contains(s.provider)) { return false; }
+          !_selectedProviders.contains(filterName)) { return false; }
       if (_filterDC    && !s.isDC)          { return false; }
       if (_filterAvail && s.available == 0) { return false; }
       // Minimum-power filter (profile setting): hide stations with a known
@@ -1031,6 +1092,7 @@ class _MapScreenState extends State<MapScreen>
                 });
                 _locateMe(recenter: true);
                 _loadOcmCountries();
+                _loadTurkey();
               },
             ),
             children: [
@@ -1068,6 +1130,7 @@ class _MapScreenState extends State<MapScreen>
                         available: s.available,
                         total:     s.total,
                         isOut:     _stationOutOfOrder(s),
+                        unknown:   !s.live,
                       ),
                     ),
                   )).toList(),
@@ -1076,11 +1139,15 @@ class _MapScreenState extends State<MapScreen>
                   // reads orange from far out instead of a misleading green.
                   builder: (context, markers) {
                     int avail = 0, tot = 0, count = 0, outCount = 0;
+                    int unknownCount = 0;
                     for (final m in markers) {
                       final s = stationByPoint[
                           '${m.point.latitude},${m.point.longitude}'];
                       if (s == null) { continue; }
                       count++;
+                      // Stations with no live feed can't be counted as free or
+                      // busy — they'd tint the whole bubble on a guess.
+                      if (!s.live) { unknownCount++; continue; }
                       if (_stationOutOfOrder(s)) { outCount++; }
                       avail += s.available;
                       tot   += s.total > 0
@@ -1092,13 +1159,16 @@ class _MapScreenState extends State<MapScreen>
                         : (avail > 0 ? 1.0 : 0.0);
                     // Grey only when EVERY charger in the cluster is out of order.
                     final allOut = count > 0 && outCount == count;
+                    // Slate when the whole cluster is registry-only data.
+                    final allUnknown = count > 0 && unknownCount == count;
                     return Container(
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 6)],
                       ),
                       child: CustomPaint(
-                        painter: _AvailabilityPainter(freeFraction, isOut: allOut),
+                        painter: _AvailabilityPainter(freeFraction,
+                            isOut: allOut, unknown: allUnknown),
                         child: Center(
                           child: Text(
                             '${markers.length}',
@@ -1218,8 +1288,9 @@ class _MapScreenState extends State<MapScreen>
                     onAvail:     (v) => setState(() => _filterAvail = v),
                     onMyPorts:   _openProfile,
                   ),
-                  // Live OCM fetch indicator (international countries).
-                  if (_ocmLoading) ...[
+                  // Live fetch indicator — OCM countries, or the (larger, and
+                  // therefore slower) first download of the Turkish registry.
+                  if (_ocmLoading || _trLoading) ...[
                     const SizedBox(height: 8),
                     Align(
                       alignment: Alignment.centerLeft,
@@ -1230,14 +1301,18 @@ class _MapScreenState extends State<MapScreen>
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(color: _bgSurface),
                         ),
-                        child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                          SizedBox(
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          const SizedBox(
                             width: 13, height: 13,
                             child: CircularProgressIndicator(strokeWidth: 2, color: _emerald),
                           ),
-                          SizedBox(width: 8),
-                          Text('Loading international stations…',
-                              style: TextStyle(color: _textSec, fontSize: 12)),
+                          const SizedBox(width: 8),
+                          Text(
+                            _trLoading && !_ocmLoading
+                                ? 'Loading Turkish stations…'
+                                : 'Loading international stations…',
+                            style: const TextStyle(color: _textSec, fontSize: 12),
+                          ),
                         ]),
                       ),
                     ),
@@ -1294,7 +1369,8 @@ class _MapScreenState extends State<MapScreen>
                     Navigator.push<void>(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => RoutePlannerScreen(stations: _stations),
+                        builder: (_) =>
+                            RoutePlannerScreen(stations: _allStations),
                       ),
                     );
                   },
@@ -1652,6 +1728,13 @@ class _ProviderFilterSheet extends StatelessWidget {
                       // One checkbox row per known provider — toggles apply immediately.
                       ...all.map((p) {
                         final on = selected.contains(p);
+                        // The two group rows stand for whole networks of
+                        // operators rather than one brand, so they say so.
+                        final subtitle = p == TurkeyService.kProvider
+                            ? 'Every licensed network (EPDK registry)'
+                            : p == OcmService.kProvider
+                                ? 'Open Charge Map, outside Georgia'
+                                : null;
                         return InkWell(
                           onTap: () => onToggle(p),
                           child: Padding(
@@ -1662,9 +1745,23 @@ class _ProviderFilterSheet extends StatelessWidget {
                                 color: on ? _emerald : _textSec, size: 24,
                               ),
                               const SizedBox(width: 12),
-                              Text(p,
-                                  style: const TextStyle(
-                                      color: _textPri, fontSize: 15, fontWeight: FontWeight.w500)),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      p == TurkeyService.kProvider ? '🇹🇷 Turkey' : p,
+                                      style: const TextStyle(
+                                          color: _textPri, fontSize: 15,
+                                          fontWeight: FontWeight.w500),
+                                    ),
+                                    if (subtitle != null)
+                                      Text(subtitle,
+                                          style: const TextStyle(
+                                              color: _textSec, fontSize: 11)),
+                                  ],
+                                ),
+                              ),
                             ]),
                           ),
                         );
@@ -1804,16 +1901,20 @@ bool _stationOutOfOrder(Station s) =>
 
 // Grey used for out-of-order chargers (mirrors the Tesla map's "out" colour).
 const _outGrey = Color(0xFF6B7A85);
+// Slate used for stations whose source publishes no live availability.
+const _unknownSlate = Color(0xFF4F7C9E);
 
 class _AvailabilityPin extends StatelessWidget {
   const _AvailabilityPin({
     required this.available,
     required this.total,
     this.isOut = false,
+    this.unknown = false,
   });
   final int  available;
   final int  total;
-  final bool isOut; // fully out of order → grey pin
+  final bool isOut;   // fully out of order → grey pin
+  final bool unknown; // no live availability published → slate pin
 
   @override
   Widget build(BuildContext context) {
@@ -1829,7 +1930,8 @@ class _AvailabilityPin extends StatelessWidget {
         boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 6)],
       ),
       child: CustomPaint(
-        painter: _AvailabilityPainter(freeFraction, isOut: isOut),
+        painter: _AvailabilityPainter(freeFraction,
+            isOut: isOut, unknown: unknown),
         child: const Center(child: Icon(Icons.bolt, color: Colors.black, size: 20)),
       ),
     );
@@ -1837,9 +1939,14 @@ class _AvailabilityPin extends StatelessWidget {
 }
 
 class _AvailabilityPainter extends CustomPainter {
-  const _AvailabilityPainter(this.freeFraction, {this.isOut = false});
+  const _AvailabilityPainter(this.freeFraction,
+      {this.isOut = false, this.unknown = false});
   final double freeFraction; // 0..1 portion of the circle drawn green
   final bool   isOut;        // fully out of order → solid grey
+  // Source publishes no real-time availability (Turkey's EPDK registry, OCM).
+  // A green pin there would claim the plugs are free when we simply don't know,
+  // so those stations get their own neutral slate colour.
+  final bool   unknown;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1851,6 +1958,9 @@ class _AvailabilityPainter extends CustomPainter {
     if (isOut) {
       canvas.drawCircle(center, radius,
           Paint()..color = _outGrey..style = PaintingStyle.fill);
+    } else if (unknown) {
+      canvas.drawCircle(center, radius,
+          Paint()..color = _unknownSlate..style = PaintingStyle.fill);
     } else if (freeFraction >= 1.0) {
       canvas.drawCircle(center, radius, green);
     } else if (freeFraction <= 0.0) {
@@ -1881,7 +1991,9 @@ class _AvailabilityPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_AvailabilityPainter old) =>
-      old.freeFraction != freeFraction || old.isOut != isOut;
+      old.freeFraction != freeFraction ||
+      old.isOut != isOut ||
+      old.unknown != unknown;
 }
 
 // ── Zoom +/- button ───────────────────────────────────────────────────────────
@@ -2214,7 +2326,12 @@ class _StationSheetState extends State<_StationSheet> {
   Widget build(BuildContext context) {
     final s = _station;
     final avail = s.available > 0;
-    final statusColor = avail ? _emerald : Colors.orangeAccent;
+    // Registry sources (Turkey/EPDK, OCM) publish how many plugs EXIST, not how
+    // many are free. Reporting those as "available" would invent live data, so
+    // they get a neutral plug count and a neutral dot instead.
+    final statusColor = !s.live
+        ? _textSec
+        : (avail ? _emerald : Colors.orangeAccent);
 
     return SafeArea(
       top: false,
@@ -2286,6 +2403,20 @@ class _StationSheetState extends State<_StationSheet> {
                 color: Colors.blueAccent,
               )),
           ]),
+          // Where the price came from, when it isn't a live per-station rate.
+          // Turkish stations carry their operator's published tariff, so say so
+          // rather than letting it read as this charger's exact quoted price.
+          if (s.priceNote.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(children: [
+              const Icon(Icons.info_outline_rounded, color: _textSec, size: 13),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(s.priceNote,
+                    style: const TextStyle(color: _textSec, fontSize: 11)),
+              ),
+            ]),
+          ],
           const SizedBox(height: 16),
 
           // Last-updated timestamp, with the provider's logo to its right.
@@ -2344,13 +2475,17 @@ class _StationSheetState extends State<_StationSheet> {
             ),
             const SizedBox(width: 8),
             Text(
-              !avail
+              !s.live
                   ? (s.total > 0
-                      ? '0 of ${s.total} plugs available'
-                      : 'No connectors available')
-                  : (s.total > s.available
-                      ? '${s.available} of ${s.total} plugs available'
-                      : '${s.available} plug${s.available == 1 ? '' : 's'} available'),
+                      ? '${s.total} plug${s.total == 1 ? '' : 's'} · live status not published'
+                      : 'Live status not published')
+                  : !avail
+                      ? (s.total > 0
+                          ? '0 of ${s.total} plugs available'
+                          : 'No connectors available')
+                      : (s.total > s.available
+                          ? '${s.available} of ${s.total} plugs available'
+                          : '${s.available} plug${s.available == 1 ? '' : 's'} available'),
               style: TextStyle(
                 color: statusColor, fontSize: 14, fontWeight: FontWeight.w600,
               ),

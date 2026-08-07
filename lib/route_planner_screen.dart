@@ -13,6 +13,7 @@ import 'places_service.dart';
 import 'profile_screen.dart';
 import 'provider_logos.dart';
 import 'routing_service.dart';
+import 'turkey_service.dart';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 const _bgDark    = Color(0xFF1A1A1A);
@@ -52,6 +53,12 @@ class RoutePlannerScreen extends StatefulWidget {
 
 class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
   final _stops       = [RouteStop(), RouteStop()];
+  // Chargers fetched on demand because the route reaches a country the map
+  // wasn't showing. Today that means Turkey: a driver planning Tbilisi →
+  // İstanbul must not have to go and tick Turkey in Settings first, or the
+  // plan would simply run out of chargers at the border.
+  List<Station> _extraStations = const [];
+  bool _loadingCountryData = false;
   double _batteryPct = 80.0;
   double _maxRangeKm = 300.0;
   bool   _isPlanning = false;
@@ -120,7 +127,8 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
   // Stations eligible for THIS planning session, per the charger filters above.
   // Connector match is case-insensitive (mirrors the map filter); a station
   // with an unknown power rating (kw == 0) is never excluded by the kW filter.
-  List<Station> get _filteredStations => widget.stations.where((s) {
+  List<Station> get _filteredStations =>
+      [...widget.stations, ..._extraStations].where((s) {
         if (_routeConnectors.isNotEmpty &&
             !s.connectors.any((c) => _routeConnectors
                 .any((f) => f.toLowerCase() == c.toLowerCase()))) {
@@ -130,9 +138,58 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
         return true;
       }).toList();
 
+  /// Pulls in the chargers for a country the route reaches but the map wasn't
+  /// showing. Only Turkey needs this today: it is the one neighbour with its
+  /// own dataset, and it is the country Georgian drivers actually drive into.
+  /// No-op once loaded, and silent if the download fails — the plan then just
+  /// falls back to whatever chargers we already had.
+  Future<void> _ensureCountryData(List<LatLng> waypoints) async {
+    if (_extraStations.isNotEmpty || _loadingCountryData) { return; }
+    // The map may already have handed us Turkey (user has it switched on).
+    if (widget.stations.any((s) => s.country == TurkeyService.kCountry)) {
+      return;
+    }
+    if (!_routeTouches(TurkeyService.kCountry, waypoints)) { return; }
+
+    setState(() => _loadingCountryData = true);
+    final list = await TurkeyService.fetchAll();
+    if (!mounted) { return; }
+    setState(() {
+      _extraStations      = list;
+      _loadingCountryData = false;
+    });
+  }
+
+  /// True when any waypoint sits in [country], or a straight leg between two
+  /// waypoints passes through it — so Tbilisi → Sofia still picks up Turkish
+  /// chargers even though neither end is Turkish. Sampling the legs is coarse
+  /// on purpose: it runs before the Directions call, so there is no real road
+  /// geometry yet, and a false positive only costs one cached download.
+  bool _routeTouches(String country, List<LatLng> waypoints) {
+    final def = kCountries.where((c) => c.name == country).firstOrNull;
+    if (def == null || !def.hasBox) { return false; }
+    for (var i = 0; i < waypoints.length; i++) {
+      final a = waypoints[i];
+      if (def.contains(a.latitude, a.longitude)) { return true; }
+      if (i + 1 >= waypoints.length) { break; }
+      final b = waypoints[i + 1];
+      const samples = 24;
+      for (var k = 1; k < samples; k++) {
+        final t = k / samples;
+        if (def.contains(a.latitude + (b.latitude - a.latitude) * t,
+                         a.longitude + (b.longitude - a.longitude) * t)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   Future<void> _computeRoute() async {
     if (!_canPreview) { return; }
     final stops = _stops.map((s) => s.coords).whereType<LatLng>().toList();
+    await _ensureCountryData(stops);
+    if (!mounted) { return; }
     final res = await RoutingService.planRoute(
       waypoints:         stops,
       currentBatteryPct: _batteryPct,
@@ -234,6 +291,21 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
 
   bool get _canPreview =>
       _stops.first.coords != null && _stops.last.coords != null;
+
+  /// Point to rank stop [i]'s place search around: the nearest earlier stop
+  /// that's already pinned, else the first pinned stop anywhere, else the
+  /// driver's own position. Place search covers every country now, so without
+  /// a bias a short query ("Merkez") could suggest anywhere in Europe.
+  LatLng? _biasForStop(int i) {
+    for (var j = i - 1; j >= 0; j--) {
+      final c = _stops[j].coords;
+      if (c != null) { return c; }
+    }
+    for (final s in _stops) {
+      if (s.coords != null) { return s.coords; }
+    }
+    return widget.initialOrigin;
+  }
 
   // ── GPS auto-fill for the Start field ────────────────────────────────────
   Future<void> _fillMyLocation() async {
@@ -525,6 +597,10 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                                 ? () => _removeStop(i)
                                 : null,
                             onMyLocation: i == 0 ? _fillMyLocation : null,
+                            // Bias each field to the last stop already pinned,
+                            // so typing "Bursa" after İstanbul ranks Turkish
+                            // results first instead of Georgian ones.
+                            searchBias: _biasForStop(i),
                             onPlaceSelected: (pred, coords) {
                               setState(() {
                                 _stops[i].coords = coords;
@@ -629,7 +705,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
           _BottomBar(
             resolvedCount: _resolvedCount,
             total:         _stops.length,
-            isPlanning:    _isPlanning,
+            isPlanning:    _isPlanning || _loadingCountryData,
             onPlanRoute:   allResolved ? _planRoute : null,
           ),
         ],
@@ -648,10 +724,12 @@ class _StopRow extends StatelessWidget {
     required this.onPlaceSelected,
     this.onRemove,
     this.onMyLocation,
+    this.searchBias,
   });
   final int index, total;
   final RouteStop stop;
   final void Function(PlacePrediction, LatLng?) onPlaceSelected;
+  final LatLng? searchBias;
   final VoidCallback? onRemove;
   final VoidCallback? onMyLocation; // shown only for index == 0
 
@@ -687,6 +765,7 @@ class _StopRow extends StatelessWidget {
             hint:            _label,
             isResolved:      stop.coords != null,
             onPlaceSelected: onPlaceSelected,
+            searchBias:      searchBias,
           ),
         ),
         // GPS shortcut — only for the Start (index 0) field
@@ -1497,11 +1576,16 @@ class _PlaceField extends StatefulWidget {
     required this.hint,
     required this.isResolved,
     required this.onPlaceSelected,
+    this.searchBias,
   });
   final TextEditingController controller;
   final String hint;
   final bool isResolved;
   final void Function(PlacePrediction, LatLng?) onPlaceSelected;
+  // Ranks predictions around a known point (the previous stop, or the driver).
+  // Place search is no longer country-locked, so an unbiased query for a short
+  // name would happily suggest the other side of Europe.
+  final LatLng? searchBias;
 
   @override
   State<_PlaceField> createState() => _PlaceFieldState();
@@ -1531,7 +1615,7 @@ class _PlaceFieldState extends State<_PlaceField> {
     _timer?.cancel();
     if (q.trim().length < 2) { setState(() => _suggestions = const []); return; }
     _timer = Timer(const Duration(milliseconds: 400), () async {
-      final r = await PlacesService.autocomplete(q);
+      final r = await PlacesService.autocomplete(q, bias: widget.searchBias);
       if (mounted) { setState(() => _suggestions = r); }
     });
   }
