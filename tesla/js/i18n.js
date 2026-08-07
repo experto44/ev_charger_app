@@ -3,7 +3,7 @@
 const STRINGS = {
   ka: {
     appTitle: 'GeoCharge',
-    forTesla: 'Tesla-სთვის',
+    forTesla: 'Tesla',
     filters: 'ფილტრები',
     provider: 'პროვაიდერი',
     connector: 'კონექტორი',
@@ -26,6 +26,7 @@ const STRINGS = {
     statusOut: 'არ მუშაობს',
     statusUnknown: 'სტატუსი უცნობია',
     countries: 'ქვეყნები',
+    reloadHint: 'განახლება',
     countryGeorgia: 'საქართველო',
     countryArmenia: 'სომხეთი',
     countryTurkey: 'თურქეთი',
@@ -100,7 +101,7 @@ const STRINGS = {
   },
   en: {
     appTitle: 'GeoCharge',
-    forTesla: 'for Tesla',
+    forTesla: 'Tesla',
     filters: 'Filters',
     provider: 'Provider',
     connector: 'Connector',
@@ -123,6 +124,7 @@ const STRINGS = {
     statusOut: 'Out of service',
     statusUnknown: 'Live status not published',
     countries: 'Countries',
+    reloadHint: 'Reload',
     countryGeorgia: 'Georgia',
     countryArmenia: 'Armenia',
     countryTurkey: 'Turkey',
@@ -221,6 +223,9 @@ export function applyStaticStrings() {
   }
   for (const el of document.querySelectorAll('[data-t-placeholder]')) {
     el.placeholder = t(el.dataset.tPlaceholder);
+  }
+  for (const el of document.querySelectorAll('[data-t-title]')) {
+    el.title = t(el.dataset.tTitle);
   }
   for (const el of document.querySelectorAll('[data-lang-btn]')) {
     el.classList.toggle('is-active', el.dataset.langBtn === lang);

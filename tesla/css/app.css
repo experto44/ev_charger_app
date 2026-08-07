@@ -53,7 +53,22 @@ button {
   flex-shrink: 0;
 }
 
-.topbar__brand { display: flex; align-items: center; gap: 12px; }
+.topbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* It is a button now (tap = reload + back to the start view), but it must
+     still read as the logo, so it keeps no chrome of its own. */
+  min-height: var(--touch);
+  padding: 0 6px;
+  margin-left: -6px;
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.topbar__brand:active { background: var(--surface-2); }
 .topbar__mark  { height: 34px; }
 .topbar__title { font-size: 22px; font-weight: 700; white-space: nowrap; }
 

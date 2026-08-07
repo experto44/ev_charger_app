@@ -288,6 +288,13 @@ async function bootApp() {
 }
 
 function wireChrome() {
+  // The logo doubles as "start over": reload, which also drops the map back to
+  // MAP_CENTER / MAP_ZOOM. Cache-busted so a driver who taps it after an update
+  // is guaranteed the new build rather than whatever the car cached.
+  document.getElementById('btn-home')?.addEventListener('click', () => {
+    location.replace(location.pathname);
+  });
+
   for (const btn of document.querySelectorAll('[data-lang-btn]')) {
     btn.addEventListener('click', () => {
       setLang(btn.dataset.langBtn);
