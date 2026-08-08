@@ -4,7 +4,6 @@ import 'dart:io' show Platform;
 import 'dart:math' as math;
 
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -16,6 +15,7 @@ import 'profile_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/charger_alert_popup.dart';
 import 'screens/support_popup.dart';
+import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
@@ -50,18 +50,16 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   // Firebase Auth restores a persisted session asynchronously AFTER
-  // initializeApp returns. Without this gate a cold-started app sees
-  // currentUser == null for the first moments, so the profile button (and the
-  // premium sync in PurchaseService.init) wrongly treated a signed-in user as
-  // signed out — the "asks me to log in again on every launch" bug. The first
-  // authStateChanges event fires exactly when restoration completes (with the
-  // user or with null); the timeout keeps a hung Firebase from blocking launch.
-  try {
-    await FirebaseAuth.instance
-        .authStateChanges()
-        .first
-        .timeout(const Duration(seconds: 5));
-  } catch (_) {/* timeout — launch anyway; auth finishes restoring in background */}
+  // initializeApp returns. On Android that restore is still in flight here, and
+  // the FIRST authStateChanges event can be a spurious null — so waiting on the
+  // stream returned instantly with "signed out" and the app asked a signed-in
+  // user to log in again on every launch, while premium (read from the local
+  // cache) stayed on. AuthService keeps a persisted marker of whether a session
+  // is expected and waits only then. Started here but NOT awaited — the wait
+  // belongs in the background, not on the splash screen; whatever needs the
+  // answer (the profile button, arming a charger alert) joins this same
+  // in-flight restore rather than starting a countdown of its own.
+  unawaited(AuthService.restoreSession());
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await AppStrings.load(); // restore saved language (English/Georgian)
   // Subscriptions first (sets isPremium from cache), then ads — the ad layer
@@ -69,6 +67,11 @@ void main() async {
   // awaits the local cached-flag read; the store connection runs in the
   // background, so this never blocks launch on Play Billing.
   await PurchaseService.I.init();
+  // Registered after init() has seeded isPremium from the cache, so the two
+  // never race over the same flag. Auth can settle well after launch on a slow
+  // Android device; the watcher re-reads premium from the account the moment it
+  // does, so the device cache is never the last word on who is premium.
+  AuthService.watchSession();
   // Android initialises ads now — but UNAWAITED. MobileAds.initialize() talks
   // to Play Services and can be slow (or hang) when Play Services is unhealthy;
   // awaiting it here froze the whole launch on the splash screen. The bottom
@@ -127,6 +130,15 @@ const _kAllProviders = [
   'E-Space', 'mart EV', 'MOVEO', 'Electrify Georgia', 'EV Power GE', 'Da-Tene', 'Gadatene', 'EcoCars', 'Solar Station', 'Tegeta', 'Charger Plus',
   TurkeyService.kProvider,  // 'Turkey'        — the EPDK registry, one row for ~200 brands
   OcmService.kProvider,     // 'International' — every other OCM network
+];
+
+// Provider selection a fresh install starts with: the Georgian providers only.
+// The two group rows are opt-in — "International" because it streams Open Charge
+// Map live, "Turkey" because it is a multi-megabyte registry that is only
+// offered once the user has added Turkey to their countries in Settings.
+final _kDefaultProviders = <String>[
+  for (final p in _kAllProviders)
+    if (p != OcmService.kProvider && p != TurkeyService.kProvider) p,
 ];
 
 // CartoDB basemaps (free, retina-capable, great coverage for Georgia).
@@ -193,11 +205,12 @@ class _MapScreenState extends State<MapScreen>
 
   bool             _filterDC         = false;
   bool             _filterAvail      = false;
-  // Multi-select provider filter. Defaults to every LOCAL provider selected;
-  // "International" (OCM) is intentionally OFF at launch — the user opts in.
-  final Set<String> _selectedProviders = {
-    for (final p in _kAllProviders) if (p != OcmService.kProvider) p,
-  };
+  // Multi-select provider filter, persisted in SharedPreferences (kSelectedProviders)
+  // so the last choice is still in force after the app is killed and reopened.
+  // The default is every GEORGIAN provider selected; the two opt-in group rows
+  // ("International" / OCM and "Turkey" / EPDK) start OFF — they each pull a
+  // large remote dataset, so the user turns them on deliberately.
+  final Set<String> _selectedProviders = {..._kDefaultProviders};
   final Set<String> _filterConnectors = {};  // empty = no connector filter
 
   // Minimum-power filter, configured in the profile ("Minimum Charger Power").
@@ -210,18 +223,29 @@ class _MapScreenState extends State<MapScreen>
   // "International" provider chip checked.
   bool get _internationalOn => _selectedProviders.contains(OcmService.kProvider);
 
+  // The Turkey provider row can only be ticked once Turkey is one of the user's
+  // countries (Settings → Countries). Until then the row is shown greyed out
+  // with a hint, so nobody downloads the EPDK registry by accident.
+  bool get _turkeyAvailable => _activeCountries.contains(TurkeyService.kCountry);
+
+  // Providers the user can actually pick right now (Turkey only counts once its
+  // country is selected). Drives both "Select all" and the filter badge.
+  List<String> get _availableProviders => [
+        for (final p in _kAllProviders)
+          if (p != TurkeyService.kProvider || _turkeyAvailable) p,
+      ];
+
   // The Turkish (EPDK) dataset loads only when the user both selected Turkey in
   // Settings and left its provider row checked — it's a multi-megabyte file, so
   // we never pull it for someone who is not looking at Turkey.
   bool get _turkeyOn =>
-      _selectedProviders.contains(TurkeyService.kProvider) &&
-      _activeCountries.contains(TurkeyService.kCountry);
+      _selectedProviders.contains(TurkeyService.kProvider) && _turkeyAvailable;
 
   // Filter is "active" (badge shown) only for a proper, non-empty subset.
   // Empty set or all-selected both mean "show every provider".
   bool get _providerFilterActive =>
       _selectedProviders.isNotEmpty &&
-      _selectedProviders.length != _kAllProviders.length;
+      _selectedProviders.length != _availableProviders.length;
 
   LatLng?               _userPos;
   // Live GPS subscription so the location pin follows the device as it moves;
@@ -338,6 +362,7 @@ class _MapScreenState extends State<MapScreen>
     final p = await SharedPreferences.getInstance();
     final rawConn  = p.getString(kDefaultConnector);
     final rawCntry = p.getString(kActiveCountries);
+    final rawProv  = p.getString(kSelectedProviders);
     if (!mounted) { return; }
     // Back-compat: older versions stored a single connector as a plain string
     // (not JSON). Try the new list format first, then fall back.
@@ -361,12 +386,30 @@ class _MapScreenState extends State<MapScreen>
               (jsonDecode(rawCntry) as List).map((e) => e as String).toSet();
         } catch (_) {/* keep default */}
       }
+      // Restore the saved provider selection. Only names we still ship are kept,
+      // and Turkey is dropped unless its country is (still) selected — so a
+      // stale entry can never resurrect a provider the user can't see.
+      if (rawProv != null) {
+        try {
+          final saved = (jsonDecode(rawProv) as List)
+              .map((e) => e as String)
+              .where(_kAllProviders.contains)
+              .where((p) =>
+                  p != TurkeyService.kProvider ||
+                  _activeCountries.contains(TurkeyService.kCountry))
+              .toSet();
+          _selectedProviders
+            ..clear()
+            ..addAll(saved);
+        } catch (_) {/* keep default */}
+      }
     });
-    // OCM loads viewport-first; the map's onMapReady kicks off the initial load.
-    // Turkey has no viewport fallback, and this runs asynchronously against
-    // onMapReady, so kick its load off here too once the saved countries are
-    // in — otherwise a slow prefs read leaves Turkey empty until the user
-    // reopens Settings. Both entry points are idempotent (TurkeyService caches).
+    // Both datasets are also kicked off by the map's onMapReady, but that can
+    // fire BEFORE this async prefs read completes — in which case it ran against
+    // the defaults and would leave a restored "International"/"Turkey" selection
+    // with no data until the user reopened a sheet. Re-run them here now that the
+    // saved selection is in; both entry points are idempotent (results cached).
+    _loadOcmCountries();
     _loadTurkey();
   }
 
@@ -398,25 +441,12 @@ class _MapScreenState extends State<MapScreen>
   // Opens Profile (or Login when signed out) — shared by the search-bar avatar
   // and the "My Ports" filter chip.
   //
-  // Auth restore is NOT reliably finished by the time this runs. On Android,
-  // Firebase Auth restores the persisted session a moment after launch, and its
-  // FIRST authStateChanges event can be a spurious `null` before the SharedPrefs
-  // session is loaded — so the startup gate in main() can return early and this
-  // synchronous currentUser read can momentarily see `null` even for a signed-in
-  // user. A profile tap right after opening the app then wrongly demanded a
-  // fresh Google login on every launch (the reported Android bug). So when we
-  // see no user, wait a short, bounded window for restoration to settle before
-  // falling back to Login; a genuinely signed-out user just waits it out once.
+  // Auth restore is NOT reliably finished by the time this runs — a profile tap
+  // right after launch used to demand a fresh Google login on Android because
+  // currentUser was still null. restoreSession() waits that out (only when a
+  // session is actually expected), so Login is shown to signed-out users only.
   Future<void> _openProfile() async {
-    var user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      try {
-        user = await FirebaseAuth.instance
-            .authStateChanges()
-            .firstWhere((u) => u != null)
-            .timeout(const Duration(seconds: 3), onTimeout: () => null);
-      } catch (_) {/* stream error — treat as signed out, show Login */}
-    }
+    final user = await AuthService.restoreSession();
     if (!mounted) { return; }
     await Navigator.push<void>(
       context,
@@ -497,17 +527,31 @@ class _MapScreenState extends State<MapScreen>
     if (picked > 0) { await p.setInt(kMinPowerKw, picked); }
   }
 
+  // Persist the provider selection so it survives the app being killed. Written
+  // on every toggle — the sheet has no "apply" button, each tap is the decision.
+  Future<void> _saveProviders() async {
+    final p = await SharedPreferences.getInstance();
+    await p.setString(kSelectedProviders, jsonEncode(_selectedProviders.toList()));
+  }
+
   // Re-read the saved country selection after returning from Settings, then
   // refresh the live OCM data for the current viewport under the new selection.
   Future<void> _reloadCountries() async {
     final p   = await SharedPreferences.getInstance();
     final raw = p.getString(kActiveCountries);
     if (!mounted) { return; }
+    var dropTurkey = false;
     setState(() {
       _activeCountries = raw == null
           ? {'Georgia'}
           : (jsonDecode(raw) as List).map((e) => e as String).toSet();
+      // Dropping Turkey from the countries also retires its provider row, so the
+      // checkbox can't stay ticked behind a row the user can no longer see.
+      if (!_turkeyAvailable) {
+        dropTurkey = _selectedProviders.remove(TurkeyService.kProvider);
+      }
     });
+    if (dropTurkey) { await _saveProviders(); }
     _loadOcmCountries();
     _loadTurkey();
   }
@@ -598,7 +642,16 @@ class _MapScreenState extends State<MapScreen>
 
   Future<void> _fetchOcmViewport() async {
     if (!mounted || !_internationalOn) { return; }
-    final cam = _mapCtrl.camera;
+    // Reading the camera throws until FlutterMap has attached the controller.
+    // Restoring a saved "International" selection can schedule this before the
+    // first layout, so treat "no camera yet" as nothing to fetch — onMapReady
+    // runs the same load again the moment the map is up.
+    final MapCamera cam;
+    try {
+      cam = _mapCtrl.camera;
+    } catch (_) {
+      return;
+    }
     if (cam.zoom < _kOcmViewportMinZoom) { return; }
     // Locally-covered countries (Georgia, Armenia) ship richer provider data —
     // never overlay OCM pins on top of them.
@@ -846,11 +899,15 @@ class _MapScreenState extends State<MapScreen>
         builder: (_, setSheet) => _ProviderFilterSheet(
           all:      _kAllProviders,
           selected: _selectedProviders,
+          // Turkey stays greyed out until its country is picked in Settings.
+          turkeyAvailable: _turkeyAvailable,
           // Master checkbox: select/deselect every LOCAL provider at once.
           // "International" is intentionally left out — it gates the OCM data
-          // load, so it only ever changes via its own row.
+          // load, so it only ever changes via its own row. Turkey is left out
+          // too while its country isn't selected, so "Select all" can never tick
+          // a row the user isn't allowed to tick by hand.
           onToggleAll: () {
-            final locals = _kAllProviders
+            final locals = _availableProviders
                 .where((p) => p != OcmService.kProvider)
                 .toList();
             final allOn = locals.every(_selectedProviders.contains);
@@ -862,11 +919,14 @@ class _MapScreenState extends State<MapScreen>
               }
             });
             setSheet(() {});
+            unawaited(_saveProviders());
             // "Select all" covers the Turkey group too, so its dataset has to
             // load (or clear) with it.
             _loadTurkey();
           },
           onToggle: (p) {
+            // Turkey isn't tappable before its country is selected.
+            if (p == TurkeyService.kProvider && !_turkeyAvailable) { return; }
             setState(() {
               if (_selectedProviders.contains(p)) {
                 _selectedProviders.remove(p);
@@ -875,6 +935,7 @@ class _MapScreenState extends State<MapScreen>
               }
             });
             setSheet(() {});
+            unawaited(_saveProviders());
             // Toggling "International" loads/clears the OCM stations for the
             // user's selected countries.
             if (p == OcmService.kProvider)  { _loadOcmCountries(); }
@@ -1634,11 +1695,14 @@ class _ProviderFilterSheet extends StatelessWidget {
   const _ProviderFilterSheet({
     required this.all,
     required this.selected,
+    required this.turkeyAvailable,
     required this.onToggle,
     required this.onToggleAll,
   });
   final List<String>       all;
   final Set<String>        selected;
+  /// Turkey is in the user's countries (Settings), so its row can be ticked.
+  final bool               turkeyAvailable;
   final ValueChanged<String> onToggle;
   final VoidCallback       onToggleAll;
 
@@ -1699,6 +1763,8 @@ class _ProviderFilterSheet extends StatelessWidget {
                       Builder(builder: (_) {
                         final locals = all
                             .where((p) => p != OcmService.kProvider)
+                            .where((p) =>
+                                p != TurkeyService.kProvider || turkeyAvailable)
                             .toList();
                         final allOn = locals.every(selected.contains);
                         return InkWell(
@@ -1728,21 +1794,31 @@ class _ProviderFilterSheet extends StatelessWidget {
                       // One checkbox row per known provider — toggles apply immediately.
                       ...all.map((p) {
                         final on = selected.contains(p);
+                        // Turkey can only be ticked once the user has added
+                        // Turkey to their countries in Settings — until then the
+                        // row is greyed out and says what to do about it.
+                        final locked =
+                            p == TurkeyService.kProvider && !turkeyAvailable;
                         // The two group rows stand for whole networks of
                         // operators rather than one brand, so they say so.
                         final subtitle = p == TurkeyService.kProvider
-                            ? 'Every licensed network (EPDK registry)'
+                            ? (locked
+                                ? 'Add Turkey in Settings → Countries first'
+                                : 'Every licensed network (EPDK registry)')
                             : p == OcmService.kProvider
                                 ? 'Open Charge Map, outside Georgia'
                                 : null;
                         return InkWell(
-                          onTap: () => onToggle(p),
+                          onTap: locked ? null : () => onToggle(p),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
                             child: Row(children: [
                               Icon(
                                 on ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
-                                color: on ? _emerald : _textSec, size: 24,
+                                color: locked
+                                    ? const Color(0xFF555555)
+                                    : on ? _emerald : _textSec,
+                                size: 24,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -1751,14 +1827,20 @@ class _ProviderFilterSheet extends StatelessWidget {
                                   children: [
                                     Text(
                                       p == TurkeyService.kProvider ? '🇹🇷 Turkey' : p,
-                                      style: const TextStyle(
-                                          color: _textPri, fontSize: 15,
+                                      style: TextStyle(
+                                          color: locked
+                                              ? const Color(0xFF666666)
+                                              : _textPri,
+                                          fontSize: 15,
                                           fontWeight: FontWeight.w500),
                                     ),
                                     if (subtitle != null)
                                       Text(subtitle,
-                                          style: const TextStyle(
-                                              color: _textSec, fontSize: 11)),
+                                          style: TextStyle(
+                                              color: locked
+                                                  ? const Color(0xFF666666)
+                                                  : _textSec,
+                                              fontSize: 11)),
                                   ],
                                 ),
                               ),
@@ -2131,18 +2213,8 @@ class _StationSheetState extends State<_StationSheet> {
   // True if a user is signed in. Auth state can be spuriously null for a moment
   // right after launch while the session restores, so wait out a short, bounded
   // window before concluding signed-out (same guard as _openProfile).
-  Future<bool> _hasSession() async {
-    if (FirebaseAuth.instance.currentUser != null) { return true; }
-    try {
-      final u = await FirebaseAuth.instance
-          .authStateChanges()
-          .firstWhere((user) => user != null)
-          .timeout(const Duration(seconds: 3), onTimeout: () => null);
-      return u != null;
-    } catch (_) {
-      return false;
-    }
-  }
+  Future<bool> _hasSession() async =>
+      await AuthService.restoreSession() != null;
 
   // Arm / cancel a "notify me when it frees up" alert. [connector] scopes it to
   // one plug type (from a per-connector button); empty = whole-station alert.

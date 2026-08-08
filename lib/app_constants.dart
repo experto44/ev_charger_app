@@ -3,6 +3,7 @@
 // ── SharedPreferences keys ────────────────────────────────────────────────────
 const kDefaultConnector = 'default_connector';   // JSON list of connector labels
 const kActiveCountries  = 'active_countries';     // JSON list of country names
+const kSelectedProviders = 'selected_providers';  // JSON list of provider names
 const kSupportPopupLastShown = 'support_popup_last_shown'; // int: epoch ms of last show
 const kMinPowerEnabled  = 'min_power_enabled';    // bool: min-power map filter on/off
 const kMinPowerKw       = 'min_power_kw';         // int: minimum charger power in kW

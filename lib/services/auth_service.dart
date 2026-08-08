@@ -8,6 +8,7 @@ import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import 'purchase_service.dart';
@@ -18,6 +19,90 @@ class AuthService {
   static final _firestore = FirebaseFirestore.instance;
   static final _google    = GoogleSignIn();
   static final _functions = FirebaseFunctions.instance;
+
+  // ── Session marker ────────────────────────────────────────────────────────────
+  // Firebase Auth restores a persisted session asynchronously, and on Android it
+  // is NOT finished when Firebase.initializeApp() returns: currentUser reads null
+  // and the first authStateChanges event can be a spurious null before the stored
+  // session is loaded. Nothing in the SDK distinguishes "still restoring" from
+  // "genuinely signed out", which is why waiting on the stream alone kept letting
+  // the Login screen through on launch (the reported Android bug — premium stayed
+  // on because it comes from the local cache, while auth looked signed out).
+  //
+  // So we keep our own marker: written true on every successful sign-in and
+  // whenever a restored user is observed, false only on an explicit sign-out or
+  // account deletion. It tells us whether a session is *expected*, and therefore
+  // whether a null currentUser is worth waiting out. iOS never hit this because
+  // its restore completes before the first frame.
+  static const _kHadSession = 'auth_had_session';
+
+  static Future<void> _rememberSession(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kHadSession, value);
+  }
+
+  // One shared wait, so a profile tap during startup joins the restore already
+  // running instead of starting a second countdown of its own.
+  static Future<User?>? _pendingRestore;
+
+  /// The signed-in user, waiting out the Android restore race first.
+  ///
+  /// Returns immediately when a user is already present, and immediately with
+  /// null when the marker says nobody is signed in (so a genuinely signed-out
+  /// user never waits). Otherwise polls until restore lands or [timeout] passes.
+  /// A missing marker (a fresh install, or an upgrade from a build before the
+  /// marker existed — where a session may well be persisted) is treated as
+  /// "maybe" and waits. main() starts this at launch WITHOUT awaiting it, so
+  /// that one-off wait is spent in the background rather than on the splash.
+  static Future<User?> restoreSession({
+    Duration timeout = const Duration(seconds: 4),
+  }) {
+    final current = _auth.currentUser;
+    if (current != null) {
+      unawaited(_rememberSession(true));
+      return Future<User?>.value(current);
+    }
+    return _pendingRestore ??= _waitForRestore(timeout)
+        .whenComplete(() => _pendingRestore = null);
+  }
+
+  static Future<User?> _waitForRestore(Duration timeout) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_kHadSession) == false) { return null; }
+
+    final deadline = DateTime.now().add(timeout);
+    while (DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      final user = _auth.currentUser;
+      if (user != null) {
+        unawaited(_rememberSession(true));
+        return user;
+      }
+    }
+    // Restore had its chance and produced nobody. Record that, so the wait above
+    // can't repeat on every launch of a never-signed-in install.
+    await _rememberSession(false);
+    return null;
+  }
+
+  /// Keeps the rest of the app in step with auth state however late it settles.
+  /// Called once from main(): when the restored user finally appears, premium is
+  /// re-read from that account (replacing whatever the local cache held) and the
+  /// open is stamped for analytics. Without this, a launch that lost the restore
+  /// race left premium sourced from the device cache alone.
+  static void watchSession() {
+    String? lastUid;
+    _auth.authStateChanges().listen((user) {
+      // Null is either the pre-restore blank or a real sign-out; both should let
+      // the same account re-sync if it signs back in.
+      if (user == null) { lastUid = null; return; }
+      if (user.uid == lastUid) { return; }
+      lastUid = user.uid;
+      unawaited(_rememberSession(true));
+      unawaited(PurchaseService.I.syncPremiumFromFirestore());
+      unawaited(UserActivityService.I.recordOpen());
+    });
+  }
 
   // Sends the branded verification email (noreply@geocharge.ge, Zoho SMTP) via
   // the sendVerificationEmail Cloud Function. Falls back to Firebase's default
@@ -45,6 +130,9 @@ class AuthService {
       email: email.trim(),
       password: password,
     );
+    // Remember that a session now exists, so a later cold start waits for the
+    // restore instead of concluding signed-out (see [restoreSession]).
+    await _rememberSession(true);
     // Pull this account's premium status from Firestore into local state.
     await PurchaseService.I.syncPremiumFromFirestore();
     // Best-effort: stamp/refresh usage analytics for the admin panel.
@@ -60,6 +148,7 @@ class AuthService {
       password: password,
     );
     await _sendBrandedVerification();
+    await _rememberSession(true);
     // New account starts with no premium; sync clears any premium the previous
     // user left cached on this device.
     await PurchaseService.I.syncPremiumFromFirestore();
@@ -89,6 +178,9 @@ class AuthService {
       idToken:     googleAuth.idToken,
     );
     final cred = await _auth.signInWithCredential(credential);
+    // Remember that a session now exists, so a later cold start waits for the
+    // restore instead of concluding signed-out (see [restoreSession]).
+    await _rememberSession(true);
     // Pull this account's premium status from Firestore into local state.
     await PurchaseService.I.syncPremiumFromFirestore();
     // Best-effort: stamp/refresh usage analytics for the admin panel.
@@ -169,6 +261,7 @@ class AuthService {
       await wipeAndDelete();
     }
 
+    await _rememberSession(false);
     await PurchaseService.I.clearLocalPremium();
     try { await _google.signOut(); } catch (_) {}
   }
@@ -208,6 +301,8 @@ class AuthService {
       _auth.signOut(),
       _google.signOut(),
     ]);
+    // No session to wait for on the next launch — the Login screen is correct now.
+    await _rememberSession(false);
     // Premium is per-account: drop the local cache so the next user on this
     // device doesn't inherit it. The account's Firestore record is untouched.
     await PurchaseService.I.clearLocalPremium();
