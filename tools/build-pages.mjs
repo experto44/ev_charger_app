@@ -1730,7 +1730,8 @@ ${ROUTES.map((r) => {
 // script, not this one. This file still has to know their URLs, because the
 // sitemap and the IndexNow submission are both built here. Keep in sync.
 const ARTICLE_SLUGS = ['datenvis-fasi', 'konektorebi', 'ac-da-dc', 'shori-mgzavroba',
-  'amerikuli-importi', 'chinuri-importi', 'zamtari', 'sakhlis-damteni', '100-km-fasi', 'batarea'];
+  'amerikuli-importi', 'chinuri-importi', 'zamtari', 'sakhlis-damteni', '100-km-fasi', 'batarea',
+  'batareis-cveta'];
 
 // Every indexable URL on geocharge.ge that this script does not itself render:
 // the two hand-written home pages and everything under /blog/.

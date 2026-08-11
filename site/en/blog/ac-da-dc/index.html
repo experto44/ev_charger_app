@@ -230,6 +230,24 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 .key p{margin:0;color:#1B5E42;font-size:16.5px;line-height:1.7}
 .key p+p{margin-top:10px}
 .meta{color:#8B98A1;font-size:13.5px;margin:0 0 28px}
+/* Figures are hand-authored inline SVG: no external asset, no layout shift, and
+   they inherit the palette below, so a token change repaints them for free. */
+.fig{margin:0 0 26px;border:1px solid var(--line);border-radius:18px;
+padding:20px clamp(12px,2.4vw,22px) 14px;background:var(--soft)}
+/* Below ~600px the figure scrolls sideways instead of shrinking its labels into
+   illegibility, the same trade the .tw tables already make. */
+.fig .fs{overflow-x:auto}
+.fig svg{display:block;width:100%;min-width:560px;height:auto}
+.fig figcaption{color:var(--ink-2);font-size:14px;line-height:1.6;margin-top:14px;text-wrap:pretty}
+.fig .fx{font:500 14.5px 'Poppins','Noto Sans Georgian',sans-serif;fill:var(--ink-2)}
+.fig .fk{font:600 15px 'Poppins','Noto Sans Georgian',sans-serif;fill:var(--ink)}
+/* An ol, so .prose ul rules do not reach it; the inherited .prose li dot would
+   double up with the number, hence the reset. */
+.src{margin:0 0 18px;padding-left:24px;display:grid;gap:11px}
+.src li{padding-left:0;color:var(--ink-2);font-size:15px;line-height:1.65}
+.src li::before{content:none}
+.src a{color:var(--accent-d);font-weight:500;text-decoration:none}
+.src a:hover{text-decoration:underline}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:16px;margin:0}
 .acard{display:block;background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px;text-decoration:none}
 .acard:hover{border-color:var(--accent);box-shadow:0 12px 32px -18px rgba(23,153,95,.35)}
@@ -277,6 +295,7 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <details><summary>How long does it take to charge an EV?</summary><p>A 60 kWh battery goes from 20 to 80 percent in about 20 minutes on a 150 kW DC charger, or about 5 hours on a 7 kW AC charger.</p></details>
 <details><summary>How many fast chargers are there in Georgia?</summary><p>Roughly 390 fast DC chargers and 220 slow AC ones, out of more than 600 public stations.</p></details>
 </div>
+
 </div>
 
 <h2>More guides</h2>
@@ -285,11 +304,12 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <a class="acard" href="/en/blog/konektorebi/"><b>CCS2, GB/T, Type 2: which connector do you need in Georgia</b><span>CCS2 and GB/T dominate Georgian charging. Which one matches your car, and how many stations of each exist in the country.</span></a>
 <a class="acard" href="/en/blog/shori-mgzavroba/"><b>Driving long distance in Georgia by EV: a practical guide</b><span>Tbilisi to Batumi needs one stop. Where the chargers are on the main routes, and how to plan the drive.</span></a>
 <a class="acard" href="/en/blog/amerikuli-importi/"><b>Importing an EV from the US: where you will charge it in Georgia</b><span>A US-spec car has CCS1, NACS or Type 1. Georgia has 29 such stations in total. What adapters do and what to check before you buy.</span></a>
-<a class="acard" href="/en/blog/chinuri-importi/"><b>Chinese EVs in Georgia: the GB/T connector and where to charge</b><span>GB/T is on 347 stations in Georgia, almost as many as European CCS2. Why that is good news if you drive a Chinese import.</span></a>
+<a class="acard" href="/en/blog/chinuri-importi/"><b>Chinese EVs in Georgia: the GB/T connector and where to charge</b><span>GB/T is on 351 stations in Georgia, almost as many as European CCS2. Why that is good news if you drive a Chinese import.</span></a>
 <a class="acard" href="/en/blog/zamtari/"><b>Driving an EV through a Georgian winter: range, charging and the mountains</b><span>Cold weather costs up to a third of your range. Bakuriani has 6 chargers and none of them fast, Stepantsminda 2. How to plan for it.</span></a>
 <a class="acard" href="/en/blog/sakhlis-damteni/"><b>Home charger installation: what it needs and what drives the price</b><span>A normal socket, a 7 kW wallbox or three phase. What a flat and a house each need, what to insist on from the electrician, and when a wallbox is not worth buying.</span></a>
 <a class="acard" href="/en/blog/100-km-fasi/"><b>Electric or petrol: what 100 km actually costs in Georgia</b><span>100 km on a fast charger is 14.04 GEL against 28.72 on petrol. Where that gap comes from and what the calculation leaves out.</span></a>
 <a class="acard" href="/en/blog/batarea/"><b>Battery degradation: what actually happens, and what it means in Georgia</b><span>A battery loses roughly 1 to 2 percent a year. Why Georgian summers and living in a flat are the two real risks here, and what to check when buying used.</span></a>
+<a class="acard" href="/en/blog/batareis-cveta/"><b>Battery wear by mileage: Tesla, Nissan Leaf and Chinese models</b><span>Measured figures rather than guesswork: what is left of the pack at 50,000, 100,000 and 200,000 km on a Tesla, a Nissan Leaf, a Chinese model and a hybrid. And which cars are the high risk group.</span></a>
 </div>
 
 <h2>See also</h2>

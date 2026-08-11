@@ -218,6 +218,24 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://geocharge.ge/blog/batareis-cveta/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/batareis-cveta/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/blog/batareis-cveta/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/blog/batareis-cveta/"/>
+    <lastmod>2026-08-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/blog/batareis-cveta/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/batareis-cveta/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/blog/batareis-cveta/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/blog/batareis-cveta/"/>
+    <lastmod>2026-08-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://geocharge.ge/privacy-policy.html</loc>
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/privacy-policy.html"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/privacy-policy.html"/>

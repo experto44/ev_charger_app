@@ -230,6 +230,24 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 .key p{margin:0;color:#1B5E42;font-size:16.5px;line-height:1.7}
 .key p+p{margin-top:10px}
 .meta{color:#8B98A1;font-size:13.5px;margin:0 0 28px}
+/* Figures are hand-authored inline SVG: no external asset, no layout shift, and
+   they inherit the palette below, so a token change repaints them for free. */
+.fig{margin:0 0 26px;border:1px solid var(--line);border-radius:18px;
+padding:20px clamp(12px,2.4vw,22px) 14px;background:var(--soft)}
+/* Below ~600px the figure scrolls sideways instead of shrinking its labels into
+   illegibility, the same trade the .tw tables already make. */
+.fig .fs{overflow-x:auto}
+.fig svg{display:block;width:100%;min-width:560px;height:auto}
+.fig figcaption{color:var(--ink-2);font-size:14px;line-height:1.6;margin-top:14px;text-wrap:pretty}
+.fig .fx{font:500 14.5px 'Poppins','Noto Sans Georgian',sans-serif;fill:var(--ink-2)}
+.fig .fk{font:600 15px 'Poppins','Noto Sans Georgian',sans-serif;fill:var(--ink)}
+/* An ol, so .prose ul rules do not reach it; the inherited .prose li dot would
+   double up with the number, hence the reset. */
+.src{margin:0 0 18px;padding-left:24px;display:grid;gap:11px}
+.src li{padding-left:0;color:var(--ink-2);font-size:15px;line-height:1.65}
+.src li::before{content:none}
+.src a{color:var(--accent-d);font-weight:500;text-decoration:none}
+.src a:hover{text-decoration:underline}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:16px;margin:0}
 .acard{display:block;background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px;text-decoration:none}
 .acard:hover{border-color:var(--accent);box-shadow:0 12px 32px -18px rgba(23,153,95,.35)}
@@ -309,6 +327,7 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <details><summary>შემიძლია თუ არა ბინაში დამტენის დაყენება?</summary><p>შესაძლებელია, მაგრამ სამი პირობა უნდა შესრულდეს: სადგომზე მესაკუთრეთა ამხანაგობის თანხმობა, თქვენი მრიცხველიდან ცალკე ხაზი და შემოყვანაზე თავისუფალი სიმძლავრე. სამივე ცალკე მოგვარებადია, თუმცა სწორედ მესამე აჩერებს პროექტს ყველაზე ხშირად.</p></details>
 <details><summary>სამფაზიანი დამტენი უკეთესია თუ ერთფაზიანი?</summary><p>უკეთესია მხოლოდ მაშინ, თუ სამი ფაზა შემოყვანილი გაქვთ და მანქანაც 11 ან 22 კილოვატს იღებს. ერთფაზიან შემოყვანაზე სამფაზიანი აპარატი იმავე 7.4 კილოვატს მოგცემთ, რასაც ერთფაზიანი.</p></details>
 </div>
+
 </div>
 
 <h2>სხვა სტატიები</h2>
@@ -318,10 +337,11 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <a class="acard" href="/blog/ac-da-dc/"><b>AC თუ DC: რით განსხვავდება ნელი და სწრაფი დატენვა</b><span>საქართველოს 600-ზე მეტი დამტენიდან დაახლოებით 390 სწრაფი DC-ა, 220 კი ნელი AC. რომელი როდის გამოვიყენოთ.</span></a>
 <a class="acard" href="/blog/shori-mgzavroba/"><b>შორი მგზავრობა ელექტრომობილით საქართველოში: პრაქტიკული გზამკვლევი</b><span>თბილისიდან ბათუმამდე ერთი გაჩერება საკმარისია. სად არის დამტენები მთავარ მარშრუტებზე და როგორ დავგეგმოთ გზა.</span></a>
 <a class="acard" href="/blog/amerikuli-importi/"><b>ამერიკიდან ჩამოყვანილი ელექტრომობილი: სად დატენავთ საქართველოში</b><span>ამერიკული სპეციფიკაციის მანქანას CCS1, NACS ან Type 1 აქვს. საქართველოში ასეთი დამტენი სულ 29-ია. რა ვქნათ ადაპტერით და რა შევამოწმოთ ყიდვამდე.</span></a>
-<a class="acard" href="/blog/chinuri-importi/"><b>ჩინური ელექტრომობილი საქართველოში: GB/T კონექტორი და დატენვა</b><span>GB/T კონექტორი საქართველოში 347 სადგურზეა, თითქმის იმდენზე, რამდენზეც ევროპული CCS2. რატომ არის ეს კარგი ამბავი ჩინური მანქანის მფლობელისთვის.</span></a>
+<a class="acard" href="/blog/chinuri-importi/"><b>ჩინური ელექტრომობილი საქართველოში: GB/T კონექტორი და დატენვა</b><span>GB/T კონექტორი საქართველოში 351 სადგურზეა, თითქმის იმდენზე, რამდენზეც ევროპული CCS2. რატომ არის ეს კარგი ამბავი ჩინური მანქანის მფლობელისთვის.</span></a>
 <a class="acard" href="/blog/zamtari/"><b>ელექტრომობილი ზამთარში საქართველოში: გარბენი, დატენვა და მთა</b><span>ცივ ამინდში გარბენი მესამედამდე ეცემა. ბაკურიანში 6 დამტენია და არცერთი სწრაფი, სტეფანწმინდაში 2. როგორ დავგეგმოთ ზამთარი.</span></a>
 <a class="acard" href="/blog/100-km-fasi/"><b>ელექტრომობილი თუ ბენზინი: 100 კილომეტრის რეალური ღირებულება</b><span>100 კილომეტრი სწრაფ დამტენზე 14.04 ლარია, ბენზინის მანქანით კი 28.72. სად ჩერდება ეს სხვაობა და რა არ შედის ამ ანგარიშში.</span></a>
 <a class="acard" href="/blog/batarea/"><b>ბატარეის დეგრადაცია: რა ხდება რეალურად და რას ნიშნავს ეს საქართველოში</b><span>ბატარეა წელიწადში დაახლოებით 1-2 პროცენტს კარგავს. რატომ არის საქართველოს სიცხე და ბინაში ცხოვრება ორი მთავარი რისკი და რა შეამოწმოთ მეორადი მანქანის ყიდვისას.</span></a>
+<a class="acard" href="/blog/batareis-cveta/"><b>ბატარეის ცვეთა გარბენის მიხედვით: ტესლა, ნისან ლიფი და ჩინური მოდელები</b><span>გაზომილი ციფრები და არა ვარაუდი: რამდენი რჩება ბატარეას 50 000, 100 000 და 200 000 კილომეტრზე ტესლაზე, ნისან ლიფზე, ჩინურ მოდელებზე და ჰიბრიდზე. რომელია მაღალი რისკის ჯგუფი.</span></a>
 </div>
 
 <h2>იხილეთ ასევე</h2>

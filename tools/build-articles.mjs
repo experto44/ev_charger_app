@@ -113,6 +113,24 @@ const PROSE = `
 .key p{margin:0;color:#1B5E42;font-size:16.5px;line-height:1.7}
 .key p+p{margin-top:10px}
 .meta{color:#8B98A1;font-size:13.5px;margin:0 0 28px}
+/* Figures are hand-authored inline SVG: no external asset, no layout shift, and
+   they inherit the palette below, so a token change repaints them for free. */
+.fig{margin:0 0 26px;border:1px solid var(--line);border-radius:18px;
+padding:20px clamp(12px,2.4vw,22px) 14px;background:var(--soft)}
+/* Below ~600px the figure scrolls sideways instead of shrinking its labels into
+   illegibility, the same trade the .tw tables already make. */
+.fig .fs{overflow-x:auto}
+.fig svg{display:block;width:100%;min-width:560px;height:auto}
+.fig figcaption{color:var(--ink-2);font-size:14px;line-height:1.6;margin-top:14px;text-wrap:pretty}
+.fig .fx{font:500 14.5px 'Poppins','Noto Sans Georgian',sans-serif;fill:var(--ink-2)}
+.fig .fk{font:600 15px 'Poppins','Noto Sans Georgian',sans-serif;fill:var(--ink)}
+/* An ol, so .prose ul rules do not reach it; the inherited .prose li dot would
+   double up with the number, hence the reset. */
+.src{margin:0 0 18px;padding-left:24px;display:grid;gap:11px}
+.src li{padding-left:0;color:var(--ink-2);font-size:15px;line-height:1.65}
+.src li::before{content:none}
+.src a{color:var(--accent-d);font-weight:500;text-decoration:none}
+.src a:hover{text-decoration:underline}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:16px;margin:0}
 .acard{display:block;background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px;text-decoration:none}
 .acard:hover{border-color:var(--accent);box-shadow:0 12px 32px -18px rgba(23,153,95,.35)}
@@ -120,6 +138,101 @@ const PROSE = `
 .acard span{display:block;color:var(--ink-2);font-size:14.5px;line-height:1.6}
 .links{display:flex;flex-wrap:wrap;gap:10px;margin:0}
 `.trim();
+
+// ---------------------------------------------------------------------------
+// Figures for the degradation article. Inline SVG rather than images: they stay
+// sharp, cost no request, and follow the palette. Every plotted point is a
+// measurement cited in the article body, so the label dictionaries carry only
+// wording; move a number here and you have to move it in the prose too.
+// ---------------------------------------------------------------------------
+
+// Battery health against distance. Y axis 60 to 100 percent, X axis 0 to 250
+// thousand km, both linear.
+const X = (km) => 70 + (km / 250000) * 660;
+const Y = (soh) => 300 - ((soh - 60) / 40) * 270;
+const line = (pts, colour, dash) => {
+  const p = pts.map(([k, s]) => `${X(k).toFixed(1)},${Y(s).toFixed(1)}`).join(' ');
+  return `<polyline points="${p}" fill="none" stroke="${colour}" stroke-width="3"
+stroke-linecap="round" stroke-linejoin="round"${dash ? ` stroke-dasharray="${dash}"` : ''}/>
+${pts.map(([k, s]) => `<circle cx="${X(k).toFixed(1)}" cy="${Y(s).toFixed(1)}" r="4.5" fill="${colour}"/>`).join('')}`;
+};
+
+// Anchored on the cited measurements and kept monotonic: health does not
+// recover, so a curve that rises would read as a charting error. Where two
+// sources disagree at the same distance the fleet figure wins over the single
+// car, and the single car is quoted in the prose instead.
+const CURVE = {
+  lfp: [[0, 100], [50000, 95.5], [100000, 93.3], [160000, 91.5], [250000, 89.5]],
+  nca: [[0, 100], [50000, 95], [100000, 90.5], [160000, 89.7], [250000, 88]],
+  air: [[0, 100], [50000, 90], [100000, 80], [160000, 72], [250000, 63]],
+};
+
+const figCurve = (t) => `<figure class="fig">
+<div class="fs"><svg viewBox="0 0 760 410" role="img" aria-label="${esc(t.alt)}">
+<g stroke="var(--line)" stroke-width="1">
+${[100, 90, 80, 70, 60].map((v) => `<line x1="70" y1="${Y(v)}" x2="730" y2="${Y(v)}"/>`).join('')}
+</g>
+<g class="fx" text-anchor="end">
+${[100, 90, 80, 70, 60].map((v) => `<text x="58" y="${Y(v) + 4}">${v}%</text>`).join('')}
+</g>
+<g class="fx" text-anchor="middle">
+${[0, 50, 100, 150, 200, 250].map((k) => `<text x="${X(k * 1000)}" y="326">${k}</text>`).join('')}
+<text x="400" y="352" class="fk">${esc(t.xlab)}</text>
+</g>
+${line(CURVE.air, '#C2410C')}
+${line(CURVE.nca, 'var(--ink)')}
+${line(CURVE.lfp, 'var(--accent-d)')}
+<g class="fk">
+<line x1="70" y1="381" x2="104" y2="381" stroke="var(--accent-d)" stroke-width="3" stroke-linecap="round"/>
+<text x="114" y="386">${esc(t.lfp)}</text>
+<line x1="70" y1="405" x2="104" y2="405" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>
+<text x="114" y="410">${esc(t.nca)}</text>
+<line x1="430" y1="381" x2="464" y2="381" stroke="#C2410C" stroke-width="3" stroke-linecap="round"/>
+<text x="474" y="386">${esc(t.air)}</text>
+</g>
+</svg></div>
+<figcaption>${t.cap}</figcaption>
+</figure>`;
+
+// The Leaf capacity gauge, whose first segment is worth more than twice any of
+// the others. Drawn because no sentence explains that as fast as the picture.
+const BARW = 34, BARG = 6, BARX = 40;
+const barRow = (y, lit) => Array.from({ length: 12 }, (_, i) =>
+  `<rect x="${BARX + i * (BARW + BARG)}" y="${y}" width="${BARW}" height="46" rx="5"
+fill="${i < lit ? 'var(--accent)' : '#fff'}" stroke="${i < lit ? 'var(--accent-d)' : 'var(--line)'}" stroke-width="1.5"/>`).join('');
+
+const figBars = (t) => `<figure class="fig">
+<div class="fs"><svg viewBox="0 0 760 270" role="img" aria-label="${esc(t.alt)}">
+${t.rows.map((r, n) => {
+    const y = 30 + n * 82;
+    return `${barRow(y, r.lit)}
+<text x="536" y="${y + 21}" class="fk" font-size="17">${esc(r.pct)}</text>
+<text x="536" y="${y + 41}" class="fx">${esc(r.note)}</text>`;
+  }).join('\n')}
+</svg></div>
+<figcaption>${t.cap}</figcaption>
+</figure>`;
+
+// The daily charging window each chemistry actually wants. Same axis for all
+// three so the reader compares bands, not numbers.
+const W0 = 40, WW = 430;
+const figWindow = (t) => `<figure class="fig">
+<div class="fs"><svg viewBox="0 0 760 300" role="img" aria-label="${esc(t.alt)}">
+${t.rows.map((r, n) => {
+    const y = 44 + n * 82;
+    return `<text x="${W0}" y="${y - 12}" class="fk">${esc(r.name)}</text>
+<rect x="${W0}" y="${y}" width="${WW}" height="28" rx="8" fill="#fff" stroke="var(--line)" stroke-width="1.5"/>
+<rect x="${W0 + (r.from / 100) * WW}" y="${y}" width="${((r.to - r.from) / 100) * WW}" height="28" rx="8"
+fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1.5"/>
+<text x="${W0 + WW + 22}" y="${y + 12}" class="fx">${esc(r.note1)}</text>
+<text x="${W0 + WW + 22}" y="${y + 30}" class="fx">${esc(r.note2)}</text>`;
+  }).join('\n')}
+<g class="fx" text-anchor="middle">
+<text x="${W0}" y="285">0%</text><text x="${W0 + WW / 2}" y="285">50%</text><text x="${W0 + WW}" y="285">100%</text>
+</g>
+</svg></div>
+<figcaption>${t.cap}</figcaption>
+</figure>`;
 
 const buildArticles = (N, F) => [
   {
@@ -1228,6 +1341,7 @@ const buildArticles = (N, F) => [
 <li><strong>რეკუპერაცია.</strong> დამუხრუჭებისას ენერგიის დაბრუნება ბატარეას არ ტვირთავს.</li>
 <li><strong>მანქანის ყოველდღიური გამოყენება.</strong> გაჩერებული ელექტრომობილი უფრო ცუდად გრძნობს თავს, ვიდრე მოსიარულე.</li>
 </ul>
+<p>კონკრეტული მოდელების გაზომილი ციფრები, გარბენის მიხედვით დაყოფილი, ცალკე გვაქვს: <a href="/blog/batareis-cveta/">ბატარეის ცვეთა 50 000-დან 200 000 კილომეტრამდე</a>.</p>
 `,
       faq: [
         ['რამდენ ხანს ძლებს ელექტრომობილის ბატარეა?',
@@ -1302,6 +1416,7 @@ const buildArticles = (N, F) => [
 <li><strong>Regenerative braking.</strong> Recovering energy while slowing does not stress the pack.</li>
 <li><strong>Driving the car every day.</strong> A parked EV is worse off than a used one.</li>
 </ul>
+<p>Measured figures for specific models, broken down by mileage, are covered separately in <a href="/en/blog/batareis-cveta/">battery wear from 50,000 to 200,000 km</a>.</p>
 `,
       faq: [
         ['How long does an EV battery last?',
@@ -1313,6 +1428,399 @@ const buildArticles = (N, F) => [
       ],
     },
   },
+
+  {
+    slug: 'batareis-cveta',
+    date: '2026-08-11',
+    ka: {
+      title: 'ბატარეის ცვეთა გარბენის მიხედვით: ტესლა, ნისან ლიფი და ჩინური მოდელები',
+      metaTitle: 'ბატარეის ცვეთა 50 000-დან 200 000 კილომეტრამდე',
+      desc: 'გაზომილი ციფრები და არა ვარაუდი: რამდენი რჩება ბატარეას 50 000, 100 000 და 200 000 კილომეტრზე ტესლაზე, ნისან ლიფზე, ჩინურ მოდელებზე და ჰიბრიდზე. რომელია მაღალი რისკის ჯგუფი.',
+      key: [
+        'საშუალო ელექტრომობილი წელიწადში 2.3 პროცენტს კარგავს. ეს Geotab-ის 2026 წლის კვლევის ციფრია, რომელიც 22 700 რეალურ მანქანასა და 21 მოდელს დაეყრდნო. რვა წელში ეს დაახლოებით 82 პროცენტს ტოვებს.',
+        'საშუალო ციფრი კი მთავარს მალავს. ერთსა და იმავე გარბენზე LFP ბატარეა 93 პროცენტზეა, ჰაერით გაგრილებული ნისან ლიფი ცხელ კლიმატში კი 80-ზე. სამი რამ წყვეტს ყველაფერს: ქიმია, ბატარეის გაგრილება და სწრაფი დატენვის წილი.',
+      ],
+      body: `
+<h2>რას ნიშნავს ცვეთა და როგორ იზომება</h2>
+<p>ბატარეის მდგომარეობა, ანუ SOH, ერთი ციფრია: რამდენ ენერგიას იტევს ბატარეა დღეს იმასთან შედარებით, რასაც ქარხნიდან გამოსვლისას იტევდა. 75 კილოვატსაათიანი ბატარეა, რომელიც ახლა 68-ს იტევს, 91 პროცენტზეა.</p>
+<p>ეს ციფრი მანქანის კომპიუტერში წერია და დიაგნოსტიკური აპარატით ან OBD ადაპტერით იკითხება. სპიდომეტრზე ნაჩვენები გარბენი და სავსე ბატარეაზე დაპირებული კილომეტრები ამ ციფრს ვერ ჩაანაცვლებს: დაპირებული კილომეტრები ბოლო მგზავრობების ხარჯზეა გათვლილი და კვირაში ორჯერ იცვლება.</p>
+<p>მთავარი, რაც ქვემოთ მოყვანილ ყველა ციფრს ერთმანეთთან აკავშირებს: ცვეთა ხაზოვანი არ არის. პირველ წლებში ვარდნა ყველაზე ციცაბოა, შემდეგ მრუდი ბრტყელდება. სწორედ ამიტომ 50 000 კილომეტრზე დაკარგული 5 პროცენტი არ ნიშნავს, რომ 200 000-ზე 20 დაიკარგება.</p>
+
+<h2>საშუალო ციფრი და რა დგას მის უკან</h2>
+<p>ყველაზე დიდი საჯარო მონაცემი ტელემეტრიის კომპანია Geotab-ს აქვს. მისი 2026 წლის ანალიზი 22 700 ელექტრომობილს და 21 მოდელს დაეყრდნო და საშუალო წლიური ცვეთა 2.3 პროცენტი გამოვიდა. იმავე ტემპით რვა წელში ბატარეას 81.6 პროცენტი რჩება.</p>
+<p>2024 წელს იმავე კომპანიამ 10 000 მანქანაზე 1.8 პროცენტი დაითვალა. ზრდა იმას არ ნიშნავს, რომ ბატარეები გაუარესდა. ის იმას ნიშნავს, რომ სწრაფი დატენვის წილი გაიზარდა, და სწორედ ეს გამოჩნდა შედეგში.</p>
+<p>ყველაზე საინტერესო ამ კვლევაში სწორედ სწრაფი დატენვის დაყოფაა:</p>
+<ul>
+<li><strong>თუ დატენვების 12 პროცენტზე ნაკლებია სწრაფი,</strong> ცვეთა წელიწადში 1.5 პროცენტია.</li>
+<li><strong>თუ სწრაფი დატენვა ხშირია, მაგრამ ძირითადად 100 კილოვატზე ნაკლებ აპარატებზე,</strong> ციფრი 2.2 პროცენტამდე ადის.</li>
+<li><strong>თუ სწრაფი დატენვა ხშირია და სესიების 40 პროცენტზე მეტი 100 კილოვატს აღემატება,</strong> ცვეთა წელიწადში 3 პროცენტია.</li>
+</ul>
+<p>რვა წელში ეს ორ სხვადასხვა მანქანას აძლევს: პირველ ჯგუფს 88 პროცენტი რჩება, ბოლოს კი 76. ერთი და იგივე მოდელი, ერთი და იგივე ასაკი, სხვაობა მხოლოდ ჩვევაშია.</p>
+<p>ცალკე დათვლილია სიცხის ეფექტი. ცხელ პირობებში მოსიარულე მანქანა წელიწადში 0.4 პროცენტით მეტს კარგავს, ცხელად კი კვლევა იმ პირობებს მიიჩნევს, სადაც დღეების 35 პროცენტზე მეტი 25 გრადუსს აღემატება. თბილისი, რუსთავი და კახეთი ზაფხულში სწორედ ამ განსაზღვრებაში ხვდება.</p>
+
+${figCurve({
+  alt: 'ბატარეის ჯანმრთელობის მრუდი გარბენის მიხედვით სამი ტიპის ბატარეაზე',
+  xlab: 'გარბენი, ათასი კილომეტრი',
+  lfp: 'LFP ბატარეა',
+  nca: 'NCA/NMC თხევადი გაგრილებით',
+  air: 'ჰაერით გაგრილებული (ლიფი)',
+  cap: 'მრუდები ქვემოთ ჩამოთვლილ გაზომვებზეა გავლებული და ტიპურ სურათს აჩვენებს. ჰაერით გაგრილებული ხაზი ცხელ კლიმატში მოსიარულე ლიფს ასახავს, გრილ ევროპაში იგივე მანქანა შესამჩნევად მაღლა დგას.',
+})}
+
+<h2>სამი ქიმია, სამი სხვადასხვა ქცევა</h2>
+<p>სანამ კონკრეტულ მოდელებზე გადავალთ, ერთი გავრცელებული აღრევა უნდა გავასწოროთ. <strong>ტესლას ნიკელმეტალჰიდრიდის ბატარეა არასდროს ჰქონია.</strong> NiMH ჰიბრიდების ქიმიაა, პრიუსის და მისი მსგავსების. ტესლას ყოველთვის ლითიუმიონური ბატარეა ჰქონდა, უბრალოდ ორი სხვადასხვა სახის.</p>
+<ul>
+<li><strong>NCA და NMC, ანუ ნიკელიანი ქიმია.</strong> მაღალი ენერგოტევადობა, ანუ მეტი კილომეტრი იმავე წონაზე. სამაგიეროდ მგრძნობიარეა მაღალ მუხტსა და სიცხეზე. ესაა ტესლა Long Range და Performance, ფოლქსვაგენი, ჰიუნდაი, კია და ევროპული მოდელების უმეტესობა.</li>
+<li><strong>LFP, ლითიუმრკინაფოსფატი.</strong> ნაკლები ენერგოტევადობა, სამაგიეროდ ბევრად უკეთესი კალენდარული ცხოვრება და მეტი ციკლი. სავსე მდგომარეობა მას თითქმის არ აწუხებს. ესაა BYD-ის Blade, CATL-ის ბატარეები და ტესლას საბაზისო უკანაწამყვანა ვერსიები.</li>
+<li><strong>NiMH.</strong> ჰიბრიდის ბატარეა. სულ სხვა ქიმია და მწყობრიდან გამოსვლის სულ სხვა სცენარი, ცალკე გავარჩევთ ქვემოთ.</li>
+</ul>
+
+<h2>ტესლა: რა ჩანს რეალურ მონაცემებში</h2>
+<p>ტესლაზე ყველაზე მეტი გაზომვა არსებობს, რადგან მანქანა თავად ინახავს დეტალურ ტელემეტრიას და ის OBD-ით იკითხება.</p>
+<h3>მწარმოებლის საკუთარი ციფრი</h3>
+<p>ტესლას წლიური ანგარიშის (Impact Report) მიხედვით 320 000 კილომეტრზე, ანუ 200 000 მილზე, Model S და Model X საშუალოდ 12 პროცენტს კარგავს, Model 3 და Model Y კი 15-ს. ეს კომპანიის საკუთარი ციფრია მისივე შეერთებული პარკიდან, ანუ დამოუკიდებელი გაზომვა არ არის, მაგრამ სხვა წყაროებს არ ეწინააღმდეგება.</p>
+<h3>დამოუკიდებელი გაზომვა</h3>
+<p>2019 წლის Model 3 Long Range, რომელსაც 164 541 კილომეტრი ჰქონდა გავლილი, 8.2 პროცენტი ჰქონდა დაკარგული, ანუ 91.8 პროცენტზე იდგა. მისი ენერგიის 30 პროცენტი სწრაფი დამტენიდან იყო აღებული და 70 ნელიდან. ეს ზუსტად ის თანაფარდობაა, რომელსაც Geotab-ის კვლევა საუკეთესო ჯგუფად თვლის, და შედეგიც ტიპურზე უკეთესია: ზემოთ მოცემულ მრუდზე იმავე გარბენზე დაახლოებით 90 პროცენტი წერია.</p>
+<h3>ბატარეის მიმწოდებელს მნიშვნელობა აქვს</h3>
+<p>შვედურმა პლატფორმა Carla-მ თითქმის 10 000 ჩანაწერი გააანალიზა და 100 000 კილომეტრს გადაცილებული Model 3-ები მიმწოდებლის მიხედვით დაყო. სურათი ასეთია:</p>
+<div class="tw"><table>
+<thead><tr><th>ბატარეა</th><th>ვერსია</th><th>დარჩენილი ტევადობა</th></tr></thead>
+<tbody>
+<tr><td>CATL, LFP</td><td>საბაზისო უკანაწამყვანა</td><td>93.3%</td></tr>
+<tr><td>LG</td><td>შანხაის Long Range და Performance</td><td>91.5%</td></tr>
+<tr><td>Panasonic</td><td>Long Range და Performance, 77.8 კვტსთ</td><td>89.8%</td></tr>
+<tr><td>Panasonic</td><td>საბაზისო, 52.4 კვტსთ</td><td>88.2%</td></tr>
+</tbody></table></div>
+<p>ანუ ყველაზე იაფი და ყველაზე მოკლე გარბენის ვერსია ბატარეით ყველაზე გამძლე აღმოჩნდა. ეს შეცდომა არ არის, სწორედ LFP-ს ქიმიური თვისებაა.</p>
+
+<h2>ტესლას დისბალანსი: ის, რაზეც ყველაზე ცოტა წერია</h2>
+<p>ბატარეა ერთი დიდი ელემენტი არ არის. ის ასობით პატარა უჯრედისგან შედგება და ისინი წლების განმავლობაში ერთმანეთს სცილდება: ერთი ცოტა მეტს იტევს, მეორე ცოტა ნაკლებს. ეს დისბალანსია.</p>
+<p>პრობლემა ისაა, რომ მთელ ბატარეას ყველაზე სუსტი უჯრედი ზღუდავს. თუ ერთი მათგანი ცარიელს მიაღწევს, მანქანა მთელ ბატარეას ცარიელად თვლის, თუნდაც დანარჩენებში ენერგია იდოს. შედეგი ისაა, რომ გარბენი ეცემა მაშინაც, როცა ბატარეის რეალური ტევადობა ჯერ არ დაკლებულა.</p>
+<h3>რატომ ეხება ეს განსაკუთრებით ტესლას</h3>
+<p>ტესლა პასიურ გათანაბრებას იყენებს: მაღალ უჯრედებში ჭარბ ენერგიას სითბოდ ფანტავს, სანამ დაბალი უჯრედები არ გაუტოლდება. ეს პროცესი მხოლოდ მაშინ იწყება, როცა მუხტი მაქსიმუმს უახლოვდება. ანუ თუ მანქანა თვეების განმავლობაში 70 პროცენტს ზემოთ არ ადის, გათანაბრებას ფიზიკურად დრო არ ეძლევა.</p>
+<p>აქედან გამომდინარეობს ის, რაც ბევრს პარადოქსად ეჩვენება: მუდმივად 80 პროცენტამდე დატენვა ბატარეისთვის სწორია, მაგრამ თუ მას არასდროს ავსებთ და დამტენზე დიდხანს არ ტოვებთ, საბოლოო ჯამში მაინც კარგავთ გარბენს, უბრალოდ სხვა მიზეზით.</p>
+<h3>LFP ტესლა სხვა წესებით ცხოვრობს</h3>
+<p>LFP ბატარეის ძაბვა მუხტის ცვლილებაზე თითქმის არ რეაგირებს. შუა დიაპაზონში 30 და 60 პროცენტი ერთნაირად გამოიყურება, ამიტომ კომპიუტერს მუხტის დათვლის საშუალება პრაქტიკულად არ აქვს. ერთადერთი წერტილი, სადაც მას კალიბრაცია შეუძლია, სავსე ბატარეაა.</p>
+<p>სწორედ ამიტომ ტესლას ინსტრუქცია LFP მანქანებზე პირდაპირ ამბობს, რომ ყოველდღიური ზღვარი 100 პროცენტზე უნდა იდგეს და ბატარეა კვირაში ერთხელ მაინც სრულად უნდა დაიტენოს. ეს ნიკელიანი ბატარეის წესის საწინააღმდეგოა და შეცდომა არ არის.</p>
+<p>თუ ამას არ აკეთებთ, პროცენტის ჩვენება ცდება: მანქანა ხან უცებ ხტება, ხან გზაში მოულოდნელად ცოტას აჩვენებს. ეს ცვეთა არ არის, ეს კალიბრაციაა და რამდენიმე სრული დატენვით სწორდება.</p>
+
+${figWindow({
+  alt: 'ყოველდღიური დატენვის რეკომენდებული დიაპაზონი სამი ქიმიისთვის',
+  rows: [
+    { name: 'NCA / NMC (ტესლა Long Range, ევროპული მოდელები)', from: 20, to: 80,
+      note1: 'ყოველდღიურად 80 პროცენტამდე,', note2: '100 მხოლოდ შორი გზის წინ' },
+    { name: 'LFP (BYD Blade, ტესლას საბაზისო ვერსიები)', from: 0, to: 100,
+      note1: '100 პროცენტი ნორმაა და', note2: 'კვირაში ერთხელ საჭიროც' },
+    { name: 'NiMH ჰიბრიდი (პრიუსი და მისი მსგავსები)', from: 40, to: 80,
+      note1: 'მანქანა თვითონ მართავს,', note2: 'მძღოლი ვერ ცვლის' },
+  ],
+  cap: 'ერთი წესი სამივესთვის არ არსებობს. LFP მანქანაზე ნიკელიანი ბატარეის წესის გადმოტანა ზუსტად იმ პრობლემას ქმნის, რომლის თავიდან აცილებაც გინდოდათ.',
+})}
+
+<h3>როგორ შევამოწმოთ და როგორ გავასწოროთ</h3>
+<ul>
+<li><strong>დისბალანსი მილივოლტებში იზომება.</strong> ჯანმრთელ ბატარეაში უჯრედებს შორის სხვაობა ათეულ მილივოლტს არ სცილდება. სამნიშნა ციფრი დატვირთვის ქვეშ სერიოზული პრობლემის ნიშანია.</li>
+<li><strong>წაკითხვა OBD ადაპტერით შეიძლება.</strong> ტესლაზე ამას Scan My Tesla ან მსგავსი აპლიკაცია აკეთებს, სხვა მარკებზე Car Scanner.</li>
+<li><strong>გასწორება ნელია.</strong> გათანაბრება მილიამპერებით მიმდინარეობს, ამიტომ შესამჩნევ დისბალანსს კვირები და თვეებიც კი სჭირდება. ერთი ღამის დატენვა საკმარისი არ არის.</li>
+<li><strong>ყველაზე ეფექტური მეთოდი მოსაწყენია:</strong> მანქანა რაც შეიძლება ხშირად დატოვეთ AC დამტენზე მიერთებული, დატენვის დასრულების შემდეგაც. სწორედ ამ დროს მუშაობს გათანაბრება.</li>
+</ul>
+
+<h2>ნისან ლიფი: ცალკე შემთხვევა</h2>
+<p>ლიფი საქართველოში ერთ-ერთი ყველაზე გავრცელებული ელექტრომობილია და ის ერთადერთი მასობრივი მოდელია, რომელსაც ბატარეის აქტიური გაგრილება არ აქვს. ბატარეა ჰაერით გრილდება, ანუ პრაქტიკულად არ გრილდება.</p>
+<p>ეს ერთი ტექნიკური გადაწყვეტილება განსაზღვრავს ყველაფერს, რაც ქვემოთ წერია.</p>
+<h3>12 ზოლი და რას ნიშნავს თითოეული</h3>
+<p>ლიფი ბატარეის მდგომარეობას თორმეტი ზოლით აჩვენებს და მძღოლების უმეტესობა თვლის, რომ თითოეული თანაბარია. ეს ასე არ არის და სწორედ აქ ხდება მთავარი შეცდომა ყიდვისას.</p>
+
+${figBars({
+  alt: 'ნისან ლიფის ბატარეის თორმეტი ზოლი და მათი შესაბამისი პროცენტები',
+  rows: [
+    { lit: 12, pct: '100 დან 85 პროცენტამდე', note: 'თორმეტივე ზოლი ადგილზეა' },
+    { lit: 11, pct: '85 პროცენტი', note: 'პირველი ზოლი ქრება' },
+    { lit: 8, pct: '66 პროცენტი', note: 'გარანტიით შეცვლის ზღვარი' },
+  ],
+  cap: 'პირველი ზოლი მხოლოდ მაშინ ქრება, როცა ტევადობის 15 პროცენტი უკვე დაკარგულია. ყოველი შემდეგი კი მხოლოდ 6.25 პროცენტს შეესაბამება. თორმეტზოლიანი ლიფი შეიძლება 100 პროცენტზეც იყოს და 86-ზეც.',
+})}
+
+<p>პრაქტიკული დასკვნა: თორმეტი ზოლი ჯანმრთელ ბატარეას არ ნიშნავს. ერთი ზოლის დაკარგვა კი პანიკის საფუძველი არ არის, რადგან შემდეგები სამჯერ უფრო ჩქარა ქრება. ერთადერთი სანდო ციფრი ისევ პროცენტული SOH-ია, რომელსაც LeafSpy ან დიაგნოსტიკური აპარატი კითხულობს.</p>
+<p>გარანტია ჩვეულებრივ რვა წელს ან 160 000 კილომეტრს ფარავს და შეცვლა მაშინ ხდება, როცა ჩვენება რვა ზოლამდე ეცემა, ანუ დაახლოებით 66 პროცენტამდე.</p>
+<h3>რაპიდგეითი</h3>
+<p>ეს ლიფის ცალკე თავისებურებაა და 40 კილოვატსაათიან ვერსიას ყველაზე მეტად ეხება. ზედიზედ რამდენიმე სწრაფი დატენვისას გაუგრილებელი ბატარეა ცხელდება და პროგრამა სიმძლავრეს ჭრის. ტიპური სურათი შორ გზაზე ასეთია: პირველი დატენვა 35-დან 40 კილოვატამდე, მეორე დაახლოებით 26, მესამე 15-დან 19-მდე. მანქანა მწყობრიდან არ გამოდის, უბრალოდ თითოეული გაჩერება სამჯერ გრძელდება.</p>
+<p>2019 წლის პროგრამულმა განახლებამ სიტუაცია გააუმჯობესა, მაგრამ სრულად არ მოხსნა. თუ ლიფით <a href="/blog/shori-mgzavroba/">შორ გზაზე</a> გადიხართ, ამას გეგმაში ჩადეთ.</p>
+<h3>რომელი ლიფია რომელი</h3>
+<p>24 კილოვატსაათიანი 2011-დან 2015 წლამდე, 30-იანი 2016 და 2017, 40-იანი 2018-დან, 62-იანი Leaf Plus 2019-დან. ადრეული 24-იანები ყველაზე პრობლემურები არიან: მათი ბატარეის ქიმია 2015 წლამდე სითბოს გაცილებით ცუდად უძლებდა.</p>
+<p>სამართლიანობისთვის: ლიფების დიდი პარკის საშუალო მაჩვენებელი დღეს 91 პროცენტის ფარგლებშია. ეს იმიტომ, რომ ამ პარკში ახალი 40 და 62 კილოვატსაათიანი მანქანები ჭარბობს და უმეტესობა ზომიერ კლიმატში დადის. ცხელი ქვეყნიდან ჩამოსული 2013 წლის 24-იანი ამ საშუალოსთან კავშირში არ არის.</p>
+
+<h2>ჩინური მოდელები: ახალი და ჯერ ბოლომდე გაზომილი არა</h2>
+<p>BYD, ჩანგანი, Chery, Zeekr და დანარჩენები საქართველოში ბოლო წლებში მასობრივად შემოვიდა, ამიტომ 200 000 კილომეტრიანი სტატისტიკა მათზე ჯერ უბრალოდ არ არსებობს. რაც არსებობს, დამაიმედებელია.</p>
+<p>ავსტრალიაში გაზომილმა 2024 წლის BYD Seal-მა 50 000 კილომეტრზე 4.92 პროცენტი აჩვენა დაკარგული: გამოსაყენებელი ტევადობა 82.56-დან 78.5 კილოვატსაათამდე დაეცა. გაზომვა OBD ადაპტერით და Car Scanner-ით გაკეთდა, ანუ მანქანის საკუთარი ჩანაწერიდან.</p>
+<p>ეს Blade ბატარეაა, ანუ LFP. მისი უპირატესობა სწორედ იქ ჩანს, სადაც ქართული პირობებია მნიშვნელოვანი: სავსე მდგომარეობა მას თითქმის არ აზიანებს, ამიტომ ბინაში მცხოვრები მძღოლი, რომელიც სწრაფ დამტენზე სავსემდე ტენის, LFP მანქანით გაცილებით ნაკლებს კარგავს, ვიდრე იმავე ჩვევით ნიკელიან ბატარეაზე.</p>
+<p>ორი გაფრთხილება მაინც საჭიროა:</p>
+<ul>
+<li><strong>ყველა ჩინური მანქანა LFP არ არის.</strong> ბევრ მოდელს ვერსიის მიხედვით ან LFP უდევს, ან ნიკელიანი NMC. ყიდვამდე ზუსტად ეს გაარკვიეთ, რადგან მოვლის წესი ორივესთვის სხვადასხვაა.</li>
+<li><strong>ჩინეთის ბაზრის მანქანაზე გარანტია აქ ჩვეულებრივ არ მოქმედებს</strong> და ბატარეის დიაგნოსტიკა ხშირად მხოლოდ ჩინურენოვან პროგრამაშია ხელმისაწვდომი. ამის შესახებ ცალკე გვაქვს დაწერილი: <a href="/blog/chinuri-importi/">ჩინური ელექტრომობილი და GB/T</a>.</li>
+</ul>
+<p>შედარებისთვის, სრულიად დამოუკიდებელი ევროპული გაზომვა: გერმანულმა ავტოკლუბმა ADAC ფოლქსვაგენ ID.3 ოთხი წლის განმავლობაში 160 000 კილომეტრზე გარბენა. ბატარეას 91 პროცენტი დარჩა. ეს ნიკელიანი ქიმიაა თხევადი გაგრილებით, ანუ ის შუალედი, სადაც ევროპული მოდელების უმეტესობა დგას.</p>
+
+<h2>ჰიბრიდის ნიკელმეტალჰიდრიდი: სულ სხვა ამბავი</h2>
+<p>პრიუსი და მისი მსგავსები საქართველოში ელექტრომობილებზე ბევრად მეტია, ამიტომ ეს ნაწილი ცალკე ღირს.</p>
+<p>NiMH ბატარეა თანდათან არ ცვდება ისე, როგორც ლითიუმიონური. მისი ტიპური სცენარი სხვაა: შიდა წინაღობა იზრდება, მოდულები ერთმანეთს სცილდება და მანქანა ერთ დღეს გამაფრთხილებელ სამკუთხედს და შეცდომის კოდს გამოიტანს. ანუ გარბენი კი არ იკლებს ნელა, არამედ სისტემა უცებ ჩერდება.</p>
+<p>რესურსი ჩვეულებრივ რვიდან ათ წლამდეა, ან 160 000-დან 240 000 კილომეტრამდე. ინტენსიურად მოსიარულე მანქანები, ტაქსები მათ შორის, ხშირად 300 000-საც სცილდება, და ეს შემთხვევითი არ არის: NiMH ბატარეას მუდმივი ციკლირება უკეთესად უხდება, ვიდრე უსაქმოდ დგომა.</p>
+<p><strong>ერთი კონკრეტული რჩევა, რომელიც ყველაზე მეტს იძლევა.</strong> ამ ბატარეას გამაგრილებელი ვენტილატორი და ფილტრი აქვს, უკანა სავარძლის უკან. მტვრით ამოვსებული ფილტრი ჰაერის ნაკადს ჭრის, ბატარეა ხურდება და სწრაფად კვდება. თოიოტას საკუთარი სერვისული ბიულეტენი 2003-დან 2020 წლამდე გამოშვებულ პრიუსებზე პირდაპირ ასახელებს ვენტილატორსა და ფილტრში დაგროვილ მტვერს კოდების P0A80 და P0A7F მიზეზად. ფილტრის გაწმენდა იაფი და სწრაფი სამუშაოა და ბატარეის სიცოცხლეს რეალურად ახანგრძლივებს. თუ მეორადი ჰიბრიდი იყიდეთ, ეს პირველი, რაც უნდა შეამოწმოთ.</p>
+
+<h2>რას უნდა ველოდოთ კონკრეტულ გარბენზე</h2>
+<p>ქვემოთ მოყვანილი დიაპაზონები ზემოთ ჩამოთვლილი გაზომვებიდან გამომდინარეობს. ესაა ტიპური სურათი და არა გარანტია: ერთსა და იმავე გარბენზე ორი მანქანა ჩვევების გამო ათი პროცენტით შეიძლება განსხვავდებოდეს.</p>
+<div class="tw"><table>
+<thead><tr><th>გარბენი</th><th>NCA/NMC, თხევადი გაგრილება</th><th>LFP</th><th>ჰაერით გაგრილებული, ცხელი კლიმატი</th></tr></thead>
+<tbody>
+<tr><td>50 000 კმ</td><td>94-96%</td><td>95-96%</td><td>88-94%</td></tr>
+<tr><td>100 000 კმ</td><td>88-92%</td><td>92-94%</td><td>78-88%</td></tr>
+<tr><td>200 000 კმ</td><td>88-91%</td><td>დაახლოებით 90%, მონაცემი ჯერ მწირია</td><td>62-75%</td></tr>
+<tr><td>300 000 კმ და მეტი</td><td>85-88%</td><td>საკმარისი მონაცემი ჯერ არ არის</td><td>ჩვეულებრივ უკვე შეცვლილია</td></tr>
+</tbody></table></div>
+<p>ორ რამეს მიაქციეთ ყურადღება. პირველი: ნიკელიან სვეტში 100 000 და 200 000 კილომეტრს შორის სხვაობა თითქმის არ არის. ეს შეცდომა არ არის, სწორედ ასე გამოიყურება ბრტყელი მრუდი. მეორე: მარჯვენა სვეტში სხვაობა უზარმაზარია, რადგან იქ შედეგს ის წყვეტს, სად იდგა მანქანა და არა რამდენი გაიარა.</p>
+
+<h2>მაღალი რისკის ჯგუფი</h2>
+<p>თუ თქვენი მანქანა ქვემოთ ჩამოთვლილთაგან ერთ-ერთ კატეგორიას მაინც ხვდება, ბატარეის შემოწმება ყიდვამდე სავალდებულოა და არა სასურველი.</p>
+<ul>
+<li><strong>მანქანები ბატარეის აქტიური გაგრილების გარეშე.</strong> ნისან ლიფის ყველა თაობა და e-NV200. ცხელი კლიმატი მათზე პირდაპირ და სწრაფად აისახება.</li>
+<li><strong>2015 წლამდე გამოშვებული 24 კილოვატსაათიანი ლიფი.</strong> ორმაგი რისკი: გაგრილება არც აქვს და ბატარეის ადრეული ქიმიაც სითბოს ცუდად უძლებდა.</li>
+<li><strong>ცხელი ქვეყნიდან ჩამოსული მანქანა, რომელიც ღია ცის ქვეშ იდგა.</strong> სიცხე კალენდარულ ცვეთას აჩქარებს მაშინაც, როცა მანქანა საერთოდ არ დადის. დაბალი გარბენი აქ არაფერს ამტკიცებს.</li>
+<li><strong>მანქანა, რომელიც წლების განმავლობაში მხოლოდ სწრაფ დამტენზე იტენება.</strong> Geotab-ის მონაცემით სწორედ ეს ჯგუფი კარგავს წელიწადში 3 პროცენტს 1.5-ის ნაცვლად.</li>
+<li><strong>2017-დან 2019 წლამდე Chevrolet Bolt და 2018-დან 2020 წლამდე Hyundai Kona Electric.</strong> ორივეს ბატარეა LG-ს უჯრედების ქარხნული დეფექტის გამო მასობრივად შეიცვალა. Bolt-ზე ყველა მოდული იცვლებოდა, Kona-ზე კი 75 000-ზე მეტი ბატარეა შეიცვალა. ასეთ მანქანაზე უნდა დაადასტუროთ, გაკეთდა თუ არა შეცვლა. თუ გაკეთდა, ეს კარგი ამბავია და არა ცუდი.</li>
+<li><strong>თვეობით უმოძრაოდ მდგარი მანქანა.</strong> განსაკუთრებით სავსე ან თითქმის ცარიელი ბატარეით.</li>
+</ul>
+
+<h2>რა შეგიძლიათ რეალურად გააკეთოთ</h2>
+<p>სია მოკლეა, რადგან რაც აქ არ წერია, დანარჩენზე ფიქრი ჩვეულებრივ არც ღირს.</p>
+<ul>
+<li><strong>ჯერ ქიმია გაარკვიეთ, მერე წესი აირჩიეთ.</strong> ნიკელიან ბატარეაზე ყოველდღიური ზღვარი 80 პროცენტია, LFP-ზე კი 100, კვირაში ერთი სრული დატენვით. ერთი წესის მეორეზე გადმოტანა ბატარეას ზიანს აყენებს.</li>
+<li><strong>სწრაფი დატენვის წილი შეამცირეთ და არა რაოდენობა.</strong> მნიშვნელობა აქვს იმას, რომ ენერგიის უმეტესობა ნელი დამტენიდან მოდიოდეს. <a href="/blog/sakhlis-damteni/">სახლის დამტენი</a> ამას ყველაზე იაფად აგვარებს.</li>
+<li><strong>ზაფხულში ჩრდილი მოძებნეთ.</strong> გაუგრილებელი ბატარეისთვის ეს ყველაზე ეფექტური ზომაა და არაფერი ღირს.</li>
+<li><strong>მანქანა ხშირად დატოვეთ AC დამტენზე მიერთებული.</strong> სწორედ ამ დროს ასწორებს კომპიუტერი უჯრედების დისბალანსს.</li>
+<li><strong>ზამთარში სწრაფ დამტენამდე ბატარეა გაათბეთ,</strong> თუ მანქანას ეს ფუნქცია აქვს. ცივ ბატარეას დატენვა უჭირს და ეს ცვეთასაც აჩქარებს. <a href="/blog/zamtari/">ზამთრის ცალკე გზამკვლევი</a>.</li>
+<li><strong>თუ მანქანა კვირებით ჩერდება, დაახლოებით ნახევრად სავსე დატოვეთ.</strong></li>
+</ul>
+<p>ყიდვისას შესამოწმებელი სრული სია, გარანტიის პირობებთან ერთად, ცალკე გვაქვს: <a href="/blog/batarea/">ბატარეის დეგრადაცია და საქართველოს პირობები</a>. თუ ჯერ არჩევის ეტაპზე ხართ, გამოგადგებათ <a href="/kalkulatori/">დატენვის კალკულატორი</a> და <a href="/damtenebi/">დამტენების სია</a>.</p>
+`,
+      faq: [
+        ['რამდენს კარგავს ბატარეა 100 000 კილომეტრზე?',
+          'თხევადგაგრილებიანი ნიკელიანი ბატარეა ჩვეულებრივ 88-დან 92 პროცენტამდე რჩება, LFP 92-დან 94-მდე. ჰაერით გაგრილებული ბატარეა ცხელ კლიმატში იმავე გარბენზე 78-დან 88 პროცენტამდე ეცემა. ციფრები Carla-ს, ADAC-ის და BYD-ის გაზომვებიდან მოდის.'],
+        ['რომელი ბატარეა ძლებს მეტ ხანს, LFP თუ ნიკელიანი?',
+          'გაზომვები LFP-ს აჩვენებს უკეთესად. 100 000 კილომეტრს გადაცილებულ Model 3-ებში CATL-ის LFP ბატარეას საშუალოდ 93.3 პროცენტი ჰქონდა დარჩენილი, Panasonic-ის ნიკელიანს კი 88.2-დან 89.8-მდე. LFP-ს ნაკლები გარბენი აქვს სავსე ბატარეაზე, სამაგიეროდ სავსე მდგომარეობა მას თითქმის არ აზიანებს.'],
+        ['რატომ ამბობს ტესლა LFP მანქანაზე 100 პროცენტამდე დატენვას?',
+          'იმიტომ, რომ LFP ბატარეის ძაბვა შუა დიაპაზონში თითქმის არ იცვლება და კომპიუტერს მუხტის ზუსტად დათვლა არ შეუძლია. სავსე ბატარეა ერთადერთი წერტილია, სადაც მას კალიბრაცია შეუძლია. ამიტომ ტესლას ინსტრუქცია LFP მოდელებზე ყოველდღიურ 100 პროცენტს და კვირაში ერთხელ სრულ დატენვას ითხოვს. ნიკელიან ბატარეაზე იგივე წესი მავნებელია.'],
+        ['თორმეტი ზოლი ნისან ლიფზე ნიშნავს, რომ ბატარეა ჯანმრთელია?',
+          'არა. პირველი ზოლი მხოლოდ მაშინ ქრება, როცა ტევადობის 15 პროცენტი უკვე დაკარგულია, ანუ თორმეტზოლიანი მანქანა შეიძლება 86 პროცენტზე იყოს. ყოველი შემდეგი ზოლი კი მხოლოდ 6.25 პროცენტს შეესაბამება. სანდო ციფრს მხოლოდ LeafSpy ან დიაგნოსტიკური აპარატი იძლევა.'],
+        ['სწრაფი დატენვა რამდენად აჩქარებს ცვეთას ციფრებში?',
+          'Geotab-ის 2026 წლის კვლევით, თუ დატენვების 12 პროცენტზე ნაკლებია სწრაფი, ცვეთა წელიწადში 1.5 პროცენტია. თუ სწრაფი დატენვა ხშირია და სესიების 40 პროცენტზე მეტი 100 კილოვატს აღემატება, ციფრი 3 პროცენტამდე ადის. რვა წელში ეს 88 და 76 პროცენტს შორის სხვაობაა.'],
+      ],
+      sources: [
+        ['Geotab: EV Battery Health Study, 22 700 მანქანა, 2026', 'https://www.geotab.com/blog/ev-battery-health/'],
+        ['Electrek: ტესლას ანგარიში ბატარეის ცვეთაზე 200 000 მილის შემდეგ', 'https://electrek.co/2023/04/25/tesla-update-battery-degradation/'],
+        ['InsideEVs: Model 3 Long Range, 164 541 კმ, 8.2 პროცენტი', 'https://insideevs.com/news/593068/tesla-model3-battery-degradation-3years-102k-miles/'],
+        ['InsideEVs: Carla-ს მონაცემები ბატარეის მიმწოდებლების მიხედვით', 'https://insideevs.com/news/801724/tesla-model-3-lpf-degradation/'],
+        ['InsideEVs: BYD Seal, Blade ბატარეა, 50 000 კმ', 'https://insideevs.com/features/795440/ev-battery-degradation-byd-seal/'],
+        ['Volkswagen: ADAC-ის ტესტი ID.3-ზე, 160 000 კმ, 91 პროცენტი', 'https://www.volkswagen-newsroom.com/en/press-releases/over-90-per-cent-capacity-id3-battery-impresses-in-adacs-160000-kilometre-endurance-test-19433'],
+        ['Electric Vehicle Wiki: ლიფის ზოლების ზღვრები', 'https://www.electricvehiclewiki.com/battery-capacity-loss/'],
+        ['Green Car Reports: Bolt-ისა და Kona-ს ბატარეების მასობრივი შეცვლა', 'https://www.greencarreports.com/news/1135509_nhtsa-investigates-lg-batteries-behind-ev-recalls-for-gm-hyundai-others'],
+        ['თოიოტას სერვისული ბიულეტენი: ჰიბრიდის ვენტილატორი და P0A80', 'https://static.nhtsa.gov/odi/tsbs/2020/MC-10179698-9999.pdf'],
+      ],
+    },
+    en: {
+      title: 'Battery wear by mileage: Tesla, Nissan Leaf and Chinese models',
+      metaTitle: 'EV battery wear from 50,000 to 200,000 km',
+      desc: 'Measured figures rather than guesswork: what is left of the pack at 50,000, 100,000 and 200,000 km on a Tesla, a Nissan Leaf, a Chinese model and a hybrid. And which cars are the high risk group.',
+      key: [
+        'The average EV loses 2.3 percent a year. That figure comes from Geotab’s 2026 study of 22,700 real vehicles across 21 models. At that rate eight years leaves about 82 percent.',
+        'The average hides the point. At the same mileage an LFP pack sits at 93 percent while an air cooled Nissan Leaf in a hot climate sits at 80. Three things decide it: chemistry, pack cooling, and the share of fast charging.',
+      ],
+      body: `
+<h2>What wear means and how it is measured</h2>
+<p>Battery state of health, or SOH, is one number: how much energy the pack holds today against how much it held when it left the factory. A 75 kWh pack that now holds 68 is at 91 percent.</p>
+<p>That number lives in the car’s computer and is read with a diagnostic tool or an OBD adapter. The odometer and the range promised on a full charge are not substitutes: the second figure is computed from recent consumption and moves twice a week.</p>
+<p>One thing ties every figure below together: wear is not linear. The early years are the steepest, then the curve flattens. That is why 5 percent lost at 50,000 km does not mean 20 percent lost at 200,000.</p>
+
+<h2>The average figure, and what sits behind it</h2>
+<p>The largest public dataset belongs to the telematics company Geotab. Its 2026 analysis covered 22,700 EVs across 21 models and put average annual wear at 2.3 percent. At that rate eight years leaves 81.6 percent.</p>
+<p>In 2024 the same company measured 1.8 percent across 10,000 vehicles. The increase does not mean batteries got worse. It means the share of fast charging went up, and that is what showed in the result.</p>
+<p>The most useful part of the study is the fast charging split:</p>
+<ul>
+<li><strong>If under 12 percent of sessions are DC,</strong> wear runs at 1.5 percent a year.</li>
+<li><strong>If DC is frequent but mostly on units below 100 kW,</strong> the figure rises to 2.2 percent.</li>
+<li><strong>If DC is frequent and over 40 percent of sessions exceed 100 kW,</strong> wear runs at 3 percent a year.</li>
+</ul>
+<p>Over eight years that produces two different cars: the first group keeps 88 percent, the last keeps 76. Same model, same age, the only difference is habit.</p>
+<p>Heat is counted separately. Cars operating in hot conditions lose an extra 0.4 percent a year, where hot means more than 35 percent of days above 25 degrees. Tbilisi, Rustavi and Kakheti fall inside that definition every summer.</p>
+
+${figCurve({
+  alt: 'Battery health against distance for three types of pack',
+  xlab: 'Distance, thousand kilometres',
+  lfp: 'LFP pack',
+  nca: 'NCA/NMC, liquid cooled',
+  air: 'Air cooled (Leaf)',
+  cap: 'The curves are drawn through the measurements cited below and show the typical case. The air cooled line reflects a Leaf living in a hot climate; the same car in cool northern Europe sits noticeably higher.',
+})}
+
+<h2>Three chemistries, three different behaviours</h2>
+<p>Before the models, one common mix up is worth correcting. <strong>Tesla has never used a nickel metal hydride battery.</strong> NiMH is hybrid chemistry, the kind in a Prius. Tesla has always used lithium ion, just in two different forms.</p>
+<ul>
+<li><strong>NCA and NMC, the nickel chemistries.</strong> High energy density, meaning more kilometres for the same weight. In exchange they are sensitive to high state of charge and to heat. This is Tesla Long Range and Performance, Volkswagen, Hyundai, Kia and most European models.</li>
+<li><strong>LFP, lithium iron phosphate.</strong> Lower density, but far better calendar life and more cycles. Sitting full barely bothers it. This is BYD’s Blade, CATL packs, and Tesla’s base rear wheel drive versions.</li>
+<li><strong>NiMH.</strong> Hybrid battery. Different chemistry, different failure mode, covered separately below.</li>
+</ul>
+
+<h2>Tesla: what the real data shows</h2>
+<p>Tesla has more measurements behind it than any other brand, because the car logs detailed telemetry and it can be read over OBD.</p>
+<h3>The manufacturer’s own figure</h3>
+<p>According to Tesla’s impact report, at 320,000 km, that is 200,000 miles, Model S and Model X lose 12 percent on average and Model 3 and Model Y lose 15. This is the company’s own number from its own connected fleet, so not an independent measurement, but it does not contradict the other sources.</p>
+<h3>An independent measurement</h3>
+<p>A 2019 Model 3 Long Range with 164,541 km on it was down 8.2 percent, sitting at 91.8. Thirty percent of its energy had come from fast chargers and 70 from slow ones. That is exactly the ratio Geotab’s study identifies as the best case group, and the result is better than typical: the curve above puts roughly 90 percent at that distance.</p>
+<h3>The cell supplier matters</h3>
+<p>The Swedish platform Carla analysed nearly 10,000 records and sorted Model 3s past 100,000 km by pack supplier. The picture:</p>
+<div class="tw"><table>
+<thead><tr><th>Pack</th><th>Version</th><th>Capacity remaining</th></tr></thead>
+<tbody>
+<tr><td>CATL, LFP</td><td>Base rear wheel drive</td><td>93.3%</td></tr>
+<tr><td>LG</td><td>Shanghai Long Range and Performance</td><td>91.5%</td></tr>
+<tr><td>Panasonic</td><td>Long Range and Performance, 77.8 kWh</td><td>89.8%</td></tr>
+<tr><td>Panasonic</td><td>Base, 52.4 kWh</td><td>88.2%</td></tr>
+</tbody></table></div>
+<p>So the cheapest, shortest range version turned out to have the most durable pack. That is not an error; it is what LFP chemistry does.</p>
+
+<h2>Cell imbalance on a Tesla: the least written about part</h2>
+<p>A battery is not one large cell. It is hundreds of small ones, and over the years they drift apart: one holds a little more, another a little less. That is imbalance.</p>
+<p>The problem is that the weakest cell limits the whole pack. When one of them hits empty, the car treats the entire battery as empty even though energy is still sitting in the rest. Range falls while actual pack capacity has not.</p>
+<h3>Why this hits Tesla in particular</h3>
+<p>Tesla uses passive balancing: it burns off excess energy from the high cells as heat until the low ones catch up. That process only starts as charge approaches the top. So a car that spends months never going above 70 percent is never given the chance to balance.</p>
+<p>Which produces what looks to many owners like a paradox: charging to 80 percent daily is correct for the pack, but if you never fill it and never leave it plugged in, you still lose range, just for a different reason.</p>
+<h3>An LFP Tesla lives by different rules</h3>
+<p>The voltage of an LFP pack barely responds to a change in charge. In the middle of the range 30 percent and 60 percent look nearly identical, so the computer has almost no way to work out the state of charge. The one point where it can recalibrate is a full battery.</p>
+<p>This is why Tesla’s manual for LFP cars says plainly that the daily limit should sit at 100 percent and that the pack should be charged fully at least once a week. It is the opposite of the nickel rule, and it is not a mistake.</p>
+<p>Skip it and the percentage display drifts: the car jumps suddenly, or shows an unexpectedly low figure mid journey. That is not wear, it is calibration, and a few full charges fix it.</p>
+
+${figWindow({
+  alt: 'Recommended daily charging window for three chemistries',
+  rows: [
+    { name: 'NCA / NMC (Tesla Long Range, European models)', from: 20, to: 80,
+      note1: 'Daily to 80 percent,', note2: '100 only before a long drive' },
+    { name: 'LFP (BYD Blade, Tesla base versions)', from: 0, to: 100,
+      note1: '100 percent is normal and', note2: 'needed once a week' },
+    { name: 'NiMH hybrid (Prius and similar)', from: 40, to: 80,
+      note1: 'The car manages it,', note2: 'the driver cannot change it' },
+  ],
+  cap: 'There is no single rule for all three. Applying the nickel rule to an LFP car creates precisely the problem you were trying to avoid.',
+})}
+
+<h3>How to check it and how to correct it</h3>
+<ul>
+<li><strong>Imbalance is measured in millivolts.</strong> In a healthy pack the spread between cells stays within tens of millivolts. A three digit figure under load points to a real problem.</li>
+<li><strong>It can be read with an OBD adapter.</strong> On a Tesla that means Scan My Tesla or similar; on other brands, Car Scanner.</li>
+<li><strong>Correction is slow.</strong> Balancing runs at milliamps, so a noticeable imbalance takes weeks or months. One overnight charge will not do it.</li>
+<li><strong>The most effective method is the dullest one:</strong> leave the car connected to an AC charger as often as you can, including after charging finishes. That is when balancing happens.</li>
+</ul>
+
+<h2>The Nissan Leaf: a case of its own</h2>
+<p>The Leaf is one of the most common EVs in Georgia and the only mass market model with no active pack cooling at all. The battery is air cooled, which in practice means barely cooled.</p>
+<p>That single engineering decision explains everything below.</p>
+<h3>Twelve bars and what each one means</h3>
+<p>The Leaf reports battery health with twelve bars, and most drivers assume each is worth the same. They are not, and this is where the mistake usually happens when buying.</p>
+
+${figBars({
+  alt: 'The twelve capacity bars of a Nissan Leaf and the percentages behind them',
+  rows: [
+    { lit: 12, pct: '100 down to 85 percent', note: 'All twelve bars still shown' },
+    { lit: 11, pct: '85 percent', note: 'The first bar disappears' },
+    { lit: 8, pct: '66 percent', note: 'Warranty replacement threshold' },
+  ],
+  cap: 'The first bar only disappears once 15 percent of capacity is already gone. Every bar after that is worth just 6.25 percent. A twelve bar Leaf can be at 100 percent or at 86.',
+})}
+
+<p>The practical conclusion: twelve bars does not mean a healthy pack. And losing one bar is no reason to panic, because the ones after it fall three times faster. The only reliable number is still SOH as a percentage, read with LeafSpy or a diagnostic tool.</p>
+<p>The warranty normally covers eight years or 160,000 km, and replacement is triggered when the display drops to eight bars, roughly 66 percent.</p>
+<h3>Rapidgate</h3>
+<p>This is a Leaf specific behaviour and hits the 40 kWh version hardest. On several consecutive fast charges the uncooled pack heats up and the software cuts power. The typical pattern on a long drive: first charge 35 to 40 kW, second around 26, third 15 to 19. Nothing breaks; each stop simply takes three times longer.</p>
+<p>A 2019 software update improved matters but did not remove the issue. If you are taking a Leaf on <a href="/en/blog/shori-mgzavroba/">a long trip</a>, plan around it.</p>
+<h3>Which Leaf is which</h3>
+<p>24 kWh from 2011 to 2015, 30 kWh in 2016 and 2017, 40 kWh from 2018, and the 62 kWh Leaf Plus from 2019. The early 24 kWh cars are the most problematic: no cooling, and a pre 2015 cell chemistry that handled heat considerably worse.</p>
+<p>In fairness: the average across a large modern Leaf pool sits around 91 percent today. That is because such pools are dominated by newer 40 and 62 kWh cars living in temperate climates. A 2013 24 kWh car shipped in from a hot country has nothing to do with that average.</p>
+
+<h2>Chinese models: new, and not yet fully measured</h2>
+<p>BYD, Changan, Chery, Zeekr and the rest arrived in Georgia in volume only recently, so 200,000 km statistics on them simply do not exist yet. What does exist is encouraging.</p>
+<p>A 2024 BYD Seal measured in Australia was down 4.92 percent at 50,000 km: usable capacity had fallen from 82.56 to 78.5 kWh. The reading was taken over an OBD adapter with Car Scanner, meaning from the car’s own log.</p>
+<p>That is a Blade pack, so LFP. Its advantage shows up exactly where Georgian conditions bite: sitting full barely harms it, so a driver living in a flat who charges to full on public DC loses far less on an LFP car than the same habit would cost on a nickel pack.</p>
+<p>Two warnings are still needed:</p>
+<ul>
+<li><strong>Not every Chinese car is LFP.</strong> Many models carry either LFP or nickel NMC depending on the version. Establish which before buying, because the care rules differ.</li>
+<li><strong>A Chinese market car normally has no valid warranty here,</strong> and battery diagnostics are often only available in Chinese language software. That is covered separately in <a href="/en/blog/chinuri-importi/">Chinese EVs and GB/T</a>.</li>
+</ul>
+<p>For comparison, a fully independent European measurement: the German motoring club ADAC ran a Volkswagen ID.3 for 160,000 km over four years. The pack retained 91 percent. That is nickel chemistry with liquid cooling, which is where most European models sit.</p>
+
+<h2>Hybrid nickel metal hydride: a different story entirely</h2>
+<p>Priuses and their relatives vastly outnumber EVs in Georgia, so this part earns its own section.</p>
+<p>A NiMH pack does not fade gradually the way lithium ion does. Its typical script is different: internal resistance rises, modules drift apart from each other, and one day the car throws a warning triangle and a fault code. Range does not slowly shrink; the system simply stops.</p>
+<p>Service life is normally eight to ten years, or 160,000 to 240,000 km. Heavily used cars, taxis among them, frequently pass 300,000, and that is not an accident: a NiMH pack copes better with constant cycling than with standing idle.</p>
+<p><strong>One specific piece of advice pays for itself here.</strong> This battery has a cooling fan and filter, behind the rear seat. A filter packed with dust chokes the airflow, the pack overheats and dies early. Toyota’s own service bulletin for Priuses built between 2003 and 2020 names dust build up in the fan and filter directly as a cause of fault codes P0A80 and P0A7F. Cleaning the filter is cheap, quick, and genuinely extends pack life. If you have bought a used hybrid, it is the first thing to check.</p>
+
+<h2>What to expect at a given mileage</h2>
+<p>The ranges below follow from the measurements listed above. This is the typical picture, not a guarantee: two cars at the same mileage can differ by ten percent on habit alone.</p>
+<div class="tw"><table>
+<thead><tr><th>Distance</th><th>NCA/NMC, liquid cooled</th><th>LFP</th><th>Air cooled, hot climate</th></tr></thead>
+<tbody>
+<tr><td>50,000 km</td><td>94-96%</td><td>95-96%</td><td>88-94%</td></tr>
+<tr><td>100,000 km</td><td>88-92%</td><td>92-94%</td><td>78-88%</td></tr>
+<tr><td>200,000 km</td><td>88-91%</td><td>around 90%, data still thin</td><td>62-75%</td></tr>
+<tr><td>300,000 km and beyond</td><td>85-88%</td><td>not enough data yet</td><td>usually already replaced</td></tr>
+</tbody></table></div>
+<p>Two things deserve attention. First, in the nickel column there is barely any difference between 100,000 and 200,000 km. That is not an error; it is what a flat curve looks like. Second, the right hand column has an enormous spread, because there the result is decided by where the car was parked rather than how far it was driven.</p>
+
+<h2>The high risk group</h2>
+<p>If your car falls into even one of the categories below, checking the pack before buying is mandatory rather than advisable.</p>
+<ul>
+<li><strong>Cars with no active pack cooling.</strong> Every generation of Nissan Leaf, and the e-NV200. A hot climate shows on them directly and quickly.</li>
+<li><strong>24 kWh Leafs built before 2015.</strong> A double risk: no cooling, plus an early cell chemistry that tolerated heat poorly.</li>
+<li><strong>A car shipped from a hot country that lived outdoors.</strong> Heat accelerates calendar ageing even when the car never moves, so low mileage proves nothing here.</li>
+<li><strong>A car charged only on DC for years.</strong> Geotab puts exactly this group at 3 percent a year instead of 1.5.</li>
+<li><strong>2017 to 2019 Chevrolet Bolt and 2018 to 2020 Hyundai Kona Electric.</strong> Both were subject to global recalls over a manufacturing defect in LG cells, and packs were replaced: all modules on the Bolt, and over 75,000 packs on the Kona. On such a car, confirm the replacement was carried out. If it was, that is good news rather than bad.</li>
+<li><strong>A car left standing for months,</strong> particularly full or nearly empty.</li>
+</ul>
+
+<h2>What you can actually do</h2>
+<p>The list is short, because anything not on it is usually not worth the effort.</p>
+<ul>
+<li><strong>Establish the chemistry first, then pick the rule.</strong> On a nickel pack the daily limit is 80 percent; on LFP it is 100, with one full charge a week. Applying one rule to the other chemistry does harm.</li>
+<li><strong>Reduce the share of fast charging, not the count.</strong> What matters is that most of your energy comes from a slow charger. <a href="/en/blog/sakhlis-damteni/">A home charger</a> is the cheapest way to fix that.</li>
+<li><strong>Find shade in summer.</strong> For an uncooled pack this is the single most effective measure and it costs nothing.</li>
+<li><strong>Leave the car plugged into AC often.</strong> That is when the computer corrects cell imbalance.</li>
+<li><strong>Precondition the pack before fast charging in winter</strong> if the car offers it. Charging a cold pack is hard on both. There is <a href="/en/blog/zamtari/">a separate winter guide</a>.</li>
+<li><strong>If the car will sit for weeks, leave it around half full.</strong></li>
+</ul>
+<p>The full checklist for buying used, together with warranty terms, is covered separately in <a href="/en/blog/batarea/">battery degradation and Georgian conditions</a>. If you are still choosing, the <a href="/en/calculator/">charging cost calculator</a> and the <a href="/en/chargers/">charger list</a> will help.</p>
+`,
+      faq: [
+        ['How much does a battery lose by 100,000 km?',
+          'A liquid cooled nickel pack normally sits at 88 to 92 percent and an LFP pack at 92 to 94. An air cooled pack in a hot climate falls to 78 to 88 percent over the same distance. The figures come from measurements by Carla, ADAC and BYD owners.'],
+        ['Which lasts longer, LFP or nickel chemistry?',
+          'The measurements favour LFP. Across Model 3s past 100,000 km, CATL LFP packs averaged 93.3 percent remaining against 88.2 to 89.8 percent for Panasonic nickel packs. LFP gives less range on a full charge, but sitting full barely harms it.'],
+        ['Why does Tesla tell LFP owners to charge to 100 percent?',
+          'Because an LFP pack’s voltage barely changes across the middle of its range, so the computer cannot work out the state of charge accurately. A full battery is the one point where it can recalibrate. Tesla’s manual therefore asks for a 100 percent daily limit and a full charge at least weekly on LFP models. The same rule on a nickel pack would be harmful.'],
+        ['Does twelve bars on a Nissan Leaf mean the battery is healthy?',
+          'No. The first bar only disappears once 15 percent of capacity is gone, so a twelve bar car can be at 86 percent. Every bar after that is worth only 6.25 percent. Only LeafSpy or a diagnostic tool gives you a reliable figure.'],
+        ['How much does fast charging accelerate wear, in numbers?',
+          'In Geotab’s 2026 study, cars where under 12 percent of sessions were DC wore at 1.5 percent a year. Where DC was frequent and over 40 percent of sessions exceeded 100 kW, the figure rose to 3 percent a year. Over eight years that is the difference between 88 and 76 percent.'],
+      ],
+      sources: [
+        ['Geotab: EV Battery Health Study, 22,700 vehicles, 2026', 'https://www.geotab.com/blog/ev-battery-health/'],
+        ['Electrek: Tesla on battery degradation at 200,000 miles', 'https://electrek.co/2023/04/25/tesla-update-battery-degradation/'],
+        ['InsideEVs: Model 3 Long Range, 164,541 km, 8.2 percent', 'https://insideevs.com/news/593068/tesla-model3-battery-degradation-3years-102k-miles/'],
+        ['InsideEVs: Carla data broken down by pack supplier', 'https://insideevs.com/news/801724/tesla-model-3-lpf-degradation/'],
+        ['InsideEVs: BYD Seal, Blade pack, 50,000 km', 'https://insideevs.com/features/795440/ev-battery-degradation-byd-seal/'],
+        ['Volkswagen: the ADAC ID.3 test, 160,000 km, 91 percent', 'https://www.volkswagen-newsroom.com/en/press-releases/over-90-per-cent-capacity-id3-battery-impresses-in-adacs-160000-kilometre-endurance-test-19433'],
+        ['Electric Vehicle Wiki: Leaf capacity bar thresholds', 'https://www.electricvehiclewiki.com/battery-capacity-loss/'],
+        ['Green Car Reports: the Bolt and Kona battery recalls', 'https://www.greencarreports.com/news/1135509_nhtsa-investigates-lg-batteries-behind-ev-recalls-for-gm-hyundai-others'],
+        ['Toyota service bulletin: hybrid cooling fan and P0A80', 'https://static.nhtsa.gov/odi/tsbs/2020/MC-10179698-9999.pdf'],
+      ],
+    },
+  },
 ];
 
 const L = {
@@ -1321,6 +1829,7 @@ const L = {
     idxDesc: 'პრაქტიკული გზამკვლევები ელექტრომობილის მფლობელებისთვის საქართველოში: დატენვის ფასი, კონექტორები, სწრაფი და ნელი დატენვა, შორი მგზავრობა.',
     idxIntro: 'მოკლე და პირდაპირი პასუხები კითხვებზე, რომლებიც ელექტრომობილის მფლობელს საქართველოში ყველაზე ხშირად უჩნდება. ყველა ციფრი აღებულია იმავე მონაცემებიდან, რაზეც აპლიკაცია მუშაობს.',
     faqH: 'ხშირად დასმული კითხვები', more: 'სხვა სტატიები', seeAlso: 'იხილეთ ასევე',
+    sourcesH: 'წყაროები',
     related: [['დამტენების სია', '/damtenebi/'], ['ტარიფების შედარება', '/tarifebi/'],
       ['დატენვის კალკულატორი', '/kalkulatori/'], ['მარშრუტები', '/marshruti/'], ['ქსელები', '/qselebi/']],
     ctaTitle: 'იპოვე დამტენი ერთ აპლიკაციაში',
@@ -1331,11 +1840,28 @@ const L = {
     idxDesc: 'Practical guides for EV drivers in Georgia: charging costs, connectors, fast versus slow charging, and long distance trips.',
     idxIntro: 'Short, direct answers to the questions EV drivers in Georgia actually ask. Every figure comes from the same data the app runs on.',
     faqH: 'Frequently asked questions', more: 'More guides', seeAlso: 'See also',
+    sourcesH: 'Sources',
     related: [['Charger list', '/en/chargers/'], ['Tariff comparison', '/en/tariffs/'],
       ['Charging cost calculator', '/en/calculator/'], ['Routes', '/en/routes/'], ['Networks', '/en/networks/']],
     ctaTitle: 'Find a charger in one app',
     ctaBody: 'Every network in Georgia on one map, with live status and route planning. Free.',
     play: 'Get it on Google Play', store: 'Download on the App Store' },
+};
+
+// Articles used to share one hardcoded date. With a weekly publishing cadence
+// that is wrong on both counts: the JSON-LD date and the line the reader sees.
+// `date` on an article overrides it; anything without one keeps the old value.
+const DEFAULT_DATE = '2026-07-30';
+const MONTHS = {
+  ka: ['იანვარში', 'თებერვალში', 'მარტში', 'აპრილში', 'მაისში', 'ივნისში',
+    'ივლისში', 'აგვისტოში', 'სექტემბერში', 'ოქტომბერში', 'ნოემბერში', 'დეკემბერში'],
+  en: ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'],
+};
+const stamp = (lang, iso) => {
+  const [y, m] = iso.split('-');
+  const name = MONTHS[lang][Number(m) - 1];
+  return lang === 'ka' ? `განახლდა ${y} წლის ${name}` : `Updated ${name} ${y}`;
 };
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -1361,11 +1887,21 @@ function articlePage(lang, art, ARTICLES) {
   const bc = [{ name: t.home, href: `${t.base}/` },
     { name: t.blog, href: `${t.base}/${t.dir}/` }, { name: a.title }];
   const others = ARTICLES.filter((x) => x.slug !== art.slug);
+  const date = art.date || DEFAULT_DATE;
+
+  // Where an article leans on outside measurements rather than our own data, the
+  // measurements are listed and linked. A reader who wants to check a number has
+  // to be able to reach it in one click.
+  const sources = a.sources ? `
+<h2>${esc(t.sourcesH)}</h2>
+<ol class="src">
+${a.sources.map(([label, href]) => `<li><a href="${href}" rel="nofollow noopener" target="_blank">${esc(label)}</a></li>`).join('\n')}
+</ol>` : '';
 
   const body = `${crumbs(bc)}
 <div class="prose">
 <h1>${esc(a.title)}</h1>
-<p class="meta">${lang === 'ka' ? 'განახლდა 2026 წლის ივლისში' : 'Updated July 2026'}</p>
+<p class="meta">${esc(stamp(lang, date))}</p>
 <div class="key">${a.key.map((k) => `<p>${esc(k)}</p>`).join('')}</div>
 ${a.body.trim()}
 
@@ -1373,6 +1909,7 @@ ${a.body.trim()}
 <div class="faq">
 ${a.faq.map(([q, ans]) => `<details><summary>${esc(q)}</summary><p>${esc(ans)}</p></details>`).join('\n')}
 </div>
+${sources}
 </div>
 
 <h2>${esc(t.more)}</h2>
@@ -1397,7 +1934,7 @@ ${t.related.map(([label, href]) => `<a href="${href}">${esc(label)}</a>`).join('
           breadcrumbLd(bc),
           {
             '@type': 'Article', '@id': url + '#article', headline: a.title, description: a.desc,
-            url, inLanguage: lang, datePublished: '2026-07-30', dateModified: '2026-07-30',
+            url, inLanguage: lang, datePublished: date, dateModified: date,
             author: { '@type': 'Organization', '@id': `${ORIGIN}/#org`, name: 'GeoCharge' },
             publisher: { '@id': `${ORIGIN}/#org` },
             image: `${ORIGIN}/assets/og-image.png`,

@@ -85,7 +85,7 @@
      "name": "Can I charge a US-spec EV in Georgia?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "Yes, but with limits. CCS1 is on 2 stations, NACS on 9 and Type 1 on 18, which is 29 out of Georgia's 609. A Type 1 to Type 2 adapter opens up far more options for slow charging."
+      "text": "Yes, but with limits. CCS1 is on 2 stations, NACS on 9 and Type 1 on 18, which is 29 out of Georgia's 612. A Type 1 to Type 2 adapter opens up far more options for slow charging."
      }
     },
     {
@@ -230,6 +230,24 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 .key p{margin:0;color:#1B5E42;font-size:16.5px;line-height:1.7}
 .key p+p{margin-top:10px}
 .meta{color:#8B98A1;font-size:13.5px;margin:0 0 28px}
+/* Figures are hand-authored inline SVG: no external asset, no layout shift, and
+   they inherit the palette below, so a token change repaints them for free. */
+.fig{margin:0 0 26px;border:1px solid var(--line);border-radius:18px;
+padding:20px clamp(12px,2.4vw,22px) 14px;background:var(--soft)}
+/* Below ~600px the figure scrolls sideways instead of shrinking its labels into
+   illegibility, the same trade the .tw tables already make. */
+.fig .fs{overflow-x:auto}
+.fig svg{display:block;width:100%;min-width:560px;height:auto}
+.fig figcaption{color:var(--ink-2);font-size:14px;line-height:1.6;margin-top:14px;text-wrap:pretty}
+.fig .fx{font:500 14.5px 'Poppins','Noto Sans Georgian',sans-serif;fill:var(--ink-2)}
+.fig .fk{font:600 15px 'Poppins','Noto Sans Georgian',sans-serif;fill:var(--ink)}
+/* An ol, so .prose ul rules do not reach it; the inherited .prose li dot would
+   double up with the number, hence the reset. */
+.src{margin:0 0 18px;padding-left:24px;display:grid;gap:11px}
+.src li{padding-left:0;color:var(--ink-2);font-size:15px;line-height:1.65}
+.src li::before{content:none}
+.src a{color:var(--accent-d);font-weight:500;text-decoration:none}
+.src a:hover{text-decoration:underline}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:16px;margin:0}
 .acard{display:block;background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px;text-decoration:none}
 .acard:hover{border-color:var(--accent);box-shadow:0 12px 32px -18px rgba(23,153,95,.35)}
@@ -240,7 +258,7 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <div class="prose">
 <h1>Importing an EV from the US: where you will charge it in Georgia</h1>
 <p class="meta">Updated July 2026</p>
-<div class="key"><p>A US-market EV uses different plugs from a European one. In Georgia CCS1 is on just 2 stations, NACS on 9 and Type 1 on 18. European CCS2, for comparison, is on 370.</p><p>More to the point, most of those chargers belong to one network, EcoCars. In practice you depend on a single operator.</p></div>
+<div class="key"><p>A US-market EV uses different plugs from a European one. In Georgia CCS1 is on just 2 stations, NACS on 9 and Type 1 on 18. European CCS2, for comparison, is on 373.</p><p>More to the point, most of those chargers belong to one network, EcoCars. In practice you depend on a single operator.</p></div>
 <h2>Who this affects</h2>
 <p>A lot of the EVs arriving in Georgia come from US auctions, and a car built for the US market carries a different plug from a European one. This is not a detail. It decides whether you can charge at all.</p>
 <p>The models that turn up most often:</p>
@@ -255,9 +273,9 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <li><strong>CCS1:</strong> 2 stations in the whole country.</li>
 <li><strong>NACS:</strong> 9 stations.</li>
 <li><strong>Type 1:</strong> 18 stations, for slow AC charging.</li>
-<li><strong>CHAdeMO:</strong> 19 stations.</li>
+<li><strong>CHAdeMO:</strong> 18 stations.</li>
 </ul>
-<p>That is 29 stations out of Georgia's 609. European CCS2 sits on 370.</p>
+<p>That is 29 stations out of Georgia's 612. European CCS2 sits on 373.</p>
 
 <h2>The part most people miss</h2>
 <p>These chargers are not spread evenly across operators. Every Type 1 station and most of the NACS ones belong to EcoCars.</p>
@@ -265,7 +283,7 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 
 <h2>Adapters: what works and what does not</h2>
 <h3>Slow AC charging</h3>
-<p>A Type 1 to Type 2 adapter is simple, cheap and reliable. AC charging involves no complex negotiation between car and charger, so converting the plug is enough. With one of these, every Type 2 station in the country opens up, and that is 243 stations.</p>
+<p>A Type 1 to Type 2 adapter is simple, cheap and reliable. AC charging involves no complex negotiation between car and charger, so converting the plug is enough. With one of these, every Type 2 station in the country opens up, and that is 244 stations.</p>
 <p>This is the easiest fix available and worth budgeting for before you buy.</p>
 <h3>Fast DC charging</h3>
 <p>Here it is different. Fast charging involves the car and the charger talking over a protocol, and the adapter has to carry that conversation too. CCS1 to CCS2 adapters exist, but they are expensive, not every car supports them, and manufacturers often will not warrant them.</p>
@@ -291,10 +309,11 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 
 <h2>Frequently asked questions</h2>
 <div class="faq">
-<details><summary>Can I charge a US-spec EV in Georgia?</summary><p>Yes, but with limits. CCS1 is on 2 stations, NACS on 9 and Type 1 on 18, which is 29 out of Georgia's 609. A Type 1 to Type 2 adapter opens up far more options for slow charging.</p></details>
+<details><summary>Can I charge a US-spec EV in Georgia?</summary><p>Yes, but with limits. CCS1 is on 2 stations, NACS on 9 and Type 1 on 18, which is 29 out of Georgia's 612. A Type 1 to Type 2 adapter opens up far more options for slow charging.</p></details>
 <details><summary>Does a CCS1 to CCS2 adapter work?</summary><p>Such adapters exist, but they are expensive, not every car supports them and manufacturers often will not warrant them. For slow AC charging, a Type 1 to Type 2 adapter is simple and reliable.</p></details>
 <details><summary>Which network serves US cars in Georgia?</summary><p>Mainly EcoCars. Most Type 1 stations and a large share of the NACS ones belong to that network, so you effectively depend on a single operator.</p></details>
 </div>
+
 </div>
 
 <h2>More guides</h2>
@@ -303,11 +322,12 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <a class="acard" href="/en/blog/konektorebi/"><b>CCS2, GB/T, Type 2: which connector do you need in Georgia</b><span>CCS2 and GB/T dominate Georgian charging. Which one matches your car, and how many stations of each exist in the country.</span></a>
 <a class="acard" href="/en/blog/ac-da-dc/"><b>AC or DC: what actually separates slow and fast charging</b><span>Of Georgia’s 600 plus chargers, roughly 390 are fast DC and 220 are slow AC. When to use which, and how long each takes.</span></a>
 <a class="acard" href="/en/blog/shori-mgzavroba/"><b>Driving long distance in Georgia by EV: a practical guide</b><span>Tbilisi to Batumi needs one stop. Where the chargers are on the main routes, and how to plan the drive.</span></a>
-<a class="acard" href="/en/blog/chinuri-importi/"><b>Chinese EVs in Georgia: the GB/T connector and where to charge</b><span>GB/T is on 347 stations in Georgia, almost as many as European CCS2. Why that is good news if you drive a Chinese import.</span></a>
+<a class="acard" href="/en/blog/chinuri-importi/"><b>Chinese EVs in Georgia: the GB/T connector and where to charge</b><span>GB/T is on 351 stations in Georgia, almost as many as European CCS2. Why that is good news if you drive a Chinese import.</span></a>
 <a class="acard" href="/en/blog/zamtari/"><b>Driving an EV through a Georgian winter: range, charging and the mountains</b><span>Cold weather costs up to a third of your range. Bakuriani has 6 chargers and none of them fast, Stepantsminda 2. How to plan for it.</span></a>
 <a class="acard" href="/en/blog/sakhlis-damteni/"><b>Home charger installation: what it needs and what drives the price</b><span>A normal socket, a 7 kW wallbox or three phase. What a flat and a house each need, what to insist on from the electrician, and when a wallbox is not worth buying.</span></a>
 <a class="acard" href="/en/blog/100-km-fasi/"><b>Electric or petrol: what 100 km actually costs in Georgia</b><span>100 km on a fast charger is 14.04 GEL against 28.72 on petrol. Where that gap comes from and what the calculation leaves out.</span></a>
 <a class="acard" href="/en/blog/batarea/"><b>Battery degradation: what actually happens, and what it means in Georgia</b><span>A battery loses roughly 1 to 2 percent a year. Why Georgian summers and living in a flat are the two real risks here, and what to check when buying used.</span></a>
+<a class="acard" href="/en/blog/batareis-cveta/"><b>Battery wear by mileage: Tesla, Nissan Leaf and Chinese models</b><span>Measured figures rather than guesswork: what is left of the pack at 50,000, 100,000 and 200,000 km on a Tesla, a Nissan Leaf, a Chinese model and a hybrid. And which cars are the high risk group.</span></a>
 </div>
 
 <h2>See also</h2>
