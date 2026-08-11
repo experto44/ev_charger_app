@@ -1443,20 +1443,21 @@ const buildArticles = (N, F) => [
       body: `
 <h2>რას ნიშნავს ცვეთა და როგორ იზომება</h2>
 <p>ბატარეის მდგომარეობა, ანუ SOH, ერთი ციფრია: რამდენ ენერგიას იტევს ბატარეა დღეს იმასთან შედარებით, რასაც ქარხნიდან გამოსვლისას იტევდა. 75 კილოვატსაათიანი ბატარეა, რომელიც ახლა 68-ს იტევს, 91 პროცენტზეა.</p>
-<p>ეს ციფრი მანქანის კომპიუტერში წერია და დიაგნოსტიკური აპარატით ან OBD ადაპტერით იკითხება. სპიდომეტრზე ნაჩვენები გარბენი და სავსე ბატარეაზე დაპირებული კილომეტრები ამ ციფრს ვერ ჩაანაცვლებს: დაპირებული კილომეტრები ბოლო მგზავრობების ხარჯზეა გათვლილი და კვირაში ორჯერ იცვლება.</p>
-<p>მთავარი, რაც ქვემოთ მოყვანილ ყველა ციფრს ერთმანეთთან აკავშირებს: ცვეთა ხაზოვანი არ არის. პირველ წლებში ვარდნა ყველაზე ციცაბოა, შემდეგ მრუდი ბრტყელდება. სწორედ ამიტომ 50 000 კილომეტრზე დაკარგული 5 პროცენტი არ ნიშნავს, რომ 200 000-ზე 20 დაიკარგება.</p>
+<p>ეს ციფრი მანქანის კომპიუტერშია ჩაწერილი და დიაგნოსტიკური აპარატით ან იაფი OBD ადაპტერით იკითხება.</p>
+<p>ის, რასაც მანქანა სავსე ბატარეაზე გპირდებათ, სულ სხვა რამეა. ის ბოლო რამდენიმე მგზავრობის ხარჯზეა გამოთვლილი: ერთი კვირა ქალაქში იარეთ და ციფრი აიწევს, ერთხელ გუდაურიდან დაბრუნდით და ჩამოვარდება. ბატარეის ნამდვილ მდგომარეობაზე თითქმის არაფერს ამბობს.</p>
+<p>და კიდევ ერთი რამ, რაც ქვემოთ ყველა ციფრს ეხება. ცვეთა თანაბრად არ მიდის. პირველ წლებში ვარდნა ციცაბოა, მერე მრუდი ბრტყელდება და წლების განმავლობაში თითქმის აღარ იძვრის. 50 000 კილომეტრზე დაკარგული 5 პროცენტი იმას არ ნიშნავს, რომ 200 000-ზე 20 დაიკარგება.</p>
 
 <h2>საშუალო ციფრი და რა დგას მის უკან</h2>
-<p>ყველაზე დიდი საჯარო მონაცემი ტელემეტრიის კომპანია Geotab-ს აქვს. მისი 2026 წლის ანალიზი 22 700 ელექტრომობილს და 21 მოდელს დაეყრდნო და საშუალო წლიური ცვეთა 2.3 პროცენტი გამოვიდა. იმავე ტემპით რვა წელში ბატარეას 81.6 პროცენტი რჩება.</p>
-<p>2024 წელს იმავე კომპანიამ 10 000 მანქანაზე 1.8 პროცენტი დაითვალა. ზრდა იმას არ ნიშნავს, რომ ბატარეები გაუარესდა. ის იმას ნიშნავს, რომ სწრაფი დატენვის წილი გაიზარდა, და სწორედ ეს გამოჩნდა შედეგში.</p>
-<p>ყველაზე საინტერესო ამ კვლევაში სწორედ სწრაფი დატენვის დაყოფაა:</p>
+<p>ყველაზე დიდი საჯარო მონაცემი ტელემეტრიის კომპანია Geotab-ს აქვს. 2026 წლის ანალიზში 22 700 ელექტრომობილი და 21 მოდელი მოხვდა, საშუალო წლიური ცვეთა კი 2.3 პროცენტი გამოვიდა. იმავე ტემპით რვა წელში ბატარეას 81.6 პროცენტი რჩება.</p>
+<p>ორი წლის წინ იმავე კომპანიამ 1.8 პროცენტი დაითვალა. ერთი შეხედვით ბატარეები გაუარესდა. სინამდვილეში შეიცვალა ის, როგორ ვტენით: სწრაფი დატენვის წილი გაიზარდა და ციფრმაც მაშინვე უპასუხა.</p>
+<p>ამ კვლევის ყველაზე სასარგებლო ნაწილი აქ იწყება. Geotab-მა მანქანები დატენვის ჩვევის მიხედვით დაყო.</p>
 <ul>
-<li><strong>თუ დატენვების 12 პროცენტზე ნაკლებია სწრაფი,</strong> ცვეთა წელიწადში 1.5 პროცენტია.</li>
-<li><strong>თუ სწრაფი დატენვა ხშირია, მაგრამ ძირითადად 100 კილოვატზე ნაკლებ აპარატებზე,</strong> ციფრი 2.2 პროცენტამდე ადის.</li>
-<li><strong>თუ სწრაფი დატენვა ხშირია და სესიების 40 პროცენტზე მეტი 100 კილოვატს აღემატება,</strong> ცვეთა წელიწადში 3 პროცენტია.</li>
+<li>თუ დატენვების 12 პროცენტზე ნაკლებია სწრაფი, ცვეთა წელიწადში 1.5 პროცენტია.</li>
+<li>თუ სწრაფი დატენვა ხშირია, მაგრამ ძირითადად 100 კილოვატზე ნაკლებ აპარატებზე, ციფრი 2.2-მდე ადის.</li>
+<li>თუ სწრაფი დატენვა ხშირია და სესიების 40 პროცენტზე მეტი 100 კილოვატს აღემატება, ცვეთა წელიწადში 3 პროცენტია.</li>
 </ul>
-<p>რვა წელში ეს ორ სხვადასხვა მანქანას აძლევს: პირველ ჯგუფს 88 პროცენტი რჩება, ბოლოს კი 76. ერთი და იგივე მოდელი, ერთი და იგივე ასაკი, სხვაობა მხოლოდ ჩვევაშია.</p>
-<p>ცალკე დათვლილია სიცხის ეფექტი. ცხელ პირობებში მოსიარულე მანქანა წელიწადში 0.4 პროცენტით მეტს კარგავს, ცხელად კი კვლევა იმ პირობებს მიიჩნევს, სადაც დღეების 35 პროცენტზე მეტი 25 გრადუსს აღემატება. თბილისი, რუსთავი და კახეთი ზაფხულში სწორედ ამ განსაზღვრებაში ხვდება.</p>
+<p>რვა წელიწადში პირველ ჯგუფს 88 პროცენტი რჩება, ბოლოს კი 76. მოდელიც ერთია და ასაკიც. სხვაობას მარტო ის ქმნის, სად ტენდა მძღოლი.</p>
+<p>სიცხე ცალკე დაითვალეს. ცხელ პირობებში მოსიარულე მანქანა წელიწადში 0.4 პროცენტით მეტს კარგავს, ცხელად კი კვლევა იმ ადგილს მიიჩნევს, სადაც დღეების 35 პროცენტზე მეტი 25 გრადუსს აღემატება. თბილისი, რუსთავი და კახეთი ზაფხულში ამ ზღვარს მშვიდად გადალახავს.</p>
 
 ${figCurve({
   alt: 'ბატარეის ჯანმრთელობის მრუდი გარბენის მიხედვით სამი ტიპის ბატარეაზე',
@@ -1468,21 +1469,23 @@ ${figCurve({
 })}
 
 <h2>სამი ქიმია, სამი სხვადასხვა ქცევა</h2>
-<p>სანამ კონკრეტულ მოდელებზე გადავალთ, ერთი გავრცელებული აღრევა უნდა გავასწოროთ. <strong>ტესლას ნიკელმეტალჰიდრიდის ბატარეა არასდროს ჰქონია.</strong> NiMH ჰიბრიდების ქიმიაა, პრიუსის და მისი მსგავსების. ტესლას ყოველთვის ლითიუმიონური ბატარეა ჰქონდა, უბრალოდ ორი სხვადასხვა სახის.</p>
+<p>დანარჩენი სტატია მოდელებზეა, მაგრამ მოდელზე ადრე ქიმია მოქმედებს. სამი ჯგუფი არსებობს და ერთმანეთს არ ჰგვანან.</p>
 <ul>
-<li><strong>NCA და NMC, ანუ ნიკელიანი ქიმია.</strong> მაღალი ენერგოტევადობა, ანუ მეტი კილომეტრი იმავე წონაზე. სამაგიეროდ მგრძნობიარეა მაღალ მუხტსა და სიცხეზე. ესაა ტესლა Long Range და Performance, ფოლქსვაგენი, ჰიუნდაი, კია და ევროპული მოდელების უმეტესობა.</li>
+<li><strong>NCA და NMC, ნიკელიანი ქიმია.</strong> მაღალი ენერგოტევადობა, ანუ მეტი კილომეტრი იმავე წონაზე. სამაგიეროდ მგრძნობიარეა მაღალ მუხტსა და სიცხეზე. ესაა ტესლა Long Range და Performance, ფოლქსვაგენი, ჰიუნდაი, კია და ევროპული მოდელების უმეტესობა.</li>
 <li><strong>LFP, ლითიუმრკინაფოსფატი.</strong> ნაკლები ენერგოტევადობა, სამაგიეროდ ბევრად უკეთესი კალენდარული ცხოვრება და მეტი ციკლი. სავსე მდგომარეობა მას თითქმის არ აწუხებს. ესაა BYD-ის Blade, CATL-ის ბატარეები და ტესლას საბაზისო უკანაწამყვანა ვერსიები.</li>
-<li><strong>NiMH.</strong> ჰიბრიდის ბატარეა. სულ სხვა ქიმია და მწყობრიდან გამოსვლის სულ სხვა სცენარი, ცალკე გავარჩევთ ქვემოთ.</li>
+<li><strong>NiMH.</strong> ჰიბრიდის ბატარეა. ლითიუმისგან განსხვავებით ის ტევადობას კი არ კარგავს ნელა, არამედ ერთ დღეს ჩერდება. ქვემოთ ცალკე გვაქვს.</li>
 </ul>
 
 <h2>ტესლა: რა ჩანს რეალურ მონაცემებში</h2>
-<p>ტესლაზე ყველაზე მეტი გაზომვა არსებობს, რადგან მანქანა თავად ინახავს დეტალურ ტელემეტრიას და ის OBD-ით იკითხება.</p>
+<p>ტესლაზე გაზომვა ყველაზე ბევრია, რადგან მანქანა დეტალურ ტელემეტრიას თვითონ ინახავს და მას OBD-ით წაიკითხავთ.</p>
 <h3>მწარმოებლის საკუთარი ციფრი</h3>
-<p>ტესლას წლიური ანგარიშის (Impact Report) მიხედვით 320 000 კილომეტრზე, ანუ 200 000 მილზე, Model S და Model X საშუალოდ 12 პროცენტს კარგავს, Model 3 და Model Y კი 15-ს. ეს კომპანიის საკუთარი ციფრია მისივე შეერთებული პარკიდან, ანუ დამოუკიდებელი გაზომვა არ არის, მაგრამ სხვა წყაროებს არ ეწინააღმდეგება.</p>
+<p>ტესლას წლიური ანგარიშის (Impact Report) მიხედვით 320 000 კილომეტრზე Model S და Model X საშუალოდ 12 პროცენტს კარგავს, Model 3 და Model Y კი 15-ს.</p>
+<p>ამ ციფრს ერთი დათქმა სჭირდება. ის თავად კომპანიამ გამოაქვეყნა, საკუთარი შეერთებული პარკიდან, ანუ დამოუკიდებელი გაზომვა არ არის. მეორე მხრივ, სხვა წყაროებს არ ეწინააღმდეგება, ამიტომ სრულად უგულებელყოფაც არ ღირს.</p>
 <h3>დამოუკიდებელი გაზომვა</h3>
-<p>2019 წლის Model 3 Long Range, რომელსაც 164 541 კილომეტრი ჰქონდა გავლილი, 8.2 პროცენტი ჰქონდა დაკარგული, ანუ 91.8 პროცენტზე იდგა. მისი ენერგიის 30 პროცენტი სწრაფი დამტენიდან იყო აღებული და 70 ნელიდან. ეს ზუსტად ის თანაფარდობაა, რომელსაც Geotab-ის კვლევა საუკეთესო ჯგუფად თვლის, და შედეგიც ტიპურზე უკეთესია: ზემოთ მოცემულ მრუდზე იმავე გარბენზე დაახლოებით 90 პროცენტი წერია.</p>
+<p>ნორვეგიელმა ტესტერმა Bjørn Nyland-მა 2019 წლის Model 3 Long Range 164 541 კილომეტრზე გაზომა: 8.2 პროცენტი დაკარგული, ანუ 91.8 პროცენტზე იდგა. ენერგიის 30 პროცენტი სწრაფი დამტენიდან ჰქონდა აღებული, დანარჩენი ნელიდან.</p>
+<p>ეს იმ ჯგუფის თანაფარდობაა, რომელსაც Geotab საუკეთესოდ თვლის, და შედეგიც ტიპურზე უკეთესი გამოვიდა. ზემოთ მოცემულ მრუდზე იმავე გარბენზე დაახლოებით 90 პროცენტი წერია.</p>
 <h3>ბატარეის მიმწოდებელს მნიშვნელობა აქვს</h3>
-<p>შვედურმა პლატფორმა Carla-მ თითქმის 10 000 ჩანაწერი გააანალიზა და 100 000 კილომეტრს გადაცილებული Model 3-ები მიმწოდებლის მიხედვით დაყო. სურათი ასეთია:</p>
+<p>შვედურმა პლატფორმა Carla-მ თითქმის 10 000 ჩანაწერი გადაამუშავა და 100 000 კილომეტრს გადაცილებული Model 3-ები ბატარეის მიმწოდებლის მიხედვით დაალაგა.</p>
 <div class="tw"><table>
 <thead><tr><th>ბატარეა</th><th>ვერსია</th><th>დარჩენილი ტევადობა</th></tr></thead>
 <tbody>
@@ -1491,18 +1494,19 @@ ${figCurve({
 <tr><td>Panasonic</td><td>Long Range და Performance, 77.8 კვტსთ</td><td>89.8%</td></tr>
 <tr><td>Panasonic</td><td>საბაზისო, 52.4 კვტსთ</td><td>88.2%</td></tr>
 </tbody></table></div>
-<p>ანუ ყველაზე იაფი და ყველაზე მოკლე გარბენის ვერსია ბატარეით ყველაზე გამძლე აღმოჩნდა. ეს შეცდომა არ არის, სწორედ LFP-ს ქიმიური თვისებაა.</p>
+<p>პირველი რეაქცია ჩვეულებრივ ისაა, რომ ცხრილი შებრუნებულად წერია. ყველაზე იაფმა ვერსიამ, რომელსაც გარბენიც ყველაზე მოკლე აქვს, ბატარეით ყველაზე კარგად გაუძლო. ასე მუშაობს LFP.</p>
 
-<h2>ტესლას დისბალანსი: ის, რაზეც ყველაზე ცოტა წერია</h2>
-<p>ბატარეა ერთი დიდი ელემენტი არ არის. ის ასობით პატარა უჯრედისგან შედგება და ისინი წლების განმავლობაში ერთმანეთს სცილდება: ერთი ცოტა მეტს იტევს, მეორე ცოტა ნაკლებს. ეს დისბალანსია.</p>
-<p>პრობლემა ისაა, რომ მთელ ბატარეას ყველაზე სუსტი უჯრედი ზღუდავს. თუ ერთი მათგანი ცარიელს მიაღწევს, მანქანა მთელ ბატარეას ცარიელად თვლის, თუნდაც დანარჩენებში ენერგია იდოს. შედეგი ისაა, რომ გარბენი ეცემა მაშინაც, როცა ბატარეის რეალური ტევადობა ჯერ არ დაკლებულა.</p>
+<h2>უჯრედების დისბალანსი და რატომ ეხება ტესლას</h2>
+<p>ბატარეა ერთი დიდი ელემენტი კი არა, ასობით პატარა უჯრედია. წლების განმავლობაში ისინი ერთმანეთს სცილდება: ერთი ცოტა მეტს იტევს, მეორე ცოტა ნაკლებს. ამას დისბალანსი ჰქვია.</p>
+<p>მთელ ბატარეას კი ყველაზე სუსტი უჯრედი ზღუდავს. როგორც კი ერთი მათგანი ცარიელს მიაღწევს, მანქანა მთელ ბატარეას ცარიელად ჩათვლის, თუნდაც დანარჩენებში ენერგია ეყაროს. გარბენი ეცემა, ტევადობა კი ჯერ არსად წასულა.</p>
 <h3>რატომ ეხება ეს განსაკუთრებით ტესლას</h3>
-<p>ტესლა პასიურ გათანაბრებას იყენებს: მაღალ უჯრედებში ჭარბ ენერგიას სითბოდ ფანტავს, სანამ დაბალი უჯრედები არ გაუტოლდება. ეს პროცესი მხოლოდ მაშინ იწყება, როცა მუხტი მაქსიმუმს უახლოვდება. ანუ თუ მანქანა თვეების განმავლობაში 70 პროცენტს ზემოთ არ ადის, გათანაბრებას ფიზიკურად დრო არ ეძლევა.</p>
-<p>აქედან გამომდინარეობს ის, რაც ბევრს პარადოქსად ეჩვენება: მუდმივად 80 პროცენტამდე დატენვა ბატარეისთვის სწორია, მაგრამ თუ მას არასდროს ავსებთ და დამტენზე დიდხანს არ ტოვებთ, საბოლოო ჯამში მაინც კარგავთ გარბენს, უბრალოდ სხვა მიზეზით.</p>
+<p>ტესლა პასიურ გათანაბრებას იყენებს: მაღალ უჯრედებში ჭარბ ენერგიას სითბოდ ფანტავს, სანამ დაბალი უჯრედები არ გაუტოლდება. პროცესი მხოლოდ მაშინ ირთვება, როცა მუხტი მაქსიმუმს უახლოვდება.</p>
+<p>დასკვნა უცნაურად ჟღერს, მაგრამ პირდაპირია. თუ მანქანა თვეობით 70 პროცენტს ზემოთ არ ადის, გათანაბრებას საშუალება არ რჩება.</p>
+<p>ამიტომ ის, რაც ბევრს წინააღმდეგობად ეჩვენება, სინამდვილეში ორი სხვადასხვა რამეა. ყოველდღიური 80 პროცენტი ბატარეისთვის სწორია. მაგრამ თუ მას არასდროს ავსებთ და დამტენზე დიდხანს არასდროს ტოვებთ, გარბენს მაინც დაკარგავთ, უბრალოდ სხვა მიზეზით.</p>
 <h3>LFP ტესლა სხვა წესებით ცხოვრობს</h3>
-<p>LFP ბატარეის ძაბვა მუხტის ცვლილებაზე თითქმის არ რეაგირებს. შუა დიაპაზონში 30 და 60 პროცენტი ერთნაირად გამოიყურება, ამიტომ კომპიუტერს მუხტის დათვლის საშუალება პრაქტიკულად არ აქვს. ერთადერთი წერტილი, სადაც მას კალიბრაცია შეუძლია, სავსე ბატარეაა.</p>
-<p>სწორედ ამიტომ ტესლას ინსტრუქცია LFP მანქანებზე პირდაპირ ამბობს, რომ ყოველდღიური ზღვარი 100 პროცენტზე უნდა იდგეს და ბატარეა კვირაში ერთხელ მაინც სრულად უნდა დაიტენოს. ეს ნიკელიანი ბატარეის წესის საწინააღმდეგოა და შეცდომა არ არის.</p>
-<p>თუ ამას არ აკეთებთ, პროცენტის ჩვენება ცდება: მანქანა ხან უცებ ხტება, ხან გზაში მოულოდნელად ცოტას აჩვენებს. ეს ცვეთა არ არის, ეს კალიბრაციაა და რამდენიმე სრული დატენვით სწორდება.</p>
+<p>LFP ბატარეის ძაბვა მუხტის ცვლილებაზე თითქმის არ რეაგირებს. შუა დიაპაზონში 30 და 60 პროცენტი კომპიუტერისთვის თითქმის ერთნაირად გამოიყურება, ამიტომ მუხტის ზუსტად დათვლა უჭირს. ერთადერთი ადგილი, სადაც კალიბრაცია შეუძლია, სავსე ბატარეაა.</p>
+<p>ამიტომ ტესლას ინსტრუქცია LFP მანქანებზე პირდაპირ წერს: ყოველდღიური ზღვარი 100 პროცენტზე დააყენეთ და კვირაში ერთხელ მაინც სრულად დატენეთ. ნიკელიან ბატარეაზე იგივე რჩევა მავნებელი იქნებოდა.</p>
+<p>თუ ამას არ აკეთებთ, პროცენტი იწყებს ცრუობას: ხან უცებ ხტება, ხან გზაში მოულოდნელად დაბალ ციფრს აჩვენებს. ბატარეას ამ დროს არაფერი სჭირს, უბრალოდ კომპიუტერმა თვლა დაკარგა. რამდენიმე სრული დატენვა აგვარებს.</p>
 
 ${figWindow({
   alt: 'ყოველდღიური დატენვის რეკომენდებული დიაპაზონი სამი ქიმიისთვის',
@@ -1519,17 +1523,17 @@ ${figWindow({
 
 <h3>როგორ შევამოწმოთ და როგორ გავასწოროთ</h3>
 <ul>
-<li><strong>დისბალანსი მილივოლტებში იზომება.</strong> ჯანმრთელ ბატარეაში უჯრედებს შორის სხვაობა ათეულ მილივოლტს არ სცილდება. სამნიშნა ციფრი დატვირთვის ქვეშ სერიოზული პრობლემის ნიშანია.</li>
-<li><strong>წაკითხვა OBD ადაპტერით შეიძლება.</strong> ტესლაზე ამას Scan My Tesla ან მსგავსი აპლიკაცია აკეთებს, სხვა მარკებზე Car Scanner.</li>
-<li><strong>გასწორება ნელია.</strong> გათანაბრება მილიამპერებით მიმდინარეობს, ამიტომ შესამჩნევ დისბალანსს კვირები და თვეებიც კი სჭირდება. ერთი ღამის დატენვა საკმარისი არ არის.</li>
-<li><strong>ყველაზე ეფექტური მეთოდი მოსაწყენია:</strong> მანქანა რაც შეიძლება ხშირად დატოვეთ AC დამტენზე მიერთებული, დატენვის დასრულების შემდეგაც. სწორედ ამ დროს მუშაობს გათანაბრება.</li>
+<li>დისბალანსი მილივოლტებში იზომება. ჯანმრთელ ბატარეაში უჯრედებს შორის სხვაობა ათეულ მილივოლტს არ სცილდება; სამნიშნა ციფრი დატვირთვის ქვეშ უკვე პრობლემაა.</li>
+<li>წასაკითხად OBD ადაპტერი გჭირდებათ. ტესლაზე ამას Scan My Tesla აკეთებს, სხვა მარკებზე Car Scanner.</li>
+<li>გასწორებას დრო სჭირდება. გათანაბრება მილიამპერებით მიდის, ამიტომ შესამჩნევ დისბალანსს კვირები და თვეებიც კი უნდა. ერთი ღამე ვერაფერს შეცვლის.</li>
+<li>ყველაზე ეფექტური რჩევა ყველაზე მოსაწყენია: მანქანა რაც შეიძლება ხშირად დატოვეთ AC დამტენზე მიერთებული, დატენვის დასრულების შემდეგაც. გათანაბრება სწორედ მაშინ მუშაობს.</li>
 </ul>
 
 <h2>ნისან ლიფი: ცალკე შემთხვევა</h2>
-<p>ლიფი საქართველოში ერთ-ერთი ყველაზე გავრცელებული ელექტრომობილია და ის ერთადერთი მასობრივი მოდელია, რომელსაც ბატარეის აქტიური გაგრილება არ აქვს. ბატარეა ჰაერით გრილდება, ანუ პრაქტიკულად არ გრილდება.</p>
-<p>ეს ერთი ტექნიკური გადაწყვეტილება განსაზღვრავს ყველაფერს, რაც ქვემოთ წერია.</p>
+<p>ლიფი საქართველოში ერთ-ერთი ყველაზე გავრცელებული ელექტრომობილია და ერთადერთი მასობრივი მოდელი, რომელსაც ბატარეის აქტიური გაგრილება არ აქვს. ბატარეა ჰაერით გრილდება, რაც ზაფხულის რუსთავში დაახლოებით იმას ნიშნავს, რომ არ გრილდება.</p>
+<p>ქვემოთ ყველაფერი ამ ერთი გადაწყვეტილებიდან გამომდინარეობს.</p>
 <h3>12 ზოლი და რას ნიშნავს თითოეული</h3>
-<p>ლიფი ბატარეის მდგომარეობას თორმეტი ზოლით აჩვენებს და მძღოლების უმეტესობა თვლის, რომ თითოეული თანაბარია. ეს ასე არ არის და სწორედ აქ ხდება მთავარი შეცდომა ყიდვისას.</p>
+<p>ლიფი ბატარეის მდგომარეობას თორმეტი ზოლით აჩვენებს. მძღოლების უმეტესობა ბუნებრივად ფიქრობს, რომ თითოეული თანაბარია. არ არის, და ყიდვისას მთავარი შეცდომაც აქ იბადება.</p>
 
 ${figBars({
   alt: 'ნისან ლიფის ბატარეის თორმეტი ზოლი და მათი შესაბამისი პროცენტები',
@@ -1541,34 +1545,35 @@ ${figBars({
   cap: 'პირველი ზოლი მხოლოდ მაშინ ქრება, როცა ტევადობის 15 პროცენტი უკვე დაკარგულია. ყოველი შემდეგი კი მხოლოდ 6.25 პროცენტს შეესაბამება. თორმეტზოლიანი ლიფი შეიძლება 100 პროცენტზეც იყოს და 86-ზეც.',
 })}
 
-<p>პრაქტიკული დასკვნა: თორმეტი ზოლი ჯანმრთელ ბატარეას არ ნიშნავს. ერთი ზოლის დაკარგვა კი პანიკის საფუძველი არ არის, რადგან შემდეგები სამჯერ უფრო ჩქარა ქრება. ერთადერთი სანდო ციფრი ისევ პროცენტული SOH-ია, რომელსაც LeafSpy ან დიაგნოსტიკური აპარატი კითხულობს.</p>
-<p>გარანტია ჩვეულებრივ რვა წელს ან 160 000 კილომეტრს ფარავს და შეცვლა მაშინ ხდება, როცა ჩვენება რვა ზოლამდე ეცემა, ანუ დაახლოებით 66 პროცენტამდე.</p>
+<p>ანუ თორმეტი ზოლი ჯანმრთელ ბატარეას არ ნიშნავს. ერთი ზოლის დაკარგვა კი, პირიქით, პანიკის საბაბი არ არის: შემდეგები სამჯერ უფრო ჩქარა ქრება. სანდო ციფრს მაინც LeafSpy ან დიაგნოსტიკური აპარატი გაძლევთ.</p>
+<p>გარანტია ჩვეულებრივ რვა წელს ან 160 000 კილომეტრს ფარავს და ბატარეას მაშინ ცვლიან, როცა ჩვენება რვა ზოლამდე ჩამოვა, ანუ დაახლოებით 66 პროცენტამდე.</p>
 <h3>რაპიდგეითი</h3>
-<p>ეს ლიფის ცალკე თავისებურებაა და 40 კილოვატსაათიან ვერსიას ყველაზე მეტად ეხება. ზედიზედ რამდენიმე სწრაფი დატენვისას გაუგრილებელი ბატარეა ცხელდება და პროგრამა სიმძლავრეს ჭრის. ტიპური სურათი შორ გზაზე ასეთია: პირველი დატენვა 35-დან 40 კილოვატამდე, მეორე დაახლოებით 26, მესამე 15-დან 19-მდე. მანქანა მწყობრიდან არ გამოდის, უბრალოდ თითოეული გაჩერება სამჯერ გრძელდება.</p>
-<p>2019 წლის პროგრამულმა განახლებამ სიტუაცია გააუმჯობესა, მაგრამ სრულად არ მოხსნა. თუ ლიფით <a href="/blog/shori-mgzavroba/">შორ გზაზე</a> გადიხართ, ამას გეგმაში ჩადეთ.</p>
+<p>ეს ლიფის ცალკე თავისებურებაა და 40 კილოვატსაათიან ვერსიას ყველაზე მეტად ეხება. ზედიზედ რამდენიმე სწრაფი დატენვისას გაუგრილებელი ბატარეა ცხელდება და პროგრამა სიმძლავრეს ჭრის.</p>
+<p>შორ გზაზე ეს ასე გამოიყურება: პირველი დატენვა 35-დან 40 კილოვატამდე, მეორე დაახლოებით 26, მესამე 15-დან 19-მდე. მანქანა მწყობრიდან არ გამოდის, უბრალოდ ყოველი შემდეგი გაჩერება წინაზე გრძელი ხდება. ბათუმის გზაზე ეს სხვაობა საღამოსთვის კარგად იგრძნობა.</p>
+<p>2019 წლის პროგრამულმა განახლებამ სიტუაცია შეამსუბუქა, თუმცა არ მოხსნა. თუ ლიფით <a href="/blog/shori-mgzavroba/">შორ გზაზე</a> გადიხართ, ამას გეგმაში ჩადეთ.</p>
 <h3>რომელი ლიფია რომელი</h3>
-<p>24 კილოვატსაათიანი 2011-დან 2015 წლამდე, 30-იანი 2016 და 2017, 40-იანი 2018-დან, 62-იანი Leaf Plus 2019-დან. ადრეული 24-იანები ყველაზე პრობლემურები არიან: მათი ბატარეის ქიმია 2015 წლამდე სითბოს გაცილებით ცუდად უძლებდა.</p>
-<p>სამართლიანობისთვის: ლიფების დიდი პარკის საშუალო მაჩვენებელი დღეს 91 პროცენტის ფარგლებშია. ეს იმიტომ, რომ ამ პარკში ახალი 40 და 62 კილოვატსაათიანი მანქანები ჭარბობს და უმეტესობა ზომიერ კლიმატში დადის. ცხელი ქვეყნიდან ჩამოსული 2013 წლის 24-იანი ამ საშუალოსთან კავშირში არ არის.</p>
+<p>24 კილოვატსაათიანი 2011-დან 2015 წლამდე გამოდიოდა, 30-იანი 2016 და 2017 წლებში, 40-იანი 2018-დან, 62-იანი Leaf Plus კი 2019-დან. ადრეული 24-იანები ყველაზე პრობლემურია: გაგრილება არ აქვს და 2015 წლამდე ბატარეის ქიმიაც სითბოს ბევრად ცუდად უძლებდა.</p>
+<p>სამართლიანობისთვის ისიც უნდა ითქვას, რომ დიდი ლიფების პარკის საშუალო მაჩვენებელი დღეს 91 პროცენტის ფარგლებშია. ოღონდ ასეთ პარკებში ახალი 40 და 62 კილოვატსაათიანი მანქანები ჭარბობს და უმეტესობა ზომიერ კლიმატში დადის. ცხელი ქვეყნიდან ჩამოსულ 2013 წლის 24-იანს ამ საშუალოსთან საერთო არაფერი აქვს.</p>
 
-<h2>ჩინური მოდელები: ახალი და ჯერ ბოლომდე გაზომილი არა</h2>
-<p>BYD, ჩანგანი, Chery, Zeekr და დანარჩენები საქართველოში ბოლო წლებში მასობრივად შემოვიდა, ამიტომ 200 000 კილომეტრიანი სტატისტიკა მათზე ჯერ უბრალოდ არ არსებობს. რაც არსებობს, დამაიმედებელია.</p>
-<p>ავსტრალიაში გაზომილმა 2024 წლის BYD Seal-მა 50 000 კილომეტრზე 4.92 პროცენტი აჩვენა დაკარგული: გამოსაყენებელი ტევადობა 82.56-დან 78.5 კილოვატსაათამდე დაეცა. გაზომვა OBD ადაპტერით და Car Scanner-ით გაკეთდა, ანუ მანქანის საკუთარი ჩანაწერიდან.</p>
-<p>ეს Blade ბატარეაა, ანუ LFP. მისი უპირატესობა სწორედ იქ ჩანს, სადაც ქართული პირობებია მნიშვნელოვანი: სავსე მდგომარეობა მას თითქმის არ აზიანებს, ამიტომ ბინაში მცხოვრები მძღოლი, რომელიც სწრაფ დამტენზე სავსემდე ტენის, LFP მანქანით გაცილებით ნაკლებს კარგავს, ვიდრე იმავე ჩვევით ნიკელიან ბატარეაზე.</p>
-<p>ორი გაფრთხილება მაინც საჭიროა:</p>
+<h2>ჩინური მოდელები: ჯერ ძალიან ახალია სტატისტიკისთვის</h2>
+<p>BYD, ჩანგანი, Chery, Zeekr და დანარჩენები საქართველოში ბოლო წლებში მასობრივად შემოვიდა. 200 000 კილომეტრიანი სტატისტიკა მათზე არსად არსებობს, უბრალოდ ამდენი დრო არ გასულა. რაც არსებობს, დამაიმედებელია.</p>
+<p>ავსტრალიაში 2024 წლის BYD Seal-ს 50 000 კილომეტრზე 4.92 პროცენტი ჰქონდა დაკარგული: გამოსაყენებელი ტევადობა 82.56-დან 78.5 კილოვატსაათამდე ჩამოვიდა. გაზომვა OBD ადაპტერით და Car Scanner-ით გაკეთდა, ანუ თავად მანქანის ჩანაწერიდან.</p>
+<p>ეს Blade ბატარეაა, ანუ LFP, და მისი უპირატესობა ზუსტად იქ ჩანს, სადაც ქართული ყოფაა. ბინაში მცხოვრები მძღოლი, რომელსაც სახლის დამტენი არ აქვს და ყველაფერს საჯარო DC-ზე სავსემდე ტენის, LFP მანქანით გაცილებით ნაკლებს კარგავს, ვიდრე იმავე ჩვევით ნიკელიან ბატარეაზე.</p>
+<p>ორ რამეზე მაინც უნდა გაფრთხილდეთ.</p>
 <ul>
 <li><strong>ყველა ჩინური მანქანა LFP არ არის.</strong> ბევრ მოდელს ვერსიის მიხედვით ან LFP უდევს, ან ნიკელიანი NMC. ყიდვამდე ზუსტად ეს გაარკვიეთ, რადგან მოვლის წესი ორივესთვის სხვადასხვაა.</li>
 <li><strong>ჩინეთის ბაზრის მანქანაზე გარანტია აქ ჩვეულებრივ არ მოქმედებს</strong> და ბატარეის დიაგნოსტიკა ხშირად მხოლოდ ჩინურენოვან პროგრამაშია ხელმისაწვდომი. ამის შესახებ ცალკე გვაქვს დაწერილი: <a href="/blog/chinuri-importi/">ჩინური ელექტრომობილი და GB/T</a>.</li>
 </ul>
-<p>შედარებისთვის, სრულიად დამოუკიდებელი ევროპული გაზომვა: გერმანულმა ავტოკლუბმა ADAC ფოლქსვაგენ ID.3 ოთხი წლის განმავლობაში 160 000 კილომეტრზე გარბენა. ბატარეას 91 პროცენტი დარჩა. ეს ნიკელიანი ქიმიაა თხევადი გაგრილებით, ანუ ის შუალედი, სადაც ევროპული მოდელების უმეტესობა დგას.</p>
+<p>შედარებისთვის ერთი სრულიად დამოუკიდებელი ევროპული ტესტი: გერმანულმა ავტოკლუბმა ADAC ფოლქსვაგენ ID.3 ოთხ წელიწადში 160 000 კილომეტრზე გარბენა და ბატარეას 91 პროცენტი დარჩა. ეს ნიკელიანი ქიმიაა თხევადი გაგრილებით, ანუ ის შუალედი, სადაც ევროპული მოდელების უმეტესობა ზის.</p>
 
-<h2>ჰიბრიდის ნიკელმეტალჰიდრიდი: სულ სხვა ამბავი</h2>
-<p>პრიუსი და მისი მსგავსები საქართველოში ელექტრომობილებზე ბევრად მეტია, ამიტომ ეს ნაწილი ცალკე ღირს.</p>
-<p>NiMH ბატარეა თანდათან არ ცვდება ისე, როგორც ლითიუმიონური. მისი ტიპური სცენარი სხვაა: შიდა წინაღობა იზრდება, მოდულები ერთმანეთს სცილდება და მანქანა ერთ დღეს გამაფრთხილებელ სამკუთხედს და შეცდომის კოდს გამოიტანს. ანუ გარბენი კი არ იკლებს ნელა, არამედ სისტემა უცებ ჩერდება.</p>
-<p>რესურსი ჩვეულებრივ რვიდან ათ წლამდეა, ან 160 000-დან 240 000 კილომეტრამდე. ინტენსიურად მოსიარულე მანქანები, ტაქსები მათ შორის, ხშირად 300 000-საც სცილდება, და ეს შემთხვევითი არ არის: NiMH ბატარეას მუდმივი ციკლირება უკეთესად უხდება, ვიდრე უსაქმოდ დგომა.</p>
-<p><strong>ერთი კონკრეტული რჩევა, რომელიც ყველაზე მეტს იძლევა.</strong> ამ ბატარეას გამაგრილებელი ვენტილატორი და ფილტრი აქვს, უკანა სავარძლის უკან. მტვრით ამოვსებული ფილტრი ჰაერის ნაკადს ჭრის, ბატარეა ხურდება და სწრაფად კვდება. თოიოტას საკუთარი სერვისული ბიულეტენი 2003-დან 2020 წლამდე გამოშვებულ პრიუსებზე პირდაპირ ასახელებს ვენტილატორსა და ფილტრში დაგროვილ მტვერს კოდების P0A80 და P0A7F მიზეზად. ფილტრის გაწმენდა იაფი და სწრაფი სამუშაოა და ბატარეის სიცოცხლეს რეალურად ახანგრძლივებს. თუ მეორადი ჰიბრიდი იყიდეთ, ეს პირველი, რაც უნდა შეამოწმოთ.</p>
+<h2>ჰიბრიდის ბატარეა: სულ სხვა ამბავი</h2>
+<p>პრიუსი და მისი მსგავსები საქართველოში ელექტრომობილებზე ბევრად მეტია, ამიტომ ეს ნაწილიც ღირს. ჰიბრიდში ნიკელმეტალჰიდრიდის ბატარეა დევს და ის ლითიუმიონურივით არ იქცევა.</p>
+<p>ლითიუმი ტევადობას ნელა კარგავს. NiMH სხვანაირად კვდება: შიდა წინაღობა იზრდება, მოდულები ერთმანეთს სცილდება და მანქანა ერთ დღეს გამაფრთხილებელ სამკუთხედს გამოიტანს. გარბენი კი არ იკლებს ნელნელა, არამედ სისტემა უცებ ჩერდება.</p>
+<p>რესურსი ჩვეულებრივ რვიდან ათ წლამდეა, ან 160 000-დან 240 000 კილომეტრამდე. ინტენსიურად მოსიარულე მანქანები, ტაქსები მათ შორის, ხშირად 300 000-საც სცილდება. ეს შემთხვევითი არ არის: NiMH ბატარეას მუდმივი მუშაობა უფრო უხდება, ვიდრე უსაქმოდ დგომა.</p>
+<p>და ერთი კონკრეტული რჩევა, რომელიც ყველაზე მეტს იძლევა. ამ ბატარეას გამაგრილებელი ვენტილატორი და ფილტრი აქვს, უკანა სავარძლის უკან. მტვრით ამოვსებული ფილტრი ჰაერს ჭრის, ბატარეა ხურდება და ადრე კვდება. თოიოტას საკუთარი სერვისული ბიულეტენი 2003-დან 2020 წლამდე გამოშვებულ პრიუსებზე პირდაპირ ასახელებს ვენტილატორსა და ფილტრში დაგროვილ მტვერს კოდების P0A80 და P0A7F მიზეზად. გაწმენდა იაფი და სწრაფი სამუშაოა. თუ მეორადი ჰიბრიდი იყიდეთ, დაიწყეთ სწორედ აქედან.</p>
 
 <h2>რას უნდა ველოდოთ კონკრეტულ გარბენზე</h2>
-<p>ქვემოთ მოყვანილი დიაპაზონები ზემოთ ჩამოთვლილი გაზომვებიდან გამომდინარეობს. ესაა ტიპური სურათი და არა გარანტია: ერთსა და იმავე გარბენზე ორი მანქანა ჩვევების გამო ათი პროცენტით შეიძლება განსხვავდებოდეს.</p>
+<p>ქვემოთ მოცემული დიაპაზონები ზემოთ ჩამოთვლილი გაზომვებიდან გამომდინარეობს. ესაა ტიპური სურათი და არა გარანტია: ერთსა და იმავე გარბენზე ორი მანქანა მარტო ჩვევების გამო ათი პროცენტით შეიძლება დაშორდეს ერთმანეთს.</p>
 <div class="tw"><table>
 <thead><tr><th>გარბენი</th><th>NCA/NMC, თხევადი გაგრილება</th><th>LFP</th><th>ჰაერით გაგრილებული, ცხელი კლიმატი</th></tr></thead>
 <tbody>
@@ -1577,26 +1582,26 @@ ${figBars({
 <tr><td>200 000 კმ</td><td>88-91%</td><td>დაახლოებით 90%, მონაცემი ჯერ მწირია</td><td>62-75%</td></tr>
 <tr><td>300 000 კმ და მეტი</td><td>85-88%</td><td>საკმარისი მონაცემი ჯერ არ არის</td><td>ჩვეულებრივ უკვე შეცვლილია</td></tr>
 </tbody></table></div>
-<p>ორ რამეს მიაქციეთ ყურადღება. პირველი: ნიკელიან სვეტში 100 000 და 200 000 კილომეტრს შორის სხვაობა თითქმის არ არის. ეს შეცდომა არ არის, სწორედ ასე გამოიყურება ბრტყელი მრუდი. მეორე: მარჯვენა სვეტში სხვაობა უზარმაზარია, რადგან იქ შედეგს ის წყვეტს, სად იდგა მანქანა და არა რამდენი გაიარა.</p>
+<p>ცხრილში ორი რამ თვალშისაცემია. ნიკელიან სვეტში 100 000 და 200 000 კილომეტრს შორის თითქმის არაფერი იცვლება, რაც შეცდომად გამოიყურება, სინამდვილეში კი ბრტყელი მრუდის ჩვეულებრივი სახეა. მარჯვენა სვეტში კი დიაპაზონი უზარმაზარია, რადგან იქ შედეგს ის წყვეტს, სად იდგა მანქანა და არა რამდენი გაიარა.</p>
 
 <h2>მაღალი რისკის ჯგუფი</h2>
-<p>თუ თქვენი მანქანა ქვემოთ ჩამოთვლილთაგან ერთ-ერთ კატეგორიას მაინც ხვდება, ბატარეის შემოწმება ყიდვამდე სავალდებულოა და არა სასურველი.</p>
+<p>თუ თქვენი მანქანა ერთ-ერთ ამ კატეგორიაში მაინც ხვდება, ბატარეის შემოწმება ყიდვამდე აუცილებელია.</p>
 <ul>
 <li><strong>მანქანები ბატარეის აქტიური გაგრილების გარეშე.</strong> ნისან ლიფის ყველა თაობა და e-NV200. ცხელი კლიმატი მათზე პირდაპირ და სწრაფად აისახება.</li>
 <li><strong>2015 წლამდე გამოშვებული 24 კილოვატსაათიანი ლიფი.</strong> ორმაგი რისკი: გაგრილება არც აქვს და ბატარეის ადრეული ქიმიაც სითბოს ცუდად უძლებდა.</li>
 <li><strong>ცხელი ქვეყნიდან ჩამოსული მანქანა, რომელიც ღია ცის ქვეშ იდგა.</strong> სიცხე კალენდარულ ცვეთას აჩქარებს მაშინაც, როცა მანქანა საერთოდ არ დადის. დაბალი გარბენი აქ არაფერს ამტკიცებს.</li>
 <li><strong>მანქანა, რომელიც წლების განმავლობაში მხოლოდ სწრაფ დამტენზე იტენება.</strong> Geotab-ის მონაცემით სწორედ ეს ჯგუფი კარგავს წელიწადში 3 პროცენტს 1.5-ის ნაცვლად.</li>
-<li><strong>2017-დან 2019 წლამდე Chevrolet Bolt და 2018-დან 2020 წლამდე Hyundai Kona Electric.</strong> ორივეს ბატარეა LG-ს უჯრედების ქარხნული დეფექტის გამო მასობრივად შეიცვალა. Bolt-ზე ყველა მოდული იცვლებოდა, Kona-ზე კი 75 000-ზე მეტი ბატარეა შეიცვალა. ასეთ მანქანაზე უნდა დაადასტუროთ, გაკეთდა თუ არა შეცვლა. თუ გაკეთდა, ეს კარგი ამბავია და არა ცუდი.</li>
-<li><strong>თვეობით უმოძრაოდ მდგარი მანქანა.</strong> განსაკუთრებით სავსე ან თითქმის ცარიელი ბატარეით.</li>
+<li><strong>2017-დან 2019 წლამდე Chevrolet Bolt და 2018-დან 2020 წლამდე Hyundai Kona Electric.</strong> ორივეს ბატარეა LG-ს უჯრედების ქარხნული დეფექტის გამო მასობრივად შეიცვალა: Bolt-ზე ყველა მოდული, Kona-ზე კი 75 000-ზე მეტი ბატარეა. ასეთ მანქანაზე აუცილებლად დააზუსტეთ, გაკეთდა თუ არა შეცვლა. თუ გაკეთდა, ეს კარგი ამბავია.</li>
+<li><strong>თვეობით უმოძრაოდ მდგარი მანქანა,</strong> განსაკუთრებით სავსე ან თითქმის ცარიელი ბატარეით.</li>
 </ul>
 
 <h2>რა შეგიძლიათ რეალურად გააკეთოთ</h2>
-<p>სია მოკლეა, რადგან რაც აქ არ წერია, დანარჩენზე ფიქრი ჩვეულებრივ არც ღირს.</p>
+<p>სია მოკლეა და ეს განზრახაა. დანარჩენზე ფიქრი ჩვეულებრივ არც ღირს.</p>
 <ul>
 <li><strong>ჯერ ქიმია გაარკვიეთ, მერე წესი აირჩიეთ.</strong> ნიკელიან ბატარეაზე ყოველდღიური ზღვარი 80 პროცენტია, LFP-ზე კი 100, კვირაში ერთი სრული დატენვით. ერთი წესის მეორეზე გადმოტანა ბატარეას ზიანს აყენებს.</li>
 <li><strong>სწრაფი დატენვის წილი შეამცირეთ და არა რაოდენობა.</strong> მნიშვნელობა აქვს იმას, რომ ენერგიის უმეტესობა ნელი დამტენიდან მოდიოდეს. <a href="/blog/sakhlis-damteni/">სახლის დამტენი</a> ამას ყველაზე იაფად აგვარებს.</li>
-<li><strong>ზაფხულში ჩრდილი მოძებნეთ.</strong> გაუგრილებელი ბატარეისთვის ეს ყველაზე ეფექტური ზომაა და არაფერი ღირს.</li>
-<li><strong>მანქანა ხშირად დატოვეთ AC დამტენზე მიერთებული.</strong> სწორედ ამ დროს ასწორებს კომპიუტერი უჯრედების დისბალანსს.</li>
+<li><strong>ზაფხულში ჩრდილი მოძებნეთ.</strong> გაუგრილებელი ბატარეისთვის ეს ყველაზე ეფექტური ზომაა და არაფერი ჯდება.</li>
+<li><strong>მანქანა ხშირად დატოვეთ AC დამტენზე მიერთებული.</strong> ამ დროს ასწორებს კომპიუტერი უჯრედების დისბალანსს.</li>
 <li><strong>ზამთარში სწრაფ დამტენამდე ბატარეა გაათბეთ,</strong> თუ მანქანას ეს ფუნქცია აქვს. ცივ ბატარეას დატენვა უჭირს და ეს ცვეთასაც აჩქარებს. <a href="/blog/zamtari/">ზამთრის ცალკე გზამკვლევი</a>.</li>
 <li><strong>თუ მანქანა კვირებით ჩერდება, დაახლოებით ნახევრად სავსე დატოვეთ.</strong></li>
 </ul>
@@ -1637,20 +1642,21 @@ ${figBars({
       body: `
 <h2>What wear means and how it is measured</h2>
 <p>Battery state of health, or SOH, is one number: how much energy the pack holds today against how much it held when it left the factory. A 75 kWh pack that now holds 68 is at 91 percent.</p>
-<p>That number lives in the car’s computer and is read with a diagnostic tool or an OBD adapter. The odometer and the range promised on a full charge are not substitutes: the second figure is computed from recent consumption and moves twice a week.</p>
-<p>One thing ties every figure below together: wear is not linear. The early years are the steepest, then the curve flattens. That is why 5 percent lost at 50,000 km does not mean 20 percent lost at 200,000.</p>
+<p>That number lives in the car’s computer and is read with a diagnostic tool or a cheap OBD adapter.</p>
+<p>The range the car promises you on a full charge is something else entirely. It is calculated from your last few journeys: drive around town for a week and it climbs, come back from Gudauri once and it collapses. About the actual state of the pack it says almost nothing.</p>
+<p>One more thing, and it applies to every figure below. Wear does not proceed evenly. The early years are steep, then the curve flattens and barely moves for years afterwards. Five percent lost at 50,000 km does not mean twenty will be gone at 200,000.</p>
 
 <h2>The average figure, and what sits behind it</h2>
-<p>The largest public dataset belongs to the telematics company Geotab. Its 2026 analysis covered 22,700 EVs across 21 models and put average annual wear at 2.3 percent. At that rate eight years leaves 81.6 percent.</p>
-<p>In 2024 the same company measured 1.8 percent across 10,000 vehicles. The increase does not mean batteries got worse. It means the share of fast charging went up, and that is what showed in the result.</p>
-<p>The most useful part of the study is the fast charging split:</p>
+<p>The largest public dataset belongs to the telematics company Geotab. Its 2026 analysis took in 22,700 EVs across 21 models and put average annual wear at 2.3 percent. At that rate eight years leaves 81.6 percent.</p>
+<p>Two years earlier the same company measured 1.8 percent. At first glance batteries got worse. What actually changed is how we charge: the share of fast charging went up, and the figure answered immediately.</p>
+<p>The most useful part of the study starts here. Geotab split the cars by charging habit.</p>
 <ul>
-<li><strong>If under 12 percent of sessions are DC,</strong> wear runs at 1.5 percent a year.</li>
-<li><strong>If DC is frequent but mostly on units below 100 kW,</strong> the figure rises to 2.2 percent.</li>
-<li><strong>If DC is frequent and over 40 percent of sessions exceed 100 kW,</strong> wear runs at 3 percent a year.</li>
+<li>Where under 12 percent of sessions are DC, wear runs at 1.5 percent a year.</li>
+<li>Where DC is frequent but mostly on units below 100 kW, the figure climbs to 2.2.</li>
+<li>Where DC is frequent and over 40 percent of sessions exceed 100 kW, wear runs at 3 percent a year.</li>
 </ul>
-<p>Over eight years that produces two different cars: the first group keeps 88 percent, the last keeps 76. Same model, same age, the only difference is habit.</p>
-<p>Heat is counted separately. Cars operating in hot conditions lose an extra 0.4 percent a year, where hot means more than 35 percent of days above 25 degrees. Tbilisi, Rustavi and Kakheti fall inside that definition every summer.</p>
+<p>Over eight years the first group keeps 88 percent and the last keeps 76. Same model, same age. The only thing separating them is where the driver plugged in.</p>
+<p>Heat was counted separately. Cars in hot conditions lose an extra 0.4 percent a year, and the study calls a place hot when more than 35 percent of days go above 25 degrees. Tbilisi, Rustavi and Kakheti clear that bar comfortably every summer.</p>
 
 ${figCurve({
   alt: 'Battery health against distance for three types of pack',
@@ -1662,21 +1668,23 @@ ${figCurve({
 })}
 
 <h2>Three chemistries, three different behaviours</h2>
-<p>Before the models, one common mix up is worth correcting. <strong>Tesla has never used a nickel metal hydride battery.</strong> NiMH is hybrid chemistry, the kind in a Prius. Tesla has always used lithium ion, just in two different forms.</p>
+<p>The rest of this article is about models, but chemistry acts before the model does. There are three families and they do not behave alike.</p>
 <ul>
 <li><strong>NCA and NMC, the nickel chemistries.</strong> High energy density, meaning more kilometres for the same weight. In exchange they are sensitive to high state of charge and to heat. This is Tesla Long Range and Performance, Volkswagen, Hyundai, Kia and most European models.</li>
 <li><strong>LFP, lithium iron phosphate.</strong> Lower density, but far better calendar life and more cycles. Sitting full barely bothers it. This is BYD’s Blade, CATL packs, and Tesla’s base rear wheel drive versions.</li>
-<li><strong>NiMH.</strong> Hybrid battery. Different chemistry, different failure mode, covered separately below.</li>
+<li><strong>NiMH.</strong> The hybrid battery. Unlike lithium it does not lose capacity slowly; it stops one day. Covered separately below.</li>
 </ul>
 
 <h2>Tesla: what the real data shows</h2>
-<p>Tesla has more measurements behind it than any other brand, because the car logs detailed telemetry and it can be read over OBD.</p>
+<p>Tesla has the most measurements behind it, because the car logs detailed telemetry itself and you can read it over OBD.</p>
 <h3>The manufacturer’s own figure</h3>
-<p>According to Tesla’s impact report, at 320,000 km, that is 200,000 miles, Model S and Model X lose 12 percent on average and Model 3 and Model Y lose 15. This is the company’s own number from its own connected fleet, so not an independent measurement, but it does not contradict the other sources.</p>
+<p>According to Tesla’s annual Impact Report, at 320,000 km Model S and Model X lose 12 percent on average, and Model 3 and Model Y lose 15.</p>
+<p>That figure needs one caveat. The company published it itself, from its own connected fleet, so it is not an independent measurement. On the other hand it does not contradict the other sources, so it is not worth dismissing either.</p>
 <h3>An independent measurement</h3>
-<p>A 2019 Model 3 Long Range with 164,541 km on it was down 8.2 percent, sitting at 91.8. Thirty percent of its energy had come from fast chargers and 70 from slow ones. That is exactly the ratio Geotab’s study identifies as the best case group, and the result is better than typical: the curve above puts roughly 90 percent at that distance.</p>
+<p>The Norwegian tester Bjørn Nyland measured a 2019 Model 3 Long Range at 164,541 km: down 8.2 percent, sitting at 91.8. Thirty percent of its energy had come from fast chargers, the rest from slow ones.</p>
+<p>That is the ratio Geotab rates as the best case, and the result came out better than typical. The curve above puts roughly 90 percent at the same distance.</p>
 <h3>The cell supplier matters</h3>
-<p>The Swedish platform Carla analysed nearly 10,000 records and sorted Model 3s past 100,000 km by pack supplier. The picture:</p>
+<p>The Swedish platform Carla worked through nearly 10,000 records and sorted Model 3s past 100,000 km by pack supplier.</p>
 <div class="tw"><table>
 <thead><tr><th>Pack</th><th>Version</th><th>Capacity remaining</th></tr></thead>
 <tbody>
@@ -1685,18 +1693,19 @@ ${figCurve({
 <tr><td>Panasonic</td><td>Long Range and Performance, 77.8 kWh</td><td>89.8%</td></tr>
 <tr><td>Panasonic</td><td>Base, 52.4 kWh</td><td>88.2%</td></tr>
 </tbody></table></div>
-<p>So the cheapest, shortest range version turned out to have the most durable pack. That is not an error; it is what LFP chemistry does.</p>
+<p>The usual first reaction is that the table has been printed upside down. The cheapest version, the one with the shortest range, held up best of all. That is LFP doing what LFP does.</p>
 
-<h2>Cell imbalance on a Tesla: the least written about part</h2>
-<p>A battery is not one large cell. It is hundreds of small ones, and over the years they drift apart: one holds a little more, another a little less. That is imbalance.</p>
-<p>The problem is that the weakest cell limits the whole pack. When one of them hits empty, the car treats the entire battery as empty even though energy is still sitting in the rest. Range falls while actual pack capacity has not.</p>
+<h2>Cell imbalance, and why it hits Tesla</h2>
+<p>A battery is not one large cell but hundreds of small ones. Over the years they drift apart: one holds a little more, another a little less. That is imbalance.</p>
+<p>And the weakest cell limits the whole pack. The moment one of them hits empty, the car calls the entire battery empty, even with energy still sitting in the rest. Range falls while capacity has gone nowhere.</p>
 <h3>Why this hits Tesla in particular</h3>
-<p>Tesla uses passive balancing: it burns off excess energy from the high cells as heat until the low ones catch up. That process only starts as charge approaches the top. So a car that spends months never going above 70 percent is never given the chance to balance.</p>
-<p>Which produces what looks to many owners like a paradox: charging to 80 percent daily is correct for the pack, but if you never fill it and never leave it plugged in, you still lose range, just for a different reason.</p>
+<p>Tesla uses passive balancing: it bleeds off excess energy from the high cells as heat until the low ones catch up. The process only switches on as charge approaches the top.</p>
+<p>The conclusion sounds odd but it is straightforward. A car that spends months never going above 70 percent never gets the chance to balance.</p>
+<p>So what looks to many owners like a contradiction is really two separate things. Charging to 80 percent daily is right for the pack. But if you never fill it and never leave it plugged in, you lose range anyway, for a different reason.</p>
 <h3>An LFP Tesla lives by different rules</h3>
-<p>The voltage of an LFP pack barely responds to a change in charge. In the middle of the range 30 percent and 60 percent look nearly identical, so the computer has almost no way to work out the state of charge. The one point where it can recalibrate is a full battery.</p>
-<p>This is why Tesla’s manual for LFP cars says plainly that the daily limit should sit at 100 percent and that the pack should be charged fully at least once a week. It is the opposite of the nickel rule, and it is not a mistake.</p>
-<p>Skip it and the percentage display drifts: the car jumps suddenly, or shows an unexpectedly low figure mid journey. That is not wear, it is calibration, and a few full charges fix it.</p>
+<p>The voltage of an LFP pack barely responds to a change in charge. Across the middle of the range 30 percent and 60 percent look nearly identical to the computer, so working out the state of charge is hard. The one place it can recalibrate is a full battery.</p>
+<p>So Tesla’s manual for LFP cars says it outright: set the daily limit to 100 percent and charge fully at least once a week. On a nickel pack the same advice would be harmful.</p>
+<p>Skip it and the percentage starts lying: jumping suddenly, or showing an unexpectedly low figure mid journey. Nothing is wrong with the pack; the computer has simply lost count. A few full charges sort it out.</p>
 
 ${figWindow({
   alt: 'Recommended daily charging window for three chemistries',
@@ -1713,17 +1722,17 @@ ${figWindow({
 
 <h3>How to check it and how to correct it</h3>
 <ul>
-<li><strong>Imbalance is measured in millivolts.</strong> In a healthy pack the spread between cells stays within tens of millivolts. A three digit figure under load points to a real problem.</li>
-<li><strong>It can be read with an OBD adapter.</strong> On a Tesla that means Scan My Tesla or similar; on other brands, Car Scanner.</li>
-<li><strong>Correction is slow.</strong> Balancing runs at milliamps, so a noticeable imbalance takes weeks or months. One overnight charge will not do it.</li>
-<li><strong>The most effective method is the dullest one:</strong> leave the car connected to an AC charger as often as you can, including after charging finishes. That is when balancing happens.</li>
+<li>Imbalance is measured in millivolts. In a healthy pack the spread between cells stays within tens of millivolts; a three digit figure under load is already a problem.</li>
+<li>You need an OBD adapter to read it. On a Tesla that means Scan My Tesla, on other brands Car Scanner.</li>
+<li>Correcting it takes time. Balancing runs at milliamps, so a noticeable imbalance needs weeks or even months. One night will change nothing.</li>
+<li>The most effective advice is the dullest: leave the car connected to an AC charger as often as you can, including after charging finishes. That is when balancing happens.</li>
 </ul>
 
 <h2>The Nissan Leaf: a case of its own</h2>
-<p>The Leaf is one of the most common EVs in Georgia and the only mass market model with no active pack cooling at all. The battery is air cooled, which in practice means barely cooled.</p>
-<p>That single engineering decision explains everything below.</p>
+<p>The Leaf is one of the most common EVs in Georgia and the only mass market model with no active pack cooling. The battery is air cooled, which in a Rustavi summer means roughly that it is not cooled.</p>
+<p>Everything below follows from that one decision.</p>
 <h3>Twelve bars and what each one means</h3>
-<p>The Leaf reports battery health with twelve bars, and most drivers assume each is worth the same. They are not, and this is where the mistake usually happens when buying.</p>
+<p>The Leaf reports battery health with twelve bars. Most drivers naturally assume each is worth the same. They are not, and that is where the mistake is usually born when buying.</p>
 
 ${figBars({
   alt: 'The twelve capacity bars of a Nissan Leaf and the percentages behind them',
@@ -1735,34 +1744,35 @@ ${figBars({
   cap: 'The first bar only disappears once 15 percent of capacity is already gone. Every bar after that is worth just 6.25 percent. A twelve bar Leaf can be at 100 percent or at 86.',
 })}
 
-<p>The practical conclusion: twelve bars does not mean a healthy pack. And losing one bar is no reason to panic, because the ones after it fall three times faster. The only reliable number is still SOH as a percentage, read with LeafSpy or a diagnostic tool.</p>
-<p>The warranty normally covers eight years or 160,000 km, and replacement is triggered when the display drops to eight bars, roughly 66 percent.</p>
+<p>So twelve bars does not mean a healthy pack. Losing one bar, on the other hand, is no cause for panic: the ones after it disappear three times faster. For a number you can trust you still want LeafSpy or a diagnostic tool.</p>
+<p>The warranty normally covers eight years or 160,000 km, and the pack is replaced when the display drops to eight bars, roughly 66 percent.</p>
 <h3>Rapidgate</h3>
-<p>This is a Leaf specific behaviour and hits the 40 kWh version hardest. On several consecutive fast charges the uncooled pack heats up and the software cuts power. The typical pattern on a long drive: first charge 35 to 40 kW, second around 26, third 15 to 19. Nothing breaks; each stop simply takes three times longer.</p>
-<p>A 2019 software update improved matters but did not remove the issue. If you are taking a Leaf on <a href="/en/blog/shori-mgzavroba/">a long trip</a>, plan around it.</p>
+<p>This is a Leaf specific behaviour and hits the 40 kWh version hardest. On several consecutive fast charges the uncooled pack heats up and the software cuts power.</p>
+<p>On a long drive it looks like this: first charge 35 to 40 kW, second around 26, third 15 to 19. Nothing breaks; each stop is simply longer than the one before it. On the Batumi road the difference is well felt by evening.</p>
+<p>A 2019 software update eased it without removing it. If you are taking a Leaf on <a href="/en/blog/shori-mgzavroba/">a long trip</a>, plan around it.</p>
 <h3>Which Leaf is which</h3>
-<p>24 kWh from 2011 to 2015, 30 kWh in 2016 and 2017, 40 kWh from 2018, and the 62 kWh Leaf Plus from 2019. The early 24 kWh cars are the most problematic: no cooling, and a pre 2015 cell chemistry that handled heat considerably worse.</p>
-<p>In fairness: the average across a large modern Leaf pool sits around 91 percent today. That is because such pools are dominated by newer 40 and 62 kWh cars living in temperate climates. A 2013 24 kWh car shipped in from a hot country has nothing to do with that average.</p>
+<p>The 24 kWh ran from 2011 to 2015, the 30 kWh in 2016 and 2017, the 40 kWh from 2018, and the 62 kWh Leaf Plus from 2019. The early 24 kWh cars are the most problematic: no cooling, and a pre 2015 cell chemistry that handled heat considerably worse.</p>
+<p>In fairness, the average across a large modern Leaf pool sits around 91 percent today. But such pools are dominated by newer 40 and 62 kWh cars living in temperate climates. A 2013 24 kWh car shipped in from a hot country has nothing in common with that average.</p>
 
-<h2>Chinese models: new, and not yet fully measured</h2>
-<p>BYD, Changan, Chery, Zeekr and the rest arrived in Georgia in volume only recently, so 200,000 km statistics on them simply do not exist yet. What does exist is encouraging.</p>
-<p>A 2024 BYD Seal measured in Australia was down 4.92 percent at 50,000 km: usable capacity had fallen from 82.56 to 78.5 kWh. The reading was taken over an OBD adapter with Car Scanner, meaning from the car’s own log.</p>
-<p>That is a Blade pack, so LFP. Its advantage shows up exactly where Georgian conditions bite: sitting full barely harms it, so a driver living in a flat who charges to full on public DC loses far less on an LFP car than the same habit would cost on a nickel pack.</p>
-<p>Two warnings are still needed:</p>
+<h2>Chinese models: still too new for statistics</h2>
+<p>BYD, Changan, Chery, Zeekr and the rest arrived in Georgia in volume only recently. Nobody anywhere has 200,000 km statistics on them; not enough time has passed. What does exist is encouraging.</p>
+<p>A 2024 BYD Seal in Australia was down 4.92 percent at 50,000 km: usable capacity had come down from 82.56 to 78.5 kWh. The reading was taken over an OBD adapter with Car Scanner, meaning from the car’s own log.</p>
+<p>That is a Blade pack, so LFP, and its advantage shows up precisely where Georgian life is. A driver in a flat with no home charger, who takes everything from public DC and charges to full, loses far less on an LFP car than the same habit costs on a nickel pack.</p>
+<p>Two things still deserve caution.</p>
 <ul>
 <li><strong>Not every Chinese car is LFP.</strong> Many models carry either LFP or nickel NMC depending on the version. Establish which before buying, because the care rules differ.</li>
 <li><strong>A Chinese market car normally has no valid warranty here,</strong> and battery diagnostics are often only available in Chinese language software. That is covered separately in <a href="/en/blog/chinuri-importi/">Chinese EVs and GB/T</a>.</li>
 </ul>
-<p>For comparison, a fully independent European measurement: the German motoring club ADAC ran a Volkswagen ID.3 for 160,000 km over four years. The pack retained 91 percent. That is nickel chemistry with liquid cooling, which is where most European models sit.</p>
+<p>For comparison, one entirely independent European test: the German motoring club ADAC ran a Volkswagen ID.3 for 160,000 km over four years and the pack kept 91 percent. That is nickel chemistry with liquid cooling, the middle ground where most European models sit.</p>
 
-<h2>Hybrid nickel metal hydride: a different story entirely</h2>
-<p>Priuses and their relatives vastly outnumber EVs in Georgia, so this part earns its own section.</p>
-<p>A NiMH pack does not fade gradually the way lithium ion does. Its typical script is different: internal resistance rises, modules drift apart from each other, and one day the car throws a warning triangle and a fault code. Range does not slowly shrink; the system simply stops.</p>
-<p>Service life is normally eight to ten years, or 160,000 to 240,000 km. Heavily used cars, taxis among them, frequently pass 300,000, and that is not an accident: a NiMH pack copes better with constant cycling than with standing idle.</p>
-<p><strong>One specific piece of advice pays for itself here.</strong> This battery has a cooling fan and filter, behind the rear seat. A filter packed with dust chokes the airflow, the pack overheats and dies early. Toyota’s own service bulletin for Priuses built between 2003 and 2020 names dust build up in the fan and filter directly as a cause of fault codes P0A80 and P0A7F. Cleaning the filter is cheap, quick, and genuinely extends pack life. If you have bought a used hybrid, it is the first thing to check.</p>
+<h2>The hybrid battery: a different story entirely</h2>
+<p>Priuses and their relatives vastly outnumber EVs in Georgia, so this part earns its place too. A hybrid carries a nickel metal hydride pack, and it does not behave like lithium ion.</p>
+<p>Lithium loses capacity slowly. NiMH dies differently: internal resistance rises, modules drift apart from one another, and one day the car throws a warning triangle. Range does not gradually shrink; the system stops.</p>
+<p>Service life is normally eight to ten years, or 160,000 to 240,000 km. Heavily used cars, taxis among them, frequently pass 300,000. That is no accident: a NiMH pack suits constant work better than standing idle.</p>
+<p>And one specific piece of advice that pays for itself. This battery has a cooling fan and filter, behind the rear seat. A filter packed with dust chokes the air, the pack overheats and dies early. Toyota’s own service bulletin for Priuses built between 2003 and 2020 names dust in the fan and filter directly as a cause of fault codes P0A80 and P0A7F. Cleaning it is cheap and quick. If you have bought a used hybrid, start there.</p>
 
 <h2>What to expect at a given mileage</h2>
-<p>The ranges below follow from the measurements listed above. This is the typical picture, not a guarantee: two cars at the same mileage can differ by ten percent on habit alone.</p>
+<p>The ranges below follow from the measurements listed above. This is the typical picture, not a guarantee: two cars at the same mileage can end up ten percent apart on habit alone.</p>
 <div class="tw"><table>
 <thead><tr><th>Distance</th><th>NCA/NMC, liquid cooled</th><th>LFP</th><th>Air cooled, hot climate</th></tr></thead>
 <tbody>
@@ -1771,21 +1781,21 @@ ${figBars({
 <tr><td>200,000 km</td><td>88-91%</td><td>around 90%, data still thin</td><td>62-75%</td></tr>
 <tr><td>300,000 km and beyond</td><td>85-88%</td><td>not enough data yet</td><td>usually already replaced</td></tr>
 </tbody></table></div>
-<p>Two things deserve attention. First, in the nickel column there is barely any difference between 100,000 and 200,000 km. That is not an error; it is what a flat curve looks like. Second, the right hand column has an enormous spread, because there the result is decided by where the car was parked rather than how far it was driven.</p>
+<p>Two things stand out in the table. In the nickel column almost nothing changes between 100,000 and 200,000 km, which looks like an error and is simply what a flat curve looks like. In the right hand column the spread is enormous, because there the result is decided by where the car was parked rather than how far it was driven.</p>
 
 <h2>The high risk group</h2>
-<p>If your car falls into even one of the categories below, checking the pack before buying is mandatory rather than advisable.</p>
+<p>If your car falls into even one of these categories, checking the pack before buying is not optional.</p>
 <ul>
 <li><strong>Cars with no active pack cooling.</strong> Every generation of Nissan Leaf, and the e-NV200. A hot climate shows on them directly and quickly.</li>
 <li><strong>24 kWh Leafs built before 2015.</strong> A double risk: no cooling, plus an early cell chemistry that tolerated heat poorly.</li>
 <li><strong>A car shipped from a hot country that lived outdoors.</strong> Heat accelerates calendar ageing even when the car never moves, so low mileage proves nothing here.</li>
 <li><strong>A car charged only on DC for years.</strong> Geotab puts exactly this group at 3 percent a year instead of 1.5.</li>
-<li><strong>2017 to 2019 Chevrolet Bolt and 2018 to 2020 Hyundai Kona Electric.</strong> Both were subject to global recalls over a manufacturing defect in LG cells, and packs were replaced: all modules on the Bolt, and over 75,000 packs on the Kona. On such a car, confirm the replacement was carried out. If it was, that is good news rather than bad.</li>
+<li><strong>2017 to 2019 Chevrolet Bolt and 2018 to 2020 Hyundai Kona Electric.</strong> Both had packs replaced en masse over a manufacturing defect in LG cells: all modules on the Bolt, over 75,000 packs on the Kona. On such a car, establish whether the replacement was actually carried out. If it was, that is good news.</li>
 <li><strong>A car left standing for months,</strong> particularly full or nearly empty.</li>
 </ul>
 
 <h2>What you can actually do</h2>
-<p>The list is short, because anything not on it is usually not worth the effort.</p>
+<p>The list is short, and that is deliberate. Worrying about the rest is usually not worth it.</p>
 <ul>
 <li><strong>Establish the chemistry first, then pick the rule.</strong> On a nickel pack the daily limit is 80 percent; on LFP it is 100, with one full charge a week. Applying one rule to the other chemistry does harm.</li>
 <li><strong>Reduce the share of fast charging, not the count.</strong> What matters is that most of your energy comes from a slow charger. <a href="/en/blog/sakhlis-damteni/">A home charger</a> is the cheapest way to fix that.</li>
