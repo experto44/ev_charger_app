@@ -521,16 +521,16 @@ const buildArticles = (N, F) => [
   {
     slug: 'shori-mgzavroba',
     ka: {
-      title: 'შორი მგზავრობა ელექტრომობილით საქართველოში: პრაქტიკული გზამკვლევი',
-      metaTitle: 'შორი მგზავრობა ელექტრომობილით საქართველოში',
-      desc: 'თბილისიდან ბათუმამდე ერთი გაჩერება საკმარისია. სად არის დამტენები მთავარ მარშრუტებზე და როგორ დავგეგმოთ გზა.',
+      title: 'შორ გზაზე ელექტრო მანქანით საქართველოში: პრაქტიკული გზამკვლევი',
+      metaTitle: 'შორ გზაზე ელექტრო მანქანით საქართველოში',
+      desc: 'ბათუმში წასვლა ელექტრო მანქანით ერთი გაჩერებით შეიძლება. სად არის დამტენები მთავარ მარშრუტებზე და როგორ დავგეგმოთ შორი გზა.',
       key: [
         'თბილისი და ბათუმი დაახლოებით 370 კილომეტრით არის დაშორებული. თანამედროვე ელექტრომობილს გზაზე ერთი გაჩერება სჭირდება.',
         'მთავარი მაგისტრალი კარგად არის დაფარული. თერჯოლის მიდამოებში 18 დამტენია, აქედან 17 სწრაფი.',
       ],
       body: `
 <h2>დაფარვა მთავარ მიმართულებებზე</h2>
-<p>ყველაზე ხშირი კითხვა ისაა, გავივლი თუ არა თბილისიდან ბათუმამდე. პასუხი დიახ, და ერთი გაჩერებით.</p>
+<p>ყველაზე ხშირი კითხვა ისაა, შესაძლებელია თუ არა ბათუმში წასვლა ელექტრო მანქანით. პასუხი დიახ, და ერთი გაჩერებით. იგივე ეხება ყაზბეგს, ბაკურიანს და კახეთს. ერთადერთი მიმართულება, სადაც წინასწარი დაგეგმვა მართლაც აუცილებელია, მესტიაა.</p>
 <p>თბილისიდან დასავლეთისკენ მიმავალ გზაზე დამტენები კონცენტრირებულია რამდენიმე კვანძში. ჩვენ მონაცემებში:</p>
 <ul>
 <li><strong>თერჯოლა და რიკოთის მიდამოები.</strong> 18 სადგური, აქედან 17 სწრაფი DC. ეს არის მთავარი გამზიდი წერტილი დასავლეთის მიმართულებაზე.</li>
@@ -564,14 +564,28 @@ const buildArticles = (N, F) => [
 <li>რამდენიმე პროვაიდერის აპლიკაცია ან ბარათი, თუ კონკრეტული ქსელი გჭირდებათ.</li>
 </ul>
 <p>მარშრუტის დაგეგმვა დატენვის გაჩერებებით GeoCharge-ის აპლიკაციაშია, სადაც ცოცხალი სტატუსიც ჩანს. სადგურების სრული სია ქალაქების მიხედვით <a href="/damtenebi/">აქ არის</a>.</p>
+
+<h2>კონკრეტული მარშრუტები</h2>
+<p>თითოეულ მიმართულებაზე ცალკე გვერდი გვაქვს, სადაც გაჩერებები, სწრაფი დამტენების რაოდენობა და მარშრუტის სავარაუდო ღირებულება ცოცხალი მონაცემებიდან ითვლება:</p>
+<ul>
+<li><a href="/marshruti/tbilisi-batumi/">თბილისიდან ბათუმში ელექტრო მანქანით</a>, 370 კილომეტრი, ერთი გაჩერება.</li>
+<li><a href="/marshruti/tbilisi-kazbegi/">თბილისიდან ყაზბეგში</a>, 155 კილომეტრი, ჯვრის უღელტეხილით.</li>
+<li><a href="/marshruti/tbilisi-bakuriani/">თბილისიდან ბაკურიანში</a>, 185 კილომეტრი, აღმართით ბორჯომიდან.</li>
+<li><a href="/marshruti/tbilisi-mestia/">თბილისიდან მესტიაში</a>, 465 კილომეტრი, ყველაზე რთული მიმართულება.</li>
+<li><a href="/marshruti/tbilisi-erevani/">თბილისიდან ერევანში</a>, 275 კილომეტრი, საზღვრის გადაკვეთით.</li>
+</ul>
 `,
       faq: [
-        ['შემიძლია თბილისიდან ბათუმში ელექტრომობილით?',
-         'დიახ. დაახლოებით 370 კილომეტრია და თანამედროვე ელექტრომობილს ერთი გაჩერება სჭირდება, ჩვეულებრივ თერჯოლის ან ქუთაისის მიდამოებში.'],
+        ['შემიძლია ბათუმში წასვლა ელექტრო მანქანით?',
+         'დიახ. თბილისიდან ბათუმამდე დაახლოებით 370 კილომეტრია და თანამედროვე ელექტრომობილს ერთი გაჩერება სჭირდება, ჩვეულებრივ თერჯოლის ან ქუთაისის მიდამოებში.'],
+        ['შორ გზაზე ელექტრო მანქანით წასვლა რეალურია საქართველოში?',
+         'მთავარ მაგისტრალებზე დიახ. თბილისი ბათუმის, თბილისი ყაზბეგის და კახეთის მიმართულებები სწრაფი დამტენებით არის დაფარული. ერთადერთი მართლაც რთული მონაკვეთი ზუგდიდიდან მესტიამდეა, სადაც 130 კილომეტრზე დამტენი პრაქტიკულად არ არის.'],
         ['სად არის დამტენები თბილისი ბათუმის მაგისტრალზე?',
          'მთავარი კვანძებია გორი 17 სადგურით, თერჯოლისა და რიკოთის მიდამოები 18 სადგურით, ქუთაისი 12-ით და სამტრედია 9-ით.'],
         ['რამდენად მცირდება გარბენი ზამთარში?',
          'ცივ ამინდში ბატარეა ნაკლებ ენერგიას იძლევა და გარბენი შესამჩნევად ეცემა. იმავე მარშრუტს ზამთარში შეიძლება ერთი დამატებითი გაჩერება დასჭირდეს.'],
+        ['რამდენი გაჩერება სჭირდება ელექტრო ავტომობილს შორ გზაზე?',
+         '60 კილოვატსაათიანი ბატარეა 20-დან 80 პროცენტამდე დატენვისას დაახლოებით 200 კილომეტრს ფარავს, თუ ხარჯი 18 კილოვატსაათია 100 კილომეტრზე. ანუ 370 კილომეტრზე ერთი გაჩერება, 465-ზე ორი. ზამთარში და აღმართზე თითო ერთეული დაამატეთ.'],
       ],
     },
     en: {
@@ -618,6 +632,16 @@ const buildArticles = (N, F) => [
 <li>Apps or cards for a few providers, if you need a specific network.</li>
 </ul>
 <p>Route planning with charging stops is in the GeoCharge app, which also shows live availability. The full station list by city is <a href="/en/chargers/">here</a>.</p>
+
+<h2>The individual routes</h2>
+<p>Each direction has its own page, where the stops, the fast-charger count and the estimated cost of the drive are computed from live data:</p>
+<ul>
+<li><a href="/en/routes/tbilisi-batumi/">Tbilisi to Batumi by electric car</a>, 370 km, one stop.</li>
+<li><a href="/en/routes/tbilisi-kazbegi/">Tbilisi to Kazbegi</a>, 155 km, over the Jvari Pass.</li>
+<li><a href="/en/routes/tbilisi-bakuriani/">Tbilisi to Bakuriani</a>, 185 km, climbing from Borjomi.</li>
+<li><a href="/en/routes/tbilisi-mestia/">Tbilisi to Mestia</a>, 465 km, the hardest direction.</li>
+<li><a href="/en/routes/tbilisi-erevani/">Tbilisi to Yerevan</a>, 275 km, across the border.</li>
+</ul>
 `,
       faq: [
         ['Can I drive from Tbilisi to Batumi in an EV?',
@@ -626,6 +650,10 @@ const buildArticles = (N, F) => [
          'The main hubs are Gori with 17 stations, the Terjola and Rikoti area with 18, Kutaisi with 12 and Samtredia with 9.'],
         ['How much range do you lose in winter?',
          'In cold weather the battery delivers less energy and range drops noticeably. The same route can need one extra stop in winter.'],
+        ['Is long distance driving realistic in Georgia in an electric car?',
+         'On the main highways, yes. Tbilisi to Batumi, Tbilisi to Kazbegi and the Kakheti direction are covered by fast chargers. The one genuinely hard stretch is Zugdidi to Mestia, where 130 km has essentially no charging.'],
+        ['How many stops does a long drive take?',
+         'A 60 kWh battery covers about 200 km between 20 and 80 percent at 18 kWh per 100 km. So one stop over 370 km, two over 465. Add one in winter and on climbs.'],
       ],
     },
   },

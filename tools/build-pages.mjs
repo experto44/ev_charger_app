@@ -258,6 +258,16 @@ const L = {
     generalRules: 'შორი მგზავრობის ზოგადი წესები ცალკე გვაქვს აღწერილი',
     howToCalc: 'როგორ ითვლება დატენვის ღირებულება, ცალკე სტატიაშია ახსნილი',
     allRoutes: 'ყველა მარშრუტი', noFast: 'სწრაფი დამტენი არ არის',
+    routePlan: 'რამდენი გაჩერება დასჭირდება',
+    routeTime: 'რამდენი ხანი გავჩერდებით',
+    routeCars: 'რომელი მანქანა დაიტენება ამ გზაზე',
+    routeCost: 'რა დაჯდება ეს გზა',
+    routeNets: 'ქსელები ამ მარშრუტზე',
+    routeWinter: 'რა იცვლება ზამთარში',
+    longestGap: 'ყველაზე გრძელი მონაკვეთი სწრაფის გარეშე',
+    winterCopy: 'ცივ ამინდში ორი რამ ერთდროულად ხდება: ბატარეა ნაკლებ ენერგიას გასცემს და სალონის გათბობა თავისას იღებს. რეალური გარბენი ზამთარში მეოთხედამდე ეცემა, ცივი ბატარეა კი სწრაფ დამტენზეც ნელა იტენება, სანამ არ გაცხელდება. პრაქტიკული დასკვნა მარტივია: იმავე მარშრუტზე ზამთარში ერთი დამატებითი გაჩერება ჩადეთ გეგმაში და დანიშნულების ადგილს 20 პროცენტზე მეტი მარაგით მიაღწიეთ.',
+    winterMore: 'ზამთრის გარბენზე ცალკე სტატია გვაქვს',
+    calcMore: 'თქვენი მანქანის ციფრებით გადათვლა კალკულატორში შეგიძლიათ',
   },
   en: {
     code: 'en', base: '/en', chargersDir: 'chargers', networksDir: 'networks',
@@ -286,6 +296,16 @@ const L = {
     generalRules: 'The general rules for long trips are covered separately',
     howToCalc: 'How a charge is priced is explained in its own guide',
     allRoutes: 'All routes', noFast: 'no fast charger',
+    routePlan: 'How many stops it takes',
+    routeTime: 'How long the stop takes',
+    routeCars: 'Which cars this road serves',
+    routeCost: 'What the drive costs',
+    routeNets: 'Networks on this route',
+    routeWinter: 'What changes in winter',
+    longestGap: 'longest stretch without fast charging',
+    winterCopy: 'Two things happen at once in cold weather: the battery gives up less energy, and cabin heating takes its own share. Real range drops by up to a quarter, and a cold battery also charges slowly on a fast charger until it warms up. The practical conclusion is simple: plan one extra stop on the same route in winter, and arrive with more than 20 percent left.',
+    winterMore: 'Winter range has its own guide',
+    calcMore: 'You can redo the numbers for your own car in the calculator',
   },
 };
 
@@ -1584,7 +1604,18 @@ function routeStops(route, byCity, byCityAll, raw) {
   });
 }
 
-function routePage(lang, route, byCity, byCityAll, raw, updated) {
+/* Planning model. Deliberately one stated set of assumptions rather than a
+   per-car guess: 18 kWh/100 km is the calculator's default, 60 kWh is a typical
+   pack, and 20 % to 80 % is the window a DC charger actually covers quickly.
+   Every page prints the assumptions next to the result. */
+const CONS_KWH_100 = 18;
+const TYPICAL_PACK = 60;
+const FAST_WINDOW = 0.6;
+
+const KA_NUM = ['ნული', 'ერთი', 'ორი', 'სამი', 'ოთხი', 'ხუთი', 'ექვსი'];
+const EN_NUM = ['no', 'one', 'two', 'three', 'four', 'five', 'six'];
+
+function routePage(lang, route, byCity, byCityAll, raw, updated, byProvider) {
   const t = L[lang], a = route[lang];
   const o = L[lang === 'ka' ? 'en' : 'ka'];
   const url = `${ORIGIN}${t.base}/${t.routesDir}/${route.slug}/`;
@@ -1596,42 +1627,125 @@ function routePage(lang, route, byCity, byCityAll, raw, updated) {
   const dest = stops[stops.length - 1];
   const destDc = dest.list.filter((x) => x.type === 'Fast DC').length;
 
+  /* ── planning figures ─────────────────────────────────────────────────── */
+  const kwh = Math.round(route.km * CONS_KWH_100 / 100);
+  const legKm = Math.round(TYPICAL_PACK * FAST_WINDOW / CONS_KWH_100 * 100 / 10) * 10;
+  const legs = Math.max(0, Math.ceil(route.km / legKm) - 1);
+  const legWord = (lang === 'ka' ? KA_NUM : EN_NUM)[Math.min(legs, 6)];
+
+  // Gaps are measured between the route's named stops, so this is the longest
+  // stretch where the itinerary itself offers no fast charging. A charger may
+  // still sit at a village in between; the wording says "between stops".
+  const dcPts = stops.filter((s) => s.list.some((x) => x.type === 'Fast DC'));
+  let gapKm = 0, gapFrom = null, gapTo = null;
+  for (let i = 1; i < dcPts.length; i++) {
+    const d = dcPts[i].km - dcPts[i - 1].km;
+    if (d > gapKm) { gapKm = d; gapFrom = dcPts[i - 1]; gapTo = dcPts[i]; }
+  }
+  const tailKm = dcPts.length ? route.km - dcPts[dcPts.length - 1].km : route.km;
+
+  const routeStations = stops.flatMap((s) => s.list);
+  const routePrice = tariffStats(routeStations);
+  const dcMed = routePrice.dc.length ? median(routePrice.dc) : null;
+  const cost = dcMed ? kwh * dcMed : null;
+
+  // Charging time. Real average power over a 20 % to 80 % session sits well
+  // below the rated figure, because the curve tapers; 75 % is the derate used.
+  const legKwh = Math.round(TYPICAL_PACK * FAST_WINDOW);
+  const mins = (kwRated) => Math.round(legKwh / (kwRated * 0.75) * 60);
+
+  // Which cars this road actually serves. The connector mix is the one thing a
+  // driver with a US or Chinese spec car cannot get anywhere else.
+  const connOnRoute = Object.fromEntries(summarise(onWay.flatMap((s) => s.list)).connectors);
+  const nConn = (...names) => names.reduce((n, c) => n + (connOnRoute[c] || 0), 0);
+  const euConn = nConn('CCS2'), cnConn = nConn('GB/T'), usConn = nConn('CCS1', 'NACS', 'Type 1');
+  const acConn = nConn('Type 2');
+
+  const netCount = {};
+  for (const s of onWay) for (const x of s.list) netCount[x.provider] = (netCount[x.provider] || 0) + 1;
+  const nets = Object.entries(netCount).sort((x, y) => y[1] - x[1]);
+  const netName = (p) => (lang === 'ka' ? (PROVIDER_KA[p] || p) : p);
+  const hasNetPage = (p) => !byProvider || byProvider.has(p);
+  const onWaySum = summarise(onWay.flatMap((s) => s.list));
+
   const title = lang === 'ka'
-    ? `${a.from} ${a.to} ელექტრომობილით, სად დავტენოთ | GeoCharge`
-    : `${a.from} to ${a.to} by EV, where to charge | GeoCharge`;
+    ? `${a.fromAbl} ${a.toLoc} ელექტრო მანქანით, სად დავტენოთ | GeoCharge`
+    : `${a.from} to ${a.to} by electric car, where to charge | GeoCharge`;
   const desc = lang === 'ka'
-    ? `${a.from} ${a.to} ${route.km} კილომეტრია. მარშრუტზე ${enRoute} დამტენი სადგურია, აქედან ${dcOnRoute} სწრაფი. სად გავჩერდეთ და რაზე მივაქციოთ ყურადღება.`
-    : `${a.from} to ${a.to} is ${route.km} km. There are ${enRoute} charging stations along the way, ${dcOnRoute} of them fast. Where to stop and what to watch for.`;
+    ? `${a.fromAbl} ${a.toLoc} ${route.km} კილომეტრია. მარშრუტზე ${enRoute} დამტენი სადგურია, აქედან ${dcOnRoute} სწრაფი. რამდენი გაჩერება დასჭირდება, რა დაჯდება გზა და რაზე მივაქციოთ ყურადღება.`
+    : `${a.from} to ${a.to} is ${route.km} km with ${enRoute} charging stations on the way, ${dcOnRoute} of them fast. How many stops it takes, what the drive costs and what to watch for.`;
 
   const bc = [{ name: t.home, href: `${t.base}/` },
     { name: t.routes, href: `${t.base}/${t.routesDir}/` }, { name: `${a.from} ${a.to}` }];
 
   const faq = lang === 'ka' ? [
-    [`შემიძლია ${a.fromAbl} ${a.toLoc} ელექტრომობილით?`,
-      `${route.km} კილომეტრია და მარშრუტზე ${enRoute} დამტენი სადგურია, აქედან ${dcOnRoute} სწრაფი DC. ${a.advice}`],
+    [`შემიძლია ${a.fromAbl} ${a.toLoc} წასვლა ელექტრო მანქანით?`,
+      `დიახ. ${route.km} კილომეტრია და მარშრუტზე ${enRoute} დამტენი სადგურია, აქედან ${dcOnRoute} სწრაფი DC. ${a.advice}`],
+    [`რამდენი გაჩერება დამჭირდება ${a.fromAbl} ${a.toLoc}?`,
+      legs
+        ? `დაახლოებით ${legWord}. გაანგარიშება ეყრდნობა 18 კილოვატსაათს 100 კილომეტრზე და 60 კილოვატსაათიან ბატარეას, რომელიც 20-დან 80 პროცენტამდე დატენვისას დაახლოებით ${legKm} კილომეტრს ფარავს. ზამთარში ერთი დამატებითი გაჩერება ჩადეთ.`
+        : `სავსე ბატარეით გასვლის შემთხვევაში გზაში გაჩერება არ არის საჭირო. ${route.km} კილომეტრი 60 კილოვატსაათიანი ბატარეის ერთ დატენვაში ეტევა, თუ ხარჯი 18 კილოვატსაათია 100 კილომეტრზე. ზამთარში და აღმართზე მარაგი შეამცირეთ.`],
     [`სად არის დამტენები ${a.from} ${a.to} მარშრუტზე?`,
       onWay.filter((s) => s.list.length).map((s) => `${s.name('ka')} ${s.list.length}`).join(', ') + '.'],
+    [`რა დაჯდება ${a.fromAbl} ${a.toLoc} ელექტრო ავტომობილით?`,
+      cost
+        ? `მთელ გზაზე დაახლოებით ${kwh} კილოვატსაათი იხარჯება. მარშრუტის სწრაფი დამტენების მედიანური ტარიფით, ${fmt(dcMed)} ლარი კილოვატსაათზე, ეს დაახლოებით ${fmt(cost)} ლარია. სახლში დატენვა მნიშვნელოვნად იაფია.`
+        : `მთელ გზაზე დაახლოებით ${kwh} კილოვატსაათი იხარჯება. ღირებულება იმაზეა დამოკიდებული, რომელ ქსელში დატენავთ.`],
     [`არის თუ არა სწრაფი დამტენი ${a.toLoc}?`,
       destDc ? `დიახ, ${destDc} სწრაფი DC სადგური.` : `არა. ${a.toLoc} მხოლოდ ნელი AC დამტენებია, ამიტომ დაბრუნების ენერგია წინასწარ უნდა დაგეგმოთ.`],
+    [`რომელი ქსელები მუშაობს ამ მარშრუტზე?`,
+      nets.length ? nets.map(([p, n]) => `${netName(p)} ${n}`).join(', ') + '.' : 'მონაცემები ჯერ არ არის.'],
+    ['რა იცვლება ზამთარში?', t.winterCopy],
   ] : [
-    [`Can I drive from ${a.from} to ${a.to} in an EV?`,
-      `It is ${route.km} km with ${enRoute} charging stations along the way, ${dcOnRoute} of them fast DC. ${a.advice}`],
+    [`Can I drive from ${a.from} to ${a.to} in an electric car?`,
+      `Yes. It is ${route.km} km with ${enRoute} charging stations along the way, ${dcOnRoute} of them fast DC. ${a.advice}`],
+    [`How many stops does ${a.from} to ${a.to} take?`,
+      legs
+        ? `About ${legWord}. That assumes 18 kWh per 100 km and a 60 kWh battery, which covers roughly ${legKm} km between 20 and 80 percent. Add one more stop in winter.`
+        : `None, if you leave with a full battery. ${route.km} km fits in a single charge of a 60 kWh battery at 18 kWh per 100 km. Leave more margin in winter and on climbs.`],
     [`Where are the chargers between ${a.from} and ${a.to}?`,
       onWay.filter((s) => s.list.length).map((s) => `${s.name('en')} ${s.list.length}`).join(', ') + '.'],
+    [`What does ${a.from} to ${a.to} cost in an EV?`,
+      cost
+        ? `The drive uses about ${kwh} kWh. At the median fast-charging tariff on this route, ${fmt(dcMed)} GEL per kWh, that is roughly ${fmt(cost)} GEL. Charging at home costs considerably less.`
+        : `The drive uses about ${kwh} kWh. What it costs depends on which network you charge with.`],
     [`Is there a fast charger in ${a.to}?`,
       destDc ? `Yes, ${destDc} fast DC stations.` : `No. ${a.to} has only slow AC chargers, so the energy to get back has to be planned in advance.`],
+    ['Which networks operate on this route?',
+      nets.length ? nets.map(([p, n]) => `${netName(p)} ${n}`).join(', ') + '.' : 'No data yet.'],
+    ['What changes in winter?', t.winterCopy],
   ];
 
+  const lk = 'style="color:var(--accent-d);font-weight:500;text-decoration:none"';
+
   const body = `${crumbs(bc)}
-<h1>${lang === 'ka' ? `${esc(a.from)} ${esc(a.to)} ელექტრომობილით` : `${esc(a.from)} to ${esc(a.to)} by EV`}</h1>
+<h1>${lang === 'ka' ? `${esc(a.fromAbl)} ${esc(a.toLoc)} ელექტრო მანქანით` : `${esc(a.from)} to ${esc(a.to)} by electric car`}</h1>
+<p class="intro">${lang === 'ka'
+    ? `${esc(a.fromAbl)} ${esc(a.toLoc)} ${route.km} კილომეტრია. ეს გვერდი აჩვენებს, სად დგას დამტენები ამ გზაზე, რამდენი გაჩერება დასჭირდება ელექტრომობილს და რა დაჯდება მთელი მარშრუტი. ციფრები ცოცხალი მონაცემებიდან მოდის და ავტომატურად ახლდება.`
+    : `${esc(a.from)} to ${esc(a.to)} is ${route.km} km. This page shows where the chargers stand on that road, how many stops an EV needs and what the whole drive costs. The figures come from live data and refresh automatically.`}</p>
 <p class="intro">${esc(a.note)}</p>
 <div class="stats">
   <div class="stat"><b>${route.km} km</b><span>${lang === 'ka' ? 'მანძილი' : 'distance'}</span></div>
   <div class="stat"><b>${enRoute}</b><span>${lang === 'ka' ? 'დამტენი გზაში' : 'chargers on the way'}</span></div>
   <div class="stat"><b>${dcOnRoute}</b><span>${esc(t.fast)}</span></div>
+  <div class="stat"><b>${kwh} kWh</b><span>${lang === 'ka' ? 'ენერგია მთელ გზაზე' : 'energy for the drive'}</span></div>
+  ${cost ? `<div class="stat"><b>${fmt(cost)} ₾</b><span>${lang === 'ka' ? 'სავარაუდო ღირებულება' : 'estimated cost'}</span></div>` : ''}
+  ${gapKm ? `<div class="stat"><b>${gapKm} km</b><span>${esc(t.longestGap)}</span></div>` : ''}
   <div class="stat"><b>${destDc || esc(t.noFast)}</b><span>${lang === 'ka' ? `სწრაფი ${esc(a.toLoc)}` : `fast in ${esc(a.to)}`}</span></div>
 </div>
 <p class="upd">${esc(t.updated)} ${esc(updated)}</p>
+
+<h2>${esc(t.routePlan)}</h2>
+<p class="intro">${lang === 'ka'
+    ? `${route.km} კილომეტრზე დაახლოებით ${kwh} კილოვატსაათი ენერგია იხარჯება. გაანგარიშება 18 კილოვატსაათს იღებს 100 კილომეტრზე, რაც ზომიერ ამინდში საშუალო მაჩვენებელია. 60 კილოვატსაათიანი ბატარეა 20-დან 80 პროცენტამდე დატენვისას დაახლოებით ${legKm} კილომეტრს ფარავს, ამიტომ ${legs ? `ამ მარშრუტზე ${legWord} გაჩერება დაგჭირდებათ` : 'სავსე ბატარეით გასვლის შემთხვევაში გზაში გაჩერება საერთოდ არ დაგჭირდებათ'}. თუ თქვენი მანქანის ბატარეა ამაზე პატარაა ან ხარჯი მეტია, ერთი გაჩერება დაამატეთ.`
+    : `The drive uses about ${kwh} kWh. That takes 18 kWh per 100 km, an average figure in mild weather. A 60 kWh battery covers roughly ${legKm} km between 20 and 80 percent, so ${legs ? `this route takes ${legWord} stop${legs > 1 ? 's' : ''}` : 'you need no stop at all if you leave with a full battery'}. If your battery is smaller or your consumption higher, add one stop.`}</p>
+${gapKm ? `<p class="intro" style="margin-top:14px">${lang === 'ka'
+    ? `სწრაფი დამტენი მარშრუტის ${dcPts.length} გაჩერებაზეა. ყველაზე გრძელი მონაკვეთი ორ ასეთ წერტილს შორის ${gapKm} კილომეტრია (${esc(gapFrom.name('ka'))} და ${esc(gapTo.name('ka'))}). ${tailKm
+      ? `ბოლო სწრაფი წერტილიდან ${esc(a.toLoc)} კიდევ ${tailKm} კილომეტრი რჩება, ამიტომ ბოლო გაჩერებას ეს მანძილიც უნდა დაემატოს.`
+      : `${esc(a.to)} თავად სწრაფი დამტენებით არის დაფარული, ანუ ბოლო მონაკვეთზე დამატებითი მარაგის დაგროვება საჭირო არ არის.`} სწორედ ეს ციფრები განსაზღვრავს, რამდენი მარაგით უნდა გახვიდეთ დამტენიდან.`
+    : `${dcPts.length} of the stops on this route have fast charging. The longest stretch between two of them is ${gapKm} km (${esc(gapFrom.name('en'))} to ${esc(gapTo.name('en'))}). ${tailKm
+      ? `Another ${tailKm} km remain from the last fast point to ${esc(a.to)}, so the final stop has to cover that too.`
+      : `${esc(a.to)} has fast charging of its own, so the last leg needs no extra reserve.`} Those figures decide how much margin you need when you leave a charger.`}</p>` : ''}
 
 <h2>${esc(t.routeTable)}</h2>
 <div class="tw"><table>
@@ -1646,9 +1760,44 @@ ${stops.map((s) => {
   }).join('\n')}
 </tbody></table></div>
 
+<h2>${esc(t.routeTime)}</h2>
+<p class="intro">${lang === 'ka'
+    ? `ერთი გაჩერება 20-დან 80 პროცენტამდე დაახლოებით ${legKwh} კილოვატსაათს ნიშნავს. 50 კილოვატიან დამტენზე ეს დაახლოებით ${mins(50)} წუთია, 100 კილოვატიანზე ${mins(100)} წუთი, 150 კილოვატიანზე კი ${mins(150)} წუთი.${onWaySum.maxKw >= 120 ? ` ამ მარშრუტის ყველაზე მძლავრი სადგური ${onWaySum.maxKw} კილოვატია, თუმცა რეალურ დროს ჩვეულებრივ სადგური კი არა, მანქანა განსაზღვრავს: ბევრი ელექტრომობილი 150 კილოვატზე მეტს ვერ იღებს.` : ''} გაანგარიშება რეალურ საშუალო სიმძლავრეს იღებს დეკლარირებულის სამ მეოთხედად, რადგან 80 პროცენტთან მიახლოებისას დატენვა ბუნებრივად ნელდება.`
+    : `One stop from 20 to 80 percent means about ${legKwh} kWh. On a 50 kW charger that is roughly ${mins(50)} minutes, on a 100 kW one ${mins(100)} minutes, and on a 150 kW one ${mins(150)}.${onWaySum.maxKw >= 120 ? ` The most powerful station on this route is ${onWaySum.maxKw} kW, but the real limit is usually the car rather than the charger: many EVs cannot take more than 150 kW.` : ''} The figures take real average power as three quarters of the rated one, because charging naturally slows as it approaches 80 percent.`}</p>
+
+${(euConn || cnConn || usConn) ? `<h2>${esc(t.routeCars)}</h2>
+<p class="intro">${lang === 'ka'
+    ? `კონექტორი განსაზღვრავს, რომელ სადგურზე გაჩერდებით. ამ მარშრუტზე ევროპული სპეციფიკაციის მანქანას (CCS2) ${euConn} სწრაფი პორტი ხვდება, ჩინურს (GB/T) ${cnConn}, ამერიკულს კი (CCS1, NACS ან Type 1) სულ ${usConn}. ${usConn < 5 ? 'ამერიკიდან ჩამოყვანილი მანქანით ამ გზაზე ადაპტერის გარეშე გასვლა რისკია.' : 'ამერიკული სპეციფიკაციისთვისაც არის რამდენიმე ვარიანტი, თუმცა ადაპტერი მაინც აუცილებელია.'} ნელი AC დატენვისთვის Type 2 პორტი ${acConn} ადგილზეა.`
+    : `The connector decides which stations you can use. On this route a European spec car (CCS2) meets ${euConn} fast ports, a Chinese one (GB/T) ${cnConn}, and a US spec car (CCS1, NACS or Type 1) ${usConn} in total. ${usConn < 5 ? 'Driving this road in a US import without an adapter is a risk.' : 'There are a few options for US spec cars too, though an adapter is still needed.'} For slow AC charging there are ${acConn} Type 2 ports.`}</p>
+<p class="intro" style="margin-top:14px">${lang === 'ka' ? 'კონექტორების ტიპები ცალკე სტატიაშია ახსნილი' : 'Connector types are explained in their own guide'}: <a href="${t.base}/blog/konektorebi/" ${lk}>${lang === 'ka' ? 'რომელი კონექტორი რომელ მანქანას' : 'which connector fits which car'}</a>.</p>` : ''}
+
+<h2>${esc(t.routeCost)}</h2>
+<p class="intro">${lang === 'ka'
+    ? (cost
+      ? `${kwh} კილოვატსაათი სწრაფ დამტენზე დაახლოებით ${fmt(cost)} ლარი დაჯდება. ტარიფად აღებულია ამ მარშრუტის სწრაფი დამტენების მედიანური ფასი, ${fmt(dcMed)} ლარი კილოვატსაათზე. რეალური თანხა იმაზეა დამოკიდებული, რომელ ქსელში გაჩერდებით, რადგან ტარიფები ქსელებს შორის შესამჩნევად განსხვავდება. სახლში დატენვისას იგივე ენერგია რამდენჯერმე იაფი გამოდის.`
+      : `${kwh} კილოვატსაათი დასჭირდება მთელ გზას. ამ მარშრუტზე გამოქვეყნებული ტარიფები საკმარისი არ არის მედიანის დასათვლელად, ამიტომ ღირებულება ქსელის მიხედვით უნდა შეამოწმოთ.`)
+    : (cost
+      ? `${kwh} kWh on fast chargers costs about ${fmt(cost)} GEL. The tariff used is the median fast-charging price on this route, ${fmt(dcMed)} GEL per kWh. What you actually pay depends on which network you stop at, since tariffs differ noticeably between them. The same energy at home costs several times less.`
+      : `The whole drive needs ${kwh} kWh. There are not enough published tariffs on this route to take a median, so check the cost per network.`)}</p>
+<p class="intro" style="margin-top:14px">${esc(t.calcMore)}: <a href="${t.base}/${t.calcDir}/" ${lk}>${lang === 'ka' ? 'დატენვის კალკულატორი' : 'the charging calculator'}</a>. ${esc(t.howToCalc)}: <a href="${t.base}/blog/100-km-fasi/" ${lk}>${lang === 'ka' ? '100 კილომეტრის რეალური ღირებულება' : 'what 100 km really costs'}</a>.</p>
+
+${nets.length ? `<h2>${esc(t.routeNets)}</h2>
+<p class="intro">${lang === 'ka'
+    ? `გზაში ${nets.length} სხვადასხვა ქსელის დამტენს გადააწყდებით. თითოეულს თავისი ტარიფი და თავისი აპლიკაცია აქვს, ამიტომ გრძელ მარშრუტზე ერთ ქსელზე დაყრდნობა არ ღირს.`
+    : `You will meet chargers from ${nets.length} different networks on the way. Each has its own tariff and its own app, so it is not worth depending on a single network for a long drive.`}</p>
+<div class="chips">${nets.map(([p, n]) => (hasNetPage(p)
+    ? `<a class="chip" href="${t.base}/${t.networksDir}/${slug(p)}/" style="text-decoration:none;color:inherit"><b>${n}</b> ${esc(netName(p))}</a>`
+    : `<span class="chip"><b>${n}</b> ${esc(netName(p))}</span>`)).join('')}</div>` : ''}
+
+${onWaySum.connectors.length ? connectorChips(onWaySum, lang) : ''}
+
 <h2>${esc(t.routeNotes)}</h2>
 <p class="intro">${esc(a.advice)}</p>
-<p class="intro" style="margin-top:14px">${esc(t.generalRules)}: <a href="${t.base}/blog/shori-mgzavroba/" style="color:var(--accent-d);font-weight:500;text-decoration:none">${lang === 'ka' ? 'შორი მგზავრობა ელექტრომობილით' : 'driving long distance by EV'}</a>.</p>
+<p class="intro" style="margin-top:14px">${esc(t.generalRules)}: <a href="${t.base}/blog/shori-mgzavroba/" ${lk}>${lang === 'ka' ? 'შორ გზაზე ელექტრო მანქანით' : 'driving long distance by EV'}</a>.</p>
+
+<h2>${esc(t.routeWinter)}</h2>
+<p class="intro">${esc(t.winterCopy)}</p>
+<p class="intro" style="margin-top:14px">${esc(t.winterMore)}: <a href="${t.base}/blog/zamtari/" ${lk}>${lang === 'ka' ? 'ელექტრომობილი ზამთარში' : 'EVs in winter'}</a>.</p>
 
 <h2>${esc(t.faq)}</h2>
 <div class="faq">
@@ -1686,18 +1835,18 @@ function routesIndexPage(lang, byCity, byCityAll, raw, updated) {
   const url = `${ORIGIN}${t.base}/${t.routesDir}/`;
   const alt = `${ORIGIN}${o.base}/${o.routesDir}/`;
   const title = lang === 'ka'
-    ? 'მარშრუტები ელექტრომობილით საქართველოში | GeoCharge'
-    : 'EV routes in Georgia | GeoCharge';
+    ? 'შორ გზაზე ელექტრო მანქანით: მარშრუტები საქართველოში | GeoCharge'
+    : 'Long drives by electric car: EV routes in Georgia | GeoCharge';
   const desc = lang === 'ka'
-    ? 'სად დავტენოთ საქართველოს მთავარ მარშრუტებზე: ბათუმი, ყაზბეგი, ბაკურიანი, მესტია და ერევანი.'
-    : 'Where to charge on Georgia’s main routes: Batumi, Kazbegi, Bakuriani, Mestia and Yerevan.';
+    ? 'სად დავტენოთ ელექტრო მანქანა საქართველოს მთავარ მარშრუტებზე: ბათუმი, ყაზბეგი, ბაკურიანი, მესტია და ერევანი. რამდენი გაჩერება სჭირდება თითოეულს.'
+    : 'Where to charge an electric car on Georgia’s main routes: Batumi, Kazbegi, Bakuriani, Mestia and Yerevan, and how many stops each one takes.';
   const bc = [{ name: t.home, href: `${t.base}/` }, { name: t.routes }];
 
   const body = `${crumbs(bc)}
-<h1>${lang === 'ka' ? 'მარშრუტები ელექტრომობილით საქართველოში' : 'EV routes in Georgia'}</h1>
+<h1>${lang === 'ka' ? 'შორ გზაზე ელექტრო მანქანით საქართველოში' : 'Long drives by electric car in Georgia'}</h1>
 <p class="intro" style="margin-bottom:32px">${lang === 'ka'
-    ? 'თითოეულ მარშრუტზე ნაჩვენებია, სად არის დამტენები, რამდენია სწრაფი და სად შეიძლება პრობლემა შეგხვდეთ. ციფრები ცოცხალი მონაცემებიდან მოდის.'
-    : 'Each route shows where the chargers are, how many are fast, and where you may run into trouble. The figures come from live data.'}</p>
+    ? 'თითოეულ მარშრუტზე ნაჩვენებია, სად არის დამტენები, რამდენია სწრაფი, რამდენი გაჩერება სჭირდება ელექტრომობილს და სად შეიძლება პრობლემა შეგხვდეთ. ციფრები ცოცხალი მონაცემებიდან მოდის.'
+    : 'Each route shows where the chargers are, how many are fast, how many stops an EV needs, and where you may run into trouble. The figures come from live data.'}</p>
 <div class="tw"><table>
 <thead><tr><th>${esc(t.routes)}</th><th>km</th><th>${esc(t.thCount)}</th><th>${esc(t.fast)}</th></tr></thead>
 <tbody>
@@ -1839,7 +1988,7 @@ async function main() {
     pages.push(routesIndexPage(lang, byCity, byCityAll, raw, updated));
     for (const [c, list] of cityList) pages.push(cityPage(lang, list[0]._city, list, cityList, updated));
     for (const [p, list] of provList) pages.push(providerPage(lang, p, list, provList, updated));
-    for (const r of ROUTES) pages.push(routePage(lang, r, byCity, byCityAll, raw, updated));
+    for (const r of ROUTES) pages.push(routePage(lang, r, byCity, byCityAll, raw, updated, byProvider));
   }
 
   // Daily snapshot. Growth over time is the one thing the catalogue cannot show
