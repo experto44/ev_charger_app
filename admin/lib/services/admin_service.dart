@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/app_user.dart';
 import '../models/purchase.dart';
+import 'premium_terms.dart';
 
 /// Data + auth layer for the admin panel.
 ///
@@ -77,6 +78,85 @@ class AdminService {
       });
       return list;
     });
+  }
+
+  // ── Manual premium (bank transfers) ────────────────────────────────────────
+  /// Activate premium by hand for [uid] — the path for users who could not use
+  /// the in-app purchase and paid us directly.
+  ///
+  /// Writes the flag the mobile app already reads (`isPremium`) plus an expiry
+  /// (`premiumUntil`). No app update is involved: the app syncs `isPremium` from
+  /// Firestore on every launch, and the `expireManualPremium` Cloud Function
+  /// clears the flag once the date passes, so ads come back by themselves.
+  ///
+  /// Time is ADDED to whatever is left: re-activating a user who still has 10
+  /// days extends them rather than throwing those days away. [amountGel] (when
+  /// > 0) also records a revenue row so the Finance tab reflects the money that
+  /// actually arrived — at zero commission, since no store was involved.
+  ///
+  /// Returns the new expiry date.
+  Future<DateTime> grantManualPremium({
+    required String uid,
+    required String plan, // 'monthly' | 'yearly'
+    double amountGel = 0,
+    String note = '',
+  }) async {
+    final ref = _db.collection('users').doc(uid);
+    final snap = await ref.get();
+    final current = snap.data()?['premiumUntil'];
+    final now = DateTime.now();
+
+    // Re-read the expiry here (rather than trusting the streamed copy) so two
+    // admins granting at the same time can't both extend from the same stale
+    // date. Unused time carries over — see [PremiumTerms.extend].
+    final until = PremiumTerms.extend(
+      current is Timestamp ? current.toDate() : null,
+      plan,
+      from: now,
+    );
+
+    await ref.set({
+      'isPremium': true,
+      'premiumUntil': Timestamp.fromDate(until),
+      'premiumSource': 'manual',
+      'premiumPlan': plan,
+      'premiumGrantedBy': _auth.currentUser?.email ?? '',
+      'premiumGrantedAt': FieldValue.serverTimestamp(),
+      'premiumNote': note.trim(),
+    }, SetOptions(merge: true));
+
+    if (amountGel > 0) {
+      // One row per activation (never overwritten — the id carries the
+      // timestamp), mirroring the shape the app writes for store purchases.
+      final id = 'manual_${uid}_${now.millisecondsSinceEpoch}';
+      await _db.collection('purchases').doc(id).set({
+        'uid': uid,
+        'plan': plan,
+        'platform': 'manual',
+        'gross': amountGel,
+        'currency': 'GEL',
+        'productId': 'manual_$plan',
+        'type': 'manual',
+        'grantedBy': _auth.currentUser?.email ?? '',
+        'note': note.trim(),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    return until;
+  }
+
+  /// End a manual subscription immediately: the flag goes false and the expiry
+  /// is set to now, so the ad-supported version returns on the next app open.
+  /// The revenue rows already recorded are left untouched (history is
+  /// append-only).
+  Future<void> revokeManualPremium(String uid) {
+    return _db.collection('users').doc(uid).set({
+      'isPremium': false,
+      'premiumUntil': Timestamp.fromDate(DateTime.now()),
+      'premiumSource': 'manual',
+      'premiumExpiredAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   // ── Admin allow-list management ────────────────────────────────────────────

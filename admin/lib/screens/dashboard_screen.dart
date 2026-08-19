@@ -7,8 +7,10 @@ import '../services/admin_service.dart';
 import '../services/export_service.dart';
 import '../services/finance.dart';
 import '../services/finance_config.dart';
+import '../services/premium_terms.dart';
 import '../theme.dart';
 import '../widgets/breakdown_card.dart';
+import '../widgets/grant_premium_dialog.dart';
 import '../widgets/kpi_card.dart';
 import '../widgets/registrations_chart.dart';
 import '../widgets/revenue_chart.dart';
@@ -19,8 +21,16 @@ import 'admins_screen.dart';
 /// Subscription-tier filter.
 enum StatusFilter { all, premium, free }
 
-/// Which top-level view is shown: the user directory or the revenue analytics.
-enum SectionTab { users, finance }
+/// Which top-level view is shown: the user directory, the manual-premium
+/// register, or the revenue analytics.
+enum SectionTab { users, premium, finance }
+
+/// Grants [grant] to [user] and resolves with the new expiry date.
+typedef GrantPremiumFn = Future<DateTime> Function(
+    AppUser user, PremiumGrant grant);
+
+/// Ends [user]'s manual subscription immediately.
+typedef RevokePremiumFn = Future<void> Function(AppUser user);
 
 /// Firebase-backed entry point: streams the user list and hands it to the pure
 /// [DashboardView]. Keeping the two apart lets the layout be previewed with mock
@@ -51,6 +61,14 @@ class DashboardScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(builder: (_) => const AdminsScreen()),
               ),
+              onGrantPremium: (user, grant) => AdminService.I.grantManualPremium(
+                uid: user.uid,
+                plan: grant.plan,
+                amountGel: grant.amountGel,
+                note: grant.note,
+              ),
+              onRevokePremium: (user) =>
+                  AdminService.I.revokeManualPremium(user.uid),
             );
           },
         );
@@ -73,6 +91,8 @@ class DashboardView extends StatefulWidget {
     this.initialSection = SectionTab.users,
     required this.onSignOut,
     required this.onManageAdmins,
+    required this.onGrantPremium,
+    required this.onRevokePremium,
   });
 
   /// Which tab the view opens on (used by the preview harness to land on
@@ -96,6 +116,10 @@ class DashboardView extends StatefulWidget {
 
   final VoidCallback onSignOut;
   final VoidCallback onManageAdmins;
+
+  /// Manual premium activation / cancellation (bank-transfer customers).
+  final GrantPremiumFn onGrantPremium;
+  final RevokePremiumFn onRevokePremium;
 
   @override
   State<DashboardView> createState() => _DashboardViewState();
@@ -133,10 +157,10 @@ class _DashboardViewState extends State<DashboardView> {
     return all.where((u) {
       switch (_status) {
         case StatusFilter.premium:
-          if (!u.isPremium) return false;
+          if (!u.effectivePremium) return false;
           break;
         case StatusFilter.free:
-          if (u.isPremium) return false;
+          if (u.effectivePremium) return false;
           break;
         case StatusFilter.all:
           break;
@@ -233,14 +257,21 @@ class _DashboardViewState extends State<DashboardView> {
         preferredSize: const Size.fromHeight(52),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-          child: Align(
-            alignment: Alignment.centerLeft,
+          // Three segments no longer fit on a narrow phone — let the strip
+          // scroll sideways instead of overflowing.
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
             child: SegmentedButton<SectionTab>(
               segments: const [
                 ButtonSegment(
                   value: SectionTab.users,
                   icon: Icon(Icons.people_outline, size: 18),
                   label: Text('Users'),
+                ),
+                ButtonSegment(
+                  value: SectionTab.premium,
+                  icon: Icon(Icons.workspace_premium_outlined, size: 18),
+                  label: Text('Premium'),
                 ),
                 ButtonSegment(
                   value: SectionTab.finance,
@@ -269,6 +300,8 @@ class _DashboardViewState extends State<DashboardView> {
     switch (_section) {
       case SectionTab.users:
         return _usersBody();
+      case SectionTab.premium:
+        return _premiumBody();
       case SectionTab.finance:
         return _financeBody();
     }
@@ -307,7 +340,10 @@ class _DashboardViewState extends State<DashboardView> {
               else
                 ...filtered.map((u) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
-                      child: UserTile(user: u),
+                      child: UserTile(
+                        user: u,
+                        onManagePremium: () => _openGrant(u),
+                      ),
                     )),
             ],
           );
@@ -358,7 +394,7 @@ class _DashboardViewState extends State<DashboardView> {
   // ── KPI strip ──────────────────────────────────────────────────────────────
   Widget _kpiStrip(List<AppUser> users, double width) {
     final total = users.length;
-    final premium = users.where((u) => u.isPremium).length;
+    final premium = users.where((u) => u.effectivePremium).length;
     final free = total - premium;
     final android = users.where((u) => u.platform == 'android').length;
     final ios = users.where((u) => u.platform == 'ios').length;
@@ -444,6 +480,7 @@ class _DashboardViewState extends State<DashboardView> {
                   DataColumn(label: Text('REGISTERED')),
                   DataColumn(label: Text('LAST ACTIVE')),
                   DataColumn(label: Text('OPENS/DAY'), numeric: true),
+                  DataColumn(label: Text('PREMIUM')),
                 ],
                 rows: [
                   for (var i = 0; i < users.length; i++)
@@ -469,21 +506,38 @@ class _DashboardViewState extends State<DashboardView> {
         DataCell(Text(u.name.isEmpty ? '—' : u.name)),
         DataCell(Text(u.phone.isEmpty ? '—' : u.phone)),
         DataCell(Text(u.email.isEmpty ? '—' : u.email)),
-        DataCell(StatusChip(isPremium: u.isPremium)),
+        DataCell(StatusChip(isPremium: u.effectivePremium, manual: u.isManual)),
         DataCell(Text(u.platform.isEmpty ? '—' : u.platform)),
         DataCell(Text(u.createdAt == null ? '—' : _fmt.format(u.createdAt!))),
         DataCell(
             Text(u.lastSeenAt == null ? '—' : _fmt.format(u.lastSeenAt!))),
         DataCell(Text(
             u.opensPerDay == null ? '—' : u.opensPerDay!.toStringAsFixed(1))),
+        DataCell(_grantButton(u)),
       ],
+    );
+  }
+
+  /// Entry point for manual activation, available on every user row.
+  Widget _grantButton(AppUser u) {
+    return IconButton(
+      tooltip: u.manualActive
+          ? 'Extend manual premium (${u.remainingLabel} left)'
+          : 'Activate premium manually',
+      icon: Icon(
+        u.manualActive ? Icons.workspace_premium : Icons.add_card,
+        size: 18,
+        color: u.manualActive ? kEmerald : kTextSec,
+      ),
+      onPressed: () => _openGrant(u),
     );
   }
 
   // ── Right rail (desktop) ─────────────────────────────────────────────────────
   Widget _rightRail(List<AppUser> all) {
     final total = all.length;
-    final premium = all.where((u) => u.isPremium).length;
+    final premium = all.where((u) => u.effectivePremium).length;
+    final manual = all.where((u) => u.manualActive).length;
     final android = all.where((u) => u.platform == 'android').length;
     final ios = all.where((u) => u.platform == 'ios').length;
     final other = total - android - ios;
@@ -493,9 +547,12 @@ class _DashboardViewState extends State<DashboardView> {
         SizedBox(height: 220, child: _chartCard(all)),
         const SizedBox(height: 16),
         BreakdownCard(
+          // Disjoint rows only — the card turns them into shares of their own
+          // sum, so an overlapping "of which…" line would skew every percentage.
           title: 'Subscription',
           rows: [
-            BreakdownRow('Premium', premium, kEmerald),
+            BreakdownRow('Premium · store', premium - manual, kEmerald),
+            BreakdownRow('Premium · manual', manual, kBlue),
             BreakdownRow('Free (ads)', total - premium, kAmber),
           ],
         ),
@@ -543,6 +600,424 @@ class _DashboardViewState extends State<DashboardView> {
               style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
           children: [
             SizedBox(height: 170, child: RegistrationsChart(users: all)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ══ Manual premium section ═══════════════════════════════════════════════════
+  /// Ask for the term/amount and write the grant. Any user can be activated —
+  /// this is the path for customers who couldn't pay through the store and
+  /// transferred the money to us directly.
+  Future<void> _openGrant(AppUser u) async {
+    final grant = await GrantPremiumDialog.show(context, u);
+    if (grant == null || !mounted) return;
+    try {
+      final until = await widget.onGrantPremium(u, grant);
+      if (!mounted) return;
+      _toast('${u.email.isEmpty ? u.name : u.email} · premium until '
+          '${_dfmt.format(until)}');
+    } catch (e) {
+      if (!mounted) return;
+      _toast('Activation failed: $e', error: true);
+    }
+  }
+
+  Future<void> _confirmRevoke(AppUser u) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: kBgCard,
+        title: const Text('End premium now?'),
+        content: Text(
+          '${u.email.isEmpty ? u.name : u.email} loses premium immediately and '
+          'the ad-supported version returns on their next app open. '
+          'Recorded revenue is kept.',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('End now'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      await widget.onRevokePremium(u);
+      if (!mounted) return;
+      _toast('Premium ended for ${u.email.isEmpty ? u.name : u.email}');
+    } catch (e) {
+      if (!mounted) return;
+      _toast('Could not end the subscription: $e', error: true);
+    }
+  }
+
+  void _toast(String message, {bool error = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message),
+      backgroundColor: error ? Colors.redAccent : kBgSurface,
+      behavior: SnackBarBehavior.floating,
+    ));
+  }
+
+  /// Every account that has ever been granted premium by hand, most urgent
+  /// first: still-running grants ordered by soonest expiry, then the lapsed
+  /// ones (most recently expired first).
+  List<AppUser> _manualUsers(List<AppUser> all) {
+    final list = all.where((u) => u.premiumUntil != null).toList();
+    list.sort((a, b) {
+      if (a.manualActive != b.manualActive) return a.manualActive ? -1 : 1;
+      return a.manualActive
+          ? a.premiumUntil!.compareTo(b.premiumUntil!)
+          : b.premiumUntil!.compareTo(a.premiumUntil!);
+    });
+    return list;
+  }
+
+  Widget _premiumBody() {
+    if (widget.error != null) return _ErrorView(error: widget.error!);
+    if (widget.users == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final all = widget.users!;
+    final manual = _manualUsers(all);
+
+    return LayoutBuilder(builder: (context, c) {
+      final w = c.maxWidth;
+      final isMobile = w < 680;
+      final pad = isMobile ? 12.0 : 20.0;
+
+      if (isMobile) {
+        return ListView(
+          padding: EdgeInsets.all(pad),
+          children: [
+            _premiumKpiStrip(manual, w),
+            const SizedBox(height: 16),
+            _premiumActionsBar(all, manual.length),
+            const SizedBox(height: 12),
+            if (manual.isEmpty)
+              _premiumEmptyState()
+            else
+              ...manual.map((u) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _manualCard(u),
+                  )),
+          ],
+        );
+      }
+
+      return Padding(
+        padding: EdgeInsets.all(pad),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _premiumKpiStrip(manual, w),
+            const SizedBox(height: 16),
+            Expanded(
+              child: Card(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                      child: _premiumActionsBar(all, manual.length),
+                    ),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: manual.isEmpty
+                          ? _premiumEmptyState()
+                          : _manualTable(manual),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _premiumKpiStrip(List<AppUser> manual, double width) {
+    final active = manual.where((u) => u.manualActive).toList();
+    final soon =
+        active.where((u) => (u.daysLeft ?? 999) <= 7).length;
+    final expired = manual.length - active.length;
+    final manualRevenue = (widget.purchases ?? const <Purchase>[])
+        .where((p) => p.isManual)
+        .fold<double>(0, (sum, p) => sum + FinanceConfig.I.toGel(p.gross, p.currency));
+
+    final cards = <Widget>[
+      KpiCard(
+          label: 'Active manual',
+          value: '${active.length}',
+          icon: Icons.workspace_premium,
+          accent: kEmerald),
+      KpiCard(
+          label: 'Expiring ≤ 7 days',
+          value: '$soon',
+          icon: Icons.hourglass_bottom,
+          accent: kAmber),
+      KpiCard(
+          label: 'Expired',
+          value: '$expired',
+          icon: Icons.history_toggle_off,
+          accent: kTextSec),
+      KpiCard(
+          label: 'Collected',
+          value: _gel(manualRevenue),
+          icon: Icons.account_balance,
+          accent: kBlue),
+    ];
+
+    final perRow = width >= 1080 ? 4 : (width >= 680 ? 2 : 2);
+    const gap = 12.0;
+    return LayoutBuilder(builder: (context, c) {
+      final itemW = (c.maxWidth - (perRow - 1) * gap) / perRow;
+      return Wrap(
+        spacing: gap,
+        runSpacing: gap,
+        children: cards.map((w) => SizedBox(width: itemW, child: w)).toList(),
+      );
+    });
+  }
+
+  Widget _premiumActionsBar(List<AppUser> all, int count) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        FilledButton.icon(
+          onPressed: () => _pickUserAndGrant(all),
+          icon: const Icon(Icons.add, size: 18),
+          label: const Text('Activate premium'),
+        ),
+        Text('$count granted',
+            style: const TextStyle(color: kTextSec, fontSize: 13)),
+        // A plain sized box, NOT Expanded/Flexible: this is a Wrap, and a flex
+        // parent-data widget inside one throws (the whole panel then renders as
+        // Flutter's grey error box in a release build).
+        const SizedBox(
+          width: 320,
+          child: Text(
+            'Expiry is enforced server-side — ads return automatically when the '
+            'term runs out.',
+            style: TextStyle(color: kTextSec, fontSize: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _pickUserAndGrant(List<AppUser> all) async {
+    final user = await UserPickerDialog.show(context, all);
+    if (user == null || !mounted) return;
+    await _openGrant(user);
+  }
+
+  Widget _manualTable(List<AppUser> users) {
+    return LayoutBuilder(builder: (context, c) {
+      return Scrollbar(
+        child: SingleChildScrollView(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: c.maxWidth),
+              child: DataTable(
+                headingRowColor: const WidgetStatePropertyAll(kBgSurface),
+                headingTextStyle: const TextStyle(
+                    color: kTextSec,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600),
+                dividerThickness: 0.5,
+                columnSpacing: 24,
+                columns: const [
+                  DataColumn(label: Text('USER')),
+                  DataColumn(label: Text('PLAN')),
+                  DataColumn(label: Text('STATUS')),
+                  DataColumn(label: Text('EXPIRES')),
+                  DataColumn(label: Text('TIME LEFT')),
+                  DataColumn(label: Text('GRANTED BY')),
+                  DataColumn(label: Text('NOTE')),
+                  DataColumn(label: Text('')),
+                ],
+                rows: [
+                  for (var i = 0; i < users.length; i++)
+                    _manualRow(users[i], i),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  DataRow _manualRow(AppUser u, int i) {
+    final left = u.daysLeft ?? 0;
+    final leftColor = !u.manualActive
+        ? kTextSec
+        : (left <= 7 ? kAmber : kEmerald);
+    return DataRow(
+      color: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.hovered)) {
+          return kEmerald.withValues(alpha: 0.06);
+        }
+        return i.isOdd ? Colors.white.withValues(alpha: 0.02) : null;
+      }),
+      cells: [
+        DataCell(Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(u.name.isEmpty ? '—' : u.name,
+                maxLines: 1, overflow: TextOverflow.ellipsis),
+            if (u.email.isNotEmpty)
+              Text(u.email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: kTextSec, fontSize: 11.5)),
+          ],
+        )),
+        DataCell(Text(PremiumTerms.label(u.premiumPlan))),
+        DataCell(StatusChip(isPremium: u.manualActive, manual: true)),
+        DataCell(Text(
+            u.premiumUntil == null ? '—' : _fmt.format(u.premiumUntil!))),
+        DataCell(Text(u.remainingLabel,
+            style: TextStyle(color: leftColor, fontWeight: FontWeight.w600))),
+        DataCell(Text(
+            u.premiumGrantedBy.isEmpty ? '—' : u.premiumGrantedBy,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis)),
+        DataCell(SizedBox(
+          width: 140,
+          child: Text(u.premiumNote.isEmpty ? '—' : u.premiumNote,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: kTextSec, fontSize: 12)),
+        )),
+        DataCell(Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              tooltip: u.manualActive ? 'Extend' : 'Activate again',
+              icon: const Icon(Icons.more_time, size: 18, color: kEmerald),
+              onPressed: () => _openGrant(u),
+            ),
+            if (u.manualActive)
+              IconButton(
+                tooltip: 'End now',
+                icon: const Icon(Icons.cancel_outlined,
+                    size: 18, color: Colors.redAccent),
+                onPressed: () => _confirmRevoke(u),
+              ),
+          ],
+        )),
+      ],
+    );
+  }
+
+  Widget _manualCard(AppUser u) {
+    final left = u.daysLeft ?? 0;
+    final leftColor =
+        !u.manualActive ? kTextSec : (left <= 7 ? kAmber : kEmerald);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(u.name.isEmpty ? '—' : u.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                ),
+                StatusChip(isPremium: u.manualActive, manual: true),
+              ],
+            ),
+            if (u.email.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(u.email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: kTextSec, fontSize: 12.5)),
+            ],
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Text(u.remainingLabel,
+                    style: TextStyle(
+                        color: leftColor,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${PremiumTerms.label(u.premiumPlan)} · until '
+                    '${u.premiumUntil == null ? '—' : _dfmt.format(u.premiumUntil!)}',
+                    style: const TextStyle(color: kTextSec, fontSize: 12.5),
+                  ),
+                ),
+              ],
+            ),
+            if (u.premiumNote.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(u.premiumNote,
+                  style: const TextStyle(color: kTextSec, fontSize: 12)),
+            ],
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: () => _openGrant(u),
+                  icon: const Icon(Icons.more_time, size: 18),
+                  label: Text(u.manualActive ? 'Extend' : 'Activate again'),
+                ),
+                if (u.manualActive)
+                  TextButton.icon(
+                    style: TextButton.styleFrom(
+                        foregroundColor: Colors.redAccent),
+                    onPressed: () => _confirmRevoke(u),
+                    icon: const Icon(Icons.cancel_outlined, size: 18),
+                    label: const Text('End'),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _premiumEmptyState() {
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.workspace_premium_outlined, color: kTextSec, size: 40),
+            SizedBox(height: 12),
+            Text('No manual activations yet.',
+                style: TextStyle(color: kTextSec)),
+            SizedBox(height: 4),
+            Text(
+              'Use "Activate premium" for users who paid you directly instead '
+              'of through the store.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: kTextSec, fontSize: 12),
+            ),
           ],
         ),
       ),
@@ -796,6 +1271,8 @@ class _DashboardViewState extends State<DashboardView> {
             BreakdownRow('iOS (Apple)', net('ios', s.byPlatform), kBlue),
             BreakdownRow(
                 'Android (Google)', net('android', s.byPlatform), kEmerald),
+            if ((s.byPlatform['manual']?.count ?? 0) > 0)
+              BreakdownRow('Manual (bank)', net('manual', s.byPlatform), kAmber),
             if ((s.byPlatform['other']?.count ?? 0) > 0)
               BreakdownRow('Other', net('other', s.byPlatform), kTextSec),
           ],
@@ -898,6 +1375,7 @@ class _DashboardViewState extends State<DashboardView> {
             'all': 'All platforms',
             'android': 'Android',
             'ios': 'iOS',
+            'manual': 'Manual (bank)',
           },
           onChanged: (v) => setState(() => _finPlatform = v!),
         ),

@@ -70,9 +70,10 @@ class FinanceSummary {
         ..gross += gross
         ..net += net;
 
+      // `manual` rows carry no fee at all, so they belong to neither store.
       if (p.platform == 'ios') {
         appleFee += fee;
-      } else {
+      } else if (p.platform != 'manual') {
         googleFee += fee;
       }
 

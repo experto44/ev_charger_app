@@ -99,6 +99,49 @@ host.) Without this, Google sign-in popups are blocked on the custom domain.
 - **Export Excel** downloads exactly the filtered rows.
 - **Manage admins** (top-right icon) to add/remove other admins.
 
+---
+
+## Manual premium (users who paid you directly)
+
+Some users can't complete the in-app purchase and transfer the money to you
+instead. The **Premium** tab activates their subscription by hand.
+
+**Granting**
+- *Premium* tab → **Activate premium** → search the user → pick **1 month** or
+  **1 year**, enter the amount received (GEL) and an optional note → *Activate*.
+- The same button sits on every row of the *Users* tab (the card icon), so you
+  can grant straight from a search result.
+- Time is **added** to whatever is left: re-activating someone with 10 days
+  remaining gives them 10 days + the new term. The dialog shows the resulting
+  date before you confirm.
+
+**What happens under the hood**
+- `users/{uid}` gets `isPremium: true`, `premiumUntil`, `premiumSource: manual`,
+  plus who granted it, when, and the note.
+- The app reads `isPremium` from Firestore on every launch, so ads stop on the
+  user's next app open. **No app update is needed** — nothing in the mobile app
+  changed for this feature.
+- The `expireManualPremium` Cloud Function runs hourly, and once `premiumUntil`
+  passes it sets `isPremium: false` again. The ad-supported version returns on
+  the user's next launch. Store subscriptions (`premiumSource != manual`) are
+  never touched by it.
+- If you entered an amount, a row is written to `purchases` with
+  `platform: manual` and **0 % commission** (no store took a cut), so the
+  *Finance* tab still reconciles. Filter it with the *Manual (bank)* platform.
+
+**Ending early:** the red *End now* button on a Premium-tab row drops the user
+back to free immediately. Recorded revenue is kept.
+
+**Deploying this feature** (rules + the expiry job + the panel):
+```bash
+firebase deploy --only firestore:rules,functions:expireManualPremium --project geocharge-f6714
+cd admin && flutter build web --release && cd ..
+firebase deploy --only hosting --project geocharge-f6714
+```
+The first deploy of the scheduled function creates a Cloud Scheduler job — this
+requires the **Blaze** plan (the project is already on it for the verification
+emails).
+
 ## Redeploying after code changes
 ```bash
 cd admin && flutter build web --release && cd ..
@@ -113,5 +156,11 @@ firebase deploy --only hosting --project geocharge-f6714
 - **Scale:** the panel loads the full `users` collection client-side — perfect
   for the current user base. If it grows into tens of thousands, switch to
   paginated/server-side queries (and possibly Cloud Functions).
-- **Cost:** no Cloud Functions / Blaze plan required. Firebase Hosting + the
-  Firestore reads fit the free tier at this scale.
+- **Cost:** Firebase Hosting + the Firestore reads fit the free tier at this
+  scale. The one scheduled function (`expireManualPremium`) needs the Blaze plan
+  — already enabled for the branded verification emails — and costs cents: an
+  hourly run over a range query that returns only already-expired documents.
+- **Manual expiry timing:** the sweep runs hourly, and the app only re-reads
+  `isPremium` when it launches, so ads can come back up to an hour (plus the
+  user's next app open) after the date. The panel itself computes the status
+  from `premiumUntil`, so it never shows a lapsed grant as Premium.

@@ -1,12 +1,9 @@
-import 'dart:js_interop';
-import 'dart:typed_data';
-
 import 'package:excel/excel.dart';
 import 'package:intl/intl.dart';
-import 'package:web/web.dart' as web;
 
 import '../models/app_user.dart';
 import '../models/purchase.dart';
+import 'browser.dart' as browser;
 import 'finance_config.dart';
 
 /// Builds an .xlsx workbook from a (already filtered) list of users and triggers
@@ -36,6 +33,11 @@ class ExportService {
       TextCellValue('Last active'),
       TextCellValue('Opens/day'),
       TextCellValue('Total opens'),
+      TextCellValue('Premium source'),
+      TextCellValue('Premium until'),
+      TextCellValue('Days left'),
+      TextCellValue('Granted by'),
+      TextCellValue('Note'),
     ]);
 
     for (final u in users) {
@@ -51,6 +53,12 @@ class ExportService {
             ? ''
             : u.opensPerDay!.toStringAsFixed(1)),
         IntCellValue(u.openCount),
+        TextCellValue(u.isManual ? 'manual' : (u.isPremium ? 'store' : '')),
+        TextCellValue(
+            u.premiumUntil == null ? '' : _fmt.format(u.premiumUntil!)),
+        TextCellValue(u.daysLeft == null ? '' : '${u.daysLeft}'),
+        TextCellValue(u.premiumGrantedBy),
+        TextCellValue(u.premiumNote),
       ]);
     }
 
@@ -109,24 +117,12 @@ class ExportService {
     _download(bytes, 'geocharge_revenue_$stamp.xlsx');
   }
 
-  /// Save [bytes] to the user's machine via an object-URL anchor click.
+  /// Save [bytes] to the user's machine (browser download).
   static void _download(List<int> bytes, String filename) {
-    final data = Uint8List.fromList(bytes).toJS;
-    final blob = web.Blob(
-      <JSAny>[data].toJS,
-      web.BlobPropertyBag(
-        type:
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      ),
+    browser.downloadBytes(
+      bytes,
+      filename,
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     );
-    final url = web.URL.createObjectURL(blob);
-    final anchor = web.HTMLAnchorElement()
-      ..href = url
-      ..download = filename
-      ..style.display = 'none';
-    web.document.body?.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    web.URL.revokeObjectURL(url);
   }
 }

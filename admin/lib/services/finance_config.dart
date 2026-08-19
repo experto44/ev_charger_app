@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:web/web.dart' as web;
+
+import 'browser.dart' as browser;
 
 /// Editable financial assumptions for the analytics: the store commission rates
 /// and the USD→GEL rate used to fold iOS (USD-billed) revenue into a single GEL
@@ -27,9 +28,13 @@ class FinanceConfig extends ChangeNotifier {
   double get googleRate => _googleRate;
   double get usdToGel => _usdToGel;
 
-  /// Commission fraction (0..1) for a purchase on [platform].
-  double rateFor(String platform) =>
-      platform == 'ios' ? _appleRate : _googleRate;
+  /// Commission fraction (0..1) for a purchase on [platform]. A `manual`
+  /// (bank-transfer) activation never passed through a store, so no cut is
+  /// taken — gross and net are the same money.
+  double rateFor(String platform) {
+    if (platform == 'manual') return 0;
+    return platform == 'ios' ? _appleRate : _googleRate;
+  }
 
   /// Convert a store [amount] in [currency] into GEL using the configured FX.
   /// GEL passes through; USD is converted; any other currency is assumed to be
@@ -54,27 +59,18 @@ class FinanceConfig extends ChangeNotifier {
   }
 
   void _load() {
-    try {
-      final s = web.window.localStorage;
-      final a = s.getItem(_kApple);
-      final g = s.getItem(_kGoogle);
-      final f = s.getItem(_kFx);
-      if (a != null) _appleRate = double.tryParse(a) ?? _appleRate;
-      if (g != null) _googleRate = double.tryParse(g) ?? _googleRate;
-      if (f != null) _usdToGel = double.tryParse(f) ?? _usdToGel;
-    } catch (_) {
-      // localStorage unavailable — fall back to the defaults.
-    }
+    // Missing values (or a non-web build) simply leave the defaults in place.
+    final a = browser.readLocal(_kApple);
+    final g = browser.readLocal(_kGoogle);
+    final f = browser.readLocal(_kFx);
+    if (a != null) _appleRate = double.tryParse(a) ?? _appleRate;
+    if (g != null) _googleRate = double.tryParse(g) ?? _googleRate;
+    if (f != null) _usdToGel = double.tryParse(f) ?? _usdToGel;
   }
 
   void _save() {
-    try {
-      final s = web.window.localStorage;
-      s.setItem(_kApple, _appleRate.toString());
-      s.setItem(_kGoogle, _googleRate.toString());
-      s.setItem(_kFx, _usdToGel.toString());
-    } catch (_) {
-      // best-effort; a failed save just means the tweak won't persist.
-    }
+    browser.writeLocal(_kApple, _appleRate.toString());
+    browser.writeLocal(_kGoogle, _googleRate.toString());
+    browser.writeLocal(_kFx, _usdToGel.toString());
   }
 }

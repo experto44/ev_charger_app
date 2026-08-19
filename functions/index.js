@@ -1,6 +1,7 @@
 "use strict";
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const logger = require("firebase-functions/logger");
@@ -105,5 +106,72 @@ exports.sendVerificationEmail = onCall(
 
     logger.info(`Verification email sent to ${user.email} (uid=${uid})`);
     return { sent: true };
+  }
+);
+
+// ── expireManualPremium ───────────────────────────────────────────────────────
+// Manual (bank-transfer) premium grants are written by the admin panel as
+//   users/{uid}.isPremium    = true
+//   users/{uid}.premiumUntil = <expiry timestamp>
+//   users/{uid}.premiumSource= "manual"
+// The mobile app has no concept of an expiry date — it just reads `isPremium`
+// from Firestore on every launch (PurchaseService.syncPremiumFromFirestore).
+// So the expiry has to be enforced server-side: this job flips `isPremium` back
+// to false once `premiumUntil` has passed, and the ad-supported version returns
+// on the user's next app open. Deliberately server-side so NO app update is
+// needed for manual subscriptions to expire.
+//
+// Runs hourly. The query filters on `premiumUntil` alone (a single-field range —
+// no composite index required) and the remaining conditions are checked in
+// memory; only already-expired documents are ever returned, so a quiet hour
+// costs a single empty read.
+exports.expireManualPremium = onSchedule(
+  {
+    schedule: "every 60 minutes",
+    timeZone: "Asia/Tbilisi",
+    retryCount: 1,
+  },
+  async () => {
+    const db = admin.firestore();
+    const now = admin.firestore.Timestamp.now();
+
+    const snap = await db
+      .collection("users")
+      .where("premiumUntil", "<=", now)
+      .get();
+
+    // Only manual grants that are still marked premium need downgrading. A
+    // store subscription (premiumSource != "manual") is owned by Apple/Google
+    // and must never be touched here.
+    const stale = snap.docs.filter((d) => {
+      const u = d.data();
+      return u.isPremium === true && u.premiumSource === "manual";
+    });
+
+    if (stale.length === 0) {
+      logger.info("expireManualPremium: nothing to expire");
+      return;
+    }
+
+    // Firestore caps a batch at 500 writes; chunk so a large sweep can't fail.
+    for (let i = 0; i < stale.length; i += 400) {
+      const batch = db.batch();
+      for (const doc of stale.slice(i, i + 400)) {
+        batch.set(
+          doc.ref,
+          {
+            isPremium: false,
+            premiumExpiredAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+      await batch.commit();
+    }
+
+    logger.info(
+      `expireManualPremium: downgraded ${stale.length} account(s) → free`,
+      { uids: stale.map((d) => d.id) }
+    );
   }
 );

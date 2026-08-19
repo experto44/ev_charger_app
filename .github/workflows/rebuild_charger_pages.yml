@@ -18,6 +18,8 @@ on:
     branches: [main]
     paths:
       - 'tools/build-pages.mjs'
+      # The Turkish dataset the /turketi/ pages are built from.
+      - 'tools/turkey.mjs'
       - '.github/workflows/rebuild_charger_pages.yml'
 
   workflow_dispatch:

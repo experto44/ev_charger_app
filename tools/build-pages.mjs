@@ -13,6 +13,8 @@ import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { loadTurkey, turkeyStats, provinceStats, corridor, trSlug, trKw,
+  provName, provIn, big } from './turkey.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = path.join(ROOT, 'site');
@@ -251,6 +253,7 @@ const L = {
     tariffsDir: 'tarifebi', routesDir: 'marshruti', calcDir: 'kalkulatori', calc: 'კალკულატორი',
     tariffs: 'ტარიფები', routes: 'მარშრუტები',
     customsDir: 'ganbajeba', customs: 'განბაჟება',
+    turkeyDir: 'turketi', turkey: 'თურქეთი', thDcTr: 'DC ₺/kWh',
     thDc: 'DC ₾/kWh', thAc: 'AC ₾/kWh', thNoPrice: 'ფასის გარეშე', thCities: 'ქალაქი',
     thKm: 'კმ თბილისიდან', thStop: 'გაჩერება', median: 'მედიანა',
     cheapestDc: 'ყველაზე იაფი DC', cheapestAc: 'ყველაზე იაფი AC', dearestDc: 'ყველაზე ძვირი DC',
@@ -289,6 +292,7 @@ const L = {
     tariffsDir: 'tariffs', routesDir: 'routes', calcDir: 'calculator', calc: 'Calculator',
     tariffs: 'Tariffs', routes: 'Routes',
     customsDir: 'customs', customs: 'Import duty',
+    turkeyDir: 'turkey', turkey: 'Turkey', thDcTr: 'DC TRY/kWh',
     thDc: 'DC GEL/kWh', thAc: 'AC GEL/kWh', thNoPrice: 'No price', thCities: 'Cities',
     thKm: 'km from Tbilisi', thStop: 'Stop', median: 'median',
     cheapestDc: 'Cheapest DC', cheapestAc: 'Cheapest AC', dearestDc: 'Most expensive DC',
@@ -542,19 +546,19 @@ function summarise(list) {
   };
 }
 
-const statBlock = (sum, lang) => {
+const statBlock = (sum, lang, n = (x) => x) => {
   const t = L[lang];
   return `<div class="stats">
-  <div class="stat"><b>${sum.total}</b><span>${esc(t.stations)}</span></div>
-  <div class="stat"><b>${sum.dc}</b><span>${esc(t.fast)}</span></div>
-  <div class="stat"><b>${sum.ac}</b><span>${esc(t.slow)}</span></div>
+  <div class="stat"><b>${n(sum.total)}</b><span>${esc(t.stations)}</span></div>
+  <div class="stat"><b>${n(sum.dc)}</b><span>${esc(t.fast)}</span></div>
+  <div class="stat"><b>${n(sum.ac)}</b><span>${esc(t.slow)}</span></div>
   <div class="stat"><b>${sum.providers.length}</b><span>${esc(t.networksWord)}</span></div>
   ${sum.maxKw ? `<div class="stat"><b>${sum.maxKw} kW</b><span>${esc(t.maxPower)}</span></div>` : ''}
 </div>`;
 };
 
-const connectorChips = (sum, lang) => `<h2>${esc(L[lang].connectorMix)}</h2>
-<div class="chips">${sum.connectors.map(([c, n]) => `<span class="chip"><b>${n}</b> ${esc(c)}</span>`).join('')}</div>`;
+const connectorChips = (sum, lang, fmt = (x) => x) => `<h2>${esc(L[lang].connectorMix)}</h2>
+<div class="chips">${sum.connectors.map(([c, n]) => `<span class="chip"><b>${fmt(n)}</b> ${esc(c)}</span>`).join('')}</div>`;
 
 /* ── page builders ───────────────────────────────────────────────────────── */
 function catalogPage(lang, all, byCity, byProvider, updated) {
@@ -608,6 +612,7 @@ ${statBlock(sum, lang)}
   <a href="${t.base}/${t.calcDir}/">${esc(t.calc)}</a>
   <a href="${t.base}/${t.routesDir}/">${esc(t.routes)}</a>
   <a href="${t.base}/${t.networksDir}/">${esc(t.networks)}</a>
+  <a href="${t.base}/${t.turkeyDir}/">${lang === 'ka' ? 'დამტენები თურქეთში' : 'Chargers in Turkey'}</a>
 </div>
 
 <h2>${esc(t.byCity)}</h2>
@@ -1857,7 +1862,17 @@ ${ROUTES.map((r) => {
     return `<tr><td><a href="${t.base}/${t.routesDir}/${r.slug}/">${esc(r[lang].from)} ${esc(r[lang].to)}</a></td><td>${r.km}</td><td>${n}</td><td>${dc}</td></tr>`;
   }).join('\n')}
 </tbody></table></div>
-<p class="upd">${esc(t.updated)} ${esc(updated)}</p>`;
+<p class="upd">${esc(t.updated)} ${esc(updated)}</p>
+
+<h2>${lang === 'ka' ? 'საზღვარს გარეთ' : 'Beyond the border'}</h2>
+<p>${lang === 'ka'
+    ? 'ერთადერთი საზღვარი, რომელსაც ქართველი მძღოლი ელექტრო მანქანით რეალურად კვეთს, თურქეთისაა. თურქეთის საჯარო დამტენების სრული სია, ტარიფებით და პროვინციების მიხედვით, ცალკე გვერდზეა.'
+    : 'The one border Georgian EV drivers actually cross is the Turkish one. The full list of public chargers in Turkey, with tariffs and a breakdown by province, has its own page.'}</p>
+<div class="links">
+  <a href="${t.base}/${t.turkeyDir}/">${lang === 'ka' ? 'დამტენები თურქეთში' : 'Chargers in Turkey'}</a>
+  <a href="${t.base}/blog/tbilisi-stambuli/">${lang === 'ka' ? 'თბილისი სტამბოლი' : 'Tbilisi to Istanbul'}</a>
+  <a href="${t.base}/blog/turketshi-mgzavroba/">${lang === 'ka' ? 'თურქეთში ელექტრო მანქანით' : 'Driving into Turkey'}</a>
+</div>`;
 
   return {
     file: path.join(SITE, t.base.replace('/', ''), t.routesDir, 'index.html'),
@@ -1878,9 +1893,316 @@ ${ROUTES.map((r) => {
 // Hand-written guides live in tools/build-articles.mjs and are written by that
 // script, not this one. This file still has to know their URLs, because the
 // sitemap and the IndexNow submission are both built here. Keep in sync.
+/* ── Turkey ──────────────────────────────────────────────────────────────────
+   The app ships the whole Turkish registry (13k+ stations, see tools/turkey.mjs
+   and docs/turkey_epdk_api.md), and driving into Turkey is the one international
+   trip Georgian EV owners actually make. These pages publish that dataset on the
+   same terms as the Georgian catalogue: what exists and where, never coordinates
+   and never live status. Deliberately absent from the header nav, because the
+   site's subject stays Georgia; readers reach this section from search, from the
+   guides and from the catalogue. */
+const TR_MIN_PAGE = 80;   // below this a province page would be thin content
+const TR_FORCE = ['Rize', 'Artvin', 'Giresun', 'Erzurum', 'Kars']; // the roads out of Georgia
+const TR_ROWS = 150;      // rows per province page: İstanbul alone holds 2,800
+
+const TR_PAGES = new Set(); // filled in main(), read by every Turkish province link
+const trHref = (lang, prov) => `${L[lang].base}/${L[lang].turkeyDir}/${trSlug(prov)}/`;
+const trCell = (lang, prov) => (TR_PAGES.has(prov)
+  ? `<a href="${trHref(lang, prov)}">${esc(provName(prov, lang))}</a>`
+  : esc(provName(prov, lang)));
+
+const lira = (n) => `${n.toFixed(2)} ₺`;
+
+function trStationRows(list, lang) {
+  const t = L[lang];
+  const head = [t.thName, t.thProvider, t.thType, t.thPower, t.thConnectors, t.thPrice];
+  const rows = list.map((s) => `<tr>`
+    + `<td>${esc(s.name || '—')}</td>`
+    + `<td>${esc(s.provider || '—')}</td>`
+    + `<td><span class="tag ${s.type === 'Fast DC' ? 'dc' : 'ac'}">${s.type === 'Fast DC' ? 'DC' : 'AC'}</span></td>`
+    + `<td>${esc(s.power && s.power !== '—' ? s.power : '—')}</td>`
+    + `<td>${esc((s.connectors || []).join(', ') || '—')}</td>`
+    + `<td>${esc(s.price || t.noPrice)}</td>`
+    + `</tr>`);
+  return `<div class="tw"><table>
+<thead><tr>${head.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead>
+<tbody>
+${rows.join('\n')}
+</tbody></table></div>`;
+}
+
+// Sorted the way a driver reads the list: fast chargers first, strongest first,
+// so the top of a capped table is the part that matters on a trip.
+const trRank = (a, b) => (b.type === 'Fast DC') - (a.type === 'Fast DC')
+  || trKw(b) - trKw(a) || String(a.name).localeCompare(String(b.name));
+
+function turkeyHubPage(lang, list, st, provPages) {
+  const t = L[lang];
+  const o = L[lang === 'ka' ? 'en' : 'ka'];
+  const url = `${ORIGIN}${t.base}/${t.turkeyDir}/`;
+  const alt = `${ORIGIN}${o.base}/${o.turkeyDir}/`;
+  const bc = [{ name: t.home, href: `${t.base}/` }, { name: t.turkey }];
+
+  const chademo = (st.connectors.find(([c]) => c === 'CHAdeMO') || ['', 0])[1];
+  const ccs2 = (st.connectors.find(([c]) => c === 'CCS2') || ['', 0])[1];
+  const type2 = (st.connectors.find(([c]) => c === 'Type 2') || ['', 0])[1];
+  const border = corridor(list, 'sarp-trabzon', { maxKm: 5, minKw: 50 });
+  const toIst = corridor(list, 'sarp-istanbul', { maxKm: 5, minKw: 50 });
+  const top = st.provinces[0], second = st.provinces[1];
+  const topBrand = st.brands[0], brand2 = st.brands[1];
+  const pricedPct = Math.round((st.withPrice / st.total) * 100);
+
+  const title = lang === 'ka'
+    ? `ელექტრო მანქანის დამტენები თურქეთში: ${big(st.total, 'ka')} სადგური | GeoCharge`
+    : `EV charging stations in Turkey — ${big(st.total, 'en')} stations | GeoCharge`;
+  const desc = lang === 'ka'
+    ? `თურქეთის ${big(st.total, 'ka')} საჯარო დამტენი ერთ სიაში: ${big(st.dc, 'ka')} სწრაფი DC, ${st.brands.length} ოპერატორი, ტარიფები ლირაში და დაყოფა 81 პროვინციაზე. მონაცემები EPDK-ის ოფიციალური რეესტრიდან.`
+    : `All ${big(st.total, 'en')} public EV chargers in Turkey in one list: ${big(st.dc, 'en')} fast DC, ${st.brands.length} operators, tariffs in lira and a breakdown across all 81 provinces, from the official EPDK registry.`;
+
+  const faq = lang === 'ka' ? [
+    ['რამდენი ელექტრო მანქანის დამტენია თურქეთში?',
+      `${big(st.total, 'ka')} საჯარო სადგური, ${st.brands.length} ოპერატორთან. აქედან ${big(st.dc, 'ka')} სწრაფი DC დამტენია და ${big(st.ultra, 'ka')} სადგური 150 კილოვატს ან მეტს იძლევა. ციფრები EPDK-ის ოფიციალური რეესტრიდანაა.`],
+    ['რომელი კონექტორი მჭირდება თურქეთში?',
+      `სწრაფი დატენვისთვის CCS2, ნელისთვის Type 2. CCS2 ${big(ccs2, 'ka')} სადგურზეა, Type 2 ${big(type2, 'ka')}-ზე. CHAdeMO მხოლოდ ${big(chademo, 'ka')} სადგურზე გვხვდება, GB/T კი საერთოდ არ არსებობს, ამიტომ ჩინური მანქანა მხოლოდ GB/T კონექტორით თურქეთში სწრაფად ვერ დაიტენება.`],
+    ['რა ღირს დატენვა თურქეთში?',
+      `სწრაფ DC დამტენზე კილოვატსაათის მედიანური ტარიფი ${lira(st.dcMed)}, ნელ AC დამტენზე ${lira(st.acMed)}. ფასს სადგურების ${pricedPct} პროცენტი აქვეყნებს, ტარიფები კი თითქმის ყველა ოპერატორთან ერთიანია მთელი ქვეყნისთვის.`],
+    ['სად არის ყველაზე მეტი დამტენი თურქეთში?',
+      `${provIn(top[0], 'ka')}, სულ ${big(top[1].length, 'ka')} სადგური. მეორეა ${provName(second[0], 'ka')} ${big(second[1].length, 'ka')} სადგურით.`],
+    ['ჩანს თუ არა თურქეთში, დამტენი თავისუფალია თუ დაკავებული?',
+      'არა. თურქეთის რეესტრი ცოცხალ სტატუსს არ აქვეყნებს, ამიტომ თურქულ სადგურებზე GeoCharge აჩვენებს კონექტორების რაოდენობას და ტარიფს, თავისუფალი ადგილების ნაცვლად. საქართველოში ცოცხალი სტატუსი მუშაობს.'],
+    ['საზღვრიდან პირველი სწრაფი დამტენი რამდენ კილომეტრშია?',
+      `სარფის საზღვრიდან ტრაბზონამდე მონაკვეთზე ${border.count} სწრაფი დამტენია გზიდან 5 კილომეტრში, ყველაზე გრძელი მონაკვეთი მათ შორის კი დაახლოებით ${Math.round(border.gap / 5) * 5} კილომეტრია. ანუ სავსე ბატარეით საზღვარს რომ გადახვიდეთ, პირველ დატენვამდე მისვლა პრობლემა არ არის.`],
+  ] : [
+    ['How many EV chargers are there in Turkey?',
+      `${big(st.total, 'en')} public stations run by ${st.brands.length} operators. ${big(st.dc, 'en')} of them are fast DC and ${big(st.ultra, 'en')} deliver 150 kW or more. The figures come from the official EPDK registry.`],
+    ['Which connector do I need in Turkey?',
+      `CCS2 for fast charging, Type 2 for slow. CCS2 is on ${big(ccs2, 'en')} stations and Type 2 on ${big(type2, 'en')}. CHAdeMO appears on only ${big(chademo, 'en')}, and GB/T does not exist in Turkey at all, so a Chinese car with a GB/T-only inlet cannot fast charge there.`],
+    ['What does charging cost in Turkey?',
+      `The median fast DC tariff is ${lira(st.dcMed)} per kWh and the median AC tariff ${lira(st.acMed)}. ${pricedPct} percent of stations publish a price, and most operators run one national tariff.`],
+    ['Which province has the most chargers?',
+      `${top[0]} with ${big(top[1].length, 'en')} stations, followed by ${second[0]} with ${big(second[1].length, 'en')}.`],
+    ['Does Turkey show live charger availability?',
+      'No. The Turkish registry publishes no real-time status, so GeoCharge shows the connector count and the tariff for Turkish stations instead of free bays. Live status works in Georgia.'],
+    ['How far is the first fast charger from the Georgian border?',
+      `On the stretch from the Sarp border gate to Trabzon there are ${border.count} fast chargers within 5 km of the road, and the longest stretch between any two of them is about ${Math.round(border.gap / 5) * 5} km.`],
+  ];
+
+  const intro = lang === 'ka'
+    ? `თურქეთში <strong>${big(st.total, 'ka')} საჯარო დამტენი სადგურია</strong>, ${st.brands.length} ოპერატორთან და ქვეყნის ყველა 81 პროვინციაში. აქედან ${big(st.dc, 'ka')} სწრაფი DC დამტენია, ${big(st.ac, 'ka')} ჩვეულებრივი AC, ${big(st.ultra, 'ka')} სადგური კი 150 კილოვატს ან მეტს იძლევა. ეს იმას ნიშნავს, რომ ელექტრო მანქანით საქართველოდან თურქეთში გამგზავრება დღეს დაგეგმვის საკითხია და არა რისკის.`
+    : `Turkey has <strong>${big(st.total, 'en')} public charging stations</strong>, run by ${st.brands.length} operators and spread across all 81 provinces. ${big(st.dc, 'en')} of them are fast DC, ${big(st.ac, 'en')} are standard AC, and ${big(st.ultra, 'en')} deliver 150 kW or more. Driving an EV from Georgia into Turkey is now a question of planning, not of risk.`;
+
+  const body = `${crumbs(bc)}
+<h1>${lang === 'ka' ? 'ელექტრო მანქანის დამტენები თურქეთში' : 'EV charging stations in Turkey'}</h1>
+<p class="intro">${intro}</p>
+${statBlock({ total: st.total, dc: st.dc, ac: st.ac, providers: st.brands, maxKw: st.maxKw }, lang, (x) => big(x, lang))}
+<p class="upd">${lang === 'ka'
+    ? `მონაცემები EPDK-ის, თურქეთის ენერგეტიკის მარეგულირებლის, ოფიციალური რეესტრიდან. ბოლო განახლება: ${esc(st.updated)}`
+    : `Data from the official registry of EPDK, the Turkish energy regulator. Last update: ${esc(st.updated)}`}</p>
+
+<h2>${lang === 'ka' ? 'რა იცვლება საზღვრის გადაკვეთისთანავე' : 'What changes the moment you cross the border'}</h2>
+<p>${lang === 'ka'
+    ? `თურქეთში დატენვის სტანდარტი ევროპულია. სწრაფი დატენვა CCS2-ზე მიდის, ნელი Type 2-ზე, და პრაქტიკულად სხვა ვარიანტი არ არსებობს: CHAdeMO მხოლოდ ${big(chademo, 'ka')} სადგურზეა, GB/T კი მთელ ქვეყანაში არც ერთზე.`
+    : `Turkey charges to the European standard. Fast charging runs on CCS2, slow charging on Type 2, and there is effectively nothing else: CHAdeMO is on just ${big(chademo, 'en')} stations, and GB/T on none at all.`}</p>
+<p>${lang === 'ka'
+    ? `ეს ერთი წინადადება ქართველი მძღოლისთვის ყველაზე მნიშვნელოვანია. საქართველოში GB/T კონექტორი ჩვეულებრივი ამბავია, რადგან ჩინური მანქანების დიდი ნაწილი სწორედ ამ კონექტორით შემოდის. თურქეთში ასეთი მანქანა სწრაფად ვერ დაიტენება. თუ თქვენს მანქანას CCS2-იც აქვს, პრობლემა არ გაქვთ, თუ მხოლოდ GB/T აქვს, თურქეთში მხოლოდ Type 2-ზე ნელი დატენვა დაგრჩებათ და ისიც მხოლოდ იმ შემთხვევაში, თუ მანქანას Type 2 შესასვლელი აქვს. სანამ გზას დაგეგმავთ, გადაამოწმეთ, რომელი კონექტორი გაქვთ.`
+    : `That single sentence matters most to drivers coming from Georgia. GB/T is ordinary in Georgia because a large share of imported cars are Chinese and arrive with that inlet. In Turkey such a car cannot fast charge at all. If your car also has CCS2 you are fine; if it only has GB/T, all that is left is slow Type 2 charging, and only where the car has a Type 2 inlet. Check which inlet you actually have before planning the drive.`}</p>
+<div class="links" style="margin-top:6px">
+  <a href="${t.base}/blog/${lang === 'ka' ? 'konektorebi' : 'konektorebi'}/">${lang === 'ka' ? 'კონექტორების გზამკვლევი' : 'Connector guide'}</a>
+  <a href="${t.base}/blog/turketshi-mgzavroba/">${lang === 'ka' ? 'თურქეთში ელექტრო მანქანით' : 'Driving into Turkey'}</a>
+  <a href="${t.base}/blog/tbilisi-stambuli/">${lang === 'ka' ? 'თბილისი სტამბოლი' : 'Tbilisi to Istanbul'}</a>
+</div>
+
+${connectorChips({ connectors: st.connectors }, lang, (x) => big(x, lang))}
+
+<h2>${lang === 'ka' ? 'რა ღირს დატენვა თურქეთში' : 'What charging costs in Turkey'}</h2>
+<p>${lang === 'ka'
+    ? `თურქული ოპერატორები ტარიფს ეროვნულ დონეზე აქვეყნებენ, ანუ ერთი და იმავე ქსელის ფასი სტამბოლშიც და ტრაბზონშიც ერთია. სწრაფ DC დამტენზე კილოვატსაათის მედიანური ფასი ${lira(st.dcMed)}, დიაპაზონი ${lira(st.dcMin)}-დან ${lira(st.dcMax)}-მდე. ნელ AC დამტენზე მედიანა ${lira(st.acMed)}, დიაპაზონი ${lira(st.acMin)}-დან ${lira(st.acMax)}-მდე. ტარიფი გამოქვეყნებული აქვს სადგურების ${pricedPct} პროცენტს.`
+    : `Turkish operators publish national tariffs, so the same network costs the same in İstanbul and in Trabzon. The median fast DC price is ${lira(st.dcMed)} per kWh, ranging from ${lira(st.dcMin)} to ${lira(st.dcMax)}. On AC the median is ${lira(st.acMed)}, ranging from ${lira(st.acMin)} to ${lira(st.acMax)}. ${pricedPct} percent of stations publish a tariff.`}</p>
+<p>${lang === 'ka'
+    ? `პრაქტიკული ორიენტირი: 60 კილოვატსაათიანი ბატარეის 20-დან 80 პროცენტამდე დატენვა 36 კილოვატსაათს ნიშნავს, ანუ მედიანურ ტარიფზე დაახლოებით ${(36 * st.dcMed).toFixed(0)} ლირას. ფასები ლირაშია და კურსი ხშირად იცვლება, ამიტომ ლარში გადათვლა მგზავრობის დღის კურსით ჯობია.`
+    : `A practical yardstick: charging a 60 kWh battery from 20 to 80 percent means 36 kWh, which at the median tariff is about ${(36 * st.dcMed).toFixed(0)} lira. Prices are in lira and the exchange rate moves, so convert on the day you travel.`}</p>
+
+<h2>${lang === 'ka' ? 'დამტენები პროვინციების მიხედვით' : 'Chargers by province'}</h2>
+<p>${lang === 'ka'
+    ? `თურქეთის 81-ვე პროვინციაში არის საჯარო დამტენი. ცხრილში ისინი რაოდენობის მიხედვითაა დალაგებული, ${provPages.length} ყველაზე დიდსა და საქართველოსთან ყველაზე ახლოს მდებარეს კი ცალკე გვერდი აქვს.`
+    : `Every one of Turkey's 81 provinces has public chargers. The table is ordered by station count, and the ${provPages.length} largest provinces plus the ones nearest Georgia have a page of their own.`}</p>
+<div class="tw"><table>
+<thead><tr><th>${lang === 'ka' ? 'პროვინცია' : 'Province'}</th><th>${esc(t.thCount)}</th><th>${esc(t.fast)}</th><th>${lang === 'ka' ? '150 kW და მეტი' : '150 kW and up'}</th><th>${esc(t.thProvider)}</th></tr></thead>
+<tbody>
+${st.provinces.map(([p, l]) => {
+    const ps = provinceStats(l);
+    return `<tr><td>${trCell(lang, p)}</td><td>${big(ps.total, lang)}</td><td>${big(ps.dc, lang)}</td><td>${big(ps.ultra, lang)}</td><td>${ps.brands.length}</td></tr>`;
+  }).join('\n')}
+</tbody></table></div>
+
+<h2>${lang === 'ka' ? 'ოპერატორები' : 'Operators'}</h2>
+<p>${lang === 'ka'
+    ? `თურქეთში ${st.brands.length} ლიცენზირებული ოპერატორია, მაგრამ ბაზარს რამდენიმე დიდი ქსელი განსაზღვრავს. ყველაზე დიდია ${topBrand[0]} ${big(topBrand[1].length, 'ka')} სადგურით, შემდეგ ${brand2[0]} ${big(brand2[1].length, 'ka')}-ით. ქვემოთ ოცდაათი უმსხვილესია.`
+    : `Turkey has ${st.brands.length} licensed operators, but a handful of large networks define the market. The biggest is ${topBrand[0]} with ${big(topBrand[1].length, 'en')} stations, then ${brand2[0]} with ${big(brand2[1].length, 'en')}. The thirty largest are below.`}</p>
+<div class="tw"><table>
+<thead><tr><th>${esc(t.thProvider)}</th><th>${esc(t.thCount)}</th><th>${esc(t.fast)}</th><th>${esc(t.maxPower)}</th><th>${esc(t.thDcTr)}</th></tr></thead>
+<tbody>
+${st.brands.slice(0, 30).map(([b, l]) => {
+    const ps = provinceStats(l);
+    return `<tr><td>${esc(b)}</td><td>${big(ps.total, lang)}</td><td>${big(ps.dc, lang)}</td><td>${ps.maxKw ? ps.maxKw + ' kW' : '—'}</td><td>${ps.dcMed ? lira(ps.dcMed) : '—'}</td></tr>`;
+  }).join('\n')}
+</tbody></table></div>
+<p class="note">${lang === 'ka'
+    ? 'ტარიფის სვეტში ოპერატორის მედიანური DC ფასია ლირაში. ფასები ინფორმაციული ხასიათისაა და ოპერატორის მიერაა გამოქვეყნებული.'
+    : 'The tariff column is the operator’s median DC price in lira. Tariffs are indicative and published by the operator.'}</p>
+
+<h2>${lang === 'ka' ? 'გზა საქართველოს საზღვრიდან' : 'The road from the Georgian border'}</h2>
+<p>${lang === 'ka'
+    ? `სარფის საზღვრიდან ტრაბზონამდე შავი ზღვის გზაზე ${border.count} სწრაფი დამტენია გზიდან 5 კილომეტრში, აქედან ${border.ultra} სადგური 150 კილოვატს ან მეტს იძლევა. ორ მეზობელ დამტენს შორის ყველაზე გრძელი მონაკვეთი დაახლოებით ${Math.round(border.gap / 5) * 5} კილომეტრია.`
+    : `Between the Sarp border gate and Trabzon there are ${border.count} fast chargers within 5 km of the coastal road, ${border.ultra} of them rated 150 kW or more. The longest stretch between two neighbouring chargers is about ${Math.round(border.gap / 5) * 5} km.`}</p>
+<p>${lang === 'ka'
+    ? `მთელ გზაზე სარფიდან სტამბოლამდე, შავი ზღვის სანაპიროთი, ${big(toIst.count, 'ka')} სწრაფი დამტენია გზის 5 კილომეტრში, ${big(toIst.ultra, 'ka')} მათგანი 150 კილოვატიდან. ეს მარშრუტი, გაჩერებებით და ხარჯით, ცალკე სტატიაშია გარჩეული.`
+    : `Along the whole road from Sarp to İstanbul, following the Black Sea coast, there are ${big(toIst.count, 'en')} fast chargers within 5 km of the route, ${big(toIst.ultra, 'en')} of them at 150 kW or more. That drive, with its stops and its cost, has its own guide.`}</p>
+<div class="links" style="margin-top:6px">
+  <a href="${t.base}/blog/tbilisi-stambuli/">${lang === 'ka' ? 'თბილისიდან სტამბოლამდე ელექტრო მანქანით' : 'Tbilisi to Istanbul by EV'}</a>
+  <a href="${t.base}/blog/turketshi-mgzavroba/">${lang === 'ka' ? 'საქართველოდან თურქეთში ელექტრო მანქანით' : 'From Georgia into Turkey by EV'}</a>
+  <a href="${t.base}/${t.routesDir}/">${esc(t.routes)}</a>
+</div>
+
+<h2>${lang === 'ka' ? 'ცოცხალი სტატუსი და აპლიკაცია' : 'Live status and the app'}</h2>
+<p>${lang === 'ka'
+    ? 'თურქეთის რეესტრი იმას არ აქვეყნებს, დამტენი ახლა თავისუფალია თუ დაკავებული, ამიტომ თურქულ სადგურებზე აპლიკაცია კონექტორების რაოდენობასა და ტარიფს აჩვენებს და არა თავისუფალ ადგილებს. საქართველოში ცოცხალი სტატუსი მუშაობს და რეალურ დროში ახლდება.'
+    : 'The Turkish registry does not publish whether a charger is busy right now, so for Turkish stations the app shows the connector count and the tariff rather than free bays. In Georgia live status works and refreshes in real time.'}</p>
+<p>${lang === 'ka'
+    ? 'აპლიკაციაში თურქეთი პარამეტრებში, ქვეყნების სიაში ირთვება. მარშრუტის დაგეგმვისას კი ცალკე ჩართვა საჭირო არ არის: თუ გზა თურქეთს კვეთს, თურქული დამტენები ავტომატურად ჩამოიტვირთება და გაჩერებებში ჩაითვლება.'
+    : 'In the app, Turkey is switched on in Settings, in the country list. Route planning needs no switch at all: if the route crosses Turkey, the Turkish chargers are downloaded automatically and counted into the stops.'}</p>
+
+<h2>${esc(t.faq)}</h2>
+<div class="faq">
+${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('\n')}
+</div>`;
+
+  return {
+    file: path.join(SITE, t.base.replace('/', ''), t.turkeyDir, 'index.html'),
+    url,
+    html: shell({
+      lang, title, desc, canonical: url, altHref: alt, body,
+      jsonld: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          breadcrumbLd(bc),
+          { '@type': 'CollectionPage', '@id': url + '#page', name: title, url, inLanguage: t.code, description: desc,
+            isPartOf: { '@type': 'WebSite', '@id': `${ORIGIN}/#website` } },
+          { '@type': 'FAQPage', inLanguage: t.code,
+            mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+        ],
+      },
+    }),
+  };
+}
+
+function turkeyProvincePage(lang, prov, list, st) {
+  const t = L[lang];
+  const o = L[lang === 'ka' ? 'en' : 'ka'];
+  const s = trSlug(prov);
+  const url = `${ORIGIN}${t.base}/${t.turkeyDir}/${s}/`;
+  const alt = `${ORIGIN}${o.base}/${o.turkeyDir}/${s}/`;
+  const name = provName(prov, lang);
+  const where = provIn(prov, lang);
+  const ps = provinceStats(list);
+  const shown = [...list].sort(trRank).slice(0, TR_ROWS);
+  const rank = st.provinces.findIndex(([p]) => p === prov) + 1;
+  const neighbours = st.provinces.filter(([p]) => p !== prov && TR_PAGES.has(p)).slice(0, 12);
+  const bc = [{ name: t.home, href: `${t.base}/` },
+    { name: t.turkey, href: `${t.base}/${t.turkeyDir}/` }, { name }];
+
+  const title = lang === 'ka'
+    ? `ელექტრო მანქანის დამტენები ${where}: ${big(ps.total, 'ka')} სადგური | GeoCharge`
+    : `EV chargers in ${name} — ${big(ps.total, 'en')} stations | GeoCharge`;
+  const desc = lang === 'ka'
+    ? `${where} ${big(ps.total, 'ka')} საჯარო დამტენია, აქედან ${big(ps.dc, 'ka')} სწრაფი DC. ქსელები, კონექტორები, ტარიფები ლირაში და სადგურების სია.`
+    : `${name} has ${big(ps.total, 'en')} public chargers, ${big(ps.dc, 'en')} of them fast DC. Networks, connectors, tariffs in lira and the station list.`;
+
+  const faq = lang === 'ka' ? [
+    [`რამდენი დამტენია ${where}?`,
+      `${big(ps.total, 'ka')} საჯარო სადგური, აქედან ${big(ps.dc, 'ka')} სწრაფი DC და ${big(ps.ac, 'ka')} ჩვეულებრივი AC. ${ps.brands.length} სხვადასხვა ოპერატორი მუშაობს, ყველაზე დიდი ${ps.brands[0][0]} ${ps.brands[0][1]} სადგურით.`],
+    [`რომელი კონექტორები გვხვდება ${where}?`,
+      `${ps.connectors.map(([c, n]) => `${c} (${n})`).join(', ')}. სწრაფი დატენვისთვის CCS2 გჭირდებათ.`],
+    [`რა ღირს სწრაფი დატენვა ${where}?`,
+      ps.dcMed
+        ? `მედიანური DC ტარიფი ${lira(ps.dcMed)} ერთ კილოვატსაათზე. ოპერატორები ერთიან ეროვნულ ტარიფს აქვეყნებენ, ამიტომ ფასი პრაქტიკულად იგივეა, რაც ქვეყნის დანარჩენ ნაწილში.`
+        : 'ამ პროვინციის სადგურების უმეტესობა ტარიფს არ აქვეყნებს. ფასს ადგილზე, ოპერატორის აპლიკაციაში ნახავთ.'],
+  ] : [
+    [`How many chargers are there in ${name}?`,
+      `${big(ps.total, 'en')} public stations: ${big(ps.dc, 'en')} fast DC and ${big(ps.ac, 'en')} standard AC, run by ${ps.brands.length} operators. The largest is ${ps.brands[0][0]} with ${ps.brands[0][1]} stations.`],
+    [`Which connectors are used in ${name}?`,
+      `${ps.connectors.map(([c, n]) => `${c} (${n})`).join(', ')}. You need CCS2 for fast charging.`],
+    [`What does fast charging cost in ${name}?`,
+      ps.dcMed
+        ? `The median DC tariff is ${lira(ps.dcMed)} per kWh. Operators publish one national tariff, so the price is effectively the same as in the rest of the country.`
+        : 'Most stations here publish no tariff. You will see the price in the operator’s app on site.'],
+  ];
+
+  const body = `${crumbs(bc)}
+<h1>${lang === 'ka' ? `ელექტრო მანქანის დამტენები ${where}` : `EV chargers in ${name}`}</h1>
+<p class="intro">${lang === 'ka'
+    ? `${where} <strong>${big(ps.total, 'ka')} საჯარო დამტენი სადგურია</strong>, აქედან ${big(ps.dc, 'ka')} სწრაფი DC და ${big(ps.ac, 'ka')} ჩვეულებრივი AC. ეს თურქეთის პროვინციებს შორის ${rank} ადგილია. ${ps.ultra ? `${ps.ultra} სადგური 150 კილოვატს ან მეტს იძლევა, ` : ''}ყველაზე მძლავრი ${ps.maxKw} კილოვატია.`
+    : `${name} has <strong>${big(ps.total, 'en')} public charging stations</strong>, ${big(ps.dc, 'en')} of them fast DC and ${big(ps.ac, 'en')} standard AC. That puts it ${rank} among Turkey's provinces. ${ps.ultra ? `${ps.ultra} stations deliver 150 kW or more, ` : ''}and the strongest is rated ${ps.maxKw} kW.`}</p>
+${statBlock({ total: ps.total, dc: ps.dc, ac: ps.ac, providers: ps.brands, maxKw: ps.maxKw }, lang, (x) => big(x, lang))}
+<p class="upd">${lang === 'ka'
+    ? `მონაცემები EPDK-ის ოფიციალური რეესტრიდან. ბოლო განახლება: ${esc(st.updated)}`
+    : `Data from the official EPDK registry. Last update: ${esc(st.updated)}`}</p>
+
+<h2>${lang === 'ka' ? 'ქსელები' : 'Networks'}</h2>
+<div class="tw"><table>
+<thead><tr><th>${esc(t.thProvider)}</th><th>${esc(t.thCount)}</th></tr></thead>
+<tbody>
+${ps.brands.slice(0, 20).map(([b, n]) => `<tr><td>${esc(b)}</td><td>${n}</td></tr>`).join('\n')}
+</tbody></table></div>
+
+${connectorChips({ connectors: ps.connectors }, lang, (x) => big(x, lang))}
+
+<h2>${lang === 'ka' ? 'სადგურების სია' : 'Station list'}</h2>
+<p>${lang === 'ka'
+    ? (list.length > TR_ROWS
+      ? `ქვემოთ ${TR_ROWS} სადგურია, სწრაფი და ყველაზე მძლავრი პირველ რიგში. დანარჩენი ${big(ps.total - TR_ROWS, 'ka')} სადგური რუკაზე, აპლიკაციაშია.`
+      : 'ქვემოთ ამ პროვინციის ყველა საჯარო სადგურია, სწრაფი და ყველაზე მძლავრი პირველ რიგში.')
+    : (list.length > TR_ROWS
+      ? `The ${TR_ROWS} stations below are ordered fast and strongest first. The remaining ${big(ps.total - TR_ROWS, 'en')} are on the map in the app.`
+      : 'Below is every public station in this province, ordered fast and strongest first.')}</p>
+${trStationRows(shown, lang)}
+<p class="note">${lang === 'ka'
+    ? 'ტარიფები ლირაშია, ინფორმაციული ხასიათისაა და ოპერატორის მიერაა გამოქვეყნებული. თურქეთში ცოცხალი სტატუსი არ ქვეყნდება.'
+    : 'Tariffs are in lira, indicative and published by the operator. Turkey publishes no live availability.'}</p>
+
+<h2>${lang === 'ka' ? 'სხვა პროვინციები' : 'Other provinces'}</h2>
+<div class="links">
+${neighbours.map(([p]) => `<a href="${trHref(lang, p)}">${esc(provName(p, lang))}</a>`).join('')}
+<a href="${t.base}/${t.turkeyDir}/">${lang === 'ka' ? 'თურქეთის ყველა დამტენი' : 'All chargers in Turkey'}</a>
+</div>
+
+<h2>${esc(t.faq)}</h2>
+<div class="faq">
+${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('\n')}
+</div>`;
+
+  return {
+    file: path.join(SITE, t.base.replace('/', ''), t.turkeyDir, s, 'index.html'),
+    url,
+    html: shell({
+      lang, title, desc, canonical: url, altHref: alt, body,
+      jsonld: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          breadcrumbLd(bc),
+          { '@type': 'CollectionPage', '@id': url + '#page', name: title, url, inLanguage: t.code, description: desc,
+            isPartOf: { '@type': 'WebSite', '@id': `${ORIGIN}/#website` } },
+          { '@type': 'FAQPage', inLanguage: t.code,
+            mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+        ],
+      },
+    }),
+  };
+}
+
 const ARTICLE_SLUGS = ['datenvis-fasi', 'konektorebi', 'ac-da-dc', 'shori-mgzavroba',
   'amerikuli-importi', 'chinuri-importi', 'zamtari', 'sakhlis-damteni', '100-km-fasi', 'batarea',
-  'batareis-cveta'];
+  'batareis-cveta', 'tbilisi-stambuli', 'turketshi-mgzavroba', 'meoradi-shemowmeba'];
 
 // Every indexable URL on geocharge.ge that this script does not itself render:
 // the two hand-written home pages and everything under /blog/.
@@ -1944,6 +2266,16 @@ async function main() {
 
   const clearance = await clearanceData(offline);
 
+  // Turkey is a second dataset, not a second country inside the same file: it
+  // comes from its own gist and its own regulator. See tools/turkey.mjs.
+  const tr = await loadTurkey({ offline });
+  const trStats = turkeyStats(tr);
+  const trProvPages = trStats.provinces
+    .filter(([prov, l]) => l.length >= TR_MIN_PAGE || TR_FORCE.includes(prov));
+  for (const [prov] of trProvPages) TR_PAGES.add(prov);
+  console.log(`· Turkey: ${trStats.total} stations, ${trStats.brands.length} operators,`
+    + ` ${trProvPages.length} province pages of ${trStats.provinces.length} provinces`);
+
   const ge = raw.filter(inGeorgia);
   console.log(`· ${ge.length} in Georgia, ${raw.length - ge.length} outside (not published)`);
 
@@ -1989,6 +2321,8 @@ async function main() {
     for (const [c, list] of cityList) pages.push(cityPage(lang, list[0]._city, list, cityList, updated));
     for (const [p, list] of provList) pages.push(providerPage(lang, p, list, provList, updated));
     for (const r of ROUTES) pages.push(routePage(lang, r, byCity, byCityAll, raw, updated, byProvider));
+    pages.push(turkeyHubPage(lang, tr, trStats, trProvPages));
+    for (const [prov, list] of trProvPages) pages.push(turkeyProvincePage(lang, prov, list, trStats));
   }
 
   // Daily snapshot. Growth over time is the one thing the catalogue cannot show
@@ -2092,7 +2426,8 @@ async function main() {
   console.log('· dash check passed: no dashes as punctuation in Georgian copy');
 
   const pairs = [];
-  const kaPrefixes = ['/damtenebi', '/qselebi', '/tarifebi', '/marshruti', '/kalkulatori', '/ganbajeba'];
+  const kaPrefixes = ['/damtenebi', '/qselebi', '/tarifebi', '/marshruti', '/kalkulatori', '/ganbajeba',
+    '/turketi'];
   const kaPages = pages.filter((p) => kaPrefixes.some((k) => p.url.startsWith(ORIGIN + k)));
   for (const p of kaPages) {
     const en = p.url
@@ -2101,8 +2436,10 @@ async function main() {
       .replace('/tarifebi/', '/en/tariffs/')
       .replace('/marshruti/', '/en/routes/')
       .replace('/kalkulatori/', '/en/calculator/')
-      .replace('/ganbajeba/', '/en/customs/');
-    const top = ['/damtenebi/', '/tarifebi/', '/qselebi/', '/marshruti/', '/kalkulatori/', '/ganbajeba/'].some((k) => p.url === ORIGIN + k);
+      .replace('/ganbajeba/', '/en/customs/')
+      .replace('/turketi/', '/en/turkey/');
+    const top = ['/damtenebi/', '/tarifebi/', '/qselebi/', '/marshruti/', '/kalkulatori/', '/ganbajeba/',
+      '/turketi/'].some((k) => p.url === ORIGIN + k);
     pairs.push({ ka: p.url, en, priority: top ? '0.9' : '0.7' });
   }
   const xml = sitemap(pairs, today);
@@ -2125,7 +2462,8 @@ async function main() {
   }
 
   console.log(`\n  per language: 1 catalogue + 1 tariffs + 1 networks index + 1 routes index`
-    + ` + ${cityList.length} cities + ${provList.length} networks + ${ROUTES.length} routes`
+    + ` + 1 customs + 1 Turkey hub + ${cityList.length} cities + ${provList.length} networks`
+    + ` + ${ROUTES.length} routes + ${trProvPages.length} Turkish provinces`
     + ` = ${pages.length / 2}, × 2 langs = ${pages.length} pages`);
 }
 

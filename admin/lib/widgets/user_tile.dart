@@ -8,8 +8,12 @@ import 'status_chip.dart';
 /// A single user rendered as a card. Used on narrow screens where the 8-column
 /// data table can't fit — the phone view the panel is most often opened on.
 class UserTile extends StatelessWidget {
-  const UserTile({super.key, required this.user});
+  const UserTile({super.key, required this.user, this.onManagePremium});
   final AppUser user;
+
+  /// Opens the manual-activation dialog for this user. Omitted in contexts
+  /// where granting isn't offered.
+  final VoidCallback? onManagePremium;
 
   static final DateFormat _fmt = DateFormat('yyyy-MM-dd HH:mm');
 
@@ -38,7 +42,20 @@ class UserTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              StatusChip(isPremium: u.isPremium),
+              StatusChip(isPremium: u.effectivePremium, manual: u.isManual),
+              if (onManagePremium != null)
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  tooltip: u.manualActive
+                      ? 'Extend manual premium'
+                      : 'Activate premium manually',
+                  icon: Icon(
+                    u.manualActive ? Icons.workspace_premium : Icons.add_card,
+                    size: 18,
+                    color: u.manualActive ? kEmerald : kTextSec,
+                  ),
+                  onPressed: onManagePremium,
+                ),
             ],
           ),
           if (u.email.isNotEmpty || u.phone.isNotEmpty) ...[
@@ -60,6 +77,8 @@ class UserTile extends StatelessWidget {
                   u.createdAt == null ? '—' : _fmt.format(u.createdAt!)),
               _meta(Icons.bolt,
                   u.opensPerDay == null ? '—' : '${u.opensPerDay!.toStringAsFixed(1)}/day'),
+              if (u.manualActive)
+                _meta(Icons.hourglass_bottom, '${u.remainingLabel} left'),
             ],
           ),
         ],

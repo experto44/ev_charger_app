@@ -18,6 +18,7 @@ class Purchase {
     required this.currency,
     required this.productId,
     required this.createdAt,
+    this.type = 'new',
   });
 
   /// Store transaction id (document id) — unique per purchase.
@@ -29,8 +30,12 @@ class Purchase {
   /// `monthly` / `yearly`.
   final String plan;
 
-  /// `ios` / `android` / `other`.
+  /// `ios` / `android` / `other`, plus `manual` for a bank transfer activated
+  /// by hand from the admin panel (no store, so no commission).
   final String platform;
+
+  /// `new` for a store purchase, `manual` for an admin-granted subscription.
+  final String type;
 
   /// Amount charged by the store, in [currency] (before commission).
   final double gross;
@@ -54,6 +59,7 @@ class Purchase {
       gross: (d['gross'] as num?)?.toDouble() ?? 0,
       currency: (d['currency'] as String?)?.trim().toUpperCase() ?? 'GEL',
       productId: (d['productId'] as String?)?.trim() ?? '',
+      type: (d['type'] as String?)?.trim() ?? 'new',
       createdAt: d['createdAt'] is Timestamp
           ? (d['createdAt'] as Timestamp).toDate()
           : null,
@@ -62,4 +68,7 @@ class Purchase {
 
   /// Human label for the plan.
   String get planLabel => plan == 'yearly' ? 'Yearly' : 'Monthly';
+
+  /// True for a manually granted (bank-transfer) subscription.
+  bool get isManual => platform == 'manual' || type == 'manual';
 }

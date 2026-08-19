@@ -14,6 +14,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CSS, shell, inGeorgia, assignCity, median, tariffStats } from './build-pages.mjs';
+import { loadTurkey, turkeyStats, corridor, big } from './turkey.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = path.join(ROOT, 'site');
@@ -29,7 +30,13 @@ const FUEL_SRC = 'https://tarifebi.ge/fuel';
 // station in the country is not what an ordinary driver pays.
 async function fuelPrices() {
   try {
-    const html = await (await fetch(FUEL_SRC)).text();
+    // tarifebi.ge answers 403 to a bare Node fetch, so it gets a browser
+    // User-Agent. Without this the scrape silently falls back to the cache and
+    // the petrol comparison in the guides quietly goes stale.
+    const res = await fetch(FUEL_SRC, { headers: { 'User-Agent':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36' } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const html = await res.text();
     const raw = (/var priceData=(\[[\s\S]*?\]);/.exec(html) || [])[1];
     if (!raw) throw new Error('priceData block not found');
     const data = JSON.parse(raw);
@@ -234,7 +241,218 @@ fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1.5"/>
 <figcaption>${t.cap}</figcaption>
 </figure>`;
 
-const buildArticles = (N, F) => [
+// What state of health a car of a given age should show, at Geotab's measured
+// average of 2.3 percent a year, against the regulatory floor of UN GTR 22.
+// Straight-line on purpose: it is the same arithmetic the battery wear guide
+// quotes, and a curve here would imply a precision the average does not carry.
+const SOH_LO = 60, SOH_W = 520, SOH_X0 = 170;
+const sohX = (v) => SOH_X0 + ((v - SOH_LO) / (100 - SOH_LO)) * SOH_W;
+const SOH_ROWS = [
+  { years: 3, soh: 93.1, floor: null },
+  { years: 5, soh: 88.5, floor: 80 },
+  { years: 8, soh: 81.6, floor: 70 },
+];
+
+const figSoh = (lang) => {
+  const ka = lang === 'ka';
+  const rows = SOH_ROWS.map((r, i) => {
+    const y = 44 + i * 76;
+    const w = sohX(r.soh) - SOH_X0;
+    const floor = r.floor === null ? '' : `
+<line x1="${sohX(r.floor).toFixed(1)}" y1="${y - 8}" x2="${sohX(r.floor).toFixed(1)}" y2="${y + 38}"
+stroke="#C2410C" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="${sohX(r.floor).toFixed(1)}" y="${y + 54}" class="fx" text-anchor="middle">${r.floor}%</text>`;
+    return `<text x="16" y="${y + 21}" class="fk">${esc(ka ? `${r.years} წლის მანქანა` : `${r.years} year old car`)}</text>
+<rect x="${SOH_X0}" y="${y}" width="${SOH_W}" height="30" rx="8" fill="#fff" stroke="var(--line)" stroke-width="1.5"/>
+<rect x="${SOH_X0}" y="${y}" width="${w.toFixed(1)}" height="30" rx="8" fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1.5"/>
+<text x="${(sohX(r.soh) + 14).toFixed(1)}" y="${y + 21}" class="fk">${r.soh.toFixed(1)}%</text>${floor}`;
+  }).join('\n');
+
+  return `<figure class="fig">
+<div class="fs"><svg viewBox="0 0 760 290" role="img" aria-label="${esc(ka
+    ? 'ბატარეის მოსალოდნელი ჯანმრთელობა მანქანის ასაკის მიხედვით'
+    : 'Expected battery state of health by the age of the car')}">
+${rows}
+<g class="fx" text-anchor="middle">
+<text x="${SOH_X0}" y="278">60%</text>
+<text x="${sohX(80)}" y="278">80%</text>
+<text x="${SOH_X0 + SOH_W}" y="278">100%</text>
+</g>
+<line x1="${SOH_X0}" y1="258" x2="${SOH_X0 + SOH_W}" y2="258" stroke="var(--line)" stroke-width="1"/>
+</svg></div>
+<figcaption>${ka
+    ? 'მწვანე ზოლი მოსალოდნელი ტევადობაა წელიწადში 2.3 პროცენტიანი საშუალო ცვეთით, Geotab-ის 2026 წლის კვლევის მიხედვით. წყვეტილი ხაზი GTR 22-ის მოთხოვნაა ახალი მანქანებისთვის: 80 პროცენტი ხუთ წელში და 70 პროცენტი რვა წელში.'
+    : 'The green bar is the capacity to expect at Geotab’s measured average of 2.3 percent a year. The dashed line is what UN GTR 22 requires of new cars: 80 percent at five years and 70 percent at eight.'}</figcaption>
+</figure>`;
+};
+
+/* ── Turkish figures ─────────────────────────────────────────────────────────
+   The Turkey guides quote the same registry the app carries (tools/turkey.mjs),
+   so a number in the prose cannot drift from the /turketi/ pages next to it.
+   Everything computed here is either a count or a distance along a corridor;
+   road distances themselves are quoted as the round approximations they are. */
+async function turkishNumbers() {
+  const list = await loadTurkey();
+  const st = turkeyStats(list);
+  const corr = (key) => corridor(list, key, { maxKm: 5, minKw: 50 });
+  const provOf = (name) => (st.provinces.find(([p]) => p === name) || ['', []])[1].length;
+  const conn = (c) => (st.connectors.find(([x]) => x === c) || ['', 0])[1];
+
+  const kwhTr = 1230 * 0.18;      // the Turkish leg at 18 kWh/100 km
+  const kwhTotal = 1620 * 0.18;
+
+  const T = {
+    total: st.total, dc: st.dc, ac: st.ac, ultra: st.ultra,
+    brands: st.brands.length, maxKw: st.maxKw,
+    ccs2: conn('CCS2'), type2: conn('Type 2'), chademo: conn('CHAdeMO'),
+    dcMed: st.dcMed, dcMin: st.dcMin, dcMax: st.dcMax, acMed: st.acMed,
+    pricedPct: Math.round((st.withPrice / st.total) * 100),
+    sockets: list.reduce((n, s) => n + (s.total_spots || 0), 0),
+    updated: st.updated,
+    border: corr('sarp-trabzon'),
+    samsunSinop: corr('samsun-sinop'),
+    zonguldakIstanbul: corr('zonguldak-istanbul'),
+    trabzonSamsun: corr('trabzon-samsun'),
+    ankaraIstanbul: corr('ankara-istanbul'),
+    all: corr('sarp-istanbul'),
+    // The thin part of the coastal road, and the inland alternative it is
+    // weighed against.
+    thin: corr('sinop-zonguldak'),
+    coastHalf: corr('samsun-istanbul-coast'),
+    inland: corr('samsun-istanbul-inland'),
+    posof: corr('posof-erzurum'),
+    kwhTr, kwhTotal, trCost: kwhTr * st.dcMed,
+    prov: provOf,
+    big: (n, lang = 'ka') => big(n, lang),
+    // A distance derived from a polyline is not a road distance. Rounding to
+    // the nearest five kilometres is the honest precision for it, and the prose
+    // always says "about".
+    round5: (n) => Math.round(n / 5) * 5,
+    topBrands: (lang) => st.brands.slice(0, 4).map(([b]) => b)
+      .join(lang === 'ka' ? ', ' : ', '),
+    routeBrands: (lang) => {
+      const top = T.all.brands.slice(0, 3);
+      return top.map(([b, n]) => `${b} (${n})`).join(lang === 'ka' ? ', ' : ', ');
+    },
+  };
+
+  // Legs of the İstanbul road, in the order a driver meets them.
+  T.legs = [
+    ['ka:სარფი ტრაბზონი|en:Sarp to Trabzon', T.border],
+    ['ka:ტრაბზონი სამსუნი|en:Trabzon to Samsun', T.trabzonSamsun],
+    ['ka:სამსუნი სინოფი|en:Samsun to Sinop', T.samsunSinop],
+    ['ka:სინოფი ზონგულდაქი|en:Sinop to Zonguldak', T.thin],
+    ['ka:ზონგულდაქი სტამბოლი|en:Zonguldak to İstanbul', T.zonguldakIstanbul],
+  ];
+
+  T.legTable = (lang) => {
+    const h = lang === 'ka'
+      ? ['მონაკვეთი', 'სწრაფი დამტენი', '150 kW და მეტი', 'ყველაზე გრძელი მონაკვეთი']
+      : ['Leg', 'Fast chargers', '150 kW and up', 'Longest gap'];
+    const rows = T.legs.map(([label, c]) => {
+      const name = label.split('|').find((x) => x.startsWith(`${lang}:`)).slice(3);
+      return `<tr><td>${esc(name)}</td><td>${big(c.count, lang)}</td>`
+        + `<td>${big(c.ultra, lang)}</td><td>${T.round5(c.gap)} km</td></tr>`;
+    }).join('\n');
+    return `<div class="tw"><table>
+<thead><tr>${h.map((x) => `<th>${esc(x)}</th>`).join('')}</tr></thead>
+<tbody>
+${rows}
+</tbody></table></div>
+<p class="note">${lang === 'ka'
+      ? 'სწრაფ დამტენად ითვლება 50 კილოვატი და მეტი, გზიდან 5 კილომეტრის რადიუსში. ბოლო სვეტში ორ მეზობელ დამტენს შორის ყველაზე დიდი მანძილია.'
+      : 'A fast charger here means 50 kW or more, within 5 km of the road. The last column is the largest distance between two neighbouring chargers.'}</p>`;
+  };
+
+  // Coverage profile: how many fast chargers sit in each 50 km slice of the
+  // corridor. Drawn because the useful fact is not the total but that the line
+  // never touches zero.
+  T.figProfile = (lang) => {
+    const step = 50;
+    const buckets = [];
+    for (let x = 0; x < T.all.length; x += step) {
+      buckets.push(T.all.positions.filter((p) => p >= x && p < x + step).length);
+    }
+    const max = Math.max(...buckets);
+    const W = 700, H = 190, X0 = 46, bw = W / buckets.length;
+    // Square root heights, with the axis labelled at 10, 50 and 300. İstanbul's
+    // slice holds thirty times what a coastal slice does, and on a linear axis
+    // that flattens the coast into nothing, which is the opposite of the point:
+    // the reader needs to see that no slice is empty.
+    const hOf = (v) => (v <= 0 ? 0 : Math.max(3, Math.sqrt(v / max) * H));
+    const bars = buckets.map((v, i) => `<rect x="${(X0 + i * bw).toFixed(1)}" y="${(H + 20 - hOf(v)).toFixed(1)}"
+width="${(bw - 3).toFixed(1)}" height="${hOf(v).toFixed(1)}" rx="3"
+fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>`).join('\n');
+    const grid = [10, 50, 300].filter((v) => v <= max).map((v) => {
+      const y = (H + 20 - hOf(v)).toFixed(1);
+      return `<line x1="${X0}" y1="${y}" x2="${X0 + W}" y2="${y}" stroke="var(--line)" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="${X0 - 8}" y="${(Number(y) + 5).toFixed(1)}" class="fx" text-anchor="end">${v}</text>`;
+    }).join('\n');
+    const samsun = T.border.length + T.trabzonSamsun.length;
+    const marks = [
+      [0, lang === 'ka' ? 'სარფი' : 'Sarp'],
+      [T.border.length, lang === 'ka' ? 'ტრაბზონი' : 'Trabzon'],
+      [samsun, lang === 'ka' ? 'სამსუნი' : 'Samsun'],
+      [samsun + T.samsunSinop.length, lang === 'ka' ? 'სინოფი' : 'Sinop'],
+      [T.all.length - T.zonguldakIstanbul.length, lang === 'ka' ? 'ზონგულდაქი' : 'Zonguldak'],
+      [T.all.length, lang === 'ka' ? 'სტამბოლი' : 'İstanbul'],
+    ].map(([pos, name], i, arr) => {
+      const x = X0 + (pos / T.all.length) * W;
+      const anchor = i === 0 ? 'start' : i === arr.length - 1 ? 'end' : 'middle';
+      return `<line x1="${x.toFixed(1)}" y1="26" x2="${x.toFixed(1)}" y2="${H + 20}" stroke="var(--line)" stroke-width="1"/>
+<text x="${x.toFixed(1)}" y="${H + 42}" class="fx" text-anchor="${anchor}">${esc(name)}</text>`;
+    }).join('\n');
+    return `<figure class="fig">
+<div class="fs"><svg viewBox="0 0 760 275" role="img" aria-label="${esc(lang === 'ka'
+      ? 'სწრაფი დამტენების რაოდენობა გზის ყოველ 50 კილომეტრზე სარფიდან სტამბოლამდე'
+      : 'Fast chargers per 50 km of road between Sarp and İstanbul')}">
+${marks}
+${grid}
+${bars}
+</svg></div>
+<figcaption>${lang === 'ka'
+      ? 'ვერტიკალურ ღერძზე სწრაფი დამტენების რაოდენობაა გზის ყოველ 50 კილომეტრზე, სარფის საზღვრიდან სტამბოლამდე. ღერძი შეკუმშულია, რადგან სტამბოლის მონაკვეთი სანაპიროზე არსებულს ათეულობითჯერ აღემატება. მთავარი ის არის, რომ არც ერთი სვეტი არ არის ნული.'
+      : 'Fast chargers in every 50 km slice of road from the Sarp border to İstanbul. The vertical axis is compressed, because the İstanbul slice holds tens of times what a coastal slice does. The point is that no slice is empty.'}</figcaption>
+</figure>`;
+  };
+
+  // The two ways out of Georgia, on the two numbers that decide the trip.
+  T.figGates = (lang) => {
+    const rows = [
+      { name: lang === 'ka' ? 'სარფი, შავი ზღვის გზა' : 'Sarpi, the coastal road',
+        per: (T.border.count / T.border.length) * 100, gap: T.round5(T.border.gap) },
+      { name: lang === 'ka' ? 'ვალე, ფოსოფი ერზურუმი' : 'Vale, the Posof road',
+        per: (T.posof.count / T.posof.length) * 100, gap: T.round5(T.posof.gap) },
+    ];
+    const max = Math.max(...rows.map((r) => r.per));
+    const W = 380, X0 = 40;
+    return `<figure class="fig">
+<div class="fs"><svg viewBox="0 0 760 220" role="img" aria-label="${esc(lang === 'ka'
+      ? 'დამტენების სიმჭიდროვე ორ სასაზღვრო მიმართულებაზე'
+      : 'Charger density on the two border routes')}">
+${rows.map((r, i) => {
+      const y = 46 + i * 92;
+      const w = (r.per / max) * W;
+      return `<text x="${X0}" y="${y - 12}" class="fk">${esc(r.name)}</text>
+<rect x="${X0}" y="${y}" width="${w.toFixed(1)}" height="30" rx="8" fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1.5"/>
+<text x="${(X0 + w + 14).toFixed(1)}" y="${y + 21}" class="fk">${r.per.toFixed(0)}</text>
+<text x="${X0 + W + 90}" y="${y + 8}" class="fx">${esc(lang === 'ka' ? 'ყველაზე გრძელი მონაკვეთი' : 'longest gap')}</text>
+<text x="${X0 + W + 90}" y="${y + 28}" class="fk">${r.gap} km</text>`;
+    }).join('\n')}
+<text x="${X0}" y="205" class="fx">${esc(lang === 'ka'
+      ? 'სწრაფი დამტენი გზის ყოველ 100 კილომეტრზე'
+      : 'fast chargers per 100 km of road')}</text>
+</svg></div>
+<figcaption>${lang === 'ka'
+      ? 'ორივე მიმართულებაზე დათვლილია 50 კილოვატი და მეტი სიმძლავრის დამტენები გზიდან 5 კილომეტრში. სანაპირო გზაზე სიმჭიდროვე რამდენჯერმე მაღალია, ყველაზე გრძელი მონაკვეთი კი სამჯერ მოკლე.'
+      : 'Both routes count chargers of 50 kW or more within 5 km of the road. The coastal road is several times denser, and its longest gap is a third of the eastern one.'}</figcaption>
+</figure>`;
+  };
+
+  return T;
+}
+
+const buildArticles = (N, F, T) => [
   {
     slug: 'datenvis-fasi',
     ka: {
@@ -1859,6 +2077,541 @@ ${figBars({
       ],
     },
   },
+
+  {
+    slug: 'tbilisi-stambuli',
+    date: '2026-08-19',
+    ka: {
+      title: 'თბილისიდან სტამბოლამდე ელექტრო მანქანით: მარშრუტი და დამტენები',
+      metaTitle: 'თბილისი სტამბოლი ელექტრო მანქანით: სად დავიტენოთ გზაში',
+      desc: `დაახლოებით 1 620 კილომეტრი შავი ზღვის სანაპიროთი. სად არის სწრაფი დამტენები, სად თხელდება დაფარვა და რა ჯდება დატენვა ლირაში.`,
+      key: [
+        `მოკლე პასუხი: გზა სრულიად გასავლელია. სარფის საზღვრიდან სტამბოლამდე გზიდან 5 კილომეტრში ${T.big(T.all.count)} სწრაფი დამტენია, აქედან ${T.big(T.all.ultra)} სადგური 150 კილოვატს ან მეტს იძლევა.`,
+        `ერთი მონაკვეთი გამოირჩევა: სინოფსა და ზონგულდაქს შორის სანაპირო გზაზე სულ ${T.thin.count} სწრაფი დამტენია და ორ მეზობელს შორის ყველაზე გრძელი მანძილი დაახლოებით ${T.round5(T.thin.gap)} კილომეტრია. სწორედ ეს ადგილი უნდა დაგეგმოთ წინასწარ.`,
+      ],
+      body: `
+<h2>რას ნიშნავს ეს გზა ციფრებში</h2>
+<p>თბილისიდან სტამბოლამდე ყველაზე სწრაფი გზა დაახლოებით 1 620 კილომეტრია და სუფთა სვლით დაახლოებით 20 საათსა და ნახევარს იკავებს. მარშრუტი მთლიანად შავი ზღვის სანაპიროზე მიდის: თბილისიდან ბათუმამდე, სარფის საზღვარი, შემდეგ ტრაბზონი, სამსუნი, სინოფი, ზონგულდაქი და ბოლოს სტამბოლი.</p>
+<p>ერთი გავრცელებული შეცდომა თავიდანვე უნდა გამოვასწოროთ: ეს გზა ანკარაზე არ გადის. ანკარის გავლით მარშრუტი არსებობს, მაგრამ ის დაახლოებით 150 კილომეტრით გრძელია და ცალკე ვარიანტია, რომელსაც ქვემოთ შევადარებთ.</p>
+<p>საქართველოს მონაკვეთი ცალკე გვაქვს აღწერილი <a href="/marshruti/tbilisi-batumi/">თბილისი ბათუმის მარშრუტში</a>. აქ იმ ნაწილზეა საუბარი, რომელიც საზღვრის შემდეგ იწყება.</p>
+${T.figProfile('ka')}
+
+<h2>გზა მონაკვეთებად</h2>
+<p>ქვემოთ თითოეულ მონაკვეთზე ნაჩვენებია, რამდენი სწრაფი დამტენია გზიდან 5 კილომეტრში და რამდენია ორ მეზობელ დამტენს შორის ყველაზე გრძელი მანძილი. ციფრები EPDK-ის, თურქეთის ენერგეტიკის მარეგულირებლის, ოფიციალური რეესტრიდან მოდის და იმავე მონაცემებზეა აგებული, რასაც აპლიკაცია იყენებს.</p>
+${T.legTable('ka')}
+<p>პირველი სამი მონაკვეთი, ანუ სულ დაახლოებით ორი მესამედი გზისა, კარგად არის დაფარული. ტრაბზონსა და სამსუნს შორის ორ დამტენს შორის ყველაზე დიდი მანძილი დაახლოებით ${T.round5(T.trabzonSamsun.gap)} კილომეტრია, ზონგულდაქიდან სტამბოლამდე კი დამტენების სიმჭიდროვე უკვე ევროპულია.</p>
+
+<h2>სად თხელდება დაფარვა</h2>
+<p>ერთადერთი მონაკვეთი, რომელიც წინასწარ დაგეგმვას მოითხოვს, სინოფსა და ზონგულდაქს შორისაა. აქ სანაპირო გზა კლდეებში მიიკლაკნება, დასახლებები მცირეა და მთელ ამ მონაკვეთზე სულ ${T.thin.count} სწრაფი დამტენია. ორ მეზობელ დამტენს შორის ყველაზე გრძელი მანძილი დაახლოებით ${T.round5(T.thin.gap)} კილომეტრია, სინოფსა და ქასთამონუს სანაპიროს შორის.</p>
+<p>პრაქტიკული წესი მარტივია: სინოფში სავსე ბატარეით გადით. ${T.round5(T.thin.gap)} კილომეტრი თავისთავად ბევრი არ არის, მაგრამ გზა ნელია, სერპანტინებით, ხოლო ზამთარში ან ცივ ამინდში იმავე მონაკვეთს მეტი ენერგია სჭირდება, ვიდრე ბრტყელ ავტობანზე. თუ ბატარეა 40 კილოვატსაათია ან ნაკლები, ეს მონაკვეთი ორ ნაწილად დაყავით.</p>
+
+<h2>ალტერნატივა: შიდა გზა ანკარაზე</h2>
+<p>თუ სანაპიროს თხელი მონაკვეთი გაწუხებთ, სამსუნიდან შიდა გზით, ჩორუმზე, ქირიქქალესა და ანკარაზე გავლით, სტამბოლში ასევე მიხვალთ. ეს გზა დაახლოებით 150 კილომეტრით გრძელია, სამაგიეროდ დამტენებით უფრო მდიდარია.</p>
+<p>ციფრებში: სამსუნიდან სტამბოლამდე სანაპიროთი ${T.big(T.coastHalf.count)} სწრაფი დამტენია და ყველაზე გრძელი მონაკვეთი დაახლოებით ${T.round5(T.coastHalf.gap)} კილომეტრი, ანკარაზე გავლით კი ${T.big(T.inland.count)} დამტენი და ${T.round5(T.inland.gap)} კილომეტრი. ანუ ანკარის ვარიანტი დროში წაგებაა, დატენვაში კი მოგება.</p>
+<p>გონივრული არჩევანი ასეთია: ზაფხულში, დიდი ბატარეით, სანაპირო გზა უფრო სწრაფი და ლამაზია. ზამთარში, პატარა ბატარეით ან ღამით მგზავრობისას, ანკარის ვარიანტი უფრო მშვიდია.</p>
+
+<h2>რამდენი გაჩერება დასჭირდება</h2>
+<p>პრაქტიკული ანგარიში მარტივია. საშუალო ელექტრო მანქანა 100 კილომეტრზე დაახლოებით 18 კილოვატსაათს ხარჯავს. 60 კილოვატსაათიან ბატარეაზე ეს დაახლოებით 330 კილომეტრს ნიშნავს სავსე ბატარეით, მაგრამ შორ გზაზე სრულ ბატარეას არავინ ელოდება: 20-დან 80 პროცენტამდე დატენვა ყველაზე სწრაფია, და ეს დაახლოებით 200 კილომეტრია ერთ გაჩერებაზე.</p>
+<p>1 620 კილომეტრზე ეს რვიდან ათამდე გაჩერებას ნიშნავს, თითოეული 20-დან 30 წუთამდე, თუ 100 კილოვატიან ან უფრო მძლავრ დამტენს იყენებთ. მთელ თურქულ მონაკვეთზე ${T.big(T.all.ultra)} სადგური 150 კილოვატს ან მეტს იძლევა, ამიტომ მძლავრი დამტენის პოვნა რთული არ არის.</p>
+<p>დიდი ბატარეით, 77 ან 82 კილოვატსაათით, გაჩერებების რიცხვი ექვსამდე ეცემა. მცირე ბატარეით, 40 კილოვატსაათით, კი თორმეტამდე იზრდება და ორი დღე უკვე აუცილებელი ხდება.</p>
+
+<h2>რა ჯდება ეს გზა</h2>
+<p>მთელ მანძილზე დაახლოებით ${Math.round(T.kwhTotal)} კილოვატსაათი ენერგია იხარჯება. ეს ორ ნაწილად იყოფა.</p>
+<ul>
+<li><strong>საქართველოს მონაკვეთი.</strong> დაახლოებით 390 კილომეტრი, ანუ 70 კილოვატსაათი. სწრაფი დატენვის მედიანურ ტარიფზე ეს დაახლოებით ${(70 * N.dcMed).toFixed(0)} ლარია.</li>
+<li><strong>თურქეთის მონაკვეთი.</strong> დაახლოებით 1 230 კილომეტრი, ანუ ${Math.round(T.kwhTr)} კილოვატსაათი. თურქეთის მედიანურ DC ტარიფზე, რომელიც ${T.dcMed.toFixed(2)} ლირაა კილოვატსაათზე, ეს დაახლოებით ${T.big(Math.round(T.trCost))} ლირა გამოდის.</li>
+</ul>
+<p>ლირის კურსი ხშირად იცვლება, ამიტომ ლარში გადათვლა მგზავრობის დღეს ჯობია. თქვენი მანქანის ციფრებით გადათვლა <a href="/kalkulatori/">კალკულატორში</a> შეგიძლიათ.</p>
+<p>შედარებისთვის: იმავე გზაზე ბენზინის მანქანა, რომელიც 100 კილომეტრზე 8 ლიტრს ხარჯავს, დაახლოებით 130 ლიტრს მოიხმარს. ელექტრო მანქანით ეს გზა შესამჩნევად იაფია, თუნდაც საჯარო სწრაფ დამტენებზე დატენვით.</p>
+
+<h2>რომელი კონექტორი გჭირდებათ</h2>
+<p>თურქეთში სწრაფი დატენვა CCS2-ზე მიდის, ნელი Type 2-ზე. სხვა ვარიანტი პრაქტიკულად არ არსებობს: CHAdeMO მთელ ქვეყანაში ${T.big(T.chademo)} სადგურზეა, GB/T კი არც ერთზე.</p>
+<p>ეს იმას ნიშნავს, რომ ჩინური მანქანა, რომელსაც მხოლოდ GB/T კონექტორი აქვს, ამ გზას ვერ გაივლის. საქართველოში ასეთი მანქანა ბევრია, ამიტომ ეს პირველი, რაც წასვლამდე უნდა შეამოწმოთ. თუ მანქანას CCS2 აქვს, პრობლემა არ არსებობს. კონექტორების სხვაობა ცალკე <a href="/blog/konektorebi/">სტატიაშია</a> ახსნილი.</p>
+
+<h2>ვის ეკუთვნის ეს დამტენები</h2>
+<p>გზაზე ყველაზე ხშირად ${T.routeBrands('ka')} შეგხვდებათ. თურქული ოპერატორები ტარიფს ეროვნულ დონეზე აქვეყნებენ, ანუ ერთი ქსელის ფასი სტამბოლშიც და ტრაბზონშიც ერთია.</p>
+<p>დამტენის გასაშვებად ჩვეულებრივ ოპერატორის აპლიკაცია გჭირდებათ. სასარგებლოა წინასწარ ნახოთ, რომელი ქსელი დგას თქვენს დაგეგმილ გაჩერებებზე, და ის აპლიკაციები ჯერ კიდევ სახლში დააყენოთ. სად რომელი ქსელია, <a href="/turketi/">თურქეთის დამტენების გვერდზეა</a> და აპლიკაციაში.</p>
+
+<h2>ჯარიმები, რომლებიც საზღვარზე დაგხვდებათ</h2>
+<p>თურქეთის გზებზე სიჩქარეს ავტომატური კამერების სისტემა აკონტროლებს და ჯარიმა ნომრის ნიშანზე იწერება, მათ შორის ქართულ ნომერზე. ჯარიმის ქვითარი თქვენამდე არ მოვა, ამიტომ ბევრი მძღოლი მასზე მხოლოდ უკან, საზღვარზე იგებს.</p>
+<p>წესი ასეთია: თუ სისტემაში გადაუხდელი საგზაო ჯარიმა, ავტობანის ან ხიდის გადაუხდელი გასავლელი ფიქსირდება, საბაჟო მანქანას ქვეყნიდან გასვლის უფლებას არ აძლევს, სანამ თანხა არ დაიფარება. გადახდა შესაძლებელია იქვე, გამშვებ პუნქტში, ბარათით ან ნაღდი ფულით.</p>
+<p>ცალკე თემაა ავტობანების გადასახადი. თურქეთის ფასიან გზებზე გადახდა HGS სისტემით ხდება და 2026 წლის 29 ივლისს გამოქვეყნებული რეგულაციით უცხოური ნომრის მქონე მანქანასაც მოეთხოვება, სისტემაში იყოს რეგისტრირებული და ბალანსი ჰქონდეს. თუ გასვლის შემდეგ 15 დღეში გადაიხდით, ჯარიმა არ დაგერიცხებათ. 16-დან 45 დღემდე გადასახდელს ემატება იმავე ოდენობის ჯარიმა, 45 დღის შემდეგ კი ოთხმაგი.</p>
+<p>რჩევა მარტივია: სიჩქარეს ყურადღება მიაქციეთ, გზისპირა ნიშნები დაიცავით, და დაბრუნებამდე ჯარიმები წინასწარ შეამოწმეთ თურქეთის საგადასახადო სამსახურის საიტზე, სადაც უცხოური ნომრის მიხედვით ძებნა ცალკე განყოფილებაშია. საზღვარზე დაუგეგმავი გაჩერება ყოველთვის უფრო ძვირი ჯდება, ვიდრე წინასწარ გადახდა.</p>
+
+<h2>საზღვარი და ბოლო დატენვა საქართველოში</h2>
+<p>სარფი ერთადერთი სასაზღვრო პუნქტია, რომელიც ამ მარშრუტზე გჭირდებათ. ბათუმი საზღვრიდან დაახლოებით 20 კილომეტრშია, ამიტომ ბოლო ქართული დატენვა ბათუმში ან ქობულეთში ჯობია გააკეთოთ. საზღვრის მეორე მხარეს, ჰოფასა და რიზეს შორის, პირველი სწრაფი დამტენები მალევე იწყება: სარფიდან ტრაბზონამდე ${T.big(T.border.count)} სწრაფი დამტენია.</p>
+<p>საქართველოსა და თურქეთს შორის სამი სახმელეთო საბაჟო პუნქტია: სარფი, კარწახი და ვალე, რომელიც ახალციხე პოსოფის მიმართულებაზეა. ელექტრო მანქანისთვის სამივედან მხოლოდ სარფს აქვს აზრი, რადგან აღმოსავლეთ მიმართულებაზე დამტენების სიმჭიდროვე რამდენჯერმე დაბალია. ამაზე ცალკე სტატიაში, <a href="/blog/turketshi-mgzavroba/">თურქეთში ელექტრო მანქანით</a>, უფრო დეტალურად ვწერთ.</p>
+
+<h2>რა უნდა გაითვალისწინოთ</h2>
+<ul>
+<li><strong>სინოფი და ქასთამონუს სანაპირო.</strong> ერთადერთი მონაკვეთი, სადაც დამტენებს შორის დაახლოებით ${T.round5(T.thin.gap)} კილომეტრია. სინოფიდან სავსე ბატარეით გადით.</li>
+<li><strong>ცოცხალი სტატუსი თურქეთში არ ქვეყნდება.</strong> თურქეთის რეესტრი არ ამბობს, დამტენი ახლა თავისუფალია თუ არა, ამიტომ სათადარიგო ვარიანტი წინასწარ შეარჩიეთ. საქართველოში ეს ინფორმაცია რეალურ დროშია.</li>
+<li><strong>დიდი ქალაქები.</strong> სტამბოლში ${T.big(T.prov('İstanbul'))} დამტენია, მაგრამ საცობი დროს ხარჯავს. ქალაქში შესვლამდე დატენვა ჯობია.</li>
+<li><strong>ჯარიმები და HGS.</strong> გადაუხდელი ჯარიმა ან ავტობანის დავალიანება საზღვარზე გასვლას აჩერებს. წინასწარ შეამოწმეთ.</li>
+<li><strong>თბილისიდან ბათუმამდე.</strong> ეს გზა ყველაზე კარგად დაფარულია საქართველოში, თერჯოლასთან ყველაზე მძლავრი დამტენებით. დეტალები <a href="/blog/shori-mgzavroba/">შორი მგზავრობის გზამკვლევშია</a>.</li>
+<li><strong>მარშრუტის დაგეგმვა აპლიკაციაში.</strong> თუ მარშრუტი თურქეთს კვეთს, თურქული დამტენები ავტომატურად ჩამოიტვირთება და გაჩერებებში ჩაითვლება. ცალკე ჩართვა საჭირო არ არის.</li>
+</ul>
+`,
+      faq: [
+        ['შესაძლებელია თბილისიდან სტამბოლამდე ელექტრო მანქანით ჩასვლა?',
+          `დიახ. სარფის საზღვრიდან სტამბოლამდე გზიდან 5 კილომეტრში ${T.big(T.all.count)} სწრაფი დამტენია. 60 კილოვატსაათიანი ბატარეით ეს რვიდან ათამდე გაჩერებაა, ანუ ორი კომფორტული დღე.`],
+        ['გადის თუ არა ეს გზა ანკარაზე?',
+          'ყველაზე სწრაფი მარშრუტი ანკარაზე არ გადის. ის მთლიანად შავი ზღვის სანაპიროთი მიდის, სამსუნის, სინოფისა და ზონგულდაქის გავლით. ანკარის ვარიანტი დაახლოებით 150 კილომეტრით გრძელია, სამაგიეროდ დამტენები უფრო ხშირად ხვდება.'],
+        ['სად არის ყველაზე გრძელი მონაკვეთი სწრაფი დამტენის გარეშე?',
+          `სინოფსა და ზონგულდაქს შორის, სანაპირო გზაზე. მთელ ამ მონაკვეთზე ${T.thin.count} სწრაფი დამტენია და ორ მეზობელს შორის ყველაზე გრძელი მანძილი დაახლოებით ${T.round5(T.thin.gap)} კილომეტრია.`],
+        ['რა ჯდება დატენვა თურქეთში?',
+          `სწრაფ DC დამტენზე კილოვატსაათის მედიანური ტარიფი ${T.dcMed.toFixed(2)} ლირაა, ნელზე ${T.acMed.toFixed(2)}. მთელ თურქულ მონაკვეთზე დაახლოებით ${T.big(Math.round(T.trCost))} ლირა გამოდის.`],
+        ['რა ხდება, თუ თურქეთში სიჩქარის გადაჭარბებისთვის კამერა დამაჯარიმებს?',
+          'ჯარიმა ნომრის ნიშანზე იწერება, ქართულ ნომერზეც. თუ ჯარიმა ან ავტობანის გადაუხდელი გასავლელი სისტემაშია, საბაჟო მანქანას ქვეყნიდან გასვლის უფლებას არ აძლევს, სანამ თანხას არ გადაიხდით. გადახდა შესაძლებელია გამშვებ პუნქტში, ბარათით ან ნაღდი ფულით.'],
+        ['რომელი კონექტორი მჭირდება თურქეთში?',
+          `CCS2 სწრაფი დატენვისთვის და Type 2 ნელისთვის. CHAdeMO მხოლოდ ${T.big(T.chademo)} სადგურზეა, GB/T კი თურქეთში საერთოდ არ არსებობს, ამიტომ მხოლოდ GB/T კონექტორიანი ჩინური მანქანა ამ გზას ვერ გაივლის.`],
+      ],
+      sources: [
+        ['EPDK, თურქეთის ენერგეტიკის მარეგულირებელი: შემტენი სადგურების რეესტრი', 'https://www.epdk.gov.tr/'],
+        ['EPDK: 2026 წლის პირველი ნახევრის მონაცემები დატენვის წერტილებზე', 'https://www.cumhuriyet.com.tr/otomotiv/elektrikli-araclarin-sarj-tuketiminde-buyuk-artis-2026-verileri-aciklandi-2522233'],
+        ['უცხოური ნომრის მქონე მანქანების ჯარიმებისა და HGS-ის რეგულაცია, 2026 წლის 29 ივლისი', 'https://www.haberturk.com/ekonomi/yabanci-plakali-araclara-yonelik-yeni-duzenleme-3901807'],
+        ['თურქეთის საგადასახადო სამსახური: ჯარიმის შემოწმება უცხოური ნომრით', 'https://ivd.gib.gov.tr/'],
+        ['საქართველოსა და თურქეთს შორის სასაზღვრო საბაჟო პუნქტების შეთანხმება', 'https://matsne.gov.ge/ka/document/view/1802571'],
+        ['თურქული ოპერატორების გამოქვეყნებული ტარიფები', 'https://www.doviz.com/ev-sarj-fiyatlari'],
+      ],
+    },
+    en: {
+      title: 'Tbilisi to Istanbul by electric car: the route and the chargers',
+      metaTitle: 'Tbilisi to Istanbul by EV: where to charge on the way',
+      desc: `About 1,620 km along the Black Sea coast. Where the fast chargers are, where the coverage thins out, and what charging costs in lira.`,
+      key: [
+        `Short answer: the drive is entirely doable. Between the Sarp border gate and İstanbul there are ${T.big(T.all.count, 'en')} fast chargers within 5 km of the road, ${T.big(T.all.ultra, 'en')} of them rated 150 kW or more.`,
+        `One stretch stands out: between Sinop and Zonguldak the coast road holds only ${T.thin.count} fast chargers, and the longest gap between two of them is about ${T.round5(T.thin.gap)} km. That is the part to plan in advance.`,
+      ],
+      body: `
+<h2>The drive in numbers</h2>
+<p>The fastest way from Tbilisi to İstanbul is about 1,620 km and roughly twenty and a half hours of pure driving. The route stays on the Black Sea coast the whole way: Tbilisi to Batumi, the Sarp border gate, then Trabzon, Samsun, Sinop, Zonguldak and finally İstanbul.</p>
+<p>One common misconception is worth clearing up first: this road does not go through Ankara. A route via Ankara exists, but it is about 150 km longer and is a separate option, compared below.</p>
+<p>The Georgian leg has its own page, the <a href="/en/routes/tbilisi-batumi/">Tbilisi to Batumi route</a>. This guide is about what happens after the border.</p>
+${T.figProfile('en')}
+
+<h2>The road, leg by leg</h2>
+<p>For each leg the table shows how many fast chargers sit within 5 km of the road and how far apart the two most distant neighbours are. The figures come from the official registry of EPDK, the Turkish energy regulator, the same data the app runs on.</p>
+${T.legTable('en')}
+<p>The first three legs, roughly two thirds of the drive, are well covered. Between Trabzon and Samsun the largest gap is about ${T.round5(T.trabzonSamsun.gap)} km, and from Zonguldak to İstanbul the density is already European.</p>
+
+<h2>Where the coverage thins out</h2>
+<p>The one stretch that needs planning is between Sinop and Zonguldak. Here the coast road winds through cliffs, the towns are small, and the whole section holds just ${T.thin.count} fast chargers. The longest gap between two neighbours is about ${T.round5(T.thin.gap)} km, on the shore between Sinop and Kastamonu.</p>
+<p>The practical rule is simple: leave Sinop with a full battery. ${T.round5(T.thin.gap)} km is not much in itself, but the road is slow and twisting, and in cold weather the same distance costs more energy than a flat motorway would. With a 40 kWh battery or smaller, split the section in two.</p>
+
+<h2>The alternative: inland via Ankara</h2>
+<p>If the thin coastal section worries you, you can turn inland at Samsun and reach İstanbul through Çorum, Kırıkkale and Ankara. That road is about 150 km longer, and considerably richer in chargers.</p>
+<p>In numbers: from Samsun to İstanbul along the coast there are ${T.big(T.coastHalf.count, 'en')} fast chargers with a longest gap of about ${T.round5(T.coastHalf.gap)} km; via Ankara there are ${T.big(T.inland.count, 'en')} with a longest gap of ${T.round5(T.inland.gap)} km. The Ankara option costs time and buys charging comfort.</p>
+<p>A sensible split: in summer, with a large battery, the coast is faster and far prettier. In winter, with a small battery, or driving at night, the Ankara route is the calmer choice.</p>
+
+<h2>How many stops it takes</h2>
+<p>The arithmetic is simple. A typical EV uses about 18 kWh per 100 km. On a 60 kWh battery that is roughly 330 km on a full charge, but nobody waits for a full battery on a long drive: 20 to 80 percent is the fast part of the curve, and that is about 200 km per stop.</p>
+<p>Over 1,620 km that means eight to ten stops of 20 to 30 minutes each, provided you use 100 kW chargers or better. On the Turkish part of the route ${T.big(T.all.ultra, 'en')} stations deliver 150 kW or more, so finding a strong charger is not the problem.</p>
+<p>With a big battery, 77 or 82 kWh, the count drops to about six. With a 40 kWh car it rises towards twelve and two days stop being optional.</p>
+
+<h2>What the drive costs</h2>
+<p>The whole distance takes roughly ${Math.round(T.kwhTotal)} kWh of energy, split in two.</p>
+<ul>
+<li><strong>The Georgian leg.</strong> About 390 km, so 70 kWh. At the median fast charging tariff that is around ${(70 * N.dcMed).toFixed(0)} GEL.</li>
+<li><strong>The Turkish leg.</strong> About 1,230 km, so ${Math.round(T.kwhTr)} kWh. At Turkey's median DC tariff of ${T.dcMed.toFixed(2)} lira per kWh that is roughly ${T.big(Math.round(T.trCost), 'en')} lira.</li>
+</ul>
+<p>The lira moves, so convert on the day you travel. You can redo the sums for your own car in the <a href="/en/calculator/">calculator</a>.</p>
+<p>For comparison, a petrol car using 8 litres per 100 km would burn about 130 litres over the same distance. Even on public fast chargers, the electric version of this drive is markedly cheaper.</p>
+
+<h2>Which connector you need</h2>
+<p>Fast charging in Turkey runs on CCS2 and slow charging on Type 2. There is effectively nothing else: CHAdeMO is on ${T.big(T.chademo, 'en')} stations nationwide, and GB/T on none.</p>
+<p>So a Chinese car with a GB/T-only inlet cannot make this drive. Georgia has plenty of those, which makes the inlet the first thing to check before leaving. If the car has CCS2, there is no issue. The differences are explained in the <a href="/en/blog/konektorebi/">connector guide</a>.</p>
+
+<h2>Who owns these chargers</h2>
+<p>Along the route you will mostly meet ${T.routeBrands('en')}. Turkish operators publish national tariffs, so the same network costs the same in İstanbul and in Trabzon.</p>
+<p>Starting a charge normally needs the operator's own app. It is worth checking which network sits at your planned stops and installing those apps at home. Which network is where is on the <a href="/en/turkey/">Turkey chargers page</a> and in the app.</p>
+
+<h2>The fines waiting for you at the border</h2>
+<p>Speed on Turkish roads is enforced by automatic cameras, and the ticket is written against the number plate, Georgian plates included. No paper reaches you, so many drivers first hear about it on the way home, at the border.</p>
+<p>The rule is this: if an unpaid traffic fine or an unpaid motorway or bridge crossing sits in the system, customs will not let the car leave the country until it is settled. Payment can be made at the gate itself, by card or in cash.</p>
+<p>Motorway tolls are a separate matter. Turkish toll roads run on the HGS system, and a regulation published on 29 July 2026 requires foreign-plated cars to be registered in it with a positive balance. Pay within 15 days of the crossing and there is no penalty. Between 16 and 45 days the toll is doubled by a fine of the same size; after 45 days the penalty is fourfold.</p>
+<p>The advice is simple: watch your speed, respect the signs, and check for fines before you head back, on the Turkish tax administration site, which has its own section for foreign-plated vehicles. An unplanned stop at the border always costs more than paying in advance.</p>
+
+<h2>The border and your last Georgian charge</h2>
+<p>Sarp is the only crossing this route needs. Batumi is about 20 km from the gate, so the last Georgian charge belongs in Batumi or Kobuleti. On the Turkish side the fast chargers start soon after, between Hopa and Rize: from Sarp to Trabzon there are ${T.big(T.border.count, 'en')} of them.</p>
+<p>Georgia and Turkey share three land customs crossings: Sarpi, Kartsakhi and Vale, the last on the Akhaltsikhe to Posof road. For an electric car only Sarpi makes sense, because charger density on the eastern roads is several times lower. That comparison has its own guide, <a href="/en/blog/turketshi-mgzavroba/">driving into Turkey by EV</a>.</p>
+
+<h2>What to plan for</h2>
+<ul>
+<li><strong>Sinop and the Kastamonu shore.</strong> The one section where about ${T.round5(T.thin.gap)} km separates two chargers. Leave Sinop full.</li>
+<li><strong>No live status in Turkey.</strong> The Turkish registry does not say whether a charger is busy right now, so pick a backup in advance. In Georgia that information is real time.</li>
+<li><strong>Big cities.</strong> İstanbul has ${T.big(T.prov('İstanbul'), 'en')} chargers, but traffic eats time. Charge before you drive in, not inside.</li>
+<li><strong>Fines and HGS.</strong> An unpaid fine or toll debt stops the car from leaving at the border. Check before you travel back.</li>
+<li><strong>Tbilisi to Batumi.</strong> The best covered road in Georgia, with the strongest chargers around Terjola. Details are in the <a href="/en/blog/shori-mgzavroba/">long trip guide</a>.</li>
+<li><strong>Planning in the app.</strong> If the route crosses Turkey, the Turkish chargers are downloaded automatically and counted into the stops. Nothing to switch on.</li>
+</ul>
+`,
+      faq: [
+        ['Can you drive from Tbilisi to Istanbul in an electric car?',
+          `Yes. Between the Sarp border gate and İstanbul there are ${T.big(T.all.count, 'en')} fast chargers within 5 km of the road. On a 60 kWh battery that is eight to ten stops, or two comfortable days.`],
+        ['Does the route go through Ankara?',
+          'The fastest route does not. It follows the Black Sea coast the whole way, through Samsun, Sinop and Zonguldak. The Ankara option is about 150 km longer, though chargers are more frequent on it.'],
+        ['Where is the longest gap without a fast charger?',
+          `Between Sinop and Zonguldak, on the coast road. That whole section holds ${T.thin.count} fast chargers, and the longest gap between two neighbours is about ${T.round5(T.thin.gap)} km.`],
+        ['What does charging cost in Turkey?',
+          `The median fast DC tariff is ${T.dcMed.toFixed(2)} lira per kWh and the AC median ${T.acMed.toFixed(2)}. The whole Turkish leg works out at roughly ${T.big(Math.round(T.trCost), 'en')} lira.`],
+        ['What happens if a speed camera catches me in Turkey?',
+          'The ticket is written against the number plate, Georgian plates included. If an unpaid fine or toll crossing is in the system, customs will not let the car leave the country until it is paid. You can settle it at the border gate by card or in cash.'],
+        ['Which connector do I need in Turkey?',
+          `CCS2 for fast charging and Type 2 for slow. CHAdeMO is on only ${T.big(T.chademo, 'en')} stations and GB/T does not exist in Turkey, so a Chinese car with a GB/T-only inlet cannot make this trip.`],
+      ],
+      sources: [
+        ['EPDK, the Turkish energy regulator: charging station registry', 'https://www.epdk.gov.tr/'],
+        ['EPDK figures for the first half of 2026, charging points and sessions', 'https://www.cumhuriyet.com.tr/otomotiv/elektrikli-araclarin-sarj-tuketiminde-buyuk-artis-2026-verileri-aciklandi-2522233'],
+        ['The 29 July 2026 regulation on fines and HGS for foreign-plated vehicles', 'https://www.haberturk.com/ekonomi/yabanci-plakali-araclara-yonelik-yeni-duzenleme-3901807'],
+        ['Turkish tax administration: fine lookup for foreign plates', 'https://ivd.gib.gov.tr/'],
+        ['Georgia and Turkey: agreement on the joint land customs crossings', 'https://matsne.gov.ge/ka/document/view/1802571'],
+        ['Published tariffs of Turkish charging operators', 'https://www.doviz.com/ev-sarj-fiyatlari'],
+      ],
+    },
+  },
+
+  {
+    slug: 'turketshi-mgzavroba',
+    date: '2026-08-19',
+    ka: {
+      title: 'ელექტრო მანქანით საქართველოდან თურქეთში: რა უნდა იცოდეთ წასვლამდე',
+      metaTitle: 'თურქეთში ელექტრო მანქანით: დამტენები, საზღვარი და ტარიფები',
+      desc: `თურქეთში ${T.big(T.total)} საჯარო დამტენია. რომელი საზღვრით წავიდეთ, რომელი კონექტორი გვჭირდება, რა ღირს დატენვა და რა განსხვავებაა საქართველოსთან.`,
+      key: [
+        `მოკლე პასუხი: თურქეთში ${T.big(T.total)} საჯარო დამტენი სადგურია, აქედან ${T.big(T.dc)} სწრაფი. სწრაფი დატენვისთვის CCS2 გჭირდებათ, ნელისთვის Type 2. GB/T კონექტორი თურქეთში არ არსებობს.`,
+        `ელექტრო მანქანით სამი სასაზღვრო პუნქტიდან მხოლოდ სარფს აქვს აზრი: აღმოსავლეთის გზაზე, ფოსოფიდან ერზურუმამდე, დამტენებს შორის ყველაზე გრძელი მონაკვეთი დაახლოებით ${T.round5(T.posof.gap)} კილომეტრია.`,
+        'დაბრუნებამდე ჯარიმები შეამოწმეთ: თურქეთის კამერები ქართულ ნომერზეც წერენ ჯარიმას, გადაუხდელი ჯარიმით კი საბაჟო მანქანას საზღვრიდან არ გაუშვებს.',
+      ],
+      body: `
+<h2>თურქეთის დატენვის ქსელი ერთი შეხედვით</h2>
+<p>თურქეთში დღეს ${T.big(T.total)} საჯარო დამტენი სადგურია, დაახლოებით ${T.big(Math.round(T.sockets / 1000) * 1000)} კონექტორით, ${T.brands} ოპერატორთან და ქვეყნის ყველა 81 პროვინციაში. სწრაფი DC დამტენია ${T.big(T.dc)}, აქედან ${T.big(T.ultra)} სადგური 150 კილოვატს ან მეტს იძლევა.</p>
+<p>ეს ციფრები EPDK-ის, თურქეთის ენერგეტიკის მარეგულირებლის, ოფიციალური რეესტრიდანაა, სადაც ყოველი საჯარო დამტენი ლიცენზირებულია. თავად EPDK 2026 წლის პირველი ნახევრისთვის მთელ ქვეყანაში 45 660 დატენვის წერტილს ითვლის, კერძო ტერიტორიებზე განთავსებულის ჩათვლით, და 15,4 მილიონ დატენვას ექვს თვეში. ზრდა სწრაფია: წელიწადში დატენვების რაოდენობა თითქმის გაორმაგდა.</p>
+<p>საქართველოსთან შედარება მასშტაბს კარგად აჩვენებს. საქართველოში ${N.total} საჯარო დამტენია, თურქეთში ${T.big(T.total)}, ანუ დაახლოებით ${Math.round(T.total / N.total)}-ჯერ მეტი. სრული სია პროვინციების მიხედვით <a href="/turketi/">თურქეთის დამტენების გვერდზეა</a>.</p>
+
+<h2>რომელი საზღვრით წავიდეთ</h2>
+<p>საქართველოსა და თურქეთს შორის სამი სახმელეთო საბაჟო გამშვები პუნქტია: სარფი, კარწახი და ვალე ახალციხე პოსოფის მიმართულებით. ჩვეულებრივი მანქანისთვის არჩევანი მარშრუტზეა დამოკიდებული, ელექტრო მანქანისთვის კი მონაცემები ცალსახა პასუხს იძლევა.</p>
+${T.figGates('ka')}
+<p>სარფი შავი ზღვის სანაპიროზეა და პირდაპირ იმ გზაზე გამოგიყვანთ, სადაც თურქეთის დატენვის ქსელი ყველაზე მკვრივია: სარფიდან ტრაბზონამდე ${T.big(T.border.count)} სწრაფი დამტენია გზიდან 5 კილომეტრში.</p>
+<p>აღმოსავლეთის მიმართულება სულ სხვა სურათია. არდაჰანში ${T.prov('Ardahan')} დამტენია, ყარსში ${T.prov('Kars')}, ართვინში ${T.prov('Artvin')}. ფოსოფიდან ერზურუმამდე მონაკვეთზე ორ სწრაფ დამტენს შორის ყველაზე გრძელი მანძილი დაახლოებით ${T.round5(T.posof.gap)} კილომეტრია, თანაც მთაში, სადაც ხარჯი უფრო მაღალია. ეს გზა ელექტრო მანქანით გასავლელია, მაგრამ დაგეგმვას ბევრად მეტს მოითხოვს.</p>
+
+<h2>რომელი კონექტორი გჭირდებათ</h2>
+<p>თურქეთი ევროპულ სტანდარტზეა. სწრაფი დატენვა CCS2-ზე მიდის და ეს კონექტორი ${T.big(T.ccs2)} სადგურზეა. ნელი დატენვა Type 2-ზეა, ${T.big(T.type2)} სადგურზე. CHAdeMO მხოლოდ ${T.big(T.chademo)} სადგურზე შემორჩა, GB/T კი მთელ ქვეყანაში არც ერთზეა.</p>
+<p>ეს ბოლო წინადადება საქართველოსთვის კრიტიკულია. ჩვენთან GB/T ჩვეულებრივი კონექტორია, რადგან ჩინური იმპორტი ამ სტანდარტით შემოდის. თუ თქვენს მანქანას მხოლოდ GB/T აქვს, თურქეთში სწრაფად ვერსად დაიტენებით. თუ ორივე გაქვთ, ანუ GB/T და CCS2, პრობლემა არ არსებობს. <a href="/blog/chinuri-importi/">ჩინური იმპორტის სტატიაში</a> და <a href="/blog/konektorebi/">კონექტორების გზამკვლევში</a> ეს დეტალურადაა ახსნილი.</p>
+
+<h2>რა ღირს დატენვა</h2>
+<p>თურქული ოპერატორები ერთიან ეროვნულ ტარიფს აქვეყნებენ, ანუ ერთი ქსელის ფასი ქვეყნის ყველა კუთხეში ერთია. სწრაფ DC დამტენზე კილოვატსაათის მედიანური ფასი ${T.dcMed.toFixed(2)} ლირაა, დიაპაზონი ${T.dcMin.toFixed(2)}-დან ${T.dcMax.toFixed(2)} ლირამდე. ნელ AC დამტენზე მედიანა ${T.acMed.toFixed(2)} ლირაა.</p>
+<p>60 კილოვატსაათიანი ბატარეის 20-დან 80 პროცენტამდე დატენვა 36 კილოვატსაათია, ანუ მედიანურ ტარიფზე დაახლოებით ${(36 * T.dcMed).toFixed(0)} ლირა. ტარიფი გამოქვეყნებული აქვს სადგურების ${T.pricedPct} პროცენტს, დანარჩენებზე ფასს ადგილზე, ოპერატორის აპლიკაციაში ნახავთ.</p>
+
+<h2>რით განსხვავდება თურქეთი საქართველოსგან</h2>
+<ul>
+<li><strong>ცოცხალი სტატუსი არ ქვეყნდება.</strong> თურქეთის რეესტრი არ ამბობს, დამტენი ახლა დაკავებულია თუ თავისუფალი. ამიტომ თურქულ სადგურებზე აპლიკაცია კონექტორების რაოდენობასა და ტარიფს აჩვენებს. საქართველოში ცოცხალი სტატუსი მუშაობს.</li>
+<li><strong>ოპერატორები ბევრია.</strong> ${T.brands} ლიცენზირებული ქსელი, მაგრამ ბაზარს რამდენიმე დიდი განსაზღვრავს: ${T.topBrands('ka')}. ერთი აპლიკაცია ყველგან არ გამოგადგებათ.</li>
+<li><strong>სიმჭიდროვე უფრო მაღალია.</strong> ქალაქებს შორის მანძილი დამტენებს შორის უფრო მოკლეა, ვიდრე საქართველოში, განსაკუთრებით დასავლეთ თურქეთში.</li>
+<li><strong>ტარიფი ლირაშია.</strong> კურსი ხშირად იცვლება, ამიტომ ხარჯის შეფასება მგზავრობის დღის კურსით ჯობია.</li>
+</ul>
+
+<h2>ჯარიმები, რომლებსაც საზღვარზე გადაიხდით</h2>
+<p>ეს ის ნაწილია, რომელსაც ქართველი მძღოლები ყველაზე ხშირად ივიწყებენ. თურქეთის გზებზე სიჩქარეს ავტომატური კამერების სისტემა აკონტროლებს და ჯარიმა ნომრის ნიშანზე იწერება, ქართულ ნომერზეც. შეტყობინება თქვენამდე არ მოვა.</p>
+<p>ჯარიმა მაშინ იჩენს თავს, როცა უკან ბრუნდებით. თუ სისტემაში გადაუხდელი საგზაო ჯარიმა, ავტობანის ან ხიდის გადაუხდელი გასავლელი ფიქსირდება, საბაჟო მანქანას ქვეყნიდან გასვლის უფლებას არ აძლევს, სანამ თანხა არ დაიფარება. გადახდა იქვე, გამშვებ პუნქტში ხდება, ბარათით ან ნაღდი ფულით.</p>
+<p>ავტობანების გადასახადი ცალკე სისტემაა და HGS ჰქვია. 2026 წლის 29 ივლისს გამოქვეყნებული რეგულაციით უცხოური ნომრის მქონე მანქანასაც მოეთხოვება ამ სისტემაში რეგისტრაცია და საკმარისი ბალანსი. გასვლიდან 15 დღეში გადახდისას ჯარიმა არ ერიცხება, 16-დან 45 დღემდე გადასახდელს ემატება იმავე ოდენობის ჯარიმა, 45 დღის შემდეგ კი ოთხმაგი.</p>
+<p>დაბრუნებამდე ჯარიმების შემოწმება თურქეთის საგადასახადო სამსახურის საიტზეა შესაძლებელი, სადაც უცხოური ნომრით ძებნა ცალკე განყოფილებაშია. კამერებით დაფიქსირებული ჯარიმა სისტემაში რამდენიმე დღეში ჩნდება, ამიტომ შემოწმება გამგზავრებამდე ერთი კვირით ადრე აზრიანია.</p>
+
+<h2>სად წავიდეთ შაბათ კვირას</h2>
+<p>ბათუმიდან ტრაბზონი დაახლოებით 200 კილომეტრშია და ეს ყველაზე მარტივი გასვლაა ელექტრო მანქანით. ტრაბზონის პროვინციაში ${T.prov('Trabzon')} დამტენია, რიზეში ${T.prov('Rize')}. სასტუმროებში ხშირად ნელი Type 2 დამტენია, რაც ღამით სავსებით საკმარისია, სწრაფი დატენვისთვის კი ქალაქის სავაჭრო ცენტრებთან და გასამართ სადგურებთან იპოვით.</p>
+<p>უფრო შორ მიმართულებებზე იგივე ლოგიკა მუშაობს: სამსუნში ${T.prov('Samsun')} დამტენია, ანკარაში ${T.big(T.prov('Ankara'))}, სტამბოლში ${T.big(T.prov('İstanbul'))}. სტამბოლამდე მთელი გზა ცალკე <a href="/blog/tbilisi-stambuli/">სტატიაშია</a> გარჩეული.</p>
+
+<h2>რა გააკეთოთ წასვლამდე</h2>
+<ul>
+<li><strong>შეამოწმეთ კონექტორი.</strong> CCS2 გაქვთ თუ არა, ეს ყველაზე მთავარი კითხვაა. მხოლოდ GB/T ნიშნავს, რომ სწრაფი დატენვა თურქეთში არ გექნებათ.</li>
+<li><strong>დააყენეთ ოპერატორების აპლიკაციები სახლში.</strong> გზაზე რეგისტრაცია ყოველთვის უფრო რთულია, ვიდრე წინასწარ.</li>
+<li><strong>დაგეგმეთ გაჩერებები ერთი მარაგით.</strong> რადგან ცოცხალი სტატუსი არ ჩანს, ყოველი გაჩერებისთვის მეორე ვარიანტიც იქონიეთ.</li>
+<li><strong>გაითვალისწინეთ ზამთარი.</strong> ცივ ამინდში გარბენი მეოთხედამდე ეცემა. <a href="/blog/zamtari/">ზამთრის სტატიაში</a> უფრო დეტალურადაა.</li>
+<li><strong>ბოლო დატენვა საქართველოში.</strong> ბათუმი საზღვრიდან დაახლოებით 20 კილომეტრშია და სწრაფი დამტენებით კარგად არის დაფარული.</li>
+</ul>
+`,
+      faq: [
+        ['შეიძლება თუ არა ელექტრო მანქანით თურქეთში წასვლა?',
+          `დიახ. თურქეთში ${T.big(T.total)} საჯარო დამტენია, აქედან ${T.big(T.dc)} სწრაფი DC. სარფის საზღვრიდან ტრაბზონამდე მხოლოდ ამ მონაკვეთზე ${T.big(T.border.count)} სწრაფი დამტენია გზიდან 5 კილომეტრში.`],
+        ['რომელი საზღვრით ჯობია გადასვლა ელექტრო მანქანით?',
+          `სარფით. ეს ერთადერთი მიმართულებაა, სადაც დამტენების სიმჭიდროვე მაღალია. აღმოსავლეთის გზაზე, ფოსოფიდან ერზურუმამდე, ორ სწრაფ დამტენს შორის ყველაზე გრძელი მონაკვეთი დაახლოებით ${T.round5(T.posof.gap)} კილომეტრია.`],
+        ['მუშაობს თუ არა ჩინური მანქანა GB/T კონექტორით თურქეთში?',
+          'სწრაფი დატენვა არა. თურქეთში GB/T კონექტორი არც ერთ საჯარო სადგურზე არ არის. თუ მანქანას CCS2-იც აქვს, ყველაფერი რიგზეა.'],
+        ['რა ღირს დატენვა თურქეთში ლირაში?',
+          `სწრაფ დამტენზე მედიანური ტარიფი ${T.dcMed.toFixed(2)} ლირაა კილოვატსაათზე, ნელზე ${T.acMed.toFixed(2)}. 60 კილოვატსაათიანი ბატარეის 20-დან 80 პროცენტამდე დატენვა დაახლოებით ${(36 * T.dcMed).toFixed(0)} ლირა გამოდის.`],
+        ['ჩანს თუ არა თურქეთში, დამტენი თავისუფალია თუ არა?',
+          'არა. თურქეთის ოფიციალური რეესტრი ცოცხალ სტატუსს არ აქვეყნებს, ამიტომ თურქულ სადგურებზე კონექტორების რაოდენობა და ტარიფი ჩანს. საქართველოში ცოცხალი სტატუსი რეალურ დროში მუშაობს.'],
+        ['რა ხდება, თუ თურქეთში კამერამ სიჩქარის გადაჭარბებისთვის დამაჯარიმა?',
+          'ჯარიმა ქართულ ნომერზე იწერება და ქვითარი თქვენამდე არ მოვა. გადაუხდელი ჯარიმის ან ავტობანის დავალიანების შემთხვევაში საბაჟო მანქანას ქვეყნიდან გასვლის უფლებას არ აძლევს, სანამ თანხას არ გადაიხდით. გადახდა გამშვებ პუნქტში, ბარათით ან ნაღდი ფულით ხდება.'],
+        ['რამდენი დამტენია ტრაბზონში და რიზეში?',
+          `ტრაბზონის პროვინციაში ${T.prov('Trabzon')} საჯარო დამტენია, რიზეში ${T.prov('Rize')}, ართვინში კი ${T.prov('Artvin')}. ბათუმიდან ტრაბზონამდე დაახლოებით 200 კილომეტრია.`],
+      ],
+      sources: [
+        ['EPDK, თურქეთის ენერგეტიკის მარეგულირებელი', 'https://www.epdk.gov.tr/'],
+        ['EPDK: 2026 წლის პირველი ნახევრის ციფრები, 45 660 დატენვის წერტილი', 'https://www.cumhuriyet.com.tr/otomotiv/elektrikli-araclarin-sarj-tuketiminde-buyuk-artis-2026-verileri-aciklandi-2522233'],
+        ['საქართველოსა და თურქეთს შორის სასაზღვრო საბაჟო პუნქტების შეთანხმება', 'https://matsne.gov.ge/ka/document/view/1802571'],
+        ['უცხოური ნომრის მქონე მანქანების ჯარიმებისა და HGS-ის რეგულაცია, 2026 წლის 29 ივლისი', 'https://www.haberturk.com/ekonomi/yabanci-plakali-araclara-yonelik-yeni-duzenleme-3901807'],
+        ['თურქეთის საგადასახადო სამსახური: ჯარიმის შემოწმება უცხოური ნომრით', 'https://ivd.gib.gov.tr/'],
+        ['თურქული ოპერატორების გამოქვეყნებული ტარიფები', 'https://www.doviz.com/ev-sarj-fiyatlari'],
+      ],
+    },
+    en: {
+      title: 'Driving from Georgia into Turkey by electric car: what to know first',
+      metaTitle: 'Turkey by EV: chargers, border crossings and tariffs',
+      desc: `Turkey has ${T.big(T.total, 'en')} public chargers. Which border to use, which connector you need, what charging costs, and how it differs from Georgia.`,
+      key: [
+        `Short answer: Turkey has ${T.big(T.total, 'en')} public charging stations, ${T.big(T.dc, 'en')} of them fast. You need CCS2 for fast charging and Type 2 for slow. GB/T does not exist in Turkey.`,
+        `Of the three border crossings, only Sarpi makes sense in an EV: on the eastern road from Posof to Erzurum the longest gap between fast chargers is about ${T.round5(T.posof.gap)} km.`,
+        'Check for fines before you drive back: Turkish cameras ticket Georgian plates too, and customs will not let a car with an unpaid fine leave the country.',
+      ],
+      body: `
+<h2>The Turkish charging network at a glance</h2>
+<p>Turkey has ${T.big(T.total, 'en')} public charging stations today, with roughly ${T.big(Math.round(T.sockets / 1000) * 1000, 'en')} sockets between them, run by ${T.brands} operators across all 81 provinces. ${T.big(T.dc, 'en')} are fast DC, and ${T.big(T.ultra, 'en')} of those deliver 150 kW or more.</p>
+<p>These figures come from the official registry of EPDK, the Turkish energy regulator, where every public charger is licensed. EPDK itself counted 45,660 charging points nationwide in the first half of 2026, private sites included, and 15.4 million charging sessions in those six months. Growth is quick: sessions almost doubled year on year.</p>
+<p>The comparison with Georgia shows the scale. Georgia has ${N.total} public chargers, Turkey ${T.big(T.total, 'en')}, about ${Math.round(T.total / N.total)} times more. The full list by province is on the <a href="/en/turkey/">Turkey chargers page</a>.</p>
+
+<h2>Which border to use</h2>
+<p>Georgia and Turkey share three land customs crossings: Sarpi, Kartsakhi, and Vale on the Akhaltsikhe to Posof road. For a petrol car the choice depends on where you are going. For an electric one the data answers it.</p>
+${T.figGates('en')}
+<p>Sarpi sits on the Black Sea coast and puts you straight onto the road where the Turkish network is densest: from Sarp to Trabzon there are ${T.big(T.border.count, 'en')} fast chargers within 5 km of the road.</p>
+<p>The eastern direction is another picture entirely. Ardahan has ${T.prov('Ardahan')} chargers, Kars ${T.prov('Kars')}, Artvin ${T.prov('Artvin')}. On the Posof to Erzurum stretch the longest gap between two fast chargers is about ${T.round5(T.posof.gap)} km, and it is mountain road, where consumption is higher. That route is drivable, but it takes far more planning.</p>
+
+<h2>Which connector you need</h2>
+<p>Turkey is on the European standard. Fast charging runs on CCS2, present at ${T.big(T.ccs2, 'en')} stations. Slow charging is Type 2, at ${T.big(T.type2, 'en')}. CHAdeMO survives on ${T.big(T.chademo, 'en')} stations, and GB/T on none in the entire country.</p>
+<p>That last sentence matters in Georgia, where GB/T is ordinary because Chinese imports arrive with it. If your car has GB/T only, there is nowhere in Turkey to fast charge it. If it has both GB/T and CCS2, you are fine. The <a href="/en/blog/chinuri-importi/">guide on Chinese imports</a> and the <a href="/en/blog/konektorebi/">connector guide</a> go through this in detail.</p>
+
+<h2>What charging costs</h2>
+<p>Turkish operators publish one national tariff each, so a network costs the same everywhere in the country. The median fast DC price is ${T.dcMed.toFixed(2)} lira per kWh, ranging from ${T.dcMin.toFixed(2)} to ${T.dcMax.toFixed(2)}. On AC the median is ${T.acMed.toFixed(2)} lira.</p>
+<p>Charging a 60 kWh battery from 20 to 80 percent is 36 kWh, so about ${(36 * T.dcMed).toFixed(0)} lira at the median tariff. ${T.pricedPct} percent of stations publish a tariff; for the rest you see the price on site in the operator's app.</p>
+
+<h2>How Turkey differs from Georgia</h2>
+<ul>
+<li><strong>No live availability.</strong> The Turkish registry does not say whether a charger is busy, so for Turkish stations the app shows connector counts and tariffs. In Georgia live status works.</li>
+<li><strong>Many operators.</strong> ${T.brands} licensed networks, though a few define the market: ${T.topBrands('en')}. One app will not cover everything.</li>
+<li><strong>Higher density.</strong> The distances between chargers on intercity roads are shorter than in Georgia, especially in the west of the country.</li>
+<li><strong>Tariffs are in lira.</strong> The rate moves often, so budget at the rate on the day you travel.</li>
+</ul>
+
+<h2>The fines you pay at the border</h2>
+<p>This is the part drivers from Georgia forget most often. Speed on Turkish roads is enforced by automatic cameras, and the ticket is written against the number plate, Georgian plates included. No notice reaches you.</p>
+<p>The fine shows up on the way home. If an unpaid traffic fine, or an unpaid motorway or bridge crossing, sits in the system, customs will not let the car leave the country until it is settled. Payment happens at the gate itself, by card or in cash.</p>
+<p>Motorway tolls are a separate system called HGS. Under a regulation published on 29 July 2026, foreign-plated cars are required to be registered in it and to keep a sufficient balance. Pay within 15 days of the crossing and no penalty is added; between 16 and 45 days the toll is doubled by a fine of the same size; after 45 days the penalty is fourfold.</p>
+<p>You can check for fines before heading back on the Turkish tax administration site, which has a separate section for foreign-plated vehicles. Camera tickets take a few days to appear, so checking about a week before you leave is the sensible timing.</p>
+
+<h2>Where to go for a weekend</h2>
+<p>Trabzon is about 200 km from Batumi and is the easiest trip out of Georgia in an EV. Trabzon province has ${T.prov('Trabzon')} chargers, Rize ${T.prov('Rize')}. Hotels often have slow Type 2 chargers, which is plenty overnight, while fast charging sits at shopping centres and fuel stations in town.</p>
+<p>The same logic scales: Samsun has ${T.prov('Samsun')} chargers, Ankara ${T.big(T.prov('Ankara'), 'en')}, İstanbul ${T.big(T.prov('İstanbul'), 'en')}. The whole drive to İstanbul has <a href="/en/blog/tbilisi-stambuli/">its own guide</a>.</p>
+
+<h2>What to do before you leave</h2>
+<ul>
+<li><strong>Check the inlet.</strong> Whether you have CCS2 is the question that decides the trip. GB/T alone means no fast charging in Turkey.</li>
+<li><strong>Install the operator apps at home.</strong> Registering on the road is always harder than doing it in advance.</li>
+<li><strong>Plan each stop with a backup.</strong> With no live status visible, a second option for every stop is worth having.</li>
+<li><strong>Allow for winter.</strong> Cold weather costs up to a quarter of your range. The <a href="/en/blog/zamtari/">winter guide</a> has the detail.</li>
+<li><strong>Last charge in Georgia.</strong> Batumi is about 20 km from the border and is well covered with fast chargers.</li>
+</ul>
+`,
+      faq: [
+        ['Can you drive to Turkey in an electric car?',
+          `Yes. Turkey has ${T.big(T.total, 'en')} public chargers, ${T.big(T.dc, 'en')} of them fast DC. On the stretch from the Sarp border gate to Trabzon alone there are ${T.big(T.border.count, 'en')} fast chargers within 5 km of the road.`],
+        ['Which border crossing is best for an EV?',
+          `Sarpi. It is the only direction with a dense charger network. On the eastern road from Posof to Erzurum the longest gap between two fast chargers is about ${T.round5(T.posof.gap)} km.`],
+        ['Does a Chinese car with GB/T work in Turkey?',
+          'Not for fast charging. GB/T is not present at a single public station in Turkey. If the car also has CCS2, everything works normally.'],
+        ['What does charging cost in Turkey in lira?',
+          `The median fast tariff is ${T.dcMed.toFixed(2)} lira per kWh and the slow one ${T.acMed.toFixed(2)}. Charging a 60 kWh battery from 20 to 80 percent costs about ${(36 * T.dcMed).toFixed(0)} lira.`],
+        ['Does Turkey show whether a charger is free?',
+          'No. The official Turkish registry publishes no live status, so Turkish stations show connector counts and tariffs instead. In Georgia live status works in real time.'],
+        ['What happens if a camera fines me for speeding in Turkey?',
+          'The ticket is written against the Georgian plate and no notice reaches you. With an unpaid fine or toll debt in the system, customs will not let the car leave the country until it is paid, and payment is made at the border gate by card or in cash.'],
+        ['How many chargers are there in Trabzon and Rize?',
+          `Trabzon province has ${T.prov('Trabzon')} public chargers, Rize ${T.prov('Rize')} and Artvin ${T.prov('Artvin')}. Batumi to Trabzon is about 200 km.`],
+      ],
+      sources: [
+        ['EPDK, the Turkish energy regulator', 'https://www.epdk.gov.tr/'],
+        ['EPDK figures for the first half of 2026: 45,660 charging points', 'https://www.cumhuriyet.com.tr/otomotiv/elektrikli-araclarin-sarj-tuketiminde-buyuk-artis-2026-verileri-aciklandi-2522233'],
+        ['Georgia and Turkey: agreement on the joint land customs crossings', 'https://matsne.gov.ge/ka/document/view/1802571'],
+        ['The 29 July 2026 regulation on fines and HGS for foreign-plated vehicles', 'https://www.haberturk.com/ekonomi/yabanci-plakali-araclara-yonelik-yeni-duzenleme-3901807'],
+        ['Turkish tax administration: fine lookup for foreign plates', 'https://ivd.gib.gov.tr/'],
+        ['Published tariffs of Turkish charging operators', 'https://www.doviz.com/ev-sarj-fiyatlari'],
+      ],
+    },
+  },
+
+  {
+    slug: 'meoradi-shemowmeba',
+    date: '2026-08-19',
+    ka: {
+      title: 'როგორ შევამოწმოთ მეორადი ელექტრომობილი ყიდვამდე',
+      metaTitle: 'მეორადი ელექტრო მანქანის შემოწმება ყიდვამდე: სრული სია',
+      desc: 'ბატარეის ჯანმრთელობა, სწრაფი დატენვის ტესტი, კონექტორი და იმპორტის ისტორია. პრაქტიკული სია, რომელიც ერთ დათვალიერებაში ეტევა.',
+      key: [
+        'მოკლე პასუხი: ერთადერთი ციფრი, რომელიც ყველაზე მეტს ნიშნავს, ბატარეის ჯანმრთელობაა, ანუ SoH. ის იაფი OBD ადაპტერითა და უფასო აპლიკაციით იზომება და პასუხს ათ წუთში იღებთ.',
+        'საშუალო ცვეთა წელიწადში 2.3 პროცენტია, ანუ ხუთი წლის მანქანას დაახლოებით 89 პროცენტი უნდა ჰქონდეს. მკვეთრად ნაკლები ან ახსნას მოითხოვს, ან ფასის კორექციას.',
+      ],
+      body: `
+<h2>ბატარეით დაიწყეთ და არა გარბენით</h2>
+<p>ბენზინის მანქანაში გარბენი ყველაფერს ნიშნავს. ელექტრომობილში არა. ორ ერთნაირ მანქანას ერთი და იმავე გარბენით სრულიად სხვადასხვა ბატარეა შეიძლება ჰქონდეს, იმის მიხედვით, როგორ ტენდნენ და რა კლიმატში იდგნენ. ამიტომ პირველი კითხვა, რომელსაც გამყიდველს უსვამთ, ბატარეის ჯანმრთელობაა.</p>
+<p>ბატარეის ჯანმრთელობას ინგლისურად state of health ჰქვია, შემოკლებით SoH. ეს არის იმის პროცენტი, თუ რამდენი ტევადობა შემორჩა ბატარეას ქარხნულთან შედარებით. 100 პროცენტი ახალი მანქანაა, 90 პროცენტი ნიშნავს, რომ ბატარეამ ტევადობის მეათედი დაკარგა და იმავე პროპორციით გარბენიც შემცირდა.</p>
+<p>ბატარეის ცვეთაზე ცალკე, დეტალური <a href="/blog/batareis-cveta/">სტატია</a> გვაქვს იმაზე, თუ როგორ ცვდება სხვადასხვა ქიმია სხვადასხვა გარბენზე. აქ მხოლოდ ის გვაინტერესებს, რაც ყიდვამდე უნდა გააკეთოთ.</p>
+
+<h2>რა ციფრს უნდა ელოდოთ ამ ასაკის მანქანისგან</h2>
+<p>ტელემეტრიის კომპანია Geotab-ის 2026 წლის კვლევაში, რომელშიც 22 700 რეალური ელექტრომობილი მოხვდა, საშუალო წლიური ცვეთა 2.3 პროცენტი გამოვიდა. ეს იძლევა მარტივ ორიენტირს, რომელსაც კონკრეტულ მანქანას შეადარებთ.</p>
+${figSoh('ka')}
+<p>ორიენტირი მკაცრი წესი არ არის. ცივ კლიმატში მდგარი და მხოლოდ ნელი დამტენით დატენილი მანქანა ამაზე ზემოთ იქნება, ტაქსად ნამუშევარი და მუდამ სწრაფ დამტენზე მდგარი კი ქვემოთ. მაგრამ თუ სამი წლის მანქანას 85 პროცენტი აქვს, ამას ახსნა სჭირდება.</p>
+<p>არსებობს რეგულაციური იატაკიც. გაეროს ევროპის ეკონომიკური კომისიის ტექნიკური რეგლამენტი GTR 22, რომელიც 2022 წელს დამტკიცდა, ახალი მსუბუქი ავტომობილებისთვის მოითხოვს, რომ ბატარეას ხუთ წელში ან 100 000 კილომეტრზე ტევადობის სულ მცირე 80 პროცენტი შერჩეს, რვა წელში ან 160 000 კილომეტრზე კი 70 პროცენტი. მეორად ბაზარზე ეს კარგი ორიენტირია იმისთვის, თუ რომელი ციფრი ითვლება ცუდად.</p>
+
+<h2>როგორ გაზომოთ SoH ადგილზე</h2>
+<p>ბევრი მყიდველი ამას საერთოდ არ ზომავს, რადგან ჰგონია, რომ სპეციალური სერვისი სჭირდება. სინამდვილეში საკმარისია იაფი OBD ადაპტერი და უფასო ან იაფი აპლიკაცია ტელეფონზე.</p>
+<ul>
+<li><strong>ნისან ლიფი.</strong> LeafSpy ამ მანქანისთვის სტანდარტული ინსტრუმენტია და ტევადობას პირდაპირ პროცენტში აჩვენებს.</li>
+<li><strong>ევროპული და კორეული მოდელები.</strong> Car Scanner ან მსგავსი აპლიკაცია უმეტეს მოდელზე კითხულობს SoH-ს ბატარეის მართვის სისტემიდან.</li>
+<li><strong>ტესლა.</strong> ბატარეის მენიუში პირდაპირ პროცენტი არ წერია, ამიტომ პრაქტიკული გზა სრულ მუხტზე ნაჩვენები გარბენის შედარებაა ქარხნულ ციფრთან, ან სპეციალიზებული აპლიკაცია.</li>
+</ul>
+<p>ერთი მნიშვნელოვანი გაფრთხილება ლიფის შესახებ. ეკრანზე თორმეტი ზოლი კარგ ბატარეას არ ნიშნავს: პირველი ზოლი მხოლოდ მაშინ ქრება, როცა ტევადობის 15 პროცენტია დაკარგული, ანუ თორმეტზოლიანი მანქანა 86 პროცენტზეც შეიძლება იდგეს. ყოველი შემდეგი ზოლი მხოლოდ 6.25 პროცენტს ნიშნავს. ზუსტ ციფრს მხოლოდ აპლიკაცია მოგცემთ.</p>
+
+<h2>სწრაფი დატენვის ტესტი, რომელსაც თითქმის არავინ აკეთებს</h2>
+<p>ეს ერთი ტესტი ორ რამეს ერთდროულად ამოწმებს და ათ წუთში ჯდება. მანქანა 30 პროცენტამდე ჩამოცლილი მიიყვანეთ სწრაფ DC დამტენთან და ჩართეთ დატენვა.</p>
+<ul>
+<li><strong>მუშაობს თუ არა DC პორტი.</strong> სწრაფი დატენვის პორტი და მისი კონტაქტორები ცალკე დეტალებია და მათი შეკეთება ძვირია. მანქანა, რომელიც მხოლოდ ნელა იტენება, სავსებით ნორმალურად შეიძლება ჩანდეს ტესტ დრაივზე.</li>
+<li><strong>რა სიმძლავრეს იღებს.</strong> გახურებული ბატარეა 30 პროცენტზე მანქანის ქარხნულ პიკს უნდა უახლოვდებოდეს. თუ 150 კილოვატიან დამტენზე 30 კილოვატს იღებს და ბატარეა ცივი არ არის, ეს ან ბატარეის, ან გაგრილების სისტემის სიგნალია.</li>
+</ul>
+<p>სად არის უახლოესი სწრაფი დამტენი, <a href="/damtenebi/">დამტენების სიაშია</a> ქალაქების მიხედვით.</p>
+
+<h2>კონექტორი: საქართველოში ეს ცალკე კითხვაა</h2>
+<p>ჩვენს ბაზარზე მანქანები სამი სხვადასხვა მიმართულებიდან შემოდის და კონექტორიც სამნაირია. ჩინური იმპორტი ხშირად GB/T-ით მოდის, ევროპული CCS2-ით, ამერიკული კი CCS1-ით ან NACS-ით. ეს არა მხოლოდ ტექნიკური დეტალია, არამედ იმის განმსაზღვრელი, სად შეძლებთ დატენვას.</p>
+<p>საქართველოში ორივე დიდი სტანდარტი ცოცხალია, ამიტომ GB/T მანქანა აქ პრობლემა არ არის. საზღვარს გარეთ კი სურათი იცვლება: თურქეთში GB/T კონექტორი არც ერთ საჯარო დამტენზე არ არსებობს, ანუ მხოლოდ ამ კონექტორიანი მანქანით თურქეთში სწრაფად ვერსად დაიტენებით. თუ საზღვარგარეთ მგზავრობას გეგმავთ, ეს ყიდვამდე უნდა იცოდეთ. დეტალები <a href="/blog/turketshi-mgzavroba/">თურქეთის სტატიაშია</a> და <a href="/blog/konektorebi/">კონექტორების გზამკვლევში</a>.</p>
+<p>შეამოწმეთ ისიც, თან ახლავს თუ არა მანქანას დამტენი კაბელები. Type 2 კაბელი და პორტატული დამტენი ცალკე ყიდვისას რამდენიმე ასეულ ლარს ჯდება.</p>
+
+<h2>მანქანის ისტორია</h2>
+<ul>
+<li><strong>საიდან შემოვიდა.</strong> ამერიკული აუქციონიდან ჩამოსული მანქანების დიდ ნაწილს დაზიანების ისტორია აქვს. რა უნდა შეამოწმოთ ასეთ შემთხვევაში, <a href="/blog/amerikuli-importi/">ცალკე სტატიაშია</a>.</li>
+<li><strong>გამოწვევები VIN-ით.</strong> ბატარეასთან დაკავშირებული სერიოზული გამოწვევები რამდენიმე მოდელს ჰქონდა. VIN-ით შემოწმება უფასოა მწარმოებლის ან NHTSA-ის საიტზე.</li>
+<li><strong>განბაჟებული არის თუ არა.</strong> თუ მანქანა ჯერ არ არის განბაჟებული, ეს თანხა თქვენ დაგრჩებათ. ელექტრომობილზე აქციზი და იმპორტის გადასახადი ნულია, მაგრამ დანარჩენი პროცედურა რჩება. ციფრები <a href="/ganbajeba/">განბაჟების გვერდზეა</a>.</li>
+<li><strong>სერვისის ისტორია.</strong> ბატარეის გაგრილების სისტემა, სალონის თბოტუმბო და პროგრამული განახლებები დილერთან ჩანს. მოითხოვეთ ჩანაწერები.</li>
+</ul>
+
+<h2>რაც ბენზინის მანქანაში არ ამოწმებთ</h2>
+<ul>
+<li><strong>სამუხრუჭე დისკები.</strong> რეკუპერაციის გამო ელექტრომობილი მუხრუჭებს იშვიათად იყენებს და დისკები ჟანგდება. ეს ცვეთაზე უფრო ხშირი პრობლემაა, ვიდრე გაცვეთა.</li>
+<li><strong>12 ვოლტიანი აკუმულატორი.</strong> პატარა აკუმულატორი აქაც არის და მისი გაწოვა მანქანას სრულიად აჩერებს, სავსე მთავარი ბატარეის მიუხედავად.</li>
+<li><strong>საბურავები.</strong> ელექტრომობილი უფრო მძიმეა და მომენტიც მაღალი აქვს, ამიტომ საბურავები უფრო სწრაფად ცვდება. არათანაბარი ცვეთა სავალი ნაწილის სიგნალია.</li>
+<li><strong>თბოტუმბო.</strong> თუ მოდელს თბოტუმბოს ვერსია აქვს, ზამთარში ის დიდ სხვაობას იძლევა გარბენში. კომპლექტაცია წინასწარ დააზუსტეთ.</li>
+<li><strong>ხმაური დგომისას.</strong> დატენვისას ან ცხელ ამინდში გაგრილების ტუმბოს ხმა ნორმალურია, უწყვეტი ხმამაღალი ხმაური კი არა.</li>
+</ul>
+
+<h2>რას ნიშნავს ეს ფასში</h2>
+<p>ბატარეის ჯანმრთელობა პირდაპირ ითარგმნება გარბენში. 60 კილოვატსაათიანი ბატარეა 90 პროცენტზე 54 კილოვატსაათს ინახავს, 80 პროცენტზე კი 48-ს, ანუ დაახლოებით 30 კილომეტრით ნაკლებ გარბენს ერთ დატენვაზე. თუ ორი ერთნაირი მანქანიდან ერთს 92 პროცენტი აქვს და მეორეს 80, ეს ფასში უნდა ჩანდეს.</p>
+<p>რამდენი დაგიჯდებათ დატენვა თქვენს ტარიფზე და თქვენს ბატარეაზე, <a href="/kalkulatori/">კალკულატორში</a> გამოთვალეთ.</p>
+`,
+      faq: [
+        ['როგორ შევამოწმო მეორადი ელექტრომობილის ბატარეა?',
+          'იაფი OBD ადაპტერითა და აპლიკაციით, რომელიც თქვენს მოდელს კითხულობს. ნისან ლიფზე ეს LeafSpy-ია, დანარჩენებზე Car Scanner ან მსგავსი. აპლიკაცია ბატარეის ჯანმრთელობას პროცენტში აჩვენებს. მეორე შემოწმება სწრაფ დამტენზე დატენვის ტესტია.'],
+        ['რამდენი პროცენტი უნდა ჰქონდეს ხუთი წლის ელექტრომობილს?',
+          'დაახლოებით 89 პროცენტი, თუ Geotab-ის საშუალო წლიურ 2.3 პროცენტს დავეყრდნობით. 85 პროცენტზე ქვემოთ ციფრი ახსნას საჭიროებს, 80 პროცენტზე ქვემოთ კი ფასზე უნდა აისახოს.'],
+        ['თორმეტი ზოლი ნისან ლიფზე კარგი ბატარეის ნიშანია?',
+          'არა. პირველი ზოლი მხოლოდ მაშინ ქრება, როცა ტევადობის 15 პროცენტია დაკარგული, ანუ თორმეტზოლიანი მანქანა 86 პროცენტზეც შეიძლება იდგეს. ზუსტ ციფრს მხოლოდ დიაგნოსტიკური აპლიკაცია მოგცემთ.'],
+        ['რატომ არის საჭირო სწრაფი დატენვის ტესტი ყიდვამდე?',
+          'იმიტომ, რომ DC პორტის გაუმართაობა ტესტ დრაივზე არ ჩანს, შეკეთება კი ძვირია. ტესტი ისიც აჩვენებს, რა სიმძლავრეს იღებს მანქანა: ქარხნულ ციფრზე ბევრად დაბალი მაჩვენებელი გახურებულ ბატარეაზე პრობლემის სიგნალია.'],
+        ['რა მნიშვნელობა აქვს კონექტორს მეორადი მანქანის ყიდვისას?',
+          'საქართველოში GB/T და CCS2 ორივე გავრცელებულია, ამიტომ აქ პრობლემა არ დგება. საზღვარგარეთ კი დგება: თურქეთში GB/T კონექტორი არც ერთ საჯარო დამტენზე არ არის, ამიტომ მხოლოდ GB/T კონექტორიანი მანქანით იქ სწრაფად ვერ დაიტენებით.'],
+        ['რა უნდა შევამოწმო ამერიკიდან ჩამოსულ ელექტრომობილში?',
+          'დაზიანების ისტორია, კონექტორის ტიპი, რომელიც CCS1 ან NACS იქნება, და ის, არის თუ არა მანქანა განბაჟებული. ამერიკული იმპორტის დეტალები ცალკე სტატიაშია აღწერილი.'],
+      ],
+      sources: [
+        ['Geotab: ელექტრომობილის ბატარეის ჯანმრთელობის კვლევა, 22 700 მანქანა, 2026', 'https://www.geotab.com/blog/ev-battery-health/'],
+        ['UNECE GTR No. 22: ბატარეის ხანგამძლეობის ტექნიკური რეგლამენტი', 'https://unece.org/transport/documents/2022/04/standards/un-gtr-no22-vehicle-battery-durability-electrified-vehicles'],
+        ['GTR 22-ის მოთხოვნების მიმოხილვა', 'https://globalautoregs.com/rules/242-electrified-vehicle-battery-durability'],
+        ['Electric Vehicle Wiki: ნისან ლიფის ტევადობის ზოლების ზღვრები', 'https://www.electricvehiclewiki.com/battery-capacity-loss/'],
+        ['NHTSA: გამოწვევების შემოწმება VIN-ით', 'https://www.nhtsa.gov/recalls'],
+      ],
+    },
+    en: {
+      title: 'How to check a used electric car before you buy it',
+      metaTitle: 'Checking a used EV before buying: battery, connector, history',
+      desc: 'Battery health, a fast charging test, the connector and the import history. A practical list that fits into a single viewing.',
+      key: [
+        'Short answer: the number that matters most is battery state of health, or SoH. A cheap OBD adapter and a free app read it, and you have the answer in ten minutes.',
+        'Average wear is 2.3 percent a year, so a five year old car should sit around 89 percent. Markedly less needs either an explanation or a lower price.',
+      ],
+      body: `
+<h2>Start with the battery, not the odometer</h2>
+<p>On a petrol car mileage tells you almost everything. On an EV it does not. Two identical cars with identical mileage can hold very different batteries, depending on how they were charged and what climate they sat in. So the first question for the seller is battery health.</p>
+<p>Battery health is usually written as state of health, or SoH. It is the percentage of the original capacity the pack still holds. 100 percent is a new car; 90 percent means a tenth of the capacity is gone and range has fallen in the same proportion.</p>
+<p>How different chemistries wear over distance is covered in its own <a href="/en/blog/batareis-cveta/">guide to battery degradation</a>. This article is only about what to do before you hand over the money.</p>
+
+<h2>What number to expect at this age</h2>
+<p>In telematics company Geotab's 2026 study, covering 22,700 real vehicles, average wear came out at 2.3 percent a year. That gives a simple yardstick to hold a specific car against.</p>
+${figSoh('en')}
+<p>The yardstick is not a rule. A car kept in a cool climate and charged slowly will sit above it; an ex-taxi that lived on fast chargers will sit below. But if a three year old car reads 85 percent, that needs explaining.</p>
+<p>There is a regulatory floor too. UN GTR No. 22, adopted in 2022 by the UNECE, requires new light vehicles to retain at least 80 percent of capacity at five years or 100,000 km, and 70 percent at eight years or 160,000 km. On the used market that is a useful marker for what counts as bad.</p>
+
+<h2>How to measure SoH on the spot</h2>
+<p>Most buyers skip this because they assume it needs a workshop. It does not. A cheap OBD adapter and an app on your phone are enough.</p>
+<ul>
+<li><strong>Nissan Leaf.</strong> LeafSpy is the standard tool for this car and shows remaining capacity as a percentage directly.</li>
+<li><strong>European and Korean models.</strong> Car Scanner and similar apps read SoH out of the battery management system on most models.</li>
+<li><strong>Tesla.</strong> There is no percentage in the menus, so the practical route is comparing the range shown at a full charge against the factory figure, or using a specialised app.</li>
+</ul>
+<p>One warning about the Leaf. Twelve bars on the dash does not mean a healthy battery: the first bar only disappears once 15 percent of capacity is gone, so a twelve bar car can be at 86 percent. Every bar after that is worth 6.25 percent. Only a diagnostic app gives you the real number.</p>
+
+<h2>The fast charging test almost nobody does</h2>
+<p>This single test checks two things at once and costs ten minutes. Bring the car to a DC fast charger at around 30 percent and start a charge.</p>
+<ul>
+<li><strong>Whether the DC port works at all.</strong> The fast charging port and its contactors are separate parts and expensive to fix. A car that can only charge slowly looks perfectly normal on a test drive.</li>
+<li><strong>What power it accepts.</strong> A warm pack at 30 percent should approach the car's rated peak. If it takes 30 kW from a 150 kW charger and the battery is not cold, that points at the pack or at the cooling system.</li>
+</ul>
+<p>Where the nearest fast charger is, by city, is in the <a href="/en/chargers/">charger list</a>.</p>
+
+<h2>The connector is a separate question in Georgia</h2>
+<p>Cars reach this market from three directions and arrive with three different inlets. Chinese imports often come with GB/T, European cars with CCS2, American ones with CCS1 or NACS. This is not a technical detail; it decides where you will be able to charge.</p>
+<p>Both major standards are alive in Georgia, so a GB/T car is not a problem here. Across the border the picture changes: not a single public charger in Turkey has GB/T, so a car with that inlet alone cannot fast charge there. If you plan to drive abroad, know this before buying. The detail is in the <a href="/en/blog/turketshi-mgzavroba/">Turkey guide</a> and the <a href="/en/blog/konektorebi/">connector guide</a>.</p>
+<p>Check the cables come with the car, too. A Type 2 cable and a portable charger cost real money to replace.</p>
+
+<h2>The car's history</h2>
+<ul>
+<li><strong>Where it came from.</strong> A large share of cars from American auctions carry damage history. What to check in that case is in the <a href="/en/blog/amerikuli-importi/">guide to American imports</a>.</li>
+<li><strong>Recalls by VIN.</strong> Several models have had serious battery related recalls. Checking the VIN is free, on the manufacturer's site or through NHTSA.</li>
+<li><strong>Customs status.</strong> If the car has not been cleared, that bill is yours. Excise and import duty on an EV are zero, but the rest of the procedure remains. The figures are on the <a href="/en/customs/">import duty page</a>.</li>
+<li><strong>Service history.</strong> Battery cooling work, the heat pump and software updates all show at a dealer. Ask for the records.</li>
+</ul>
+
+<h2>What you never check on a petrol car</h2>
+<ul>
+<li><strong>Brake discs.</strong> Regenerative braking means the friction brakes are rarely used and the discs corrode. Rust is a more common problem here than wear.</li>
+<li><strong>The 12 volt battery.</strong> EVs have one too, and a flat one stops the car completely, however full the main pack is.</li>
+<li><strong>Tyres.</strong> EVs are heavier and torquier, so tyres wear faster. Uneven wear points at the suspension.</li>
+<li><strong>Heat pump.</strong> Where the model offers one, it makes a large difference to winter range. Confirm which version this car is.</li>
+<li><strong>Noise at standstill.</strong> Cooling pump noise while charging or in hot weather is normal; a constant loud noise is not.</li>
+</ul>
+
+<h2>What it means for the price</h2>
+<p>Battery health translates straight into range. A 60 kWh pack at 90 percent holds 54 kWh; at 80 percent it holds 48, about 30 km less range per charge. If one of two identical cars reads 92 percent and the other 80, the price should say so.</p>
+<p>What charging will cost you on your own tariff and battery is a job for the <a href="/en/calculator/">calculator</a>.</p>
+`,
+      faq: [
+        ['How do I check the battery on a used EV?',
+          'With a cheap OBD adapter and an app that supports your model. On a Nissan Leaf that is LeafSpy; on most others Car Scanner or similar. The app shows battery state of health as a percentage. The second check is a fast charging test.'],
+        ['What state of health should a five year old EV have?',
+          'Around 89 percent, based on Geotab’s average of 2.3 percent a year. Below 85 percent needs an explanation, and below 80 percent it should be reflected in the price.'],
+        ['Do twelve bars on a Nissan Leaf mean a healthy battery?',
+          'No. The first bar only disappears once 15 percent of capacity is gone, so a twelve bar car can be at 86 percent. Only a diagnostic app gives you an accurate figure.'],
+        ['Why test fast charging before buying?',
+          'Because a faulty DC port does not show on a test drive and is expensive to repair. The test also shows what power the car accepts: far below the rated peak on a warm battery is a warning sign.'],
+        ['Does the connector matter when buying used?',
+          'In Georgia both GB/T and CCS2 are common, so it rarely bites at home. Abroad it does: no public charger in Turkey has GB/T, so a GB/T-only car cannot fast charge there.'],
+        ['What should I check on an EV imported from the United States?',
+          'Damage history, the connector type, which will be CCS1 or NACS, and whether the car has been cleared through customs. The guide to American imports covers the rest.'],
+      ],
+      sources: [
+        ['Geotab: EV Battery Health Study, 22,700 vehicles, 2026', 'https://www.geotab.com/blog/ev-battery-health/'],
+        ['UNECE GTR No. 22 on in-vehicle battery durability', 'https://unece.org/transport/documents/2022/04/standards/un-gtr-no22-vehicle-battery-durability-electrified-vehicles'],
+        ['Summary of the GTR 22 requirements', 'https://globalautoregs.com/rules/242-electrified-vehicle-battery-durability'],
+        ['Electric Vehicle Wiki: Leaf capacity bar thresholds', 'https://www.electricvehiclewiki.com/battery-capacity-loss/'],
+        ['NHTSA: recall lookup by VIN', 'https://www.nhtsa.gov/recalls'],
+      ],
+    },
+  },
 ];
 
 const L = {
@@ -2033,9 +2786,12 @@ ${t.related.map(([label, href]) => `<a href="${href}">${esc(label)}</a>`).join('
 async function main() {
   const N = await liveNumbers();
   const F = await fuelPrices();
-  const ARTICLES = buildArticles(N, F);
+  const T = await turkishNumbers();
+  const ARTICLES = buildArticles(N, F, T);
   console.log(`· live figures: ${N.total} stations, CCS2 ${N.ccs2}, GB/T ${N.gbt}, US-spec ${N.usSpec}`);
   console.log(`· tariffs: DC median ${N.dcMed.toFixed(2)} ₾, AC median ${N.acMed.toFixed(2)} ₾`);
+  console.log(`· Turkey: ${T.total} stations, ${T.brands} operators,`
+    + ` ${T.all.count} fast chargers along the İstanbul road, longest gap ${T.round5(T.all.gap)} km`);
   const pages = [];
   for (const lang of ['ka', 'en']) {
     pages.push(indexPage(lang, ARTICLES));

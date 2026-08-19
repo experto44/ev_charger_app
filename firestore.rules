@@ -29,16 +29,34 @@ service cloud.firestore {
       allow get:  if request.auth != null && (request.auth.uid == uid || isAdmin());
       allow list: if isAdmin();
 
-      // Only the owner writes their own profile/analytics. Admins have no reason
-      // to mutate user documents from the panel, so writes stay owner-only.
+      // Only the owner writes their own profile/analytics.
       allow write: if request.auth != null && request.auth.uid == uid;
+
+      // Manual premium activation (admin panel): a user who paid by bank
+      // transfer instead of an in-app purchase is granted premium by hand. An
+      // allow-listed admin may therefore update ANY user document, but ONLY the
+      // premium fields below — never a name, phone or usage counter. Expiry is
+      // enforced server-side by the `expireManualPremium` scheduled function
+      // (which uses the Admin SDK and bypasses these rules).
+      allow update: if isAdmin()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly([
+                           'isPremium',
+                           'premiumUntil',
+                           'premiumSource',
+                           'premiumPlan',
+                           'premiumGrantedBy',
+                           'premiumGrantedAt',
+                           'premiumNote',
+                           'premiumExpiredAt'
+                         ]);
 
       // ── One-shot flags (tesla.geocharge.ge) ────────────────────────────────
       // The Tesla web app grants a 24h trial per ACCOUNT. The trial marker is
       // create-once: it must carry exactly a server-time `startedAt` and can
       // never be updated or deleted, so a user cannot reset their own trial
-      // from the browser console. (There are no Cloud Functions in this
-      // project — this rule is what makes the trial tamper-proof client-side.)
+      // from the browser console — no server-side check is involved, this rule
+      // is what makes the trial tamper-proof client-side.
       match /flags/{flag} {
         allow get: if request.auth != null && request.auth.uid == uid;
         allow create: if request.auth != null && request.auth.uid == uid
@@ -70,13 +88,19 @@ service cloud.firestore {
     // `uid` field must match their token); nobody but an admin can read the
     // collection, and no client can delete rows. Amounts come straight from the
     // store's ProductDetails, so a user can at most misreport their own row.
+    //
+    // An admin may also write rows for OTHER users: a manual (bank-transfer)
+    // premium activation records its own revenue row (platform `manual`, no
+    // store commission) so the Finance tab still reconciles to reality.
     match /purchases/{id} {
       allow get, list: if isAdmin();
-      allow create: if request.auth != null
-                    && request.resource.data.uid == request.auth.uid;
-      allow update: if request.auth != null
-                    && resource.data.uid == request.auth.uid
-                    && request.resource.data.uid == request.auth.uid;
+      allow create: if isAdmin()
+                    || (request.auth != null
+                        && request.resource.data.uid == request.auth.uid);
+      allow update: if isAdmin()
+                    || (request.auth != null
+                        && resource.data.uid == request.auth.uid
+                        && request.resource.data.uid == request.auth.uid);
       // delete intentionally absent → denied (revenue history is append-only).
     }
 
