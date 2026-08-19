@@ -49,3 +49,6 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 tools/.cache/
+
+# Facebook page token for tools/fb-queue.mjs — local only, never committed.
+.env
