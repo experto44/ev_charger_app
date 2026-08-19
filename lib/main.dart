@@ -6,7 +6,7 @@ import 'dart:math' as math;
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show ValueListenable, kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
@@ -20,7 +20,6 @@ import 'services/notification_service.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -33,6 +32,7 @@ import 'provider_logos.dart';
 import 'route_planner_screen.dart';
 import 'routing_service.dart';
 import 'services/ad_service.dart';
+import 'services/live_status_service.dart';
 import 'services/purchase_service.dart';
 import 'turkey_service.dart';
 import 'services/user_activity_service.dart';
@@ -147,10 +147,9 @@ final _kDefaultProviders = <String>[
 const _kTileLight = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
 const _kTileDark  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 
-// Cloud data source — always points to latest revision (no pinned commit hash)
-const _kGistUrl =
-    'https://gist.githubusercontent.com/experto44/36f39392ce7a4abe14ab065aa8e846bd'
-    '/raw/chargers.json';
+// The cloud feed's URL, its CDN-cache handling and its ETag bookkeeping all
+// live in LiveStatusService — fetching it from here directly would go back to
+// being served a copy up to five minutes old.
 
 // ── Navigate to coordinates in Google Maps ────────────────────────────────────
 Future<void> _navigate(double lat, double lng) async {
@@ -223,17 +222,50 @@ class _MapScreenState extends State<MapScreen>
   // "International" provider chip checked.
   bool get _internationalOn => _selectedProviders.contains(OcmService.kProvider);
 
-  // The Turkey provider row can only be ticked once Turkey is one of the user's
-  // countries (Settings → Countries). Until then the row is shown greyed out
-  // with a hint, so nobody downloads the EPDK registry by accident.
+  // The Turkey row exists only once Turkey is one of the user's countries
+  // (Settings → Countries) — the EPDK registry is multi-megabyte, so nobody
+  // should be able to pull it without having asked for Turkey first.
   bool get _turkeyAvailable => _activeCountries.contains(TurkeyService.kCountry);
 
-  // Providers the user can actually pick right now (Turkey only counts once its
-  // country is selected). Drives both "Select all" and the filter badge.
+  // "International" exists only once a country we do NOT ship local provider
+  // data for is selected. _loadOcmCountries skips every localCovered country,
+  // so with just Georgia (or Armenia, or Turkey) picked the row would be an
+  // opt-in to an empty dataset: it offered a switch that could not do anything.
+  bool get _internationalAvailable => kCountries.any(
+      (c) => !c.localCovered && _activeCountries.contains(c.name));
+
+  // Providers the user can actually see and pick right now. The two group rows
+  // are absent — not greyed out — until their countries are selected, so the
+  // sheet only ever lists things that will actually put pins on the map. Drives
+  // the sheet, "Select all" and the filter badge alike.
   List<String> get _availableProviders => [
         for (final p in _kAllProviders)
-          if (p != TurkeyService.kProvider || _turkeyAvailable) p,
+          if (p != TurkeyService.kProvider || _turkeyAvailable)
+            if (p != OcmService.kProvider || _internationalAvailable) p,
       ];
+
+  // Keep the two group rows in step with the country selection, and report
+  // whether anything changed (so the caller knows to persist).
+  //
+  // Adding a country IS the decision to see its stations — making the user go
+  // and tick a second box in another sheet before anything appears is just a
+  // hidden second step. Removing the last country a row depends on retires that
+  // row again, so a checkbox can never stay ticked behind a row that is gone.
+  // Only the TRANSITION acts: someone who deliberately unticks Turkey while
+  // keeping the country selected stays unticked.
+  bool _syncGroupProviders({required bool hadTurkey, required bool hadIntl}) {
+    var changed = false;
+    void sync(String provider, bool before, bool now) {
+      if (now && !before) {
+        if (_selectedProviders.add(provider)) { changed = true; }
+      } else if (!now) {
+        if (_selectedProviders.remove(provider)) { changed = true; }
+      }
+    }
+    sync(TurkeyService.kProvider, hadTurkey, _turkeyAvailable);
+    sync(OcmService.kProvider, hadIntl, _internationalAvailable);
+    return changed;
+  }
 
   // The Turkish (EPDK) dataset loads only when the user both selected Turkey in
   // Settings and left its provider row checked — it's a multi-megabyte file, so
@@ -291,8 +323,18 @@ class _MapScreenState extends State<MapScreen>
   // Periodic background refresh of the station feed. The Gist itself is updated
   // server-side, so the app must re-poll to surface new availability while it
   // stays open — otherwise data is frozen at whatever was fetched on launch.
+  // Two minutes rather than three because a poll that finds nothing new is now
+  // answered with a 304 and a couple of hundred bytes instead of a 529 KB
+  // download, so asking more often costs almost nothing and shaves a minute off
+  // the worst case. The updater's own cycle is ~2.5 min, so polling faster than
+  // this would only re-ask for data that cannot have changed yet.
   Timer? _refreshTimer;
-  static const _kRefreshInterval = Duration(minutes: 3);
+  static const _kRefreshInterval = Duration(minutes: 2);
+
+  // The station shown in the open detail sheet, if any, kept in step with each
+  // background poll so a sheet left open does not silently go stale. Null
+  // whenever no sheet is up.
+  final ValueNotifier<Station?> _openSheetStation = ValueNotifier<Station?>(null);
 
   // Rapid multi-tap detection for the recenter (GPS) button. A single tap
   // re-centres at the normal overview zoom; tapping 2–3 times in quick
@@ -386,17 +428,18 @@ class _MapScreenState extends State<MapScreen>
               (jsonDecode(rawCntry) as List).map((e) => e as String).toSet();
         } catch (_) {/* keep default */}
       }
-      // Restore the saved provider selection. Only names we still ship are kept,
-      // and Turkey is dropped unless its country is (still) selected — so a
-      // stale entry can never resurrect a provider the user can't see.
+      // Restore the saved provider selection. Anything not currently available
+      // is dropped — a stale entry must never resurrect a row the user cannot
+      // see, and the countries were restored just above, so this is measured
+      // against the selection actually in force. Note this restores exactly what
+      // was saved: a group row the user deliberately unticked stays unticked
+      // across restarts, since only a country CHANGE re-ticks one.
       if (rawProv != null) {
         try {
+          final available = _availableProviders.toSet();
           final saved = (jsonDecode(rawProv) as List)
               .map((e) => e as String)
-              .where(_kAllProviders.contains)
-              .where((p) =>
-                  p != TurkeyService.kProvider ||
-                  _activeCountries.contains(TurkeyService.kCountry))
+              .where(available.contains)
               .toSet();
           _selectedProviders
             ..clear()
@@ -540,18 +583,18 @@ class _MapScreenState extends State<MapScreen>
     final p   = await SharedPreferences.getInstance();
     final raw = p.getString(kActiveCountries);
     if (!mounted) { return; }
-    var dropTurkey = false;
+    final hadTurkey = _turkeyAvailable;
+    final hadIntl   = _internationalAvailable;
+    var changed = false;
     setState(() {
       _activeCountries = raw == null
           ? {'Georgia'}
           : (jsonDecode(raw) as List).map((e) => e as String).toSet();
-      // Dropping Turkey from the countries also retires its provider row, so the
-      // checkbox can't stay ticked behind a row the user can no longer see.
-      if (!_turkeyAvailable) {
-        dropTurkey = _selectedProviders.remove(TurkeyService.kProvider);
-      }
+      // Newly added countries switch their group row on; removed ones switch it
+      // back off and take it out of the sheet. See _syncGroupProviders.
+      changed = _syncGroupProviders(hadTurkey: hadTurkey, hadIntl: hadIntl);
     });
-    if (dropTurkey) { await _saveProviders(); }
+    if (changed) { await _saveProviders(); }
     _loadOcmCountries();
     _loadTurkey();
   }
@@ -690,32 +733,31 @@ class _MapScreenState extends State<MapScreen>
     }
   }
 
-  // Fetch the live Gist and merge in any bundled-only providers as a supplement.
-  // Returns null on any network/parse failure so callers can decide whether to
-  // fall back (initial load) or keep existing data (background refresh).
-  Future<List<Station>?> _fetchLiveStations() async {
+  // Parse a feed body and merge in any bundled-only providers as a supplement,
+  // so the app never hides a provider it ships with. Returns null if the body
+  // could not be parsed.
+  Future<List<Station>?> _mergeFeed(String body) async {
     final assetStations = await _loadBundled();
     try {
-      final res = await http
-          .get(Uri.parse(_kGistUrl))
-          .timeout(const Duration(seconds: 8));
-      if (res.statusCode == 200) {
-        final live = _parseStations(res.body);
-        final liveProviders = live.map((s) => s.provider).toSet();
-        final supplement = assetStations
-            .where((s) => !liveProviders.contains(s.provider))
-            .toList();
-        return [...live, ...supplement];
-      }
+      final live = _parseStations(body);
+      final liveProviders = live.map((s) => s.provider).toSet();
+      final supplement = assetStations
+          .where((s) => !liveProviders.contains(s.provider))
+          .toList();
+      return [...live, ...supplement];
     } catch (_) {
-      // Network unavailable, timeout, or parse error.
+      // Malformed feed. Drop the cached fingerprint so the next attempt is
+      // answered with a body instead of a 304 against content we never used.
+      LiveStatusService.I.forgetFeedETag();
+      return null;
     }
-    return null;
   }
 
   // Initial load: show live data, or fall back to the bundled asset offline.
   Future<void> _loadStations() async {
-    final fresh = await _fetchLiveStations();
+    final res = await LiveStatusService.I.fetchFeed(requireBody: true);
+    final fresh =
+        res.body == null ? null : await _mergeFeed(res.body!);
     if (!mounted) { return; }
     if (fresh != null) {
       setState(() { _stations = fresh; _loading = false; });
@@ -729,29 +771,82 @@ class _MapScreenState extends State<MapScreen>
 
   // Background / on-demand refresh. Re-fetches live data and swaps it in.
   // Crucially, on failure it KEEPS the existing data (never clobbers good live
-  // stations with a stale bundled snapshot on a transient blip). Returns the
-  // fresh list on success, or null if the fetch failed.
-  Future<List<Station>?> _refreshStations() async {
-    final fresh = await _fetchLiveStations();
-    if (fresh == null || !mounted) { return null; }
+  // stations with a stale bundled snapshot on a transient blip), and a feed that
+  // has not changed since last time is reported as such rather than as a
+  // failure — the two used to be indistinguishable to the caller.
+  Future<FeedStatus> _refreshStations({bool userInitiated = false}) async {
+    final res = await LiveStatusService.I.fetchFeed(userInitiated: userInitiated);
+    if (res.status != FeedStatus.updated || res.body == null) {
+      return res.status;
+    }
+    final fresh = await _mergeFeed(res.body!);
+    if (fresh == null) { return FeedStatus.failed; }
+    if (!mounted) { return FeedStatus.updated; }
     setState(() => _stations = fresh);
-    return fresh;
+    _syncOpenSheet(fresh);
+    return FeedStatus.updated;
   }
 
-  // Re-fetch and return the latest data for a single station (matched by stable
-  // id, falling back to coordinates for any legacy row without an id). Powers
-  // the station sheet's manual Refresh button. Returns null if the refresh
-  // failed or the station is no longer present in the feed.
-  Future<Station?> _refreshStation(Station target) async {
-    final fresh = await _refreshStations();
-    if (fresh == null) { return null; }
+  // Push the newest row for the open sheet's station into its notifier, so a
+  // sheet the user left open follows the background polls instead of freezing on
+  // whatever was true when they tapped the marker.
+  void _syncOpenSheet(List<Station> fresh) {
+    final open = _openSheetStation.value;
+    if (open == null || open.id.isEmpty) { return; }
     for (final s in fresh) {
+      if (s.id == open.id) {
+        _openSheetStation.value = s;
+        return;
+      }
+    }
+  }
+
+  // Latest data for a single station, for the sheet's refresh button.
+  //
+  // Prefers reading the station straight from its operator (~1s old) over the
+  // feed (a pipeline snapshot up to a cycle old); see LiveStatusService. Any
+  // failure on that path falls through to the feed, so the button is never worse
+  // than it was before the direct path existed.
+  Future<StationRefresh> _refreshStation(Station target) async {
+    if (LiveStatusService.I.canFetchDirect(target)) {
+      final direct = await LiveStatusService.I.fetchDirect(target);
+      if (direct != null) {
+        if (mounted) {
+          setState(() => _stations = [
+                for (final s in _stations) s.id == direct.id ? direct : s,
+              ]);
+        }
+        return StationRefresh(
+          sameLiveState(target, direct)
+              ? RefreshOutcome.unchanged
+              : RefreshOutcome.updated,
+          direct,
+          true,
+        );
+      }
+    }
+
+    final status = await _refreshStations(userInitiated: true);
+    if (status == FeedStatus.failed) { return const StationRefresh.failed(); }
+    // Nothing new was published; the row on screen is still the current one.
+    if (status == FeedStatus.unchanged) {
+      return StationRefresh(RefreshOutcome.unchanged, target);
+    }
+    for (final s in _stations) {
       final sameId = target.id.isNotEmpty && s.id == target.id;
       final sameCoords = target.id.isEmpty &&
           s.lat == target.lat && s.lng == target.lng;
-      if (sameId || sameCoords) { return s; }
+      if (sameId || sameCoords) {
+        return StationRefresh(
+          sameLiveState(target, s)
+              ? RefreshOutcome.unchanged
+              : RefreshOutcome.updated,
+          s,
+        );
+      }
     }
-    return null;
+    // The station has dropped out of the feed entirely.
+    return const StationRefresh.failed();
   }
 
   // Acquire (or refresh) the device location and update the user pin. Called on
@@ -852,6 +947,7 @@ class _MapScreenState extends State<MapScreen>
     _ocmViewportDebounce?.cancel();
     _mapEventSub?.cancel();
     _refreshTimer?.cancel();
+    _openSheetStation.dispose();
     super.dispose();
   }
 
@@ -897,36 +993,33 @@ class _MapScreenState extends State<MapScreen>
       builder: (_) => StatefulBuilder(
         // setSheet rebuilds the checkbox rows; setState rebuilds the map + badge.
         builder: (_, setSheet) => _ProviderFilterSheet(
-          all:      _kAllProviders,
+          // Only what the user can actually act on: the group rows are absent
+          // until their countries are selected, rather than shown disabled.
+          all:      _availableProviders,
           selected: _selectedProviders,
-          // Turkey stays greyed out until its country is picked in Settings.
-          turkeyAvailable: _turkeyAvailable,
-          // Master checkbox: select/deselect every LOCAL provider at once.
-          // "International" is intentionally left out — it gates the OCM data
-          // load, so it only ever changes via its own row. Turkey is left out
-          // too while its country isn't selected, so "Select all" can never tick
-          // a row the user isn't allowed to tick by hand.
+          // Master checkbox: every row the sheet is showing. The group rows used
+          // to be excluded because they were visible before the user had opted
+          // into their countries; now they only appear once that opt-in has
+          // happened, so leaving them out would just make "Select all" skip a
+          // visible row for no reason the user could see.
           onToggleAll: () {
-            final locals = _availableProviders
-                .where((p) => p != OcmService.kProvider)
-                .toList();
-            final allOn = locals.every(_selectedProviders.contains);
+            final rows  = _availableProviders;
+            final allOn = rows.every(_selectedProviders.contains);
             setState(() {
               if (allOn) {
-                _selectedProviders.removeAll(locals);
+                _selectedProviders.removeAll(rows);
               } else {
-                _selectedProviders.addAll(locals);
+                _selectedProviders.addAll(rows);
               }
             });
             setSheet(() {});
             unawaited(_saveProviders());
-            // "Select all" covers the Turkey group too, so its dataset has to
+            // "Select all" can cover both group rows, so their datasets have to
             // load (or clear) with it.
             _loadTurkey();
+            _loadOcmCountries();
           },
           onToggle: (p) {
-            // Turkey isn't tappable before its country is selected.
-            if (p == TurkeyService.kProvider && !_turkeyAvailable) { return; }
             setState(() {
               if (_selectedProviders.contains(p)) {
                 _selectedProviders.remove(p);
@@ -948,6 +1041,7 @@ class _MapScreenState extends State<MapScreen>
 
   // ── Station marker tap → bottom sheet ────────────────────────────────────
   void _showStationSheet(Station s) {
+    _openSheetStation.value = s;
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -956,8 +1050,13 @@ class _MapScreenState extends State<MapScreen>
         station: s,
         onGetDirections: () => _openRoutePlannerTo(s),
         onRefresh: _refreshStation,
+        liveStation: _openSheetStation,
       ),
-    );
+    ).whenComplete(() {
+      // The screen can be torn down while the sheet is still closing, and
+      // the notifier goes with it.
+      if (mounted) { _openSheetStation.value = null; }
+    });
   }
 
   // Shared push — no sheet-pop side-effect (used by carousel "Plan & Go").
@@ -1695,14 +1794,13 @@ class _ProviderFilterSheet extends StatelessWidget {
   const _ProviderFilterSheet({
     required this.all,
     required this.selected,
-    required this.turkeyAvailable,
     required this.onToggle,
     required this.onToggleAll,
   });
+  /// Providers to list. Already filtered to what the user can act on, so every
+  /// row here is tappable — nothing is rendered disabled.
   final List<String>       all;
   final Set<String>        selected;
-  /// Turkey is in the user's countries (Settings), so its row can be ticked.
-  final bool               turkeyAvailable;
   final ValueChanged<String> onToggle;
   final VoidCallback       onToggleAll;
 
@@ -1758,15 +1856,10 @@ class _ProviderFilterSheet extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Master select/deselect-all row (local providers only —
-                      // "International" keeps its own opt-in row below).
+                      // Master select/deselect-all row, covering every row the
+                      // sheet is showing.
                       Builder(builder: (_) {
-                        final locals = all
-                            .where((p) => p != OcmService.kProvider)
-                            .where((p) =>
-                                p != TurkeyService.kProvider || turkeyAvailable)
-                            .toList();
-                        final allOn = locals.every(selected.contains);
+                        final allOn = all.every(selected.contains);
                         return InkWell(
                           onTap: onToggleAll,
                           child: Padding(
@@ -1794,30 +1887,21 @@ class _ProviderFilterSheet extends StatelessWidget {
                       // One checkbox row per known provider — toggles apply immediately.
                       ...all.map((p) {
                         final on = selected.contains(p);
-                        // Turkey can only be ticked once the user has added
-                        // Turkey to their countries in Settings — until then the
-                        // row is greyed out and says what to do about it.
-                        final locked =
-                            p == TurkeyService.kProvider && !turkeyAvailable;
                         // The two group rows stand for whole networks of
                         // operators rather than one brand, so they say so.
                         final subtitle = p == TurkeyService.kProvider
-                            ? (locked
-                                ? 'Add Turkey in Settings → Countries first'
-                                : 'Every licensed network (EPDK registry)')
+                            ? 'Every licensed network (EPDK registry)'
                             : p == OcmService.kProvider
                                 ? 'Open Charge Map, outside Georgia'
                                 : null;
                         return InkWell(
-                          onTap: locked ? null : () => onToggle(p),
+                          onTap: () => onToggle(p),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
                             child: Row(children: [
                               Icon(
                                 on ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
-                                color: locked
-                                    ? const Color(0xFF555555)
-                                    : on ? _emerald : _textSec,
+                                color: on ? _emerald : _textSec,
                                 size: 24,
                               ),
                               const SizedBox(width: 12),
@@ -1827,20 +1911,15 @@ class _ProviderFilterSheet extends StatelessWidget {
                                   children: [
                                     Text(
                                       p == TurkeyService.kProvider ? '🇹🇷 Turkey' : p,
-                                      style: TextStyle(
-                                          color: locked
-                                              ? const Color(0xFF666666)
-                                              : _textPri,
+                                      style: const TextStyle(
+                                          color: _textPri,
                                           fontSize: 15,
                                           fontWeight: FontWeight.w500),
                                     ),
                                     if (subtitle != null)
                                       Text(subtitle,
-                                          style: TextStyle(
-                                              color: locked
-                                                  ? const Color(0xFF666666)
-                                                  : _textSec,
-                                              fontSize: 11)),
+                                          style: const TextStyle(
+                                              color: _textSec, fontSize: 11)),
                                   ],
                                 ),
                               ),
@@ -2182,12 +2261,17 @@ class _StationSheet extends StatefulWidget {
     required this.station,
     required this.onGetDirections,
     required this.onRefresh,
+    required this.liveStation,
   });
   final Station      station;
   final VoidCallback onGetDirections;
-  // Re-fetches live data for this station; returns the updated row or null on
-  // failure / removal. Supplied by _MapScreenState so the button hits the feed.
-  final Future<Station?> Function(Station) onRefresh;
+  // Re-reads live data for this station AND says whether anything actually
+  // moved. Supplied by _MapScreenState, which reads the operator's own API
+  // directly where one is available and falls back to the feed otherwise.
+  final Future<StationRefresh> Function(Station) onRefresh;
+  // This station as each background poll re-reads it, so a sheet left open
+  // keeps up instead of freezing on the tap that opened it.
+  final ValueListenable<Station?> liveStation;
 
   @override
   State<_StationSheet> createState() => _StationSheetState();
@@ -2195,9 +2279,19 @@ class _StationSheet extends StatefulWidget {
 
 class _StationSheetState extends State<_StationSheet> {
   late Station _station = widget.station; // mutable copy, swapped in on refresh
-  bool _refreshing   = false;
-  bool _justRefreshed = false;
-  bool _refreshFailed = false;
+  bool _refreshing = false;
+  // What the last manual refresh achieved, driving the label beside the button.
+  // Null until the user taps it.
+  RefreshOutcome? _lastOutcome;
+  // When the user last refreshed by hand. A manual refresh may have come
+  // straight from the operator, which is newer than anything a background poll
+  // of the feed can carry, so those are ignored for a while afterwards.
+  DateTime _lastManualRefresh = DateTime.fromMillisecondsSinceEpoch(0);
+  static const _kManualHold = Duration(minutes: 2);
+  // Whether what is on screen came straight from the operator rather than the
+  // feed. Drives the caption under the timestamp, which must not claim a
+  // one-second-old reading is "not real-time".
+  bool _readDirect = false;
   // Composite alert keys ("id" or "id|connector") currently mid-toggle, so each
   // button shows its own spinner without blocking the others.
   final Set<String> _alertPending = {};
@@ -2276,6 +2370,25 @@ class _StationSheetState extends State<_StationSheet> {
     }
   }
 
+  @override
+  void initState() {
+    super.initState();
+    widget.liveStation.addListener(_onFeedTick);
+  }
+
+  // A background poll re-read this station. Adopt it, unless the user has just
+  // pulled a reading themselves that the feed cannot beat.
+  void _onFeedTick() {
+    final s = widget.liveStation.value;
+    if (s == null || s.id != _station.id || !mounted) { return; }
+    if (DateTime.now().difference(_lastManualRefresh) < _kManualHold) { return; }
+    if (sameLiveState(s, _station) && s.lastUpdated == _station.lastUpdated) {
+      return;
+    }
+    // A background poll is feed data by definition.
+    setState(() { _station = s; _readDirect = false; });
+  }
+
   // Inline, always-legible feedback shown INSIDE the sheet (a SnackBar from the
   // app-level messenger renders behind this modal sheet, so it's unreadable).
   // Auto-clears after a few seconds.
@@ -2292,6 +2405,7 @@ class _StationSheetState extends State<_StationSheet> {
 
   @override
   void dispose() {
+    widget.liveStation.removeListener(_onFeedTick);
     _noticeTimer?.cancel();
     super.dispose();
   }
@@ -2299,22 +2413,46 @@ class _StationSheetState extends State<_StationSheet> {
   Future<void> _refresh() async {
     if (_refreshing) { return; }
     setState(() {
-      _refreshing    = true;
-      _justRefreshed = false;
-      _refreshFailed = false;
+      _refreshing  = true;
+      _lastOutcome = null;
     });
-    final updated = await widget.onRefresh(_station);
+    final res = await widget.onRefresh(_station);
     if (!mounted) { return; }
+    _lastManualRefresh = DateTime.now();
     setState(() {
-      _refreshing = false;
-      if (updated != null) {
-        _station       = updated; // live availability/price/etc. now reflected
-        _justRefreshed = true;
-      } else {
-        _refreshFailed = true;    // network failed or station no longer listed
+      _refreshing  = false;
+      _lastOutcome = res.outcome;
+      // Present on every outcome except a failure, and never worse than what is
+      // already on screen.
+      if (res.station != null) {
+        _station    = res.station!;
+        _readDirect = res.direct;
+      }
+    });
+
+    // Free tier sees an interstitial for a refresh, but only AFTER the answer is
+    // on screen. An ad thrown up over the number the user just asked for is the
+    // "unexpected interstitial" pattern AdMob's policies are written about, and
+    // it would waste the whole point of making this button fast. AdService keeps
+    // a single two-minute gap across every placement in the app, so holding the
+    // button down cannot farm ads out of it.
+    if (res.outcome == RefreshOutcome.failed) { return; }
+    Future.delayed(const Duration(milliseconds: 1400), () {
+      if (!mounted) { return; }
+      if (!PurchaseService.I.isPremium.value) {
+        AdService.I.maybeShowInterstitial();
       }
     });
   }
+
+  // Colour shared by the refresh icon and its label: green only when something
+  // genuinely changed, neutral for "nothing to report", amber for a failure.
+  Color get _outcomeColor => switch (_lastOutcome) {
+        RefreshOutcome.updated   => _emerald,
+        RefreshOutcome.failed    => Colors.orangeAccent,
+        RefreshOutcome.unchanged => _textSec,
+        null                     => _textSec,
+      };
 
   // One large, colour-coded row per physical connector: green = free, red =
   // busy, grey = out of order. A busy plug also shows roughly how long it has
@@ -2514,9 +2652,12 @@ class _StationSheetState extends State<_StationSheet> {
                       Padding(
                         padding: const EdgeInsets.only(left: 18, top: 2),
                         child: Text(
-                          AppStrings.providerLastCheck,
-                          style: AppStrings.font(
-                              const TextStyle(color: _textSec, fontSize: 9.5)),
+                          _readDirect
+                              ? AppStrings.liveFromProvider
+                              : AppStrings.providerLastCheck,
+                          style: AppStrings.font(TextStyle(
+                              color: _readDirect ? _emerald : _textSec,
+                              fontSize: 9.5)),
                         ),
                       ),
                     ],
@@ -2571,18 +2712,26 @@ class _StationSheetState extends State<_StationSheet> {
                       child: CircularProgressIndicator(strokeWidth: 2, color: _textSec),
                     )
                   : Icon(Icons.refresh_rounded,
-                      color: _justRefreshed
-                          ? _emerald
-                          : (_refreshFailed ? Colors.orangeAccent : _textSec),
-                      size: 19),
+                      color: _outcomeColor, size: 19),
             ),
-            if (_justRefreshed) ...[
+            // Says what actually happened. This used to read "Updated" after any
+            // request that did not error, including the many that came back
+            // byte-identical — so a status frozen ten minutes in the past looked
+            // like a refresh button doing its job.
+            if (_lastOutcome != null) ...[
               const SizedBox(width: 6),
-              const Text('Updated', style: TextStyle(color: _emerald, fontSize: 11)),
-            ] else if (_refreshFailed) ...[
-              const SizedBox(width: 6),
-              const Text('Update failed',
-                  style: TextStyle(color: Colors.orangeAccent, fontSize: 11)),
+              Flexible(
+                child: Text(
+                  switch (_lastOutcome!) {
+                    RefreshOutcome.updated   => AppStrings.refreshUpdated,
+                    RefreshOutcome.unchanged => AppStrings.refreshNoChange,
+                    RefreshOutcome.failed    => AppStrings.refreshFailed,
+                  },
+                  style: AppStrings.font(
+                      TextStyle(color: _outcomeColor, fontSize: 11)),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ]),
 

@@ -61,8 +61,14 @@ class CountryDef {
       lng >= lngMin! && lng <= lngMax!;
 }
 
-// Georgia is always first; every other country follows in alphabetical order.
+// Display order, used everywhere countries are shown to the user: home country
+// first, then the two neighbours a Georgian driver actually crosses into, then
+// everything else A→Z. This is presentation only — see [countryOf] for the
+// separate order a coordinate is classified in.
 final List<CountryDef> kCountries = _buildCountries();
+
+// Pulled to the top of the list, in this order, ahead of the alphabet.
+const _kPinnedCountries = ['Georgia', 'Turkey', 'Armenia'];
 
 List<CountryDef> _buildCountries() {
   const georgia = CountryDef('Georgia', '🇬🇪', 'GE',
@@ -127,7 +133,14 @@ List<CountryDef> _buildCountries() {
     const CountryDef('United Kingdom', '🇬🇧', 'GB'),
   ]..sort((a, b) => a.name.compareTo(b.name));
 
-  return [georgia, ...others];
+  // Lift the pinned countries out of the alphabet, keeping their given order.
+  final pinned = <CountryDef>[
+    georgia,
+    for (final name in _kPinnedCountries.skip(1))
+      ...others.where((c) => c.name == name),
+  ];
+  others.removeWhere((c) => _kPinnedCountries.contains(c.name));
+  return [...pinned, ...others];
 }
 
 // ISO code -> our country name (so OCM stations match our selection names).
@@ -137,11 +150,29 @@ final Map<String, String> _kCodeToName = {
 String? countryNameForCode(String? code) =>
     code == null ? null : _kCodeToName[code.toUpperCase()];
 
-/// The country a coordinate falls in (first matching box; Georgia checked
-/// first), or null if it sits outside every boxed country.
+// The order a coordinate is tested against the country boxes. This is a
+// CORRECTNESS ordering and deliberately not the display one, because the boxes
+// overlap and first match wins: the Armenian box (38.8–41.3 N, 43.4–46.6 E) sits
+// partly inside the Turkish one (35.8–42.1 N, 26.0–44.8 E), so Gyumri
+// (40.79 N, 43.84 E) is inside both and reads as Turkish unless Armenia is
+// tested first. Georgia leads for the same reason against both of them.
+// Keeping this list apart from [kCountries] means the Settings list can be
+// reordered without silently relabelling real stations.
+const _kClassifyOrder = ['Georgia', 'Armenia', 'Turkey'];
+
+/// The country a coordinate falls in, or null if it sits outside every boxed
+/// country. See [_kClassifyOrder] for why the test order is not the list order.
 String? countryOf(double lat, double lng) {
+  for (final name in _kClassifyOrder) {
+    for (final c in kCountries) {
+      if (c.name == name && c.contains(lat, lng)) { return c.name; }
+    }
+  }
+  // Any other boxed country still gets a look, after the overlapping trio.
   for (final c in kCountries) {
-    if (c.contains(lat, lng)) { return c.name; }
+    if (!_kClassifyOrder.contains(c.name) && c.contains(lat, lng)) {
+      return c.name;
+    }
   }
   return null;
 }

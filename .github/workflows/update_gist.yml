@@ -72,14 +72,32 @@ jobs:
           # fire (scheduled OR manual workflow_dispatch) keeps the gist fresh
           # for hours. cancel-in-progress (top of file) lets a newer fire
           # preempt this run cleanly, so frequent fires still take over fast.
-          SLEEP_SECONDS=180      # update cadence — matches the app's 3-min poll
+          # Normal cadence between updates. The fetch itself takes ~60s (it was
+          # ~166s before the AMPECO calls were parallelised), so the real cycle
+          # is roughly SLEEP_SECONDS + 60. At 90 that is ~2.5 min, down from the
+          # ~5.75 min this loop actually ran at when SLEEP was 180: the old
+          # "3-min cadence" only ever counted the sleep, never the fetch.
+          # Do NOT push this below ~60. The gist PATCH is a content-creating
+          # request and GitHub caps those at 500/hour, which a runaway cadence
+          # would walk straight into (a secondary rate limit already killed a
+          # run on 2026-08-06). It also multiplies the load we put on the
+          # providers' reverse-engineered APIs, which is the real ceiling here.
+          SLEEP_SECONDS=90
+          # Base for the failure back-off, kept SEPARATE from the cadence on
+          # purpose. The back-off doubles per consecutive failure and MAX_FAILS
+          # ends the run, so deriving it from SLEEP_SECONDS means every speed-up
+          # silently shortens how long an outage is ridden out. Tying it to 90
+          # would burn all five attempts in ~25 min instead of ~50, quietly
+          # undoing the fix for the 6.5h stale-feed incident described below.
+          BACKOFF_BASE=180
           RUN_SECONDS=19800      # ~5.5h of coverage per fire (well under 6h limit)
           START=$(date +%s)
           i=1
           FAILS=0                 # consecutive failed iterations
           MAX_FAILS=5             # fail the whole run only after this many in a row
-          # Consecutive failures back off (180 → 360 → 720 → 1440, capped at
-          # 1800) instead of retrying on the normal cadence. Without this, five
+          # Consecutive failures back off from BACKOFF_BASE (180 → 360 → 720
+          # → 1440, capped at 1800) instead of retrying on the normal cadence.
+          # Without this, five
           # attempts burn through in ~12 minutes, so a GitHub blip or a
           # secondary rate limit kills the run before the window has passed —
           # and because the */5 cron is throttled, nothing restarts it for
@@ -95,6 +113,7 @@ jobs:
           # red and notifies us, instead of staying silently green forever.
           if python3 << 'PYEOF'
           import json, os, re, requests, time
+          from concurrent.futures import ThreadPoolExecutor
           from datetime import datetime, timezone
 
           GIST_ID = "36f39392ce7a4abe14ab065aa8e846bd"
@@ -178,14 +197,32 @@ jobs:
                   toks = [t for t in cand.split() if not any(ch.isdigit() for ch in t)]
                   return " ".join(toks).replace("T'bilisi", "Tbilisi").strip()
 
-              stations = []
-              for loc_id in ids:
+              # 2) Pull every location body, in parallel.
+              # These GETs dominated the cycle: mart EV alone is 191 sequential
+              # requests at ~0.35s each, i.e. ~70s of a ~166s fetch. A small pool
+              # cuts that to ~10s and leaves the parsing below untouched.
+              # Measured against the live API before enabling: 8 concurrent
+              # requests each returned in the same 0.3-0.5s as a lone sequential
+              # one, so the provider does not throttle at this width. The pool is
+              # deliberately narrow anyway -- this is a reverse-engineered API and
+              # total request volume matters more to us than raw speed.
+              def load_location(loc_id):
                   try:
                       r = requests.get(f"{base}/app/locations/{loc_id}", headers=common, timeout=60)
                       r.raise_for_status()
-                      body = r.json()
+                      return loc_id, r.json()
                   except Exception as e:
                       print(provider_name, "location", loc_id, "error:", e)
+                      return loc_id, None
+
+              with ThreadPoolExecutor(max_workers=8) as pool:
+                  bodies = list(pool.map(load_location, ids))
+
+              stations = []
+              for loc_id, body in bodies:
+                  # A location that failed to load is simply absent from this
+                  # cycle's rows, exactly as the sequential `continue` left it.
+                  if body is None:
                       continue
 
                   tariffs    = {str(t.get("id")): t for t in (body.get("tariffs") or []) if isinstance(t, dict)}
@@ -279,14 +316,26 @@ jobs:
               print(f"{provider_name}: {len(stations)} stations")
               return stations
 
+          # Every AMPECO network we read, keyed by the station-id prefix each one
+          # stamps on its rows ("martev_220" -> cp.martev.io, location 220). Kept
+          # in ONE place because notify_freed re-checks a station straight from
+          # its provider before pushing, and a second hardcoded host list would
+          # be the obvious thing to forget to update.
+          AMPECO_HOSTS = {
+              "martev":    "cp.martev.io",
+              "moveo":     "cp.moveo.ge",
+              "electrify": "cp.electrify.ge",
+              "evpower":   "cp.evpower.ge",
+          }
+
           def fetch_martev():
-              return fetch_ampeco("cp.martev.io", "mart EV", "martev")
+              return fetch_ampeco(AMPECO_HOSTS["martev"], "mart EV", "martev")
 
           def fetch_electrify():
-              return fetch_ampeco("cp.electrify.ge", "Electrify Georgia", "electrify")
+              return fetch_ampeco(AMPECO_HOSTS["electrify"], "Electrify Georgia", "electrify")
 
           def fetch_evpower():
-              return fetch_ampeco("cp.evpower.ge", "EV Power GE", "evpower")
+              return fetch_ampeco(AMPECO_HOSTS["evpower"], "EV Power GE", "evpower")
 
           # MOVEO (cp.moveo.ge) is AMPECO too, but its addresses are Georgian and
           # "|"-separated (e.g. "ვაჟა-ფშაველას გამზ. 70 | თბილისი 0186, საქართველო"),
@@ -328,7 +377,7 @@ jobs:
                           return clean(p)
                   named = [p for p in parts if p not in ("საქართველო", "Georgia", "georgia")]
                   return clean(named[-1]) if named else ""
-              return fetch_ampeco("cp.moveo.ge", "MOVEO", "moveo", city_fn=moveo_city)
+              return fetch_ampeco(AMPECO_HOSTS["moveo"], "MOVEO", "moveo", city_fn=moveo_city)
 
           # ── Da-Tene (PlugsHub platform — NOT AMPECO) ───────────────────────
           # Multi-tenant API: every request needs an X-Tenant-ID header. We log
@@ -1358,6 +1407,46 @@ jobs:
               except Exception:
                   return 0
 
+          # Re-read ONE station straight from its provider, moments before an
+          # alert about it would reach somebody's phone. A false "it's free!"
+          # push sends a driver across town for nothing, which is a worse bug
+          # than a late-but-true one, so a single odd reading should not be
+          # enough to fire. Only AMPECO networks expose a cheap per-location
+          # endpoint (~0.4s, no auth); every other provider is passed straight
+          # through, because the cycle-level guards already cover the realistic
+          # failure modes there (a failed fetch drops the whole provider out of
+          # fresh_providers, and a failed single location just goes missing).
+          # Deliberately fails OPEN: if OUR re-check errors, the alert still
+          # goes out, since our own network blip is no reason to swallow it.
+          def still_free(station):
+              sid = str(station.get("id") or "")
+              prefix, _, loc_id = sid.partition("_")
+              host = AMPECO_HOSTS.get(prefix)
+              if not host or not loc_id:
+                  return True
+              try:
+                  r = requests.get(
+                      f"https://{host}/api/v1/app/locations/{loc_id}",
+                      headers={"Accept": "application/json",
+                               "Accept-Language": "ka",
+                               "App-Version": "3.130.0",
+                               "X-Internal-App-Version": "3.130.0"},
+                      timeout=15)
+                  r.raise_for_status()
+                  body = r.json()
+              except Exception as e:
+                  print("  re-check failed for", sid, "->", e, "(sending anyway)")
+                  return True
+              # Location-level check: is ANY plug here free right now? Same
+              # "unavailable == sibling busy" rule the main fetcher uses.
+              for loc in (body.get("locations") or []):
+                  for zone in (loc.get("zones") or []):
+                      for e in (zone.get("evses") or []):
+                          st = str(e.get("status") or "").strip().lower()
+                          if bool(e.get("isAvailable")) or st == "unavailable":
+                              return True
+              return False
+
           def notify_freed(old_stations, new_stations, fresh_providers):
               sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT", "").strip()
               if not sa_json:
@@ -1386,19 +1475,43 @@ jobs:
               if not new_by_id:
                   return
 
-              # An alert fires when its target went busy -> free since last cycle.
-              # conn set → that connector TYPE had no free port before and has one
-              # now (matches any plug of the type). conn empty → legacy station-
-              # level alert: fully occupied -> at least one free plug.
-              def has_freed(sid, conn):
-                  s = new_by_id.get(sid)
-                  if s is None:
-                      return False
-                  if conn:
-                      return conn not in old_free.get(sid, set()) \
-                          and conn in free_types(s)
-                  return old_avail.get(sid, 0) == 0 and _avail(s) > 0
+              # Which stations went busy -> free this cycle, and which connector
+              # types freed up on each. Computed BEFORE Firestore is opened.
+              # The scan below streams the ENTIRE charger_alerts collection, i.e.
+              # one document read per subscriber per cycle, and it used to run on
+              # every cycle whether or not anything had actually freed up. Most
+              # cycles free up nothing, so that was almost all pure waste, and at
+              # the faster cadence it would have grown past Firestore's 50k
+              # reads/day free tier and started billing silently on Blaze.
+              #   conn set   -> that connector TYPE had no free port before and
+              #                 has one now (matches any plug of the type).
+              #   conn empty -> legacy station-level alert: fully occupied
+              #                 before, at least one free plug now.
+              freed = {}   # station id -> (newly free connector types, whole station freed?)
+              for sid, s in new_by_id.items():
+                  gained = free_types(s) - old_free.get(sid, set())
+                  whole  = old_avail.get(sid, 0) == 0 and _avail(s) > 0
+                  if gained or whole:
+                      freed[sid] = (gained, whole)
+              if not freed:
+                  return   # nothing freed up -> zero Firestore reads this cycle
 
+              # Confirm each one against the provider before it can reach anyone.
+              for sid in list(freed):
+                  if not still_free(new_by_id[sid]):
+                      print("  dropped unconfirmed free:", sid)
+                      del freed[sid]
+              if not freed:
+                  return
+
+              def has_freed(sid, conn):
+                  entry = freed.get(sid)
+                  if entry is None:
+                      return False
+                  gained, whole = entry
+                  return (conn in gained) if conn else whole
+
+              print(f"🔎 {len(freed)} station(s) freed up - scanning alerts")
               import firebase_admin
               from firebase_admin import credentials, messaging, firestore
               if not firebase_admin._apps:
@@ -1407,7 +1520,9 @@ jobs:
               db = firestore.client()
 
               sent = 0
+              scanned = 0
               for doc in db.collection("charger_alerts").stream():
+                  scanned += 1
                   data  = doc.to_dict() or {}
                   token = data.get("token")
                   subs  = data.get("subs") or {}
@@ -1460,7 +1575,7 @@ jobs:
                                for skey, _sid, _conn, _meta in hits})
                   except Exception as e:
                       print("  cleanup failed:", e)
-              print(f"🔔 sent {sent} push(es)")
+              print(f"🔔 sent {sent} push(es) after reading {scanned} alert doc(s)")
 
           # ── Load station data from the committed asset file ────────────────
           # The bundled asset ships with snapshots of the live providers for
@@ -1493,6 +1608,16 @@ jobs:
               except Exception as e:
                   print(f"{pname} fetch failed:", e)
               if fresh:
+                  # Stamp with the moment THIS provider was actually read, not
+                  # the moment the whole cycle ended. Providers are fetched in
+                  # order and a cycle takes minutes, so a single end-of-cycle
+                  # timestamp overstated the freshness of everything fetched
+                  # early -- mart EV is first, so its rows claimed to be up to
+                  # ~2.5 min newer than they were, and the app's "Last verified"
+                  # line was wrong by exactly that much.
+                  stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+                  for s in fresh:
+                      s["last_updated"] = stamp
                   stations = [s for s in stations if s.get("provider") != pname]
                   stations += fresh
                   fresh_providers.add(pname)
@@ -1515,11 +1640,28 @@ jobs:
           if _dropped:
               print(f"Dropped {_dropped} provider test station(s) by name")
 
-          # Stamp every station with the current UTC time so the app shows
-          # a meaningful "last verified" timestamp after each gist refresh.
-          now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+          # Every re-fetched row was already stamped above, at its own fetch
+          # time. What is left here is the bundled-snapshot fallback for a
+          # provider whose API failed this cycle -- and stamping THOSE with the
+          # current time told the app that a months-old snapshot had just been
+          # verified, which is the most misleading thing this feed could say.
+          # They now keep the date they actually carry, so a provider outage
+          # shows up as an old "Last verified" instead of hiding behind a fresh
+          # one.
+          #
+          # Only a REAL stamp survives. A handful of bundled rows (8 MOVEO ones)
+          # were committed carrying the fetcher's "Just now" placeholder, and the
+          # app prints any unrecognised value through verbatim — so keeping that
+          # would put "Last verified: Just now" on a months-old snapshot, which
+          # is the very lie this block exists to stop. Dropping the field instead
+          # makes the app omit the line altogether, which is the honest answer:
+          # we do not know when that row was true.
+          _STAMP_RE = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC$")
           for s in stations:
-              s["last_updated"] = now
+              if not _STAMP_RE.match(str(s.get("last_updated", ""))):
+                  s.pop("last_updated", None)
+
+          now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
           # ── Fetch the current gist so we keep any other files intact ───────
           resp = requests.get(
@@ -1544,17 +1686,50 @@ jobs:
           except Exception as e:
               print("charger-free alerts skipped:", e)
 
-          # Preserve every file in the gist except chargers.json
+          # -- Remote kill-switch for the app's direct-to-provider reads -----
+          # The app may read a single station straight from its provider's API
+          # when the user taps refresh, which turns a ~10 min stale number into a
+          # ~1s one. Those are reverse-engineered endpoints: the day a provider
+          # gates or blocks them, every user's refresh button breaks at once and
+          # shipping an app fix takes weeks of store review. So the app asks this
+          # file first, on every poll. Hand-editing it in the gist UI routes
+          # everyone back through the feed within one poll (~2 min), no release.
+          #
+          # It is CREATED only when absent, and is otherwise left out of the
+          # PATCH entirely -- the gist API leaves files it is not given alone --
+          # so a hand edit can never be clobbered by the next update cycle.
+          CONFIG_FILE = "config.json"
+          DEFAULT_CONFIG = {
+              "_readme": "Hand-edit to change app behaviour with no app release. "
+                         "The updater creates this file when missing and never "
+                         "overwrites it afterwards. Set direct_fetch.enabled to "
+                         "false to route every refresh back through this feed, or "
+                         "drop one name from direct_fetch.providers to stop only "
+                         "that network from being called directly.",
+              "direct_fetch": {
+                  "enabled": True,
+                  "providers": ["mart EV", "MOVEO", "Electrify Georgia", "EV Power GE"],
+              },
+          }
+
+          # Preserve every other file in the gist. chargers.json is rewritten
+          # below; config.json is deliberately left out so hand edits survive.
           files = {
               name: data
               for name, data in gist_data.get("files", {}).items()
-              if name != "chargers.json"
+              if name not in ("chargers.json", CONFIG_FILE)
           }
 
           # Replace chargers.json with the freshly timestamped data
           files["chargers.json"] = {
               "content": json.dumps(stations, ensure_ascii=False, indent=2)
           }
+
+          if CONFIG_FILE not in (gist_data.get("files") or {}):
+              files[CONFIG_FILE] = {
+                  "content": json.dumps(DEFAULT_CONFIG, ensure_ascii=False, indent=2)
+              }
+              print(f"Created {CONFIG_FILE} with default settings")
 
           # ── Patch the gist ─────────────────────────────────────────────────
           patch = requests.patch(
@@ -1575,7 +1750,8 @@ jobs:
               print("  body:", patch.text[:600])
           patch.raise_for_status()
 
-          print(f"✅  Updated {len(stations)} stations — last_updated = {now}")
+          print(f"✅  Updated {len(stations)} stations at {now} — "
+                f"live this cycle: {len(fresh_providers)}/11 providers")
           PYEOF
           then
             FAILS=0
@@ -1598,7 +1774,7 @@ jobs:
           # each time so a transient outage is ridden out, not hammered.
           NEXT_SLEEP=$SLEEP_SECONDS
           if [ "$FAILS" -gt 0 ]; then
-            NEXT_SLEEP=$(( SLEEP_SECONDS * (1 << (FAILS - 1)) ))
+            NEXT_SLEEP=$(( BACKOFF_BASE * (1 << (FAILS - 1)) ))
             [ "$NEXT_SLEEP" -gt "$MAX_BACKOFF" ] && NEXT_SLEEP=$MAX_BACKOFF
           fi
           echo "Sleeping ${NEXT_SLEEP}s before next update…"; sleep "$NEXT_SLEEP"

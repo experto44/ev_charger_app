@@ -233,6 +233,25 @@ class AppStrings {
       ? 'პროვაიდერის ბოლო შემოწმება — არა რეალურ დროში'
       : "Provider's last server check — not real-time";
 
+  // Shown under the "Last verified" time. Which one applies depends on where the
+  // reading came from: the feed carries the provider's own last server check and
+  // is a pipeline snapshot, while a direct read from the operator is a second
+  // old. Saying "not real-time" under the second one would be false.
+  static String get liveFromProvider => isGeorgian
+      ? 'ცოცხალი მონაცემი პროვაიდერის სისტემიდან'
+      : 'Read live from the operator';
+
+  // ── Manual refresh outcome ─────────────────────────────────────────────────
+  // Three distinct answers, because "Updated" used to appear on every successful
+  // request even when the data was byte-identical. That made a status stuck ten
+  // minutes in the past look like a refresh button doing its job.
+  static String get refreshUpdated =>
+      isGeorgian ? 'განახლდა' : 'Updated';
+  static String get refreshNoChange =>
+      isGeorgian ? 'ცვლილება არაა' : 'No change';
+  static String get refreshFailed =>
+      isGeorgian ? 'ვერ განახლდა' : 'Update failed';
+
   // ── Connector (per-plug) status ──────────────────────────────────────────────
   static String get connectorsTitle =>
       isGeorgian ? 'კონექტორების სტატუსი' : 'Connector status';

@@ -157,6 +157,22 @@ class Station {
   final bool   live;             // false = registry data, no real-time availability
   final String priceNote;        // provenance of [price] ('' = live/per-station)
 
+  /// Copy carrying freshly read availability, with every descriptive field
+  /// (name, price, connector list, city, coordinates) left exactly as the feed
+  /// published it. Used when a station is re-read straight from its operator,
+  /// where only the live parts are worth preferring over the feed.
+  Station withLiveStatus({
+    required int available,
+    required int total,
+    required List<ConnectorPort> ports,
+    required String lastUpdated,
+  }) => Station(
+        name: name, location: location, available: available, lat: lat, lng: lng,
+        isDC: isDC, kw: kw, price: price, id: id, total: total, distance: distance,
+        provider: provider, lastUpdated: lastUpdated, connectors: connectors,
+        ports: ports, country: country, live: live, priceNote: priceNote,
+      );
+
   /// Copy carrying a formatted [distance] label (e.g. "2.3 km"). Used by the
   /// home carousel to stamp each station's distance from the user before display.
   Station withDistance(String d) => Station(

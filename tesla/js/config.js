@@ -21,8 +21,10 @@ export const CHARGERS_TR_URL =
 // CountryDef box in lib/app_constants.dart).
 export const TURKEY_BOUNDS = { south: 35.8, north: 42.1, west: 26.0, east: 44.8 };
 
-// Mobile app refreshes every 3 minutes (_kRefreshInterval) — keep in sync.
-export const REFRESH_MS = 3 * 60 * 1000;
+// Mobile app refreshes every 2 minutes (_kRefreshInterval) — keep in sync. The
+// updater's own cycle is ~2.5 min, so polling faster than this only re-asks for
+// data that cannot have changed yet.
+export const REFRESH_MS = 2 * 60 * 1000;
 
 // The feed is a ~MB JSON; allow a slow first download. Refreshes revalidate
 // via ETag (cache: 'no-cache') so they are much cheaper than the first load.

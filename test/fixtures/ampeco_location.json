@@ -1,0 +1,92 @@
+{
+  "_comment": [
+    "One AMPECO /app/locations/{id} response, shaped to pin every counting rule",
+    "the app and the updater pipeline must agree on. Location 220 reproduces the",
+    "case a driver actually hit: a dual-plug DC cabinet with CCS2 charging while",
+    "AMPECO reports the idle GB/T sibling as status=unavailable. Location 999 is",
+    "here to prove a linked location in the same response is not counted."
+  ],
+  "locations": [
+    {
+      "id": 220,
+      "name": "ბერი გაბრიელ სალოსის 135",
+      "address": "Beri Gabriel Salosi 135, Tbilisi 0131, Georgia",
+      "location": "41.7084911,44.7690355",
+      "zones": [
+        {
+          "id": 1,
+          "evses": [
+            {
+              "id": "451",
+              "status": "charging",
+              "isAvailable": false,
+              "startedAt": "2026-08-19T18:57:00+00:00",
+              "maxPower": 60000,
+              "currentType": "dc",
+              "tariffId": "11",
+              "connectors": [
+                { "id": "465", "name": "CCS", "icon": "ccs", "format": "cable" }
+              ]
+            },
+            {
+              "id": "452",
+              "status": "unavailable",
+              "isAvailable": false,
+              "maxPower": 60000,
+              "currentType": "dc",
+              "tariffId": "11",
+              "connectors": [
+                { "id": "466", "name": "GB/T DC", "icon": "gb-t-dc", "format": "cable" }
+              ]
+            },
+            {
+              "id": "453",
+              "status": "outoforder",
+              "isAvailable": false,
+              "maxPower": 22000,
+              "currentType": "ac",
+              "tariffId": "11",
+              "connectors": [
+                { "id": "467", "name": "Type 2", "icon": "type2", "format": "socket" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 999,
+      "name": "A linked location that is NOT this station",
+      "address": "Somewhere else, Tbilisi 0100, Georgia",
+      "location": "41.0000000,44.0000000",
+      "zones": [
+        {
+          "id": 2,
+          "evses": [
+            {
+              "id": "900",
+              "status": "available",
+              "isAvailable": true,
+              "maxPower": 60000,
+              "currentType": "dc",
+              "tariffId": "11",
+              "connectors": [
+                { "id": "901", "name": "CCS", "icon": "ccs", "format": "cable" }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "tariffs": [
+    {
+      "id": "11",
+      "priceForEnergy": "0.80",
+      "currencyCode": "GEL"
+    }
+  ],
+  "currencies": [
+    { "code": "GEL", "sign": "₾" }
+  ]
+}

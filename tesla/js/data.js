@@ -81,7 +81,19 @@ function normalize(raw) {
 }
 
 async function fetchStations(url = CHARGERS_URL) {
-  const res = await fetch(url, {
+  // `cache: 'no-cache'` only revalidates against the BROWSER cache. The gist is
+  // served through Fastly with `Cache-Control: max-age=300`, and that edge copy
+  // is handed back regardless — so a revalidating fetch could still be answered
+  // with data five minutes old, on top of the updater's own cycle. A parameter
+  // bucketed to the current minute gives the edge a new key once a minute:
+  // staleness drops to ~1 min, while everyone within the same minute still
+  // shares one cached copy instead of stampeding the origin.
+  //
+  // Live feed only. The Turkish registry is ~5 MB, carries no live status and is
+  // fetched once per session, so busting its cache would be pure cost.
+  const bucket = Math.floor(Date.now() / 60000);
+  const target = url === CHARGERS_URL ? `${url}?t=${bucket}` : url;
+  const res = await fetch(target, {
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     cache: 'no-cache', // always revalidate (ETag) but reuse the cached body on 304
   });

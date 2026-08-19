@@ -10,7 +10,13 @@ import { TURKEY_BOUNDS } from './config.js';
 
 const STORAGE_KEY = 'gc_countries';
 
-/** Boxes mirror the CountryDef entries in lib/app_constants.dart. */
+/**
+ * Boxes mirror the CountryDef entries in lib/app_constants.dart.
+ *
+ * Listed in the order the driver sees them, which matches the app's Settings:
+ * home country first, then the neighbours. See CLASSIFY_ORDER below — that
+ * order is deliberately different and must stay that way.
+ */
 export const COUNTRIES = [
   {
     code: 'GE',
@@ -20,20 +26,30 @@ export const COUNTRIES = [
     centre: { lat: 42.0, lng: 43.5 },
   },
   {
-    code: 'AM',
-    key: 'countryArmenia',
-    flag: '🇦🇲',
-    bounds: { south: 38.8, north: 41.3, west: 43.4, east: 46.6 },
-    centre: { lat: 40.2, lng: 44.9 },
-  },
-  {
     code: 'TR',
     key: 'countryTurkey',
     flag: '🇹🇷',
     bounds: TURKEY_BOUNDS,
     centre: { lat: 39.5, lng: 33.5 },
   },
+  {
+    code: 'AM',
+    key: 'countryArmenia',
+    flag: '🇦🇲',
+    bounds: { south: 38.8, north: 41.3, west: 43.4, east: 46.6 },
+    centre: { lat: 40.2, lng: 44.9 },
+  },
 ];
+
+/**
+ * The order a coordinate is tested against the boxes, which is a different
+ * problem from the order they are listed in. The boxes overlap and first match
+ * wins: Armenia's (38.8–41.3 N, 43.4–46.6 E) sits partly inside Turkey's
+ * (35.8–42.1 N, 26.0–44.8 E), so Gyumri (40.79 N, 43.84 E) is in both and reads
+ * as Turkish unless Armenia is tested first. Georgia leads against both.
+ * Mirrors _kClassifyOrder in lib/app_constants.dart.
+ */
+const CLASSIFY_ORDER = ['GE', 'AM', 'TR'];
 
 const byCode = new Map(COUNTRIES.map((c) => [c.code, c]));
 
@@ -43,14 +59,16 @@ function inBox(b, lat, lng) {
 
 /**
  * Which country a station belongs to. The Turkish dataset says so outright;
- * everything else is placed by coordinates, Georgia first — its box and
- * Armenia's overlap slightly around the border, and the Georgian feed's own
- * stations should read as Georgian there.
+ * everything else is placed by coordinates, in CLASSIFY_ORDER rather than list
+ * order — Georgia first because its box and Armenia's overlap around the
+ * border and the Georgian feed's own stations should read as Georgian there,
+ * then Armenia before Turkey for the western-Armenia overlap.
  */
 export function stationCountry(s) {
   if (s.country === 'Turkey') return 'TR';
-  for (const c of COUNTRIES) {
-    if (inBox(c.bounds, s.lat, s.lng)) return c.code;
+  for (const code of CLASSIFY_ORDER) {
+    const c = byCode.get(code);
+    if (c && inBox(c.bounds, s.lat, s.lng)) return c.code;
   }
   return '';
 }
