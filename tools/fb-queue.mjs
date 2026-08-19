@@ -277,7 +277,35 @@ async function graph(endpoint, params, method = 'GET') {
   return json;
 }
 
+// Instagram cannot be handed a future publish time the way Facebook can, so its
+// publisher is a Cloud Function that wakes at post time. It has no copy of
+// site/ and no way to read this file, so the content it needs is exported to
+// functions/social-content.json and deployed with it. This keeps the hooks
+// authored in exactly one place.
+async function exportContent() {
+  const list = await articles();
+  const out = {
+    generated: new Date().toISOString().slice(0, 10),
+    order: ORDER,
+    season: SEASON,
+    articles: list.map((a) => ({
+      slug: a.slug,
+      title: a.title,
+      url: a.url,
+      image: a.image,
+      hooks: HOOKS[a.slug] || [a.desc],
+    })),
+  };
+  const file = path.join(ROOT, 'functions', 'social-content.json');
+  await writeFile(file, JSON.stringify(out, null, 1), 'utf8');
+  console.log(`${out.articles.length} სტატია → ${path.relative(ROOT, file)}`);
+  const missing = list.filter((a) => !HOOKS[a.slug]).map((a) => a.slug);
+  if (missing.length) console.log(`!! HOOKS აკლია: ${missing.join(', ')} (გამოყენდება meta description)`);
+}
+
 async function main() {
+  if (flag('export')) return exportContent();
+
   if (flag('list')) {
     const { id } = await creds();
     const r = await graph(`${id}/scheduled_posts`, { fields: 'id,message,scheduled_publish_time', limit: '50' });

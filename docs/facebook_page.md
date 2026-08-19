@@ -1,4 +1,13 @@
-# GeoCharge Facebook page: scheduled posts
+# GeoCharge social posting: Facebook and Instagram
+
+Two networks, two mechanisms, one set of copy. Facebook is a local script that
+queues posts a month ahead and lets Facebook do the waiting. Instagram is a
+Cloud Function that wakes at post time, because the Instagram Graph API has no
+scheduling at all. Both read their article copy from the same place.
+
+Jump to [Instagram](#instagram) for the second half.
+
+## Facebook
 
 The page's posting queue is filled by `tools/fb-queue.mjs`. It reads the built
 articles under `site/blog/`, picks what should go out next, and hands Facebook a
@@ -40,11 +49,21 @@ act on Pages its own admins manage, so no App Review is involved.
 Configured on it already:
 
 - Use case **Manage everything on your Page** (`PAGES_API`)
+- Use case **Manage messaging & content on Instagram** (`INSTAGRAM_BUSINESS`),
+  set up via **API setup with Facebook login**, content permissions only. The
+  messaging permissions are deliberately not added.
 - Product **Facebook Login for Business**
 - Permissions marked Ready for testing: `pages_manage_posts`,
-  `pages_read_engagement`, `pages_show_list`, `business_management`
+  `pages_read_engagement`, `pages_show_list`, `business_management`,
+  `instagram_basic`, `instagram_content_publish`
 
 Nothing there needs touching again.
+
+One quirk worth knowing if it ever has to be redone: the console's **Add
+required content permissions** button silently does nothing on the first click
+fairly often. It has worked when the button relabels itself to **Go to
+permissions and features**. Until then the permissions will not appear in the
+Graph API Explorer's picker.
 
 ## Getting the token
 
@@ -181,3 +200,90 @@ adding it to the app's use case is necessary but not sufficient.
   station count or a tariff will drift away from the article it links to. Reread
   the hooks against the built page whenever the catalogue moves noticeably, and
   keep new hooks qualitative where a number is not the point.
+
+---
+
+# Instagram
+
+`functions/instagram.js`, deployed as two scheduled Cloud Functions:
+`instagramTuesday` (19:00) and `instagramSaturday` (12:00), both Asia/Tbilisi.
+
+## Why a function and not the same script
+
+The Pages API takes a future `scheduled_publish_time`. The Instagram Graph API
+does not: a post is published by the call that creates it. So Instagram needs
+something awake at post time, and that is the whole reason this half exists as
+infrastructure rather than a command someone runs.
+
+## Two constraints that shape the posts
+
+- **An image is mandatory.** Instagram has no text-only post.
+- **A caption link is not clickable.** The call to action is therefore the bio,
+  which is why `CTA` in the module points there instead of at the article.
+
+## Shared copy
+
+Hooks are authored once, in `HOOKS` in `tools/fb-queue.mjs`. The function has no
+access to `site/`, so the content is exported to `functions/social-content.json`
+and deployed with it:
+
+```bash
+node tools/fb-queue.mjs --export
+```
+
+**Run that after editing any hook, or after adding an article.** Otherwise
+Instagram keeps posting the copy from the last export while Facebook uses the
+new one. The export also prints a warning for any article with no hook.
+
+## Publishing flow
+
+Instagram publishes in two steps, and the API is asynchronous even for a photo:
+
+1. `POST /{ig-user-id}/media` with `image_url` and `caption` → a container id
+2. poll `GET /{container-id}?fields=status_code` until `FINISHED`
+3. `POST /{ig-user-id}/media_publish` with `creation_id`
+
+Publishing a container that is not `FINISHED` fails, so step 2 is not optional.
+
+`retryCount` is deliberately **0**. A retry after a partial failure could
+publish the same article twice, which is worse than missing one slot. A missed
+slot shows up in the function logs and the next slot carries on.
+
+## State
+
+Firestore document `social/instagram`, holding `posted: [{slug, at, mediaId}]`.
+Selection mirrors the Facebook script: never-posted first in `ORDER`, then least
+recently posted, with seasonal articles held back outside their months. It is
+separate from `tools/fb-state.json` on purpose, so the two networks do not have
+to stay in lockstep.
+
+## Credentials
+
+The function reuses the **same page token** as the Facebook script. It carries
+`instagram_basic` and `instagram_content_publish` alongside the Pages scopes, so
+one token covers both networks. Set it as a Firebase secret:
+
+```bash
+firebase functions:secrets:set FB_PAGE_TOKEN
+```
+
+`IG_USER_ID` is a constant in the module rather than a secret: it is derivable
+from the public page and keeping it in source makes the wiring readable. Fetch
+it with `GET /{page-id}?fields=instagram_business_account`.
+
+## Image size, an open issue
+
+The posts currently reuse the article og images at 1200x630, an aspect ratio of
+**1.905:1** against Instagram's ceiling of **1.91:1**. They are accepted, with
+almost no margin, and landscape is the least prominent shape in the feed.
+
+The repo already has the right tooling for a better answer:
+`tools/build-posters.mjs` writes 1080x1350 HTML against `marketing/posters/base.css`
+and `tools/render-posters.mjs` screenshots it at exactly that size. Generating one
+poster per article, publishing them under `site/assets/`, and pointing `image` in
+the export at those would fix both the margin and the format. Rendering needs
+Playwright, which this repo does not vendor:
+
+```bash
+npm i playwright && npx playwright install chromium
+```

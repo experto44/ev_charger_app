@@ -175,3 +175,7 @@ exports.expireManualPremium = onSchedule(
     );
   }
 );
+
+// Instagram publishing runs on its own schedule — see instagram.js for why it
+// is a function at all while Facebook is a local script.
+Object.assign(exports, require("./instagram"));
