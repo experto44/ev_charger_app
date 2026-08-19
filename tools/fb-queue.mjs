@@ -24,6 +24,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BLOG = path.join(ROOT, 'site', 'blog');
 const STATE = path.join(ROOT, 'tools', 'fb-state.json');
 const PREVIEW = path.join(ROOT, 'marketing', 'fb-queue.md');
+const SITE_SOCIAL = path.join(ROOT, 'site', 'assets', 'social');
+const ORIGIN = 'https://geocharge.ge';
 const API = process.env.FB_API_VERSION || 'v26.0';
 
 // Asia/Tbilisi is UTC+4 all year, no DST, so a fixed offset is correct here
@@ -284,6 +286,17 @@ async function graph(endpoint, params, method = 'GET') {
 // authored in exactly one place.
 async function exportContent() {
   const list = await articles();
+  // Instagram gets the 4:5 poster, not the og card. The og image is 1.905:1,
+  // which clears Instagram's 1.91 ceiling by almost nothing and is the weakest
+  // shape in the feed. Posters come from tools/build-article-posters.mjs; an
+  // article without one falls back to the og image rather than being skipped.
+  let posters = 0;
+  const image = (a) => {
+    const file = path.join(SITE_SOCIAL, `article-${a.slug}.png`);
+    if (!existsSync(file)) return a.image;
+    posters++;
+    return `${ORIGIN}/assets/social/article-${a.slug}.png`;
+  };
   const out = {
     generated: new Date().toISOString().slice(0, 10),
     order: ORDER,
@@ -292,13 +305,13 @@ async function exportContent() {
       slug: a.slug,
       title: a.title,
       url: a.url,
-      image: a.image,
+      image: image(a),
       hooks: HOOKS[a.slug] || [a.desc],
     })),
   };
   const file = path.join(ROOT, 'functions', 'social-content.json');
   await writeFile(file, JSON.stringify(out, null, 1), 'utf8');
-  console.log(`${out.articles.length} სტატია → ${path.relative(ROOT, file)}`);
+  console.log(`${out.articles.length} სტატია → ${path.relative(ROOT, file)} (${posters} პოსტერით)`);
   const missing = list.filter((a) => !HOOKS[a.slug]).map((a) => a.slug);
   if (missing.length) console.log(`!! HOOKS აკლია: ${missing.join(', ')} (გამოყენდება meta description)`);
 }

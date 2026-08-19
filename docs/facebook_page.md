@@ -271,19 +271,32 @@ firebase functions:secrets:set FB_PAGE_TOKEN
 from the public page and keeping it in source makes the wiring readable. Fetch
 it with `GET /{page-id}?fields=instagram_business_account`.
 
-## Image size, an open issue
+## Images
 
-The posts currently reuse the article og images at 1200x630, an aspect ratio of
-**1.905:1** against Instagram's ceiling of **1.91:1**. They are accepted, with
-almost no margin, and landscape is the least prominent shape in the feed.
+Each article has a 1080x1350 poster, which is 4:5 — the tallest ratio Instagram
+allows and the most screen a post can take on a phone.
 
-The repo already has the right tooling for a better answer:
-`tools/build-posters.mjs` writes 1080x1350 HTML against `marketing/posters/base.css`
-and `tools/render-posters.mjs` screenshots it at exactly that size. Generating one
-poster per article, publishing them under `site/assets/`, and pointing `image` in
-the export at those would fix both the margin and the format. Rendering needs
-Playwright, which this repo does not vendor:
+```bash
+node tools/build-article-posters.mjs      # marketing/posters/article-*.html
+node tools/render-posters.mjs article-    # the same names as .png
+```
+
+Rendering needs Playwright, which this repo deliberately does not vendor:
 
 ```bash
 npm i playwright && npx playwright install chromium
 ```
+
+`render-posters.mjs` reads `PLAYWRIGHT_DIR` if you would rather install it
+outside the repo. Copy the PNGs to `site/assets/social/`, deploy hosting, then
+re-run `--export`: the export points `image` at the poster when the file exists
+and falls back to the og image when it does not, so a new article is never
+skipped for want of a poster.
+
+Everything on a poster is read from the built article page, so it cannot claim a
+number the article does not. The copy in the two cards comes from the article's
+own key block.
+
+The earlier approach used the og images at 1200x630. That is 1.905:1 against
+Instagram's 1.91:1 ceiling: accepted, but with no margin and in the weakest feed
+shape. Kept only as the fallback.

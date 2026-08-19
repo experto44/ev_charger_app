@@ -10,7 +10,9 @@
 //
 // Two further Instagram constraints shape the code:
 //   · A post must carry an image. There is no text-only post.
-//   · A link in a caption is not clickable, so the call to action is the bio.
+//   · A link in a caption is not clickable. The article URL is printed anyway,
+//     since it is readable and it matches the poster, but the bio is what a
+//     reader will actually tap.
 //
 // The article copy is NOT authored here. It comes from social-content.json,
 // exported by `node tools/fb-queue.mjs --export`, so Facebook and Instagram
@@ -36,12 +38,10 @@ const IG_USER_ID = "17841448313966233";
 const API = "https://graph.facebook.com/v26.0";
 const STATE = "social/instagram";
 
-// Instagram accepts aspect ratios from 4:5 to 1.91:1. The og images are
-// 1200x630, i.e. 1.905:1, which clears that bar with almost nothing to spare.
-// They work, but they are the least prominent shape in the feed; a 1080x1350
-// render would sit better. Swapping is a change to `image` in the export, not
-// to this file.
-const CTA = "სრული სტატია ბიოში მოცემულ ბმულზე.";
+// Images are the 1080x1350 posters under site/assets/social, built by
+// tools/build-article-posters.mjs and pointed at by the export. That is 4:5,
+// the tallest ratio Instagram allows and the most screen a post can take on a
+// phone. Which image is used is decided in the export, never here.
 const TAGS = [
   "#GeoCharge",
   "#ელექტრომობილი",
@@ -51,7 +51,19 @@ const TAGS = [
   "#ევმანქანა",
 ];
 
-const caption = (hook) => `${hook}\n\n${CTA}\n\n${TAGS.join(" ")}`;
+// The article URL goes in the caption even though Instagram will not make it
+// clickable: it is readable, it is what the poster shows, and it is the only
+// way a reader can get to the piece without hunting. The bio line is there
+// because tapping is what most people will actually do.
+const caption = (hook, url) =>
+  [
+    hook,
+    "",
+    `სრული სტატია: ${url.replace(/^https:\/\//, "").replace(/\/$/, "")}`,
+    "ბმული ბიოშიც არის.",
+    "",
+    TAGS.join(" "),
+  ].join("\n");
 
 async function graph(path, params, method = "GET") {
   const body = new URLSearchParams(params);
@@ -120,7 +132,11 @@ async function publishNext() {
 
   const container = await graph(
     `${IG_USER_ID}/media`,
-    { image_url: article.image, caption: caption(hook), access_token: token },
+    {
+      image_url: article.image,
+      caption: caption(hook, article.url),
+      access_token: token,
+    },
     "POST"
   );
   await waitReady(container.id, token);
