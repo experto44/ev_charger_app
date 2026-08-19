@@ -1,0 +1,93 @@
+/* Shared look for the GeoCharge social poster series.
+   Canvas is exactly 1080x1350, the Facebook and Instagram feed size.
+   Every poster keeps the same skeleton: eyebrow, brand, headline, sub,
+   a stage that changes per poster, then the download call to action. */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Noto+Sans+Georgian:wght@400;500;600;700;800&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { background: #080a0b; }
+
+.post {
+  position: relative; width: 1080px; height: 1350px; overflow: hidden;
+  font-family: "Poppins", "Noto Sans Georgian", "Segoe UI", Sylfaen, system-ui, sans-serif;
+  color: #F3F6F5;
+}
+.bg { position: absolute; inset: 0;
+  background: radial-gradient(72% 52% at 50% 24%, #13251d 0%, #0a100e 56%, #070a09 100%); }
+.scan { position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(to bottom, #2bd5940a 0 2px, transparent 2px 9px);
+  -webkit-mask-image: radial-gradient(78% 58% at 50% 38%, #000 38%, transparent 100%);
+          mask-image: radial-gradient(78% 58% at 50% 38%, #000 38%, transparent 100%);
+  opacity: .75; }
+
+.inner { position: absolute; inset: 0; z-index: 2;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 58px 76px 52px; text-align: center; }
+
+/* eyebrow */
+.eyebrow { display: inline-flex; align-items: center; gap: 12px;
+  padding: 10px 24px; border-radius: 999px;
+  border: 1px solid #2bd59440; background: #2bd59412;
+  color: #9fe9cd; font-size: 21px; font-weight: 600; letter-spacing: .01em; }
+.eyebrow.warm { border-color: #ffb02e40; background: #ffb02e12; color: #ffd79a; }
+.eyebrow.hot { border-color: #ff5c5c44; background: #ff5c5c12; color: #ffd1c9; }
+.tag { display: inline-flex; align-items: center; gap: 8px;
+  font-size: 17px; font-weight: 800; letter-spacing: 1px;
+  padding: 6px 13px; border-radius: 999px; background: #ff4d4d; color: #fff; }
+.tag .ldot { width: 9px; height: 9px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px #ffffff44; }
+
+/* brand lockup */
+.brand { display: flex; align-items: center; gap: 14px; margin-top: 30px; }
+.brand img { width: 58px; height: 58px; }
+.word { font-size: 40px; font-weight: 800; letter-spacing: -1.2px; }
+.w-geo { color: #fff; } .w-charge { color: #2BD594; }
+
+h1 { margin-top: 24px; font-size: 64px; line-height: 1.14; font-weight: 700;
+  letter-spacing: -0.5px; text-wrap: balance; }
+h1 .accent { color: #2BD594; }
+h1 .amber { color: #FFB02E; }
+.sub { margin-top: 18px; font-size: 25px; font-weight: 400; color: #AEBEB7;
+  max-width: 830px; line-height: 1.52; }
+
+/* the part that differs per poster */
+.stage { flex: 1 1 auto; width: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 20px; margin: 34px 0 30px; }
+
+/* shared station card */
+.card { display: flex; align-items: center; gap: 22px; width: 100%;
+  background: linear-gradient(150deg, #101c17 0%, #0d1713 100%);
+  border: 1px solid #22332b; border-radius: 22px; padding: 24px 26px;
+  box-shadow: 0 24px 50px -30px rgba(0,0,0,.75); }
+.ico { width: 64px; height: 64px; flex: none; border-radius: 16px;
+  background: #0b1512; border: 1px solid #23342c;
+  display: flex; align-items: center; justify-content: center; }
+.meta { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; flex: 1 1 auto; }
+.name { font-size: 29px; font-weight: 700; }
+.det { font-size: 20px; color: #8ea69b; }
+.status { display: inline-flex; align-items: center; gap: 10px; white-space: nowrap;
+  font-size: 22px; font-weight: 700; padding: 10px 19px; border-radius: 999px; }
+.status .sdot { width: 12px; height: 12px; border-radius: 50%; }
+.status.free { background: #2bd5941f; color: #2BD594; }
+.status.free .sdot { background: #2BD594; box-shadow: 0 0 0 5px #2bd59426; }
+.status.busy { background: #ffb02e1f; color: #FFB02E; }
+.status.busy .sdot { background: #FFB02E; box-shadow: 0 0 0 5px #ffb02e26; }
+.status.out { background: #ff5c5c1a; color: #ff8a8a; }
+.status.out .sdot { background: #ff6b6b; box-shadow: 0 0 0 5px #ff6b6b26; }
+
+/* call to action */
+.cta { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.cta-btn { display: inline-flex; align-items: center; gap: 14px;
+  background: linear-gradient(180deg, #34e2a2 0%, #21c489 100%); color: #04140E;
+  font-size: 34px; font-weight: 800; letter-spacing: -0.3px;
+  padding: 20px 48px; border-radius: 999px;
+  box-shadow: 0 26px 55px -20px rgba(43,213,148,.55); }
+.cta-btn svg { display: block; }
+.badges { display: flex; gap: 16px; }
+.badge { display: inline-flex; align-items: center; gap: 12px; background: #000;
+  border: 1px solid #46505A; border-radius: 13px; padding: 10px 22px 10px 17px; }
+.btxt { display: flex; flex-direction: column; line-height: 1.15; text-align: left; }
+.btxt .top { font-size: 12px; color: #B9C4CB; letter-spacing: .06em; text-transform: uppercase; }
+.btxt .main { font-size: 22px; color: #fff; font-weight: 600; }
+.foot { margin-top: 16px; font-size: 20px; color: #6f817a; letter-spacing: .04em; }

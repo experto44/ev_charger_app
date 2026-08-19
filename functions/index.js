@@ -179,3 +179,11 @@ exports.expireManualPremium = onSchedule(
 // Instagram publishing runs on its own schedule — see instagram.js for why it
 // is a function at all while Facebook is a local script.
 Object.assign(exports, require("./instagram"));
+
+// The app poster campaign has its own weekly slot and its own state, so it
+// lives beside the blog publisher rather than inside it.
+Object.assign(exports, require("./instagram-posters"));
+
+// Facebook cannot be handed the whole campaign at once, so its queue is topped
+// up week by week as the scheduling horizon moves. See facebook-posters.js.
+Object.assign(exports, require("./facebook-posters"));

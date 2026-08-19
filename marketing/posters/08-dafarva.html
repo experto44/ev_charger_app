@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ka">
+<head>
+<meta charset="utf-8">
+<title>GeoCharge · 08-dafarva</title>
+<link rel="stylesheet" href="base.css">
+<style>
+    .stage { flex-direction: row; align-items: center; justify-content: center; gap: 40px; }
+    /* the frame is cropped onto the map itself, so the app chrome around it
+       stays out of the poster and the pins get the whole screen */
+    .phone { width: 366px; height: 520px; flex: none; border-radius: 40px; padding: 9px;
+      background: linear-gradient(160deg, #2b3a34, #131c18); box-shadow: 0 40px 80px -34px rgba(0,0,0,.95); }
+    .phone .scr { position: relative; width: 100%; height: 100%; border-radius: 33px; overflow: hidden; background: #000; }
+    .phone img { position: absolute; width: 130%; left: -12%; top: -190px; }
+    .stats { display: flex; flex-direction: column; gap: 16px; text-align: left; }
+    .stat { border: 1px solid #22332b; border-radius: 20px; padding: 20px 26px;
+      background: linear-gradient(150deg, #101c17, #0d1713); }
+    .snum { font-size: 50px; font-weight: 800; color: #2BD594; line-height: 1; letter-spacing: -1.5px; }
+    .slab { margin-top: 8px; font-size: 20px; color: #AEBEB7; line-height: 1.35; }</style>
+</head>
+<body>
+<div class="post">
+  <div class="bg"></div>
+  <div class="scan"></div>
+  <div class="inner">
+    <div class="eyebrow">დაფარვა</div>
+    <div class="brand">
+      <img src="mark.svg" alt="">
+      <span class="word"><span class="w-geo">Geo</span><span class="w-charge">Charge</span></span>
+    </div>
+    <h1><span class="accent">800+</span> სადგური და<br>ყოველ კვირას ახლები</h1>
+    <p class="sub">ახალი დამტენი რუკაზე ავტომატურად ჩნდება, აპლიკაციის განახლების ლოდინი არ გჭირდება.</p>
+    <div class="stage">
+      <div class="phone"><div class="scr"><img src="../../site/assets/shot-nationwide.jpg" alt=""></div></div>
+      <div class="stats">
+        <div class="stat"><div class="snum">800+</div><div class="slab">დამტენი სადგური<br>საქართველოსა და რეგიონში</div></div>
+        <div class="stat"><div class="snum">12</div><div class="slab">ქსელი ერთ რუკაზე</div></div>
+        <div class="stat"><div class="snum">0 ₾</div><div class="slab">ღირს აპლიკაცია</div></div>
+      </div>
+    </div>
+    <div class="cta">
+      <div class="cta-btn">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#04140E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m6.5 10.5 5.5 5.5 5.5-5.5"/><path d="M4 20h16"/></svg>
+        ჩამოტვირთე ახლავე
+      </div>
+      <div class="badges">
+        <div class="badge">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M16.365 1.43c0 1.14-.42 2.2-1.12 2.99-.85.94-2.23 1.67-3.38 1.58-.14-1.13.42-2.32 1.05-3.06.71-.85 1.94-1.5 2.97-1.54.03.01.05.02.06.03.02.32-.02.35 0 0Zm2.86 15.7c-.51 1.19-.76 1.72-1.42 2.77-.92 1.47-2.22 3.3-3.83 3.31-1.43.02-1.8-.94-3.74-.93-1.94.01-2.35.94-3.78.92-1.61-.02-2.84-1.67-3.76-3.14-2.58-4.11-2.85-8.94-1.26-11.51 1.13-1.82 2.91-2.89 4.58-2.89 1.7 0 2.77.94 4.18.94 1.36 0 2.19-.94 4.16-.94 1.49 0 3.06.82 4.19 2.23-3.68 2.02-3.08 7.28.68 9.24Z"/></svg>
+          <span class="btxt"><span class="top">ჩამოტვირთეთ</span><span class="main">App Store</span></span>
+        </div>
+        <div class="badge">
+          <svg width="28" height="28" viewBox="0 0 24 24"><path d="M4 2.8v18.4c0 .6.7 1 1.2.7L8 20.2 16.5 15 19.8 13c.8-.45.8-1.55 0-2L5.2 2.1C4.7 1.8 4 2.2 4 2.8Z" fill="#2BD594"/><path d="M4.4 2.2 14.6 12 4.4 21.8" fill="none" stroke="#0D1A13" stroke-width=".9"/></svg>
+          <span class="btxt"><span class="top">ჩამოტვირთეთ</span><span class="main">Google Play</span></span>
+        </div>
+      </div>
+      <div class="foot">geocharge.ge</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
