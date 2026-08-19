@@ -380,6 +380,15 @@ footer{background:var(--dark-2);color:#8B98A1}
 gap:12px 26px;justify-content:space-between;align-items:center;font-size:13px}
 .f-in a{color:#B9C4CB;text-decoration:none;font-weight:500}
 .f-in a:hover{color:var(--accent)}
+/* The footer carries the full map of the site, including the sections that are
+   deliberately not in the header nav (Turkey). One link from every page is what
+   makes a section reachable at all, for a reader and for a crawler. */
+.fnav{max-width:1100px;margin:0 auto;padding:30px clamp(20px,5vw,40px) 4px;
+display:flex;flex-wrap:wrap;gap:10px 22px;border-bottom:1px solid rgba(255,255,255,.07)}
+.fnav a{color:#B9C4CB;text-decoration:none;font-size:13.5px;font-weight:500}
+.fnav a:hover{color:var(--accent)}
+.fnav a.hi{color:#fff}
+.fnav a.hi::before{content:"🇹🇷";margin-right:6px;font-size:12px}
 .note{color:#8B98A1;font-size:13px;margin:12px 0 0}
 .calc{display:grid;grid-template-columns:minmax(260px,1fr) minmax(240px,320px);gap:24px;
 background:var(--soft);border:1px solid var(--line);border-radius:20px;padding:clamp(20px,3vw,30px);margin:28px 0 0}
@@ -399,11 +408,15 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 @media (max-width:700px){.calc{grid-template-columns:1fr}}
 `.trim();
 
-export function shell({ lang, title, desc, canonical, altHref, jsonld, body }) {
+// `image` is the share card. Everything that does not pass one keeps the site
+// cover, which is right for a catalogue page and wrong for an article: a feed
+// full of identical thumbnails is a feed nobody clicks.
+export function shell({ lang, title, desc, canonical, altHref, jsonld, body, image }) {
   const t = L[lang];
   const other = lang === 'ka' ? 'en' : 'ka';
   const kaHref = lang === 'ka' ? canonical : altHref;
   const enHref = lang === 'en' ? canonical : altHref;
+  const og = image || `${ORIGIN}/assets/og-image.png`;
   return `<!DOCTYPE html>
 <html lang="${t.code}">
 <head>
@@ -422,11 +435,13 @@ export function shell({ lang, title, desc, canonical, altHref, jsonld, body }) {
 <meta property="og:url" content="${canonical}">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
-<meta property="og:image" content="${ORIGIN}/assets/og-image.png">
+<meta property="og:image" content="${og}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(title)}">
 <meta name="twitter:description" content="${esc(desc)}">
-<meta name="twitter:image" content="${ORIGIN}/assets/og-image.png">
+<meta name="twitter:image" content="${og}">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
 <link rel="apple-touch-icon" href="/assets/icon-1024.png">
@@ -470,9 +485,19 @@ ${body}
 </section>
 </main>
 <footer>
+  <nav class="fnav" aria-label="${lang === 'ka' ? 'საიტის რუკა' : 'Site map'}">
+    <a href="${t.base}/${t.chargersDir}/">${esc(t.catalog)}</a>
+    <a href="${t.base}/${t.tariffsDir}/">${esc(t.tariffs)}</a>
+    <a href="${t.base}/${t.calcDir}/">${esc(t.calc)}</a>
+    <a href="${t.base}/${t.networksDir}/">${esc(t.networks)}</a>
+    <a href="${t.base}/${t.routesDir}/">${esc(t.routes)}</a>
+    <a href="${t.base}/${t.customsDir}/">${esc(t.customs)}</a>
+    <a href="${t.base}/blog/">${lang === 'ka' ? 'სტატიები' : 'Guides'}</a>
+    <a class="hi" href="${t.base}/${t.turkeyDir}/">${lang === 'ka' ? 'დამტენები თურქეთში' : 'Chargers in Turkey'}</a>
+  </nav>
   <div class="f-in">
     <p style="margin:0">© 2026 GeoCharge</p>
-    <a href="${t.base}/">${lang === 'ka' ? '← geocharge.ge' : '← geocharge.ge'}</a>
+    <a href="${t.base}/">← geocharge.ge</a>
   </div>
 </footer>
 </body>

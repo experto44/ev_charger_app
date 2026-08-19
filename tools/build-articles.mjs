@@ -138,11 +138,44 @@ padding:20px clamp(12px,2.4vw,22px) 14px;background:var(--soft)}
 .src li::before{content:none}
 .src a{color:var(--accent-d);font-weight:500;text-decoration:none}
 .src a:hover{text-decoration:underline}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:16px;margin:0}
-.acard{display:block;background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px;text-decoration:none}
-.acard:hover{border-color:var(--accent);box-shadow:0 12px 32px -18px rgba(23,153,95,.35)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:18px;margin:0}
+/* A card is a link, so the whole thing has to read as pressable: the icon tile
+   and the arrow give it the two affordances plain text never had. */
+.acard{position:relative;display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);
+border-radius:20px;padding:22px 22px 20px;text-decoration:none;overflow:hidden;
+transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+.acard::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:var(--accent);
+transform:scaleX(0);transform-origin:left;transition:transform .22s ease}
+.acard:hover{border-color:var(--accent);box-shadow:0 16px 36px -20px rgba(23,153,95,.45);transform:translateY(-2px)}
+.acard:hover::before{transform:scaleX(1)}
+.acard:focus-visible{outline:2px solid var(--accent-d);outline-offset:3px}
+.acard .ai{width:44px;height:44px;border-radius:13px;background:var(--mint);border:1px solid var(--mint-b);
+display:flex;align-items:center;justify-content:center;margin-bottom:16px;flex-shrink:0}
+.acard .ai svg{display:block}
 .acard b{display:block;font-size:17.5px;font-weight:600;color:var(--ink);line-height:1.4;margin-bottom:8px}
 .acard span{display:block;color:var(--ink-2);font-size:14.5px;line-height:1.6}
+.acard b+span{margin-bottom:16px}
+.acard .am{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:14px;
+border-top:1px solid var(--line);color:#8B98A1;font-size:12.5px;font-weight:500}
+.acard .am .rd{margin-left:auto;color:var(--accent-d);font-weight:600;display:flex;align-items:center;gap:5px}
+.acard:hover .am .rd svg{transform:translateX(3px)}
+.acard .am .rd svg{transition:transform .18s ease}
+/* Filter and sort bar on the guides index. Rendered hidden and revealed by the
+   script, so a reader without JS is never shown controls that do nothing. */
+.ctrl{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:0 0 26px}
+.ctrl[hidden]{display:none}
+.chips-f{display:flex;flex-wrap:wrap;gap:8px}
+.chips-f button{font:600 13.5px 'Poppins','Noto Sans Georgian',sans-serif;color:var(--ink-2);
+background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 15px;cursor:pointer;
+transition:all .16s ease}
+.chips-f button:hover{border-color:var(--accent);color:var(--accent-d)}
+.chips-f button[aria-pressed="true"]{background:var(--mint);border-color:var(--mint-b);color:#1B5E42}
+.sortw{margin-left:auto;display:flex;align-items:center;gap:8px;color:#8B98A1;font-size:13px}
+.sortw select{font:600 13.5px 'Poppins','Noto Sans Georgian',sans-serif;color:var(--ink);
+background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px;cursor:pointer}
+.sortw select:hover{border-color:var(--accent)}
+.nores{color:var(--ink-2);font-size:15.5px;margin:0}
+@media (max-width:560px){.sortw{margin-left:0;width:100%}}
 .links{display:flex;flex-wrap:wrap;gap:10px;margin:0}
 `.trim();
 
@@ -2621,6 +2654,8 @@ const L = {
     idxIntro: 'მოკლე და პირდაპირი პასუხები კითხვებზე, რომლებიც ელექტრომობილის მფლობელს საქართველოში ყველაზე ხშირად უჩნდება. ყველა ციფრი აღებულია იმავე მონაცემებიდან, რაზეც აპლიკაცია მუშაობს.',
     faqH: 'ხშირად დასმული კითხვები', more: 'სხვა სტატიები', seeAlso: 'იხილეთ ასევე',
     sourcesH: 'წყაროები',
+    filterBy: 'თემა', sortBy: 'დალაგება', sortNew: 'ახლები პირველად',
+    sortPop: 'პოპულარული', noneFound: 'ამ თემაზე სტატია ჯერ არ გვაქვს.',
     related: [['დამტენების სია', '/damtenebi/'], ['ტარიფების შედარება', '/tarifebi/'],
       ['დატენვის კალკულატორი', '/kalkulatori/'], ['მარშრუტები', '/marshruti/'], ['ქსელები', '/qselebi/']],
     ctaTitle: 'იპოვე დამტენი ერთ აპლიკაციაში',
@@ -2632,6 +2667,8 @@ const L = {
     idxIntro: 'Short, direct answers to the questions EV drivers in Georgia actually ask. Every figure comes from the same data the app runs on.',
     faqH: 'Frequently asked questions', more: 'More guides', seeAlso: 'See also',
     sourcesH: 'Sources',
+    filterBy: 'Topic', sortBy: 'Sort', sortNew: 'Newest first',
+    sortPop: 'Most popular', noneFound: 'No guide on this topic yet.',
     related: [['Charger list', '/en/chargers/'], ['Tariff comparison', '/en/tariffs/'],
       ['Charging cost calculator', '/en/calculator/'], ['Routes', '/en/routes/'], ['Networks', '/en/networks/']],
     ctaTitle: 'Find a charger in one app',
@@ -2670,6 +2707,147 @@ const breadcrumbLd = (items) => ({
   })),
 });
 
+
+/* ── card furniture ──────────────────────────────────────────────────────────
+   A guide card used to be a bold line over a grey line, which read as a
+   paragraph rather than as something to open. Each guide now carries a line
+   icon, its date and a read arrow. Icons are inline SVG on the same stroke
+   style as the home page, so there is no request and no layout shift.
+
+   `cat` drives the filter chips on the index. `pop` is an EDITORIAL ranking of
+   how much the topic is searched, not measured pageviews: nothing in the build
+   has access to analytics, so a "popular" sort has to be a judgement, and it is
+   written here where it can be corrected in one place. */
+const ART_META = {
+  'datenvis-fasi':      { cat: 'charging', pop: 1, icon: '<circle cx="12" cy="12" r="8.4"/><path d="M12 7.6v8.8M9.4 10.2h5.2M9.4 13.8h5.2"/>' },
+  konektorebi:          { cat: 'charging', pop: 2, icon: '<path d="M9 3v4.6M15 3v4.6"/><path d="M6.2 7.6h11.6v3.1a5.8 5.8 0 0 1-11.6 0V7.6Z"/><path d="M12 16.5V21"/>' },
+  '100-km-fasi':        { cat: 'charging', pop: 3, icon: '<path d="M4 18.5a8 8 0 1 1 16 0"/><path d="m12 14.5 4-4.2"/><circle cx="12" cy="18.5" r="1.3"/>' },
+  'sakhlis-damteni':    { cat: 'charging', pop: 4, icon: '<path d="m3.4 10.2 8.6-6.7 8.6 6.7v9.3a1 1 0 0 1-1 1H4.4a1 1 0 0 1-1-1v-9.3Z"/><path d="M12.6 9.6 10.4 13.6h3.2L11.4 17.6"/>' },
+  'shori-mgzavroba':    { cat: 'travel',   pop: 5, icon: '<path d="M12 3.4v3M12 10.5v3M12 17.6v3"/><path d="M5.2 20.6 8 3.4M18.8 20.6 16 3.4"/>' },
+  batarea:              { cat: 'battery',  pop: 6, icon: '<rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="M6.4 10.6v2.8M10.2 10.6v2.8"/>' },
+  'chinuri-importi':    { cat: 'buying',   pop: 7, icon: '<path d="M3.4 8.2 12 4.1l8.6 4.1v7.6L12 19.9l-8.6-4.1V8.2Z"/><path d="m3.4 8.2 8.6 4.1 8.6-4.1M12 12.3v7.6"/>' },
+  'amerikuli-importi':  { cat: 'buying',   pop: 8, icon: '<path d="M3 17.4c1.4 1 2.8 1 4.2 0s2.8-1 4.2 0 2.8 1 4.2 0 2.8-1 4.2 0"/><path d="M5.4 13.8V9.2h13.2l-1.8 4.6"/><path d="M9.2 9.2V5h5.6v4.2"/>' },
+  'ac-da-dc':           { cat: 'charging', pop: 9, icon: '<path d="M13.2 2.6 4.6 14.2h6.6L10 21.4l8.6-11.6H12l1.2-7.2Z"/>' },
+  zamtari:              { cat: 'travel',   pop: 10, icon: '<path d="M12 2.6v18.8M4.2 6.6l15.6 10.8M19.8 6.6 4.2 17.4"/><path d="m9.2 4.6 2.8 2.8 2.8-2.8M9.2 19.4l2.8-2.8 2.8 2.8"/>' },
+  'batareis-cveta':     { cat: 'battery',  pop: 11, icon: '<rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="m5.4 14.2 3-3 2.6 2 3.6-4"/>' },
+  'meoradi-shemowmeba': { cat: 'buying',   pop: 12, icon: '<circle cx="10.8" cy="10.8" r="6.8"/><path d="m20.4 20.4-4.6-4.6"/><path d="m7.8 10.8 2.2 2.2 4-4.2"/>' },
+  'tbilisi-stambuli':   { cat: 'travel',   pop: 13, icon: '<path d="M12 3v18"/><path d="M12 5.2h6.6l2 2.4-2 2.4H12z"/><path d="M12 13.4H5.4l-2 2.4 2 2.4H12z"/>' },
+  'turketshi-mgzavroba':{ cat: 'travel',   pop: 14, icon: '<circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/><path d="M12 3.4a14 14 0 0 1 0 17.2 14 14 0 0 1 0-17.2Z"/>' },
+};
+
+const CATS = {
+  ka: [['all', 'ყველა'], ['charging', 'დატენვა'], ['battery', 'ბატარეა'],
+    ['travel', 'მგზავრობა'], ['buying', 'ყიდვა']],
+  en: [['all', 'All'], ['charging', 'Charging'], ['battery', 'Battery'],
+    ['travel', 'Trips'], ['buying', 'Buying']],
+};
+
+const artIcon = (slug) => `<span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${
+  (ART_META[slug] || {}).icon || '<circle cx="12" cy="12" r="8.4"/>'}</svg></span>`;
+
+const ARROW = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg>`;
+
+// MONTHS is locative ("in August"), which a date chip must not be. Georgian
+// nominatives are listed rather than derived: აგვისტო does not take the -ი the
+// other eleven do.
+const MONTHS_NOM = ['იანვარი', 'თებერვალი', 'მარტი', 'აპრილი', 'მაისი', 'ივნისი',
+  'ივლისი', 'აგვისტო', 'სექტემბერი', 'ოქტომბერი', 'ნოემბერი', 'დეკემბერი'];
+const shortDate = (lang, iso) => {
+  const [y, m] = iso.split('-');
+  return lang === 'ka'
+    ? `${MONTHS_NOM[Number(m) - 1]} ${y}`
+    : `${MONTHS.en[Number(m) - 1]} ${y}`;
+};
+
+// One card, used by the index and by the "more guides" list under an article.
+function card(lang, x, t) {
+  const meta = ART_META[x.slug] || {};
+  const date = x.date || DEFAULT_DATE;
+  return `<a class="acard" href="${t.base}/${t.dir}/${x.slug}/" data-cat="${meta.cat || 'all'}"
+data-date="${date}" data-pop="${meta.pop || 99}">${artIcon(x.slug)}<b>${esc(x[lang].title)}</b>
+<span>${esc(x[lang].desc)}</span><span class="am"><time datetime="${date}">${esc(shortDate(lang, date))}</time>
+<span class="rd">${lang === 'ka' ? 'წაკითხვა' : 'Read'} ${ARROW}</span></span></a>`;
+}
+
+// Newest first, everywhere a list of guides is printed.
+const byDate = (list) => [...list].sort((a, b) =>
+  (b.date || DEFAULT_DATE).localeCompare(a.date || DEFAULT_DATE));
+
+/* ── share cards ─────────────────────────────────────────────────────────────
+   Every guide needs its own 1200x630 card, or a feed full of shares all carries
+   the same site cover. The cards are STATIC files under site/assets/og/, shot
+   once from the sheet this writes to tools/.cache/og-cards.html:
+
+     node tools/build-articles.mjs          # writes the sheet
+     …open the sheet and screenshot each #og-<slug>-<lang> at 1200x630
+       into site/assets/og/<slug>-<lang>.png
+
+   They are not rebuilt nightly on purpose: a title changes about never, and the
+   nightly job has no browser. articlePage() falls back to the site cover for any
+   guide whose card is missing, so adding a guide can never ship a broken image. */
+async function writeOgSheet(ARTICLES) {
+  const mark = await readFile(path.join(SITE, 'assets', 'mark.svg'), 'utf8');
+  const cards = [];
+  for (const lang of ['ka', 'en']) {
+    for (const art of ARTICLES) {
+      const a = art[lang];
+      const meta = ART_META[art.slug] || {};
+      const cat = (CATS[lang].find(([id]) => id === meta.cat) || [, ''])[1];
+      cards.push(`<div class="og" id="og-${art.slug}-${lang}">
+  <div class="og-top">
+    <div class="og-brand">${mark.replace(/width="\d+" height="\d+"/, 'width="46" height="46"')}<b>GeoCharge</b></div>
+    <div class="og-ico"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2BD594"
+stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${meta.icon || ''}</svg></div>
+  </div>
+  <div class="og-mid">
+    <div class="og-pill">${esc(cat)}</div>
+    <h2>${esc(a.title)}</h2>
+    <p>${esc(a.desc)}</p>
+  </div>
+  <div class="og-foot"><span>geocharge.ge</span><span>${esc(stamp(lang, art.date || DEFAULT_DATE))}</span></div>
+</div>`);
+    }
+  }
+
+  const html = `<!DOCTYPE html><html lang="ka"><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&amp;family=Noto+Sans+Georgian:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#222;font-family:'Poppins','Noto Sans Georgian',system-ui,sans-serif}
+.og{width:1200px;height:630px;box-sizing:border-box;padding:64px 72px;margin:0 0 24px;
+background:#11161A;position:relative;overflow:hidden;display:flex;flex-direction:column;color:#fff}
+/* the glow keeps a flat dark card from looking like an error page in a feed */
+.og::after{content:"";position:absolute;width:760px;height:760px;right:-260px;top:-360px;border-radius:50%;
+background:radial-gradient(circle,rgba(43,213,148,.20) 0%,rgba(43,213,148,0) 68%)}
+.og>*{position:relative;z-index:1}
+.og-top{display:flex;align-items:center;justify-content:space-between}
+.og-brand{display:flex;align-items:center;gap:14px}
+.og-brand b{font-size:27px;font-weight:700;letter-spacing:-.01em}
+.og-ico{width:86px;height:86px;border-radius:24px;background:rgba(43,213,148,.12);
+border:1px solid rgba(43,213,148,.32);display:flex;align-items:center;justify-content:center}
+.og-mid{margin-top:auto}
+.og-pill{display:inline-block;background:rgba(43,213,148,.14);border:1px solid rgba(43,213,148,.34);
+color:#2BD594;font-size:19px;font-weight:600;padding:8px 18px;border-radius:999px;margin-bottom:22px}
+.og h2{font-size:56px;line-height:1.22;font-weight:700;margin:0 0 18px;letter-spacing:-.015em;
+display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.og p{font-size:24px;line-height:1.5;color:#A7B4BD;margin:0;max-width:960px;
+display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.og-foot{display:flex;justify-content:space-between;align-items:center;margin-top:38px;padding-top:24px;
+border-top:1px solid rgba(255,255,255,.12);color:#8B98A1;font-size:20px;font-weight:500}
+.og-foot span:first-child{color:#2BD594;font-weight:600}
+</style></head><body>
+${cards.join('\n')}
+</body></html>`;
+
+  const out = path.join(ROOT, 'tools', '.cache', 'og-cards.html');
+  await mkdir(path.dirname(out), { recursive: true });
+  await writeFile(out, html, 'utf8');
+  return out;
+}
+
 function articlePage(lang, art, ARTICLES) {
   const t = L[lang], a = art[lang];
   const o = L[lang === 'ka' ? 'en' : 'ka'];
@@ -2677,7 +2855,7 @@ function articlePage(lang, art, ARTICLES) {
   const alt = `${ORIGIN}${o.base}/${o.dir}/${art.slug}/`;
   const bc = [{ name: t.home, href: `${t.base}/` },
     { name: t.blog, href: `${t.base}/${t.dir}/` }, { name: a.title }];
-  const others = ARTICLES.filter((x) => x.slug !== art.slug);
+  const others = byDate(ARTICLES.filter((x) => x.slug !== art.slug));
   const date = art.date || DEFAULT_DATE;
 
   // Where an article leans on outside measurements rather than our own data, the
@@ -2705,7 +2883,7 @@ ${sources}
 
 <h2>${esc(t.more)}</h2>
 <div class="cards">
-${others.map((x) => `<a class="acard" href="${t.base}/${t.dir}/${x.slug}/"><b>${esc(x[lang].title)}</b><span>${esc(x[lang].desc)}</span></a>`).join('\n')}
+${others.map((x) => card(lang, x, t)).join('\n')}
 </div>
 
 <h2>${esc(t.seeAlso)}</h2>
@@ -2713,11 +2891,17 @@ ${others.map((x) => `<a class="acard" href="${t.base}/${t.dir}/${x.slug}/"><b>${
 ${t.related.map(([label, href]) => `<a href="${href}">${esc(label)}</a>`).join('')}
 </div>`;
 
+  // Each guide has its own share card under /assets/og/. A guide added without
+  // one falls back to the site cover rather than to a 404 in every feed.
+  const ogFile = path.join(SITE, 'assets', 'og', `${art.slug}-${lang}.png`);
+  const image = existsSync(ogFile) ? `${ORIGIN}/assets/og/${art.slug}-${lang}.png` : undefined;
+
   return {
     file: path.join(SITE, t.base.replace('/', ''), t.dir, art.slug, 'index.html'),
     url,
     html: shell({
       lang, title: `${a.metaTitle || a.title} | GeoCharge`, desc: a.desc, canonical: url, altHref: alt,
+      image,
       body: `<style>${PROSE}</style>\n${body}`,
       jsonld: {
         '@context': 'https://schema.org',
@@ -2728,7 +2912,7 @@ ${t.related.map(([label, href]) => `<a href="${href}">${esc(label)}</a>`).join('
             url, inLanguage: lang, datePublished: date, dateModified: date,
             author: { '@type': 'Organization', '@id': `${ORIGIN}/#org`, name: 'GeoCharge' },
             publisher: { '@id': `${ORIGIN}/#org` },
-            image: `${ORIGIN}/assets/og-image.png`,
+            image: image || `${ORIGIN}/assets/og-image.png`,
             isPartOf: { '@type': 'WebSite', '@id': `${ORIGIN}/#website` },
           },
           {
@@ -2750,17 +2934,75 @@ function indexPage(lang, ARTICLES) {
   const alt = `${ORIGIN}${o.base}/${o.dir}/`;
   const bc = [{ name: t.home, href: `${t.base}/` }, { name: t.blog }];
 
+  // Newest first is the order the page ships in, so the reader without JS, and
+  // the crawler, both see the freshest guide at the top.
+  const ordered = byDate(ARTICLES);
+
   const body = `${crumbs(bc)}
 <h1>${esc(t.idxTitle)}</h1>
-<p class="intro" style="margin-bottom:36px">${esc(t.idxIntro)}</p>
-<div class="cards">
-${ARTICLES.map((x) => `<a class="acard" href="${t.base}/${t.dir}/${x.slug}/"><b>${esc(x[lang].title)}</b><span>${esc(x[lang].desc)}</span></a>`).join('\n')}
+<p class="intro" style="margin-bottom:26px">${esc(t.idxIntro)}</p>
+
+<div class="ctrl" id="ctrl" hidden>
+  <div class="chips-f" role="group" aria-label="${esc(t.filterBy)}">
+${CATS[lang].map(([id, label], i) => `    <button type="button" data-cat="${id}" aria-pressed="${i === 0}">${esc(label)}</button>`).join('\n')}
+  </div>
+  <label class="sortw">${esc(t.sortBy)}
+    <select id="srt">
+      <option value="new">${esc(t.sortNew)}</option>
+      <option value="pop">${esc(t.sortPop)}</option>
+    </select>
+  </label>
 </div>
+
+<div class="cards" id="alist">
+${ordered.map((x) => card(lang, x, t)).join('\n')}
+</div>
+<p class="nores" id="nores" hidden>${esc(t.noneFound)}</p>
 
 <h2>${esc(t.seeAlso)}</h2>
 <div class="links">
 ${t.related.map(([label, href]) => `<a href="${href}">${esc(label)}</a>`).join('')}
-</div>`;
+</div>
+<script>
+/* Progressive enhancement only: the list is already sorted newest first in the
+   HTML, and these controls are revealed only once this runs. */
+(function () {
+  var list = document.getElementById('alist');
+  var ctrl = document.getElementById('ctrl');
+  var none = document.getElementById('nores');
+  var sel = document.getElementById('srt');
+  if (!list || !ctrl) { return; }
+  var cards = [].slice.call(list.children);
+  var cat = 'all';
+  function apply() {
+    var mode = sel.value;
+    cards.slice().sort(function (a, b) {
+      return mode === 'pop'
+        ? (+a.dataset.pop) - (+b.dataset.pop)
+        : b.dataset.date.localeCompare(a.dataset.date);
+    }).forEach(function (c) { list.appendChild(c); });
+    var shown = 0;
+    cards.forEach(function (c) {
+      var ok = cat === 'all' || c.dataset.cat === cat;
+      c.hidden = !ok;
+      if (ok) { shown++; }
+    });
+    none.hidden = shown > 0;
+  }
+  ctrl.querySelectorAll('button[data-cat]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      cat = b.dataset.cat;
+      ctrl.querySelectorAll('button[data-cat]').forEach(function (o) {
+        o.setAttribute('aria-pressed', String(o === b));
+      });
+      apply();
+    });
+  });
+  sel.addEventListener('change', apply);
+  ctrl.hidden = false;
+  apply();
+})();
+</script>`;
 
   return {
     file: path.join(SITE, t.base.replace('/', ''), t.dir, 'index.html'),
@@ -2776,6 +3018,17 @@ ${t.related.map(([label, href]) => `<a href="${href}">${esc(label)}</a>`).join('
             '@type': 'CollectionPage', '@id': url + '#page', name: t.idxTitle, url,
             inLanguage: lang, description: t.idxDesc,
             isPartOf: { '@type': 'WebSite', '@id': `${ORIGIN}/#website` },
+          },
+          // Newest first, matching what the page prints. An answer engine that
+          // reads only the graph still learns every guide and its order.
+          {
+            '@type': 'ItemList', '@id': url + '#list', name: t.idxTitle,
+            itemListOrder: 'https://schema.org/ItemListOrderDescending',
+            numberOfItems: ordered.length,
+            itemListElement: ordered.map((x, i) => ({
+              '@type': 'ListItem', position: i + 1, name: x[lang].title,
+              url: `${ORIGIN}${t.base}/${t.dir}/${x.slug}/`,
+            })),
           },
         ],
       },
@@ -2818,6 +3071,13 @@ async function main() {
     for (const o of offenders.slice(0, 12)) console.error('     ' + o);
     process.exit(1);
   }
+
+  const sheet = await writeOgSheet(ARTICLES);
+  const missing = ARTICLES.flatMap((a) => ['ka', 'en']
+    .filter((l) => !existsSync(path.join(SITE, 'assets', 'og', `${a.slug}-${l}.png`)))
+    .map((l) => `${a.slug}-${l}`));
+  console.log(`· share cards: ${ARTICLES.length * 2 - missing.length}/${ARTICLES.length * 2} present`
+    + (missing.length ? `, missing ${missing.join(', ')} (shoot them from ${path.relative(ROOT, sheet)})` : ''));
 
   console.log(`· wrote ${pages.length} pages (${ARTICLES.length} articles × 2 langs + 2 indexes)`);
   console.log('· dash check passed: no dashes used as punctuation in the prose');

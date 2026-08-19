@@ -121,6 +121,7 @@
         { "@type": "Question", "name": "Does GeoCharge work on the Tesla screen?", "acceptedAnswer": { "@type": "Answer", "text": "Yes — open tesla.geocharge.ge in the Tesla in-car browser: a live charger map plus an EV trip planner with charging stops, built for the car screen. Sign in with your GeoCharge account for a free 24-hour trial; a Premium subscription activated in the phone app unlocks it permanently." } },
         { "@type": "Question", "name": "Do I need an account?", "acceptedAnswer": { "@type": "Answer", "text": "You can sign in quickly with Google or email to save your profile." } },
         { "@type": "Question", "name": "How is GeoCharge different from using each network's own app?", "acceptedAnswer": { "@type": "Answer", "text": "Instead of juggling multiple apps, GeoCharge brings stations from across Georgia's networks into a single map with consistent details and filtering." } },
+        { "@type": "Question", "name": "Does GeoCharge show chargers in Turkey?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. The app carries the official registry of the Turkish energy regulator, over 13,000 public stations with operator names and published tariffs. Turkey is switched on in Settings, and route planning downloads the Turkish chargers automatically. Fast charging in Turkey runs on CCS2; GB/T does not exist there. The full list by province is at geocharge.ge/en/turkey/." } },
         { "@type": "Question", "name": "Can I use GeoCharge in Europe?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Switch on European countries in the app settings and GeoCharge will show their charging stations on the same map, so you can plan an EV road trip across Europe with the same app." } }
       ]
     }
@@ -249,6 +250,21 @@ h1 span{color:var(--accent)}
 .net .ct{font-size:12px;line-height:1}
 .net .ct b{color:var(--accent-d);font-weight:700}
 .net .ct span{color:#77848C;font-weight:500}
+/* Turkey band, under the Georgian provider wall. Same tokens as .net and
+   .cities so it reads as one more part of the coverage section, not a bolt-on. */
+.tr-band{margin:46px 0 0;background:var(--soft);border:1px solid var(--line);
+  border-radius:20px;padding:clamp(22px,3vw,32px)}
+.tr-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:12px}
+.tr-flag{font-size:27px;line-height:1.05}
+.tr-band h3{font-size:clamp(19px,2.2vw,23px);font-weight:700;color:var(--ink);margin:4px 0 0;line-height:1.35}
+.tr-band>p{color:var(--ink-2);font-size:15.5px;line-height:1.72;margin:0 0 20px;max-width:72ch}
+.tr-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 16px}
+.tr-stats div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px 12px;text-align:center}
+.tr-stats b{display:block;font-size:20px;font-weight:700;color:var(--accent-d);line-height:1.15}
+.tr-stats span{display:block;font-size:12.5px;color:#77848C;font-weight:500;margin-top:5px;line-height:1.35}
+.tr-nets{font-size:13px;color:#77848C;line-height:1.7;margin:0 0 20px}
+.tr-nets b{color:var(--ink);font-weight:600}
+@media (max-width:640px){.tr-stats{grid-template-columns:repeat(2,1fr)}}
 .cities{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:780px;margin:0 auto}
 .cities a{display:flex;align-items:center;justify-content:center;text-align:center;
   background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px;
@@ -480,6 +496,7 @@ footer{background:var(--dark-2);color:#8B98A1}
         <h2 class="h2" style="margin-bottom:18px">All of Georgia. One map.</h2>
         <p class="lead" style="margin:0">All of Georgia’s major public charging networks, together in one place — from city centers to intercity highways. Wherever you drive, GeoCharge shows you the nearest place to plug in. The map keeps growing on its own — new stations appear automatically as providers bring them online.</p>
         <p class="lead" style="margin:16px 0 0">Traveling beyond Georgia? Switch on European countries in the app settings and GeoCharge will show their charging stations too — so you can take your EV on a road trip across Europe with the same single app.</p>
+        <p class="lead" style="margin:16px 0 0">Turkey is a case of its own: the app carries the country's full official registry, over 13,000 public chargers with operators and tariffs. Where they are and which connector works there is on the <a href="/en/turkey/" style="color:#17995F;font-weight:600">Turkey page</a>.</p>
       </div>
       <div class="stats">
         <div class="stat"><b>800+</b><span>charging stations in Georgia and the region</span></div>
@@ -504,6 +521,31 @@ footer{background:var(--dark-2);color:#8B98A1}
         <div class="net"><span class="logo"><img loading="lazy" src="/assets/providers/socar.png" alt="Chargers at SOCAR stations"></span><span class="nm">SOCAR</span></div>
       </div>
       <p style="color:#8A97A0;font-size:13.5px;line-height:1.5;margin:22px 0 0;text-align:center">∗ E-Space chargers are located at SOCAR stations. Counts include the wider region; Georgia-only figures are in the <a href="/en/chargers/" style="color:#17995F;font-weight:600">charger list</a>.</p>
+
+      <div class="tr-band">
+        <div class="tr-top">
+          <span class="tr-flag" aria-hidden="true">🇹🇷</span>
+          <div>
+            <p class="kicker" style="margin:0">Across the border</p>
+            <h3>Over 13,000 chargers in Turkey, on the same map</h3>
+          </div>
+        </div>
+        <p>Turkey is the border drivers from Georgia actually cross, so the app carries the full official registry of EPDK, the Turkish energy regulator: every province, the operator names and their published tariffs in lira. Fast charging there runs on CCS2, and GB/T is not present at a single public station.</p>
+        <div class="tr-stats">
+          <div><b>13,000+</b><span>public stations</span></div>
+          <div><b>7,800+</b><span>fast DC</span></div>
+          <div><b>180+</b><span>operators</span></div>
+          <div><b>81</b><span>provinces</span></div>
+        </div>
+        <p class="tr-nets"><b>Largest networks:</b> ZES, Trugo, Eşarj, WAT Mobilite, OtoPriz, Voltrun, Astor Şarj, Sharz.Net</p>
+        <div class="cities">
+          <a class="all" href="/en/turkey/">All chargers in Turkey, by province</a>
+          <a href="/en/turkey/trabzon/">Trabzon</a>
+          <a href="/en/turkey/rize/">Rize</a>
+          <a href="/en/turkey/istanbul/">İstanbul</a>
+          <a href="/en/blog/tbilisi-stambuli/">Tbilisi to Istanbul</a>
+        </div>
+      </div>
 
       <h3 style="font-size:12.5px;font-weight:700;color:#17995F;letter-spacing:.12em;text-transform:uppercase;text-align:center;margin:44px 0 18px">Charger lists by city</h3>
       <div class="cities">
@@ -600,6 +642,7 @@ footer{background:var(--dark-2);color:#8B98A1}
         <details><summary>Does GeoCharge work on the Tesla screen?</summary><p>Yes — open tesla.geocharge.ge in the Tesla in-car browser: a live charger map plus an EV trip planner with charging stops, built for the car screen. Sign in with your GeoCharge account for a free 24-hour trial; a Premium subscription activated in the phone app unlocks it permanently.</p></details>
         <details><summary>Do I need an account?</summary><p>You can sign in quickly with Google or email to save your profile.</p></details>
         <details><summary>How is GeoCharge different from using each network’s own app?</summary><p>Instead of juggling multiple apps, GeoCharge brings stations from across Georgia’s networks into a single map with consistent details and filtering.</p></details>
+        <details><summary>Does GeoCharge show chargers in Turkey?</summary><p>Yes. The app carries Turkey's official registry, over 13,000 public stations with operators and tariffs. Turkey is switched on in Settings, and route planning downloads the Turkish chargers automatically. The full list by province is on the <a href="/en/turkey/" style="color:#17995F;font-weight:600">Turkey page</a>.</p></details>
         <details><summary>Can I use GeoCharge in Europe?</summary><p>Yes. Switch on European countries in the app settings and GeoCharge will show their charging stations on the same map, so you can plan an EV road trip across Europe with the same app.</p></details>
       </div>
     </div>
@@ -678,6 +721,7 @@ footer{background:var(--dark-2);color:#8B98A1}
       <a href="/en/customs/">Import duty</a>
       <a href="/en/routes/">Routes</a>
       <a href="/en/blog/">Guides</a>
+      <a href="/en/turkey/">Chargers in Turkey</a>
         <a href="#how">How it works</a>
         <a href="#tesla">Tesla</a>
         <a href="#faq">FAQ</a>

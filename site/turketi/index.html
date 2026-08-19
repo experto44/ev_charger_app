@@ -17,6 +17,8 @@
 <meta property="og:title" content="ელექტრო მანქანის დამტენები თურქეთში: 13 365 სადგური | GeoCharge">
 <meta property="og:description" content="თურქეთის 13 365 საჯარო დამტენი ერთ სიაში: 7 818 სწრაფი DC, 188 ოპერატორი, ტარიფები ლირაში და დაყოფა 81 პროვინციაზე. მონაცემები EPDK-ის ოფიციალური რეესტრიდან.">
 <meta property="og:image" content="https://geocharge.ge/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="ელექტრო მანქანის დამტენები თურქეთში: 13 365 სადგური | GeoCharge">
 <meta name="twitter:description" content="თურქეთის 13 365 საჯარო დამტენი ერთ სიაში: 7 818 სწრაფი DC, 188 ოპერატორი, ტარიფები ლირაში და დაყოფა 81 პროვინციაზე. მონაცემები EPDK-ის ოფიციალური რეესტრიდან.">
@@ -182,6 +184,15 @@ footer{background:var(--dark-2);color:#8B98A1}
 gap:12px 26px;justify-content:space-between;align-items:center;font-size:13px}
 .f-in a{color:#B9C4CB;text-decoration:none;font-weight:500}
 .f-in a:hover{color:var(--accent)}
+/* The footer carries the full map of the site, including the sections that are
+   deliberately not in the header nav (Turkey). One link from every page is what
+   makes a section reachable at all, for a reader and for a crawler. */
+.fnav{max-width:1100px;margin:0 auto;padding:30px clamp(20px,5vw,40px) 4px;
+display:flex;flex-wrap:wrap;gap:10px 22px;border-bottom:1px solid rgba(255,255,255,.07)}
+.fnav a{color:#B9C4CB;text-decoration:none;font-size:13.5px;font-weight:500}
+.fnav a:hover{color:var(--accent)}
+.fnav a.hi{color:#fff}
+.fnav a.hi::before{content:"🇹🇷";margin-right:6px;font-size:12px}
 .note{color:#8B98A1;font-size:13px;margin:12px 0 0}
 .calc{display:grid;grid-template-columns:minmax(260px,1fr) minmax(240px,320px);gap:24px;
 background:var(--soft);border:1px solid var(--line);border-radius:20px;padding:clamp(20px,3vw,30px);margin:28px 0 0}
@@ -406,6 +417,16 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 </section>
 </main>
 <footer>
+  <nav class="fnav" aria-label="საიტის რუკა">
+    <a href="/damtenebi/">დამტენები</a>
+    <a href="/tarifebi/">ტარიფები</a>
+    <a href="/kalkulatori/">კალკულატორი</a>
+    <a href="/qselebi/">ქსელები</a>
+    <a href="/marshruti/">მარშრუტები</a>
+    <a href="/ganbajeba/">განბაჟება</a>
+    <a href="/blog/">სტატიები</a>
+    <a class="hi" href="/turketi/">დამტენები თურქეთში</a>
+  </nav>
   <div class="f-in">
     <p style="margin:0">© 2026 GeoCharge</p>
     <a href="/">← geocharge.ge</a>

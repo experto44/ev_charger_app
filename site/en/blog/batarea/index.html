@@ -16,11 +16,13 @@
 <meta property="og:url" content="https://geocharge.ge/en/blog/batarea/">
 <meta property="og:title" content="EV battery degradation | GeoCharge">
 <meta property="og:description" content="A battery loses roughly 1 to 2 percent a year. Why Georgian summers and living in a flat are the two real risks here, and what to check when buying used.">
-<meta property="og:image" content="https://geocharge.ge/assets/og-image.png">
+<meta property="og:image" content="https://geocharge.ge/assets/og/batarea-en.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="EV battery degradation | GeoCharge">
 <meta name="twitter:description" content="A battery loses roughly 1 to 2 percent a year. Why Georgian summers and living in a flat are the two real risks here, and what to check when buying used.">
-<meta name="twitter:image" content="https://geocharge.ge/assets/og-image.png">
+<meta name="twitter:image" content="https://geocharge.ge/assets/og/batarea-en.png">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
 <link rel="apple-touch-icon" href="/assets/icon-1024.png">
@@ -70,7 +72,7 @@
    "publisher": {
     "@id": "https://geocharge.ge/#org"
    },
-   "image": "https://geocharge.ge/assets/og-image.png",
+   "image": "https://geocharge.ge/assets/og/batarea-en.png",
    "isPartOf": {
     "@type": "WebSite",
     "@id": "https://geocharge.ge/#website"
@@ -175,6 +177,15 @@ footer{background:var(--dark-2);color:#8B98A1}
 gap:12px 26px;justify-content:space-between;align-items:center;font-size:13px}
 .f-in a{color:#B9C4CB;text-decoration:none;font-weight:500}
 .f-in a:hover{color:var(--accent)}
+/* The footer carries the full map of the site, including the sections that are
+   deliberately not in the header nav (Turkey). One link from every page is what
+   makes a section reachable at all, for a reader and for a crawler. */
+.fnav{max-width:1100px;margin:0 auto;padding:30px clamp(20px,5vw,40px) 4px;
+display:flex;flex-wrap:wrap;gap:10px 22px;border-bottom:1px solid rgba(255,255,255,.07)}
+.fnav a{color:#B9C4CB;text-decoration:none;font-size:13.5px;font-weight:500}
+.fnav a:hover{color:var(--accent)}
+.fnav a.hi{color:#fff}
+.fnav a.hi::before{content:"🇹🇷";margin-right:6px;font-size:12px}
 .note{color:#8B98A1;font-size:13px;margin:12px 0 0}
 .calc{display:grid;grid-template-columns:minmax(260px,1fr) minmax(240px,320px);gap:24px;
 background:var(--soft);border:1px solid var(--line);border-radius:20px;padding:clamp(20px,3vw,30px);margin:28px 0 0}
@@ -248,11 +259,44 @@ padding:20px clamp(12px,2.4vw,22px) 14px;background:var(--soft)}
 .src li::before{content:none}
 .src a{color:var(--accent-d);font-weight:500;text-decoration:none}
 .src a:hover{text-decoration:underline}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:16px;margin:0}
-.acard{display:block;background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px;text-decoration:none}
-.acard:hover{border-color:var(--accent);box-shadow:0 12px 32px -18px rgba(23,153,95,.35)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:18px;margin:0}
+/* A card is a link, so the whole thing has to read as pressable: the icon tile
+   and the arrow give it the two affordances plain text never had. */
+.acard{position:relative;display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);
+border-radius:20px;padding:22px 22px 20px;text-decoration:none;overflow:hidden;
+transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+.acard::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:var(--accent);
+transform:scaleX(0);transform-origin:left;transition:transform .22s ease}
+.acard:hover{border-color:var(--accent);box-shadow:0 16px 36px -20px rgba(23,153,95,.45);transform:translateY(-2px)}
+.acard:hover::before{transform:scaleX(1)}
+.acard:focus-visible{outline:2px solid var(--accent-d);outline-offset:3px}
+.acard .ai{width:44px;height:44px;border-radius:13px;background:var(--mint);border:1px solid var(--mint-b);
+display:flex;align-items:center;justify-content:center;margin-bottom:16px;flex-shrink:0}
+.acard .ai svg{display:block}
 .acard b{display:block;font-size:17.5px;font-weight:600;color:var(--ink);line-height:1.4;margin-bottom:8px}
 .acard span{display:block;color:var(--ink-2);font-size:14.5px;line-height:1.6}
+.acard b+span{margin-bottom:16px}
+.acard .am{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:14px;
+border-top:1px solid var(--line);color:#8B98A1;font-size:12.5px;font-weight:500}
+.acard .am .rd{margin-left:auto;color:var(--accent-d);font-weight:600;display:flex;align-items:center;gap:5px}
+.acard:hover .am .rd svg{transform:translateX(3px)}
+.acard .am .rd svg{transition:transform .18s ease}
+/* Filter and sort bar on the guides index. Rendered hidden and revealed by the
+   script, so a reader without JS is never shown controls that do nothing. */
+.ctrl{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:0 0 26px}
+.ctrl[hidden]{display:none}
+.chips-f{display:flex;flex-wrap:wrap;gap:8px}
+.chips-f button{font:600 13.5px 'Poppins','Noto Sans Georgian',sans-serif;color:var(--ink-2);
+background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 15px;cursor:pointer;
+transition:all .16s ease}
+.chips-f button:hover{border-color:var(--accent);color:var(--accent-d)}
+.chips-f button[aria-pressed="true"]{background:var(--mint);border-color:var(--mint-b);color:#1B5E42}
+.sortw{margin-left:auto;display:flex;align-items:center;gap:8px;color:#8B98A1;font-size:13px}
+.sortw select{font:600 13.5px 'Poppins','Noto Sans Georgian',sans-serif;color:var(--ink);
+background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px;cursor:pointer}
+.sortw select:hover{border-color:var(--accent)}
+.nores{color:var(--ink-2);font-size:15.5px;margin:0}
+@media (max-width:560px){.sortw{margin-left:0;width:100%}}
 .links{display:flex;flex-wrap:wrap;gap:10px;margin:0}</style>
 <nav class="crumbs" aria-label="breadcrumb"><a href="/en/">Home</a><span aria-hidden="true">›</span><a href="/en/blog/">Guides</a><span aria-hidden="true">›</span><span>Battery degradation: what actually happens, and what it means in Georgia</span></nav>
 <div class="prose">
@@ -327,19 +371,84 @@ padding:20px clamp(12px,2.4vw,22px) 14px;background:var(--soft)}
 
 <h2>More guides</h2>
 <div class="cards">
-<a class="acard" href="/en/blog/datenvis-fasi/"><b>How much does it cost to charge an EV in Georgia</b><span>Fast charging runs 0.50 to 1.00 GEL per kWh, slow charging from 0.35. How to work out what one charge will cost you.</span></a>
-<a class="acard" href="/en/blog/konektorebi/"><b>CCS2, GB/T, Type 2: which connector do you need in Georgia</b><span>CCS2 and GB/T dominate Georgian charging. Which one matches your car, and how many stations of each exist in the country.</span></a>
-<a class="acard" href="/en/blog/ac-da-dc/"><b>AC or DC: what actually separates slow and fast charging</b><span>Of Georgia’s 600 plus chargers, roughly 390 are fast DC and 220 are slow AC. When to use which, and how long each takes.</span></a>
-<a class="acard" href="/en/blog/shori-mgzavroba/"><b>Driving long distance in Georgia by EV: a practical guide</b><span>Tbilisi to Batumi needs one stop. Where the chargers are on the main routes, and how to plan the drive.</span></a>
-<a class="acard" href="/en/blog/amerikuli-importi/"><b>Importing an EV from the US: where you will charge it in Georgia</b><span>A US-spec car has CCS1, NACS or Type 1. Georgia has 29 such stations in total. What adapters do and what to check before you buy.</span></a>
-<a class="acard" href="/en/blog/chinuri-importi/"><b>Chinese EVs in Georgia: the GB/T connector and where to charge</b><span>GB/T is on 359 stations in Georgia, almost as many as European CCS2. Why that is good news if you drive a Chinese import.</span></a>
-<a class="acard" href="/en/blog/zamtari/"><b>Driving an EV through a Georgian winter: range, charging and the mountains</b><span>Cold weather costs up to a third of your range. Bakuriani has 6 chargers and none of them fast, Stepantsminda 2. How to plan for it.</span></a>
-<a class="acard" href="/en/blog/sakhlis-damteni/"><b>Home charger installation: what it needs and what drives the price</b><span>A normal socket, a 7 kW wallbox or three phase. What a flat and a house each need, what to insist on from the electrician, and when a wallbox is not worth buying.</span></a>
-<a class="acard" href="/en/blog/100-km-fasi/"><b>Electric or petrol: what 100 km actually costs in Georgia</b><span>100 km on a fast charger is 14.04 GEL against 29.04 on petrol. Where that gap comes from and what the calculation leaves out.</span></a>
-<a class="acard" href="/en/blog/batareis-cveta/"><b>Battery wear by mileage: Tesla, Nissan Leaf and Chinese models</b><span>Measured figures rather than guesswork: what is left of the pack at 50,000, 100,000 and 200,000 km on a Tesla, a Nissan Leaf, a Chinese model and a hybrid. And which cars are the high risk group.</span></a>
-<a class="acard" href="/en/blog/tbilisi-stambuli/"><b>Tbilisi to Istanbul by electric car: the route and the chargers</b><span>About 1,620 km along the Black Sea coast. Where the fast chargers are, where the coverage thins out, and what charging costs in lira.</span></a>
-<a class="acard" href="/en/blog/turketshi-mgzavroba/"><b>Driving from Georgia into Turkey by electric car: what to know first</b><span>Turkey has 13,365 public chargers. Which border to use, which connector you need, what charging costs, and how it differs from Georgia.</span></a>
-<a class="acard" href="/en/blog/meoradi-shemowmeba/"><b>How to check a used electric car before you buy it</b><span>Battery health, a fast charging test, the connector and the import history. A practical list that fits into a single viewing.</span></a>
+<a class="acard" href="/en/blog/tbilisi-stambuli/" data-cat="travel"
+data-date="2026-08-19" data-pop="13"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M12 5.2h6.6l2 2.4-2 2.4H12z"/><path d="M12 13.4H5.4l-2 2.4 2 2.4H12z"/></svg></span><b>Tbilisi to Istanbul by electric car: the route and the chargers</b>
+<span>About 1,620 km along the Black Sea coast. Where the fast chargers are, where the coverage thins out, and what charging costs in lira.</span><span class="am"><time datetime="2026-08-19">August 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/turketshi-mgzavroba/" data-cat="travel"
+data-date="2026-08-19" data-pop="14"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/><path d="M12 3.4a14 14 0 0 1 0 17.2 14 14 0 0 1 0-17.2Z"/></svg></span><b>Driving from Georgia into Turkey by electric car: what to know first</b>
+<span>Turkey has 13,365 public chargers. Which border to use, which connector you need, what charging costs, and how it differs from Georgia.</span><span class="am"><time datetime="2026-08-19">August 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/meoradi-shemowmeba/" data-cat="buying"
+data-date="2026-08-19" data-pop="12"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m20.4 20.4-4.6-4.6"/><path d="m7.8 10.8 2.2 2.2 4-4.2"/></svg></span><b>How to check a used electric car before you buy it</b>
+<span>Battery health, a fast charging test, the connector and the import history. A practical list that fits into a single viewing.</span><span class="am"><time datetime="2026-08-19">August 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/batareis-cveta/" data-cat="battery"
+data-date="2026-08-11" data-pop="11"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="m5.4 14.2 3-3 2.6 2 3.6-4"/></svg></span><b>Battery wear by mileage: Tesla, Nissan Leaf and Chinese models</b>
+<span>Measured figures rather than guesswork: what is left of the pack at 50,000, 100,000 and 200,000 km on a Tesla, a Nissan Leaf, a Chinese model and a hybrid. And which cars are the high risk group.</span><span class="am"><time datetime="2026-08-11">August 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/datenvis-fasi/" data-cat="charging"
+data-date="2026-07-30" data-pop="1"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.6v8.8M9.4 10.2h5.2M9.4 13.8h5.2"/></svg></span><b>How much does it cost to charge an EV in Georgia</b>
+<span>Fast charging runs 0.50 to 1.00 GEL per kWh, slow charging from 0.35. How to work out what one charge will cost you.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/konektorebi/" data-cat="charging"
+data-date="2026-07-30" data-pop="2"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v4.6M15 3v4.6"/><path d="M6.2 7.6h11.6v3.1a5.8 5.8 0 0 1-11.6 0V7.6Z"/><path d="M12 16.5V21"/></svg></span><b>CCS2, GB/T, Type 2: which connector do you need in Georgia</b>
+<span>CCS2 and GB/T dominate Georgian charging. Which one matches your car, and how many stations of each exist in the country.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/ac-da-dc/" data-cat="charging"
+data-date="2026-07-30" data-pop="9"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.2 2.6 4.6 14.2h6.6L10 21.4l8.6-11.6H12l1.2-7.2Z"/></svg></span><b>AC or DC: what actually separates slow and fast charging</b>
+<span>Of Georgia’s 600 plus chargers, roughly 390 are fast DC and 220 are slow AC. When to use which, and how long each takes.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/shori-mgzavroba/" data-cat="travel"
+data-date="2026-07-30" data-pop="5"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.4v3M12 10.5v3M12 17.6v3"/><path d="M5.2 20.6 8 3.4M18.8 20.6 16 3.4"/></svg></span><b>Driving long distance in Georgia by EV: a practical guide</b>
+<span>Tbilisi to Batumi needs one stop. Where the chargers are on the main routes, and how to plan the drive.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/amerikuli-importi/" data-cat="buying"
+data-date="2026-07-30" data-pop="8"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.4c1.4 1 2.8 1 4.2 0s2.8-1 4.2 0 2.8 1 4.2 0 2.8-1 4.2 0"/><path d="M5.4 13.8V9.2h13.2l-1.8 4.6"/><path d="M9.2 9.2V5h5.6v4.2"/></svg></span><b>Importing an EV from the US: where you will charge it in Georgia</b>
+<span>A US-spec car has CCS1, NACS or Type 1. Georgia has 29 such stations in total. What adapters do and what to check before you buy.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/chinuri-importi/" data-cat="buying"
+data-date="2026-07-30" data-pop="7"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 8.2 12 4.1l8.6 4.1v7.6L12 19.9l-8.6-4.1V8.2Z"/><path d="m3.4 8.2 8.6 4.1 8.6-4.1M12 12.3v7.6"/></svg></span><b>Chinese EVs in Georgia: the GB/T connector and where to charge</b>
+<span>GB/T is on 359 stations in Georgia, almost as many as European CCS2. Why that is good news if you drive a Chinese import.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/zamtari/" data-cat="travel"
+data-date="2026-07-30" data-pop="10"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.6v18.8M4.2 6.6l15.6 10.8M19.8 6.6 4.2 17.4"/><path d="m9.2 4.6 2.8 2.8 2.8-2.8M9.2 19.4l2.8-2.8 2.8 2.8"/></svg></span><b>Driving an EV through a Georgian winter: range, charging and the mountains</b>
+<span>Cold weather costs up to a third of your range. Bakuriani has 6 chargers and none of them fast, Stepantsminda 2. How to plan for it.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/sakhlis-damteni/" data-cat="charging"
+data-date="2026-07-30" data-pop="4"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m3.4 10.2 8.6-6.7 8.6 6.7v9.3a1 1 0 0 1-1 1H4.4a1 1 0 0 1-1-1v-9.3Z"/><path d="M12.6 9.6 10.4 13.6h3.2L11.4 17.6"/></svg></span><b>Home charger installation: what it needs and what drives the price</b>
+<span>A normal socket, a 7 kW wallbox or three phase. What a flat and a house each need, what to insist on from the electrician, and when a wallbox is not worth buying.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/100-km-fasi/" data-cat="charging"
+data-date="2026-07-30" data-pop="3"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18.5a8 8 0 1 1 16 0"/><path d="m12 14.5 4-4.2"/><circle cx="12" cy="18.5" r="1.3"/></svg></span><b>Electric or petrol: what 100 km actually costs in Georgia</b>
+<span>100 km on a fast charger is 14.04 GEL against 29.04 on petrol. Where that gap comes from and what the calculation leaves out.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 </div>
 
 <h2>See also</h2>
@@ -356,6 +465,16 @@ padding:20px clamp(12px,2.4vw,22px) 14px;background:var(--soft)}
 </section>
 </main>
 <footer>
+  <nav class="fnav" aria-label="Site map">
+    <a href="/en/chargers/">Chargers</a>
+    <a href="/en/tariffs/">Tariffs</a>
+    <a href="/en/calculator/">Calculator</a>
+    <a href="/en/networks/">Networks</a>
+    <a href="/en/routes/">Routes</a>
+    <a href="/en/customs/">Import duty</a>
+    <a href="/en/blog/">Guides</a>
+    <a class="hi" href="/en/turkey/">Chargers in Turkey</a>
+  </nav>
   <div class="f-in">
     <p style="margin:0">© 2026 GeoCharge</p>
     <a href="/en/">← geocharge.ge</a>

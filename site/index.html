@@ -117,6 +117,7 @@
         { "@type": "Question", "name": "რამდენ დამტენ სადგურს აჩვენებს GeoCharge?", "acceptedAnswer": { "@type": "Answer", "text": "საქართველოში 600-ზე მეტ საჯარო დამტენ სადგურს, მეზობელ რეგიონთან ერთად კი 800-ზე მეტს. ახალი სადგურები ავტომატურად ემატება, როგორც კი ამუშავდება." } },
         { "@type": "Question", "name": "მუშაობს GeoCharge მთელ საქართველოში?", "acceptedAnswer": { "@type": "Answer", "text": "დიახ, ქალაქებშიც და ავტომაგისტრალებზეც, მთელი ქვეყნის მასშტაბით." } },
         { "@type": "Question", "name": "შემიძლია მარშრუტის დაგეგმვა დატენვის გაჩერებებით?", "acceptedAnswer": { "@type": "Answer", "text": "დიახ, GeoCharge-ს აქვს მარშრუტის დაგეგმვის ფუნქცია, რომ გზაში დამტენები იპოვოთ." } },
+        { "@type": "Question", "name": "ჩანს თუ არა თურქეთის დამტენები GeoCharge-ში?", "acceptedAnswer": { "@type": "Answer", "text": "დიახ. აპლიკაციაში თურქეთის ენერგეტიკის მარეგულირებლის ოფიციალური რეესტრია, 13 000-ზე მეტი საჯარო სადგური ოპერატორებითა და გამოქვეყნებული ტარიფებით. თურქეთი პარამეტრებში ირთვება, მარშრუტის დაგეგმვისას კი თურქული დამტენები ავტომატურად ჩამოიტვირთება. სწრაფი დატენვა თურქეთში CCS2-ზე მიდის, GB/T კონექტორი იქ არ არსებობს. სრული სია პროვინციების მიხედვით geocharge.ge/turketi/ გვერდზეა." } },
         { "@type": "Question", "name": "რომელ მოწყობილობებზეა GeoCharge ხელმისაწვდომი?", "acceptedAnswer": { "@type": "Answer", "text": "GeoCharge ხელმისაწვდომია როგორც Android-ზე (Google Play), ისე iOS-ზე (App Store)." } },
         { "@type": "Question", "name": "მუშაობს GeoCharge Tesla-ს ეკრანზე?", "acceptedAnswer": { "@type": "Answer", "text": "დიახ — გახსენი tesla.geocharge.ge Tesla-ს ჩაშენებულ ბრაუზერში: დამტენების ცოცხალი რუკა და EV მარშრუტის დამგეგმავი დატენვის გაჩერებებით, მანქანის ეკრანზე მორგებული. შედი GeoCharge-ის ანგარიშით და მიიღე 24-საათიანი უფასო საცდელი პერიოდი; ტელეფონის აპში გააქტიურებული Premium გამოწერა კი მუდმივად ხსნის." } },
         { "@type": "Question", "name": "მჭირდება ანგარიში?", "acceptedAnswer": { "@type": "Answer", "text": "შეგიძლიათ სწრაფად შეხვიდეთ Google-ით ან ელფოსტით და შეინახოთ პროფილი." } },
@@ -253,6 +254,21 @@ h1 span{color:var(--accent)}
 .net .ct{font-size:12px;line-height:1}
 .net .ct b{color:var(--accent-d);font-weight:700}
 .net .ct span{color:#77848C;font-weight:500}
+/* Turkey band, under the Georgian provider wall. Same tokens as .net and
+   .cities so it reads as one more part of the coverage section, not a bolt-on. */
+.tr-band{margin:46px 0 0;background:var(--soft);border:1px solid var(--line);
+  border-radius:20px;padding:clamp(22px,3vw,32px)}
+.tr-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:12px}
+.tr-flag{font-size:27px;line-height:1.05}
+.tr-band h3{font-size:clamp(19px,2.2vw,23px);font-weight:700;color:var(--ink);margin:4px 0 0;line-height:1.35}
+.tr-band>p{color:var(--ink-2);font-size:15.5px;line-height:1.72;margin:0 0 20px;max-width:72ch}
+.tr-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 16px}
+.tr-stats div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px 12px;text-align:center}
+.tr-stats b{display:block;font-size:20px;font-weight:700;color:var(--accent-d);line-height:1.15}
+.tr-stats span{display:block;font-size:12.5px;color:#77848C;font-weight:500;margin-top:5px;line-height:1.35}
+.tr-nets{font-size:13px;color:#77848C;line-height:1.7;margin:0 0 20px}
+.tr-nets b{color:var(--ink);font-weight:600}
+@media (max-width:640px){.tr-stats{grid-template-columns:repeat(2,1fr)}}
 .cities{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:780px;margin:0 auto}
 .cities a{display:flex;align-items:center;justify-content:center;text-align:center;
   background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px;
@@ -492,6 +508,7 @@ footer{background:var(--dark-2);color:#8B98A1}
         <h2 class="h2" style="margin-bottom:18px">მთელი საქართველო. ერთი რუკა.</h2>
         <p class="lead" style="margin:0">საქართველოს ყველა ძირითადი საჯარო დამტენი ქსელი, ერთად, ერთ ადგილას. ქალაქის ცენტრებიდან საქალაქთაშორისო ავტომაგისტრალებამდე: სადაც არ უნდა მგზავრობდეთ, GeoCharge გაჩვენებთ უახლოეს დატენვის ადგილს. რუკა კი თავისით იზრდება, ახალი სადგურები ავტომატურად ჩნდება, როგორც კი პროვაიდერები მათ აამუშავებენ.</p>
         <p class="lead" style="margin:16px 0 0">აპირებთ მოგზაურობას საქართველოს ფარგლებს გარეთ? ჩართეთ ევროპის ქვეყნები აპლიკაციის პარამეტრებში და GeoCharge მათ დამტენ სადგურებსაც გაჩვენებთ, ელექტრომობილით ევროპაშიც თავისუფლად იმოგზაურებთ, იმავე ერთი აპლიკაციით.</p>
+        <p class="lead" style="margin:16px 0 0">თურქეთი ცალკე შემთხვევაა: აპლიკაციაში ქვეყნის სრული ოფიციალური რეესტრია, 13 000-ზე მეტი საჯარო დამტენი, ოპერატორებითა და ტარიფებით. სად არის ისინი და რომელი კონექტორი მუშაობს იქ, <a href="/turketi/" style="color:#17995F;font-weight:600">თურქეთის გვერდზეა</a>.</p>
       </div>
       <div class="stats">
         <div class="stat"><b>800+</b><span>დამტენი სადგური საქართველოსა და რეგიონში</span></div>
@@ -516,6 +533,31 @@ footer{background:var(--dark-2);color:#8B98A1}
         <div class="net"><span class="logo"><img loading="lazy" src="/assets/providers/socar.png" alt="SOCAR (სოკარი) სადგურების დამტენები"></span><span class="nm">SOCAR</span></div>
       </div>
       <p style="color:#8A97A0;font-size:13.5px;line-height:1.5;margin:22px 0 0;text-align:center">∗ E-Space დამტენები განთავსებულია SOCAR-ის სადგურებზე. რაოდენობები მოიცავს მეზობელი რეგიონის სადგურებსაც; მხოლოდ საქართველოს ციფრები <a href="/damtenebi/" style="color:#17995F;font-weight:600">დამტენების სიაშია</a>.</p>
+
+      <div class="tr-band">
+        <div class="tr-top">
+          <span class="tr-flag" aria-hidden="true">🇹🇷</span>
+          <div>
+            <p class="kicker" style="margin:0">საზღვარს გარეთ</p>
+            <h3>თურქეთის 13 000-ზე მეტი დამტენი იმავე რუკაზე</h3>
+          </div>
+        </div>
+        <p>ქართველი მძღოლი საზღვარს ყველაზე ხშირად თურქეთის მიმართულებით კვეთს, ამიტომ აპლიკაციაში თურქეთის ენერგეტიკის მარეგულირებლის, EPDK-ის, სრული ოფიციალური რეესტრია: ყველა პროვინცია, ოპერატორების სახელები და გამოქვეყნებული ტარიფები ლირაში. სწრაფი დატენვა თურქეთში CCS2-ზე მიდის, GB/T კონექტორი კი იქ არც ერთ საჯარო სადგურზე არ არის.</p>
+        <div class="tr-stats">
+          <div><b>13 000+</b><span>საჯარო სადგური</span></div>
+          <div><b>7 800+</b><span>სწრაფი DC</span></div>
+          <div><b>180+</b><span>ოპერატორი</span></div>
+          <div><b>81</b><span>პროვინცია</span></div>
+        </div>
+        <p class="tr-nets"><b>ყველაზე დიდი ქსელები:</b> ZES, Trugo, Eşarj, WAT Mobilite, OtoPriz, Voltrun, Astor Şarj, Sharz.Net</p>
+        <div class="cities">
+          <a class="all" href="/turketi/">თურქეთის ყველა დამტენი, პროვინციების მიხედვით</a>
+          <a href="/turketi/trabzon/">ტრაბზონი</a>
+          <a href="/turketi/rize/">რიზე</a>
+          <a href="/turketi/istanbul/">სტამბოლი</a>
+          <a href="/blog/tbilisi-stambuli/">თბილისი სტამბოლი</a>
+        </div>
+      </div>
 
       <h3 style="font-size:12.5px;font-weight:700;color:#17995F;letter-spacing:.12em;text-transform:uppercase;text-align:center;margin:44px 0 18px">დამტენების სია ქალაქების მიხედვით</h3>
       <div class="cities">
@@ -608,6 +650,7 @@ footer{background:var(--dark-2);color:#8B98A1}
         <details><summary>რამდენ დამტენ სადგურს აჩვენებს GeoCharge?</summary><p>საქართველოში 600-ზე მეტ საჯარო დამტენ სადგურს, მეზობელ რეგიონთან ერთად კი 800-ზე მეტს. ახალი სადგურები ავტომატურად ემატება, როგორც კი ამუშავდება.</p></details>
         <details><summary>მუშაობს GeoCharge მთელ საქართველოში?</summary><p>დიახ, ქალაქებშიც და ავტომაგისტრალებზეც, მთელი ქვეყნის მასშტაბით.</p></details>
         <details><summary>შემიძლია მარშრუტის დაგეგმვა დატენვის გაჩერებებით?</summary><p>დიახ, GeoCharge-ს აქვს მარშრუტის დაგეგმვის ფუნქცია, რომ გზაში დამტენები იპოვოთ.</p></details>
+        <details><summary>ჩანს თუ არა თურქეთის დამტენები GeoCharge-ში?</summary><p>დიახ. აპლიკაციაში თურქეთის ოფიციალური რეესტრია, 13 000-ზე მეტი საჯარო სადგური ოპერატორებითა და ტარიფებით. თურქეთი პარამეტრებში ირთვება, მარშრუტის დაგეგმვისას კი თურქული დამტენები ავტომატურად ჩამოიტვირთება. სრული სია პროვინციების მიხედვით <a href="/turketi/" style="color:#17995F;font-weight:600">თურქეთის გვერდზეა</a>.</p></details>
         <details><summary>რომელ მოწყობილობებზეა GeoCharge ხელმისაწვდომი?</summary><p>GeoCharge ხელმისაწვდომია როგორც Android-ზე (Google Play), ისე iOS-ზე (App Store).</p></details>
         <details><summary>მუშაობს GeoCharge Tesla-ს ეკრანზე?</summary><p>დიახ — გახსენი tesla.geocharge.ge Tesla-ს ჩაშენებულ ბრაუზერში: დამტენების ცოცხალი რუკა და EV მარშრუტის დამგეგმავი დატენვის გაჩერებებით, მანქანის ეკრანზე მორგებული. შედი GeoCharge-ის ანგარიშით და მიიღე 24-საათიანი უფასო საცდელი პერიოდი; ტელეფონის აპში გააქტიურებული Premium გამოწერა კი მუდმივად ხსნის.</p></details>
         <details><summary>მჭირდება ანგარიში?</summary><p>შეგიძლიათ სწრაფად შეხვიდეთ Google-ით ან ელფოსტით და შეინახოთ პროფილი.</p></details>
@@ -689,6 +732,7 @@ footer{background:var(--dark-2);color:#8B98A1}
       <a href="/ganbajeba/">განბაჟება</a>
       <a href="/marshruti/">მარშრუტები</a>
       <a href="/blog/">სტატიები</a>
+      <a href="/turketi/">დამტენები თურქეთში</a>
         <a href="#how">როგორ მუშაობს</a>
         <a href="#tesla">Tesla</a>
         <a href="#faq">კითხვები</a>
