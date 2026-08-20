@@ -32,6 +32,7 @@ import {
   buildFilterDrawer,
   hideStation,
   setCount,
+  setStationRefreshedHandler,
   showStation,
   showToast,
   toggleFilterDrawer,
@@ -73,6 +74,10 @@ function turkeyPinsForViewport() {
     getTurkeyStations().filter((s) => b.contains({ lat: s.lat, lng: s.lng })),
   );
 }
+
+// A refresh in the station panel patches the station in place; repainting is
+// what turns that into a marker in the new colour.
+setStationRefreshedHandler(() => repaint());
 
 function repaint() {
   // The picker is live before the Maps API finishes loading, so a country can

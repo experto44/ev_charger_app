@@ -89,7 +89,19 @@
       </div>
       <h3 class="panel__ports-title" data-t="ports"></h3>
       <div class="panel__ports"></div>
-      <p class="panel__updated"></p>
+      <div class="panel__freshness">
+        <div class="panel__freshness-text">
+          <p class="panel__updated"></p>
+          <p class="panel__source"></p>
+        </div>
+        <button class="panel__refresh" type="button" hidden>
+          <svg class="panel__refresh-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+            <path fill="currentColor" d="M17.65 6.35A7.958 7.958 0 0012 4a8 8 0 108 8h-2.1A5.9 5.9 0 1112 6.1c1.63 0 3.1.66 4.17 1.73L13 11h7V4l-2.35 2.35z"/>
+          </svg>
+          <span class="panel__refresh-label"></span>
+        </button>
+      </div>
+      <p class="panel__refresh-note"></p>
       <button class="btn btn--primary btn--wide panel__nav" data-t="navigate"></button>
     </aside>
 

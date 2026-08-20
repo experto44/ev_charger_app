@@ -1,32 +1,39 @@
 #!/usr/bin/env python3
-"""Prove the app and the updater still read AMPECO the same way.
+"""Prove every client still reads AMPECO the same way.
 
 The live status of a mart EV / MOVEO / Electrify / EV Power charger is parsed
-TWICE from the same API shape: once in Python, inside `fetch_ampeco` in
-.github/workflows/update_gist.yml, for the feed everyone sees on the map; and
-once in Dart, inside LiveStatusService, for the direct read behind the detail
-sheet's refresh button.
+THREE times from the same API shape:
 
-That duplication is deliberate (the app cannot run the pipeline, the pipeline
-cannot run Dart) but it is also the one place these two codebases can silently
-drift apart. Drift does not look like a crash. It looks like the map saying a
-charger is free while the sheet for that same charger says it is taken, which is
-worse for a driver than either answer being slightly stale.
+  * Python, in `fetch_ampeco` in .github/workflows/update_gist.yml, for the feed
+    everyone sees on the map;
+  * Dart, in LiveStatusService, for the direct read behind the mobile app's
+    refresh button;
+  * JavaScript, in tesla/js/live.js, for the same button in the Tesla web app.
 
-So both are fed the identical fixture and must agree:
+The duplication is unavoidable (none of the three can run the others' code) but
+it is also the one place these codebases can silently drift apart. Drift does not
+look like a crash. It looks like the map saying a charger is free while the panel
+for that same charger says it is taken, which is worse for a driver than either
+answer being slightly stale.
 
-    python tools/check_ampeco_parsers.py     # the Python half, here
-    flutter test test/live_status_test.dart  # the Dart half
+All three are fed the identical fixture and must agree. This script checks the
+Python and JavaScript halves; the Dart half is `flutter test`:
 
-Run this after touching either parser, especially the "status=unavailable means
-the sibling plug is busy, not broken" rule, which is the subtle one.
+    python tools/check_ampeco_parsers.py
+    flutter test test/live_status_test.dart
 
-Requires PyYAML. No network access and no secrets: the HTTP layer is stubbed.
+Run this after touching any of the parsers, especially the "status=unavailable
+means the sibling plug is busy, not broken" rule, which is the subtle one.
+
+Requires PyYAML, and node on PATH for the JavaScript half (skipped if absent).
+No network access and no secrets: the HTTP layer is stubbed.
 """
 import io
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
 
 import yaml
@@ -123,15 +130,65 @@ def main():
             f"linked location wrong: {other['available_spots']} "
             f"of {other['total_spots']}")
 
+    fails += check_js()
+
     if fails:
-        print("\nPIPELINE AND APP DISAGREE:")
+        print("\nPARSERS DISAGREE:")
         for f in fails:
             print("  -", f)
-        print("\nFix whichever side is wrong, then re-run both halves.")
+        print("\nFix whichever side is wrong, then re-run all three.")
         return 1
 
-    print("\npipeline agrees with test/live_status_test.dart on every field")
+    print("\npipeline and tesla/js/live.js agree with "
+          "test/live_status_test.dart on every field")
     return 0
+
+
+def check_js():
+    """Run tesla/js/live.js over the same fixture, via node."""
+    if not shutil.which("node"):
+        print("\nnode not on PATH — skipping the JavaScript half")
+        return []
+    script = """
+import { readFileSync } from 'node:fs';
+import { applyAmpeco } from './tesla/js/live.js';
+const fx = JSON.parse(readFileSync(process.argv[1], 'utf8'));
+const base = { id: 'martev_220', provider: 'mart EV', available: 0, total: 0, ports: [] };
+const r = applyAmpeco(base, fx, '220');
+const other = applyAmpeco(base, fx, '999');
+console.log(JSON.stringify({
+  available: r.available,
+  total: r.total,
+  ports: r.ports.map((p) => [p.type, p.status]),
+  since: r.ports.find((p) => p.status === 'busy')?.since ?? null,
+  otherTotal: other.total,
+  otherAvailable: other.available,
+  unknownId: applyAmpeco(base, fx, '12345'),
+}));
+"""
+    out = subprocess.run(
+        ["node", "--input-type=module", "-e", script, FIXTURE],
+        cwd=ROOT, capture_output=True, text=True)
+    if out.returncode != 0:
+        return [f"node run failed: {out.stderr.strip()[:300]}"]
+    got = json.loads(out.stdout)
+    print("\ntesla/js/live.js reading for martev_220:")
+    print("  available/total:", f"{got['available']}/{got['total']}")
+    print("  ports          :", got["ports"])
+
+    bad = []
+    if got["total"] != EXPECTED_TOTAL or got["available"] != EXPECTED_AVAIL:
+        bad.append(f"js counts {got['available']}/{got['total']} "
+                   f"!= {EXPECTED_AVAIL}/{EXPECTED_TOTAL}")
+    if [tuple(p) for p in got["ports"]] != EXPECTED_PORTS:
+        bad.append(f"js ports {got['ports']} != {EXPECTED_PORTS}")
+    if not str(got["since"] or "").startswith(EXPECTED_SINCE):
+        bad.append(f"js session start wrong: {got['since']}")
+    if got["otherTotal"] != 1 or got["otherAvailable"] != 1:
+        bad.append("js linked location wrong")
+    if got["unknownId"] is not None:
+        bad.append("js returned a reading for a station not in the response")
+    return bad
 
 
 if __name__ == "__main__":

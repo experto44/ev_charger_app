@@ -5,9 +5,12 @@
 // works if a localhost referrer is added to this key in the Google Cloud console.
 export const MAPS_API_KEY = 'AIzaSyDYHSs4P--TUa-VVlS5DReotBtbjZK58No';
 
-// Same live feed the mobile app uses (catalog + live status in one JSON).
-export const CHARGERS_URL =
-  'https://gist.githubusercontent.com/experto44/36f39392ce7a4abe14ab065aa8e846bd/raw/chargers.json';
+// Same live feed the mobile app uses (catalog + live status in one JSON), and
+// the config file next to it that can switch off the direct-to-operator reads
+// without a redeploy (see js/live.js).
+export const CHARGERS_BASE =
+  'https://gist.githubusercontent.com/experto44/36f39392ce7a4abe14ab065aa8e846bd/raw';
+export const CHARGERS_URL = `${CHARGERS_BASE}/chargers.json`;
 
 // Turkish chargers (EPDK registry), in their own gist and their own file: it is
 // ~5 MB and ~13k stations, so it is fetched ONLY when the driver actually looks

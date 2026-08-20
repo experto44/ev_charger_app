@@ -5,6 +5,14 @@ import { stationStatus } from './map.js';
 import { busyForLabel, formatVerified, providerLogo } from './format.js';
 import { startDrive } from './drive.js';
 import { track } from './analytics.js';
+import { canRefresh, refreshStation } from './live.js';
+
+// Called after a refresh actually changed a station, so the map repaints its
+// marker in the new colour. Wired once from main.js.
+let onStationRefreshed = null;
+export function setStationRefreshedHandler(fn) {
+  onStationRefreshed = fn;
+}
 
 const PORT_LABEL = {
   free: 'statusFree',
@@ -89,6 +97,66 @@ export function showStation(s) {
     startDrive({ destination: { lat: s.lat, lng: s.lng } });
   };
 
+  // Live status, plug rows and the freshness line are re-rendered on their own
+  // after a refresh, so they live apart from the static header above.
+  renderLive(panel, s);
+
+  // ── Refresh ───────────────────────────────────────────────────────────────
+  // Only for the operators that answer a per-station request (the AMPECO
+  // networks); for everyone else the feed is the only source there is, so a
+  // button would promise something it cannot deliver.
+  const refreshBtn = panel.querySelector('.panel__refresh');
+  const note = panel.querySelector('.panel__refresh-note');
+  note.textContent = '';
+  note.className = 'panel__refresh-note';
+  refreshBtn.hidden = !canRefresh(s);
+  refreshBtn.querySelector('.panel__refresh-label').textContent = t('refresh');
+  refreshBtn.disabled = false;
+  refreshBtn.classList.remove('is-busy');
+  refreshBtn.onclick = async () => {
+    if (refreshBtn.disabled) return;
+    refreshBtn.disabled = true;
+    refreshBtn.classList.add('is-busy');
+    note.textContent = t('refreshChecking');
+    note.className = 'panel__refresh-note';
+
+    const r = await refreshStation(s);
+    // The driver may have closed the panel or picked another charger while the
+    // request was in flight.
+    if (!panel.classList.contains('is-open') ||
+        panel.querySelector('.panel__name').textContent !== s.name) {
+      return;
+    }
+    refreshBtn.disabled = false;
+    refreshBtn.classList.remove('is-busy');
+
+    if (r.outcome === 'failed') {
+      note.textContent = t('refreshFailed');
+      note.className = 'panel__refresh-note is-failed';
+      return;
+    }
+    // Patch the shared station object in place so the marker, the search index
+    // and the trip planner all see the same reading the panel is showing.
+    Object.assign(s, {
+      available: r.station.available,
+      total: r.station.total,
+      ports: r.station.ports,
+      lastUpdated: r.station.lastUpdated,
+    });
+    s.liveRead = true;
+    renderLive(panel, s);
+    note.textContent = r.outcome === 'updated' ? t('refreshChanged') : t('refreshNoChange');
+    note.className =
+      'panel__refresh-note' + (r.outcome === 'updated' ? ' is-changed' : '');
+    if (r.outcome === 'updated') onStationRefreshed?.();
+  };
+
+  panel.classList.add('is-open');
+}
+
+/** The parts of the panel a refresh replaces: status, plugs, freshness. */
+function renderLive(panel, s) {
+  const status = stationStatus(s);
   const badge = panel.querySelector('.panel__status');
   // Registry stations show how many plugs EXIST; saying "Available" there would
   // invent a live reading we never had.
@@ -130,8 +198,12 @@ export function showStation(s) {
   panel.querySelector('.panel__updated').textContent = s.lastUpdated
     ? `${t('updated')}: ${formatVerified(s.lastUpdated)}`
     : '';
-
-  panel.classList.add('is-open');
+  // Where that time came from. A feed reading is the provider's last server
+  // check relayed through our pipeline; a direct read is a second old, and
+  // captioning it "last server check" would undersell it.
+  const source = panel.querySelector('.panel__source');
+  source.textContent = s.lastUpdated ? t(s.liveRead ? 'sourceLive' : 'sourceFeed') : '';
+  source.classList.toggle('is-live', Boolean(s.liveRead));
 }
 
 export function hideStation() {
