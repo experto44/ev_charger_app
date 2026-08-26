@@ -254,6 +254,11 @@ class NotificationService {
   Future<void> _onTokenRefresh(String newToken) async {
     final old = _token;
     _token = newToken;
+    // Topic membership is a property of the token, and this is also the moment
+    // a subscription that failed at startup (iOS with no APNs token yet) can
+    // finally be made. Ahead of the early return below, which only cares about
+    // per-station alerts.
+    unawaited(_syncNewStationTopic());
     if (old == null || old == newToken || _subscribed.isEmpty) return;
     // Migrate existing alerts to the new token's doc so they still fire, then
     // drop the stale doc.

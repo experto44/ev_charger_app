@@ -873,6 +873,11 @@ class _MapScreenState extends State<MapScreen>
     if (!mounted) { return FeedStatus.updated; }
     setState(() => _stations = fresh);
     _syncOpenSheet(fresh);
+    // Cheap no-op unless a tapped push is still waiting for its station. The
+    // announcement and the feed come from the same pipeline, so it is normally
+    // present on the first load; a poll is the only other chance it gets, and
+    // only once the rows above have actually landed.
+    _consumePendingPush();
     return FeedStatus.updated;
   }
 
