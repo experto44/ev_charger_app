@@ -264,6 +264,48 @@ class AppStrings {
   static String get portUnknown =>
       isGeorgian ? 'სტატუსი არ ჩანს' : 'Status not published';
 
+  // ── "Status not published" explainer ───────────────────────────────────────
+  // "Status not published" answers the wrong question on its own. What a driver
+  // actually wants to know is whose charger this is and whether it is still
+  // worth driving to, so the row carries an "i" that says exactly that.
+  static String get unknownInfoTitle =>
+      isGeorgian ? 'რატომ არ ჩანს სტატუსი?' : 'Why is there no status?';
+
+  /// Tegeta lists Porsche Destination Charging wallboxes at partner hotels,
+  /// resorts and its own showrooms, but gets nothing back from them: their
+  /// records were written once and never updated. Tegeta's own app shows those
+  /// plugs with no colour, no label and no price, and says charging can only be
+  /// started on site. Everything below is what was verified in their app.
+  static String get unknownInfoPorsche => isGeorgian
+      ? 'ეს Porsche Destination Charging პროგრამის დამტენია. ის სასტუმროს, '
+          'კურორტის ან სალონის ტერიტორიაზე დგას და თეგეტას კატალოგში ჩანს, '
+          'მაგრამ თეგეტა მისგან რეალურ დროში მონაცემს არ იღებს.\n\n'
+          'ამიტომ ვერ გეტყვით, ახლა დაკავებულია თუ თავისუფალი. დატენვა მხოლოდ '
+          'ადგილზე ირთვება, აპლიკაციიდან ვერც ჩართავთ და ვერც გადაიხდით, '
+          'ამიტომ ფასს არ ვწერთ. იგივეს აკეთებს თეგეტას საკუთარი აპლიკაციაც.\n\n'
+          'ასეთი დამტენი ხშირად ობიექტის სტუმრებისთვისაა განკუთვნილი. სანამ '
+          'გზას გაუყვებით, ჯობია წინასწარ დარეკოთ ან ადგილზე იკითხოთ.'
+      : 'This is a Porsche Destination Charging point. It stands on a hotel, '
+          'resort or showroom property and appears in Tegeta\'s catalogue, but '
+          'Tegeta receives no real-time data from it.\n\n'
+          'So we cannot tell you whether it is free or in use right now. '
+          'Charging is started on site, not from an app, and there is no payment '
+          'through the app either, so we do not quote a price. Tegeta\'s own app '
+          'does exactly the same.\n\n'
+          'Chargers like this are often meant for the venue\'s guests. Call '
+          'ahead or ask on site before you rely on it.';
+
+  /// Any other operator that publishes a plug but no state for it.
+  static String get unknownInfoGeneric => isGeorgian
+      ? 'ამ დამტენზე ოპერატორი ცოცხალ მონაცემს არ გვიზიარებს. ვიცით, რომ '
+          'დამტენი იქ დგას, მაგრამ ვერ გეტყვით, ახლა დაკავებულია თუ '
+          'თავისუფალი, და ფასსაც იმიტომ არ ვწერთ, რომ დადასტურებული არ არის.\n\n'
+          'სანამ გზას გაუყვებით, ჯობია წინასწარ გადაამოწმოთ.'
+      : 'The operator does not share live data for this plug. We know the '
+          'charger is there, but we cannot tell you whether it is free or in use '
+          'right now, and we will not quote a price we cannot confirm.\n\n'
+          'Worth checking before you make the trip.';
+
   /// Approximate "charging for ~N" line shown under a busy connector. Buckets to
   /// 5-min steps (and to hours past 60 min) since the exact figure isn't known.
   static String chargingFor(int minutes) {

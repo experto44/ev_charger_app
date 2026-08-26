@@ -2633,6 +2633,47 @@ class _StationSheetState extends State<_StationSheet> {
         null                     => _textSec,
       };
 
+  // Explains a plug whose state the operator does not publish. The wording is
+  // picked by provider, because a vague "the operator doesn't say" is a worse
+  // answer than the specific one whenever we actually know it — and for Tegeta
+  // we do: those are Porsche destination chargers at partner venues.
+  void _showUnknownInfo() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AppStrings.wrap(AlertDialog(
+        backgroundColor: _bgCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: Row(children: [
+          const Icon(Icons.help_outline_rounded, color: _unknownSlate, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              AppStrings.unknownInfoTitle,
+              style: const TextStyle(
+                  color: _textPri, fontSize: 15, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ]),
+        content: SingleChildScrollView(
+          child: Text(
+            _station.provider == 'Tegeta'
+                ? AppStrings.unknownInfoPorsche
+                : AppStrings.unknownInfoGeneric,
+            style: const TextStyle(color: _textSec, fontSize: 13, height: 1.45),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(AppStrings.gotIt,
+                style: const TextStyle(
+                    color: _emerald, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      )),
+    );
+  }
+
   // One large, colour-coded row per physical connector: green = free, red =
   // busy, grey = out of order, slate = the operator publishes nothing for this
   // plug. A busy plug also shows roughly how long it has been charging so the
@@ -2700,6 +2741,13 @@ class _StationSheetState extends State<_StationSheet> {
               style: AppStrings.font(TextStyle(
                   color: color, fontSize: 13, fontWeight: FontWeight.w600)),
             ),
+          ],
+          // Says what "status not published" actually means: whose charger this
+          // is, and why neither a state nor a price is quoted for it. Without
+          // it the row reads like a fault rather than a gap in what we are told.
+          if (p.isUnknown) ...[
+            const SizedBox(width: 8),
+            _PortInfoButton(onTap: _showUnknownInfo),
           ],
           // Per-connector "notify me when THIS plug frees up". Only on a busy
           // plug (a free one needs no alert) and only when the station has a
@@ -3058,6 +3106,31 @@ class _NotifyButton extends StatelessWidget {
 // ── Compact per-connector "notify me" button (busy port rows) ─────────────────
 // Filled emerald when off; outlined emerald + active bell when armed (tap again
 // to cancel). Spinner while a subscribe/unsubscribe round-trip is in flight.
+/// The "i" that sits where a price would be on a plug the operator publishes no
+/// state for. Same slate as the row, so it reads as part of it rather than as a
+/// warning, and sized to the 34 px the notify button occupies on a busy row.
+class _PortInfoButton extends StatelessWidget {
+  const _PortInfoButton({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          width: 34, height: 34,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: _unknownSlate.withValues(alpha: 0.18),
+            shape: BoxShape.circle,
+            border: Border.all(color: _unknownSlate.withValues(alpha: 0.55)),
+          ),
+          child: const Icon(Icons.info_outline_rounded,
+              color: _unknownSlate, size: 18),
+        ),
+      );
+}
+
 class _PortNotifyButton extends StatelessWidget {
   const _PortNotifyButton(
       {required this.on, required this.busy, required this.onTap});
