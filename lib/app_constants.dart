@@ -7,6 +7,7 @@ const kSelectedProviders = 'selected_providers';  // JSON list of provider names
 const kSupportPopupLastShown = 'support_popup_last_shown'; // int: epoch ms of last show
 const kMinPowerEnabled  = 'min_power_enabled';    // bool: min-power map filter on/off
 const kMinPowerKw       = 'min_power_kw';         // int: minimum charger power in kW
+const kNewStationAlerts = 'new_station_alerts';   // bool: broadcast push when a provider opens a station
 
 // ── Minimum-power presets (kW) ────────────────────────────────────────────────
 // Shared by the profile filter and the route planner. Values mirror the real

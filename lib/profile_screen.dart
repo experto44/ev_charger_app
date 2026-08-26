@@ -771,6 +771,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
 
+            // ── New-charger broadcasts ───────────────────────────────────────
+            // Device-scoped like the alerts below, but through an FCM topic
+            // rather than a per-device subscription: nobody can ask in advance
+            // for a station that does not exist yet. Shown signed out too.
+            const SizedBox(height: 28),
+            _Label(AppStrings.newStationAlertsTitle),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.fromLTRB(14, 4, 4, 4),
+              decoration: BoxDecoration(
+                color: _bgCard,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _bgSurface),
+              ),
+              child: Row(children: [
+                const Icon(Icons.add_location_alt_outlined,
+                    color: _textSec, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    AppStrings.newStationAlertsHint,
+                    style: AppStrings.font(
+                        const TextStyle(color: _textSec, fontSize: 13)),
+                  ),
+                ),
+                ValueListenableBuilder<bool>(
+                  valueListenable: NotificationService.I.newStationAlerts,
+                  builder: (_, on, __) => Switch(
+                    value: on,
+                    activeThumbColor: _emerald,
+                    activeTrackColor: _emerald.withValues(alpha: 0.35),
+                    inactiveThumbColor: _textSec,
+                    inactiveTrackColor: _bgSurface,
+                    onChanged: NotificationService.I.setNewStationAlerts,
+                  ),
+                ),
+              ]),
+            ),
+
             // ── Active charger-free alerts ("Notify me!") ────────────────────
             // Device-scoped (keyed by FCM token), so shown even when signed out.
             const SizedBox(height: 28),

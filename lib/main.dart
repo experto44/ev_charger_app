@@ -405,12 +405,63 @@ class _MapScreenState extends State<MapScreen>
     // the map is already drawn. Repaint when it does, otherwise a build whose
     // compiled-in tiles are dead would keep showing them for the whole session.
     LiveStatusService.I.configListenable.addListener(_onRemoteConfig);
+    // Tapping a "new charger" push should land on that charger. The tap can
+    // arrive before this screen exists (it cold-started the app), so the
+    // service holds it and this drains it once the map can actually move.
+    NotificationService.I.openStation.addListener(_onPushOpenStation);
+    _onPushOpenStation();
     // _locateMe() is called from MapOptions.onMapReady, which fires only
     // after FlutterMap has mounted and the MapController is fully attached.
   }
 
   void _onRemoteConfig() {
     if (mounted) { setState(() {}); }
+  }
+
+  // ── "New charger" push → show that charger ────────────────────────────────
+  /// Set once FlutterMap has attached its controller. Moving the camera before
+  /// that throws, and a cold start from a notification is exactly the case that
+  /// gets there first.
+  bool _mapReady = false;
+
+  /// A tap waiting to be honoured. Held rather than dropped because the feed
+  /// lands seconds after the map does, and a station that is not in `_stations`
+  /// yet has no sheet to open.
+  ({String id, double lat, double lng})? _pendingPush;
+
+  /// Whether the camera has already been sent to [_pendingPush]. The request
+  /// outlives the move, because it is retried until the station shows up in the
+  /// feed, and re-flying the map on each retry would drag a driver who has
+  /// panned away right back.
+  bool _pushMoved = false;
+
+  void _onPushOpenStation() {
+    final req = NotificationService.I.openStation.value;
+    if (req == null) { return; }
+    NotificationService.I.openStation.value = null;
+    _pendingPush = req;
+    _pushMoved   = false;
+    _consumePendingPush();
+  }
+
+  void _consumePendingPush() {
+    final req = _pendingPush;
+    if (req == null || !mounted || !_mapReady) { return; }
+    // Move on the coordinates from the push itself, so the driver lands in the
+    // right place even if the feed has not caught up with the station yet.
+    if (!_pushMoved) {
+      _pushMoved = true;
+      _animatedMove(LatLng(req.lat, req.lng), 15);
+    }
+    Station? hit;
+    for (final s in _stations) {
+      if (s.id == req.id) { hit = s; break; }
+    }
+    // Keep the request pending when the station is not loaded yet; the next
+    // feed load calls back in.
+    if (hit == null) { return; }
+    _pendingPush = null;
+    _showStationSheet(hit);
   }
 
   // Friendly daily Support/Premium prompt. Shown ONLY to non-premium users, and
@@ -803,6 +854,8 @@ class _MapScreenState extends State<MapScreen>
       if (!mounted) { return; }
       setState(() { _stations = bundled; _loading = false; });
     }
+    // A push tapped before the feed arrived has been waiting for these.
+    _consumePendingPush();
   }
 
   // Background / on-demand refresh. Re-fetches live data and swaps it in.
@@ -984,6 +1037,7 @@ class _MapScreenState extends State<MapScreen>
     _mapEventSub?.cancel();
     _refreshTimer?.cancel();
     LiveStatusService.I.configListenable.removeListener(_onRemoteConfig);
+    NotificationService.I.openStation.removeListener(_onPushOpenStation);
     _openSheetStation.dispose();
     super.dispose();
   }
@@ -1287,7 +1341,14 @@ class _MapScreenState extends State<MapScreen>
                   _updateCenterInGeorgia();
                   _scheduleOcmViewportFetch();
                 });
-                _locateMe(recenter: true);
+                _mapReady = true;
+                // A tapped push outranks the usual recenter-on-me. _locateMe is
+                // async, so letting it run would slide the map to the driver's
+                // own position a moment after we moved it to the charger they
+                // asked for, undoing the tap.
+                final pushPending = _pendingPush != null;
+                _consumePendingPush();
+                _locateMe(recenter: !pushPending);
                 _loadOcmCountries();
                 _loadTurkey();
               },

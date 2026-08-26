@@ -309,6 +309,13 @@ class AppStrings {
       ? 'გათავისუფლდა! მოასწარი დატენვა სანამ სხვამ მიგასწრო 🙂'
       : 'is now free! Grab it before someone beats you to it 🙂';
 
+  // ── New-charger broadcasts (profile) ─────────────────────────────────────
+  static String get newStationAlertsTitle =>
+      isGeorgian ? 'ახალი დამტენები' : 'New Chargers';
+  static String get newStationAlertsHint => isGeorgian
+      ? 'შეგატყობინებთ, როცა რომელიმე კომპანია ახალ სადგურს გახსნის'
+      : 'Get a heads-up when a provider opens a new station';
+
   // ── Active alerts list (profile) ─────────────────────────────────────────
   static String get activeAlertsTitle =>
       isGeorgian ? 'აქტიური შეტყობინებები' : 'Active Alerts';
