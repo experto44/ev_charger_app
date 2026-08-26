@@ -1577,6 +1577,157 @@ jobs:
                       print("  cleanup failed:", e)
               print(f"🔔 sent {sent} push(es) after reading {scanned} alert doc(s)")
 
+          # ── Push "new charger" broadcasts ───────────────────────────
+          # A plug freeing up interests exactly one person, the one who asked for
+          # it, so those go out device by device. A provider opening a site
+          # interests everybody, so this rides an FCM topic instead: one send
+          # reaches every subscriber and reads no Firestore documents at all,
+          # which matters because that per-device scan above is already the
+          # expensive part of a cycle.
+          #
+          # "New" here means an id this pipeline has NEVER published, not merely
+          # one missing from last cycle's snapshot. A provider that answers 200
+          # with a partial list would otherwise re-add its own stations the
+          # moment it recovered, and every phone in the country would buzz about
+          # chargers that have stood there for months. A push cannot be recalled,
+          # so the published ids get their own gist file and that set only grows.
+          CONFIG_FILE = "config.json"
+          KNOWN_FILE  = "known_stations.json"
+
+          # Ceiling on how many first-seen stations one provider may announce in
+          # a single cycle. Reality is one or two going live at once; a dozen
+          # means an id scheme changed or an API started paginating differently.
+          MAX_NEW_PER_PROVIDER = 5
+
+          def load_known_ids(gist_files):
+              """Ids already published, or None when we must not announce.
+
+              None (first run, or a file we cannot parse) is deliberately not the
+              same as an empty set. Seeding silently is right; announcing the
+              entire existing feed is the worst thing this code could do, so
+              every unreadable state fails that way.
+              """
+              f = (gist_files or {}).get(KNOWN_FILE)
+              if not f:
+                  return None
+              try:
+                  if f.get("truncated") and f.get("raw_url"):
+                      body = requests.get(f["raw_url"], headers=headers,
+                                          timeout=30).json()
+                  else:
+                      body = json.loads(f.get("content") or "{}")
+                  ids = body.get("ids")
+                  return set(ids) if isinstance(ids, list) else None
+              except Exception as e:
+                  print("known-station list unreadable:", e)
+                  return None
+
+          def _site_label(row):
+              """"Batumi, Tegeta Gezi" — skipping the city when the name repeats it."""
+              name = (row.get("name") or "").strip()
+              city = (row.get("city") or "").strip()
+              if city and name and city.lower() not in name.lower():
+                  return f"{city}, {name}"
+              return name or city or ""
+
+          def notify_new_stations(known_ids, new_stations, fresh_providers, enabled):
+              """Announce first-seen stations. Returns the id set to persist."""
+              all_ids = {s["id"] for s in new_stations if s.get("id")}
+              if known_ids is None:
+                  print(f"new-charger alerts: seeding {len(all_ids)} known ids, "
+                        f"announcing nothing on this run")
+                  return all_ids
+
+              # Only a provider we actually re-fetched can introduce a station.
+              # Anything else is the bundled snapshot talking, and its rows are
+              # months old however new they look to a set difference.
+              unseen = [s for s in new_stations
+                        if s.get("id") and s["id"] not in known_ids
+                        and s.get("provider") in fresh_providers]
+              if not unseen:
+                  return known_ids | all_ids
+
+              by_provider = {}
+              for s in unseen:
+                  by_provider.setdefault(s["provider"], []).append(s)
+
+              announce = []
+              for pname, rows in by_provider.items():
+                  if len(rows) > MAX_NEW_PER_PROVIDER:
+                      print(f"new-charger alerts: {pname} produced {len(rows)} "
+                            f"first-seen stations in one cycle — recording them "
+                            f"without announcing (reads as a data change, not "
+                            f"that many openings)")
+                      continue
+                  announce.extend(rows)
+
+              # One push per site. A location with a CCS2 and a GB/T plug is one
+              # thing opening, not two, and providers routinely publish the same
+              # site as several rows; rounded coordinates (~10 m) identify it.
+              sites = {}
+              for s in announce:
+                  try:
+                      key = (s.get("provider"), round(float(s["lat"]), 4),
+                             round(float(s["lng"]), 4))
+                  except (TypeError, ValueError, KeyError):
+                      key = (s.get("provider"), s["id"])
+                  sites.setdefault(key, []).append(s)
+
+              sa_json = os.environ.get("FIREBASE_SERVICE_ACCOUNT", "").strip()
+              if sites and enabled:
+                  if not sa_json:
+                      print("new-charger alerts: no service account — not sending")
+                      enabled = False
+                  else:
+                      import firebase_admin
+                      from firebase_admin import credentials, messaging
+                      if not firebase_admin._apps:
+                          firebase_admin.initialize_app(
+                              credentials.Certificate(json.loads(sa_json)))
+
+              for rows in sites.values():
+                  pname = rows[0].get("provider") or ""
+                  where = _site_label(rows[0])
+                  conns = []
+                  for r in rows:
+                      for c in (r.get("connectors") or []):
+                          if c and c not in conns:
+                              conns.append(c)
+                  at_en = f": {where}" if where else ""
+                  at_ka = f": {where}" if where else ""
+                  cn_en = f"\nConnectors: {', '.join(conns)}" if conns else ""
+                  cn_ka = f"\nკონექტორები: {', '.join(conns)}" if conns else ""
+                  # Carried so a tap can open the station instead of dumping the
+                  # driver on whatever screen the app happened to be showing.
+                  payload = {
+                      "type": "new_station",
+                      "station_id": str(rows[0].get("id") or ""),
+                      "lat": str(rows[0].get("lat") or ""),
+                      "lng": str(rows[0].get("lng") or ""),
+                  }
+                  for topic, title, body in (
+                      ("new_stations_en", "⚡ New charger",
+                       f"{pname} added a new station{at_en}{cn_en}"),
+                      ("new_stations_ka", "⚡ ახალი დამტენი",
+                       f"{pname}-მ ახალი სადგური დაამატა{at_ka}{cn_ka}"),
+                  ):
+                      if not enabled:
+                          print(f"  [dry-run] {topic}: {body}")
+                          continue
+                      try:
+                          messaging.send(messaging.Message(
+                              topic=topic,
+                              notification=messaging.Notification(
+                                  title=title, body=body),
+                              android=messaging.AndroidConfig(priority="high"),
+                              data=payload,
+                          ))
+                          print(f"  sent {topic}: {where}")
+                      except Exception as e:
+                          print(f"  send failed ({topic}):", e)
+
+              return known_ids | all_ids
+
           # ── Load station data from the committed asset file ────────────────
           # The bundled asset ships with snapshots of the live providers for
           # offline use, so for each live provider we drop its bundled rows and
@@ -1686,6 +1837,23 @@ jobs:
           except Exception as e:
               print("charger-free alerts skipped:", e)
 
+          # ── Announce stations nobody has seen before ─────────────────────
+          # Sending stays OFF until the log has shown a few quiet cycles: flip
+          # new_station_alerts.enabled in config.json to start. Same hand-edit
+          # switch as direct_fetch, for a sharper version of the same reason —
+          # this one broadcasts, and a broadcast cannot be taken back.
+          new_known_ids = None
+          try:
+              cfg_file = (gist_data.get("files") or {}).get(CONFIG_FILE) or {}
+              cfg = json.loads(cfg_file.get("content") or "{}")
+              alerts_on = bool(
+                  (cfg.get("new_station_alerts") or {}).get("enabled", False))
+              new_known_ids = notify_new_stations(
+                  load_known_ids(gist_data.get("files")),
+                  stations, fresh_providers, alerts_on)
+          except Exception as e:
+              print("new-charger alerts skipped:", e)
+
           # -- Remote kill-switch for the app's direct-to-provider reads -----
           # The app may read a single station straight from its provider's API
           # when the user taps refresh, which turns a ~10 min stale number into a
@@ -1698,7 +1866,6 @@ jobs:
           # It is CREATED only when absent, and is otherwise left out of the
           # PATCH entirely -- the gist API leaves files it is not given alone --
           # so a hand edit can never be clobbered by the next update cycle.
-          CONFIG_FILE = "config.json"
           DEFAULT_CONFIG = {
               "_readme": "Hand-edit to change app behaviour with no app release. "
                          "The updater creates this file when missing and never "
@@ -1710,6 +1877,11 @@ jobs:
                   "enabled": True,
                   "providers": ["mart EV", "MOVEO", "Electrify Georgia", "EV Power GE"],
               },
+              # Broadcast a push when a provider publishes a station this
+              # pipeline has never seen. Starts off: turn it on only once
+              # known_stations.json has settled and the dry-run log looks sane,
+              # because every subscriber's phone hears whatever this sends.
+              "new_station_alerts": {"enabled": False},
           }
 
           # Preserve every other file in the gist. chargers.json is rewritten
@@ -1717,13 +1889,24 @@ jobs:
           files = {
               name: data
               for name, data in gist_data.get("files", {}).items()
-              if name not in ("chargers.json", CONFIG_FILE)
+              if name not in ("chargers.json", CONFIG_FILE, KNOWN_FILE)
           }
 
           # Replace chargers.json with the freshly timestamped data
           files["chargers.json"] = {
               "content": json.dumps(stations, ensure_ascii=False, indent=2)
           }
+
+          # Written every cycle, unlike config.json: this one is bookkeeping, not
+          # a setting, and a stale copy would re-announce whatever it missed.
+          if new_known_ids is not None:
+              files[KNOWN_FILE] = {"content": json.dumps({
+                  "_readme": "Station ids this pipeline has already published. "
+                             "Anything absent here is treated as brand new and "
+                             "may trigger a broadcast push, so do not prune it.",
+                  "updated": now,
+                  "ids": sorted(new_known_ids),
+              }, ensure_ascii=False, indent=2)}
 
           if CONFIG_FILE not in (gist_data.get("files") or {}):
               files[CONFIG_FILE] = {
