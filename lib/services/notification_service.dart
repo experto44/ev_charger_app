@@ -5,7 +5,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../app_constants.dart';
 import '../l10n/app_strings.dart';
 
 /// Result of attempting to arm a "notify me when this charger frees up" alert.
@@ -138,9 +140,89 @@ class NotificationService {
       _fcm.onTokenRefresh.listen(_onTokenRefresh);
       // Foreground pushes don't show a system notification — surface them in-app.
       FirebaseMessaging.onMessage.listen(_onForegroundMessage);
+      await _initNewStationTopic();
+      await _initTapHandling();
     } catch (e) {
       if (kDebugMode) debugPrint('NotificationService.init failed: $e');
     }
+  }
+
+  // ── "New charger" broadcasts ──────────────────────────────────────────────
+  /// Topics the "a provider opened a station" pushes go to, one per language.
+  ///
+  /// A topic send carries exactly one body and the server has no idea which
+  /// language any given phone reads, so the split has to happen here: each
+  /// device subscribes to the one topic it can actually read.
+  static const _topicEn = 'new_stations_en';
+  static const _topicKa = 'new_stations_ka';
+
+  /// Whether this device wants those broadcasts. Defaults ON — in a country
+  /// with a few hundred chargers a new one is genuinely news, and this fires a
+  /// handful of times a month rather than daily. The profile can turn it off.
+  final ValueNotifier<bool> newStationAlerts = ValueNotifier(true);
+
+  Future<void> _initNewStationTopic() async {
+    final p = await SharedPreferences.getInstance();
+    newStationAlerts.value = p.getBool(kNewStationAlerts) ?? true;
+    await _syncNewStationTopic();
+    // Which topic is readable depends on the chosen language, so a language
+    // switch has to drag the subscription along with it.
+    AppStrings.notifier.addListener(_syncNewStationTopic);
+  }
+
+  Future<void> setNewStationAlerts(bool on) async {
+    newStationAlerts.value = on;
+    final p = await SharedPreferences.getInstance();
+    await p.setBool(kNewStationAlerts, on);
+    await _syncNewStationTopic();
+  }
+
+  /// At most one topic at a time. Leaving the other one subscribed is not a
+  /// harmless extra: every announcement would arrive twice, once in each
+  /// language, which reads as a bug and costs us the opt-in.
+  Future<void> _syncNewStationTopic() async {
+    final wanted = !newStationAlerts.value
+        ? null
+        : (AppStrings.isGeorgian ? _topicKa : _topicEn);
+    for (final topic in const [_topicEn, _topicKa]) {
+      try {
+        if (topic == wanted) {
+          await _fcm.subscribeToTopic(topic);
+        } else {
+          await _fcm.unsubscribeFromTopic(topic);
+        }
+      } catch (e) {
+        // No token yet (iOS APNs handshake) or offline. The next init retries.
+        if (kDebugMode) debugPrint('topic $topic sync failed: $e');
+      }
+    }
+  }
+
+  // ── Tapping a push ────────────────────────────────────────────────────────
+  /// Station a tapped notification wants shown, for the map screen to consume.
+  ///
+  /// "A new charger opened" is useless if tapping it drops the driver on
+  /// whatever screen the app happened to be on, so the push carries the id and
+  /// coordinates and this hands them over.
+  final ValueNotifier<({String id, double lat, double lng})?> openStation =
+      ValueNotifier(null);
+
+  Future<void> _initTapHandling() async {
+    // A tap that launched the app cold is waiting here; one that resumed it
+    // arrives on the stream. Both look identical to the map screen.
+    final initial = await FirebaseMessaging.instance.getInitialMessage();
+    if (initial != null) { _handleTap(initial); }
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleTap);
+  }
+
+  void _handleTap(RemoteMessage message) {
+    final d = message.data;
+    if (d['type'] != 'new_station') { return; }
+    final id  = (d['station_id'] as String?) ?? '';
+    final lat = double.tryParse((d['lat'] as String?) ?? '');
+    final lng = double.tryParse((d['lng'] as String?) ?? '');
+    if (id.isEmpty || lat == null || lng == null) { return; }
+    openStation.value = (id: id, lat: lat, lng: lng);
   }
 
   Future<void> _loadSubscriptions() async {
@@ -172,6 +254,11 @@ class NotificationService {
   Future<void> _onTokenRefresh(String newToken) async {
     final old = _token;
     _token = newToken;
+    // Topic membership is a property of the token, and this is also the moment
+    // a subscription that failed at startup (iOS with no APNs token yet) can
+    // finally be made. Ahead of the early return below, which only cares about
+    // per-station alerts.
+    unawaited(_syncNewStationTopic());
     if (old == null || old == newToken || _subscribed.isEmpty) return;
     // Migrate existing alerts to the new token's doc so they still fire, then
     // drop the stale doc.
