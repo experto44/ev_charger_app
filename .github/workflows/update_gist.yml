@@ -1633,6 +1633,12 @@ jobs:
           def notify_new_stations(known_ids, new_stations, fresh_providers, enabled):
               """Announce first-seen stations. Returns the id set to persist."""
               all_ids = {s["id"] for s in new_stations if s.get("id")}
+              # A feed with nothing in it teaches us nothing, and seeding an
+              # empty set would make the entire country look brand new on the
+              # next cycle. Returning None leaves the state file untouched.
+              if not all_ids:
+                  print("new-charger alerts: empty station list — state untouched")
+                  return None
               if known_ids is None:
                   print(f"new-charger alerts: seeding {len(all_ids)} known ids, "
                         f"announcing nothing on this run")

@@ -103,6 +103,13 @@ out2, log = run(out, [st("a1"), st("a2")], ALL)  # and is back
 check("a station that vanished and returned is NOT announced",
       "[dry-run]" not in log, log)
 
+# 8b. An empty feed must never reset the state (it would make the whole
+#     country look new next cycle).
+out, log = run({"a1", "a2"}, [], ALL)
+check("empty feed leaves state untouched", out is None, out)
+out, log = run(None, [], ALL)
+check("empty feed does not seed either", out is None, out)
+
 # 9. Labels.
 check("city is prefixed", label({"name": "Gezi", "city": "Batumi"}) == "Batumi, Gezi")
 check("city is not repeated",
