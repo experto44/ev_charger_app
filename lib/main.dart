@@ -2136,9 +2136,13 @@ class _SearchDestinationSheet extends StatelessWidget {
 // total isn't known. The bolt icon and white ring match the old pin styling.
 // A station is fully out of order: no free plug, and every published plug reads
 // "out" (neither free nor busy). Such pins are drawn grey, not busy-orange.
+// Out of order means every published plug is REPORTED broken. A plug whose
+// operator publishes no status at all (Tegeta's Porsche destination chargers)
+// says nothing about the charger, so a site made only of those is unknown, not
+// broken — and the grey "out" pin would otherwise win over the slate one.
 bool _stationOutOfOrder(Station s) =>
     s.available == 0 &&
-    s.ports.isNotEmpty &&
+    s.ports.any((p) => p.isOut) &&
     !s.ports.any((p) => p.isFree || p.isBusy);
 
 // Grey used for out-of-order chargers (mirrors the Tesla map's "out" colour).
@@ -2630,18 +2634,25 @@ class _StationSheetState extends State<_StationSheet> {
       };
 
   // One large, colour-coded row per physical connector: green = free, red =
-  // busy, grey = out of order. A busy plug also shows roughly how long it has
-  // been charging so the user can guess whether it'll free up soon.
+  // busy, grey = out of order, slate = the operator publishes nothing for this
+  // plug. A busy plug also shows roughly how long it has been charging so the
+  // user can guess whether it'll free up soon.
   Widget _portRow(ConnectorPort p) {
     final Color color = p.isFree
         ? _emerald
-        : (p.isBusy ? Colors.redAccent : _textSec);
+        : p.isBusy
+            ? Colors.redAccent
+            : (p.isUnknown ? _unknownSlate : _textSec);
     final String label = p.isFree
         ? AppStrings.portFree
-        : (p.isBusy ? AppStrings.portBusy : AppStrings.portOut);
+        : p.isBusy
+            ? AppStrings.portBusy
+            : (p.isUnknown ? AppStrings.portUnknown : AppStrings.portOut);
     final IconData icon = p.isFree
         ? Icons.check_circle_rounded
-        : (p.isBusy ? Icons.bolt_rounded : Icons.block_rounded);
+        : p.isBusy
+            ? Icons.bolt_rounded
+            : (p.isUnknown ? Icons.help_outline_rounded : Icons.block_rounded);
     String? sub;
     if (p.isBusy && p.since != null) {
       final mins = DateTime.now().toUtc().difference(p.since!.toUtc()).inMinutes;

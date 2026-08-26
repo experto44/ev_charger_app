@@ -48,7 +48,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: pip install requests pycognito firebase-admin
+        run: pip install requests pycognito firebase-admin curl_cffi
 
       - name: Push chargers.json to Gist
         env:
@@ -938,21 +938,36 @@ jobs:
               return stations
 
           # ── Tegeta Motors (REST catalog + public Firestore live status) ────
-          # Two public, no-auth sources joined together:
+          #  Two public, no-auth sources joined together:
           #  1) REST catalog mobileapi.tegetamotors.ge/api/v1/EVs/ChargeStations —
-          #     locations, charge points, connector types, prices. It is behind
-          #     Cloudflare (403s a bare python-requests UA) and carries NO live
-          #     status and NO kW rating, so power is reported as "—".
+          #     locations, charge points, connector types, prices. It carries NO
+          #     live status and NO kW rating, so power is reported as "—".
           #  2) Cloud Firestore (project tegeta-app-prod, collection `chargePoints`,
           #     world-readable) — live per-connector status, joined to the catalog
-          #     by chargeStationId == station id, overlaid in catalog order.
+          #     by connector id, which the catalog spells "<chargePointId>_<n>".
+          #
+          #  The catalog host now sits behind a Cloudflare MANAGED CHALLENGE
+          #  (`Cf-Mitigated: challenge`, a 403 challenge page). It fingerprints the
+          #  TLS handshake, so no User-Agent gets through: plain requests/curl are
+          #  refused from every IP, residential ones included, while the phone app
+          #  sails past. curl_cffi replays a real Chrome handshake and is answered
+          #  normally. That block landed on 2026-07-01 and went unnoticed for eight
+          #  weeks, because the bundled-snapshot fallback kept serving 1 July rows
+          #  under a fresh-looking feed. So the catalog is ALSO cached in the gist
+          #  now: if the challenge ever comes back, live status keeps flowing over
+          #  the last catalog we read instead of the provider silently freezing.
+          TEGETA_CACHE_FILE = "tegeta_catalog.json"
+          # Set by fetch_tegeta when the live catalog was actually read; the gist
+          # writer at the bottom stores it for the next blocked cycle.
+          tegeta_catalog_fresh = None
+
           def fetch_tegeta():
+              global tegeta_catalog_fresh
+              from curl_cffi import requests as cr
+
               UA = {"User-Agent": "okhttp/4.12.0"}
-              # Cloudflare passes the real app's header signature (okhttp UA +
-              # JSON accept + ka locale + keep-alive); sparser requests get an
-              # intermittent 403, and a CI IP occasionally trips it, so retry.
-              H = {"Accept": "application/json", "Accept-Language": "ka",
-                   "Connection": "keep-alive", **UA}
+              H  = {"Accept": "application/json", "Accept-Language": "ka"}
+              CATALOG = "https://mobileapi.tegetamotors.ge/api/v1/EVs/ChargeStations"
 
               def _get(u, headers, tries=5):
                   last = None
@@ -967,9 +982,73 @@ jobs:
                       time.sleep(2)
                   raise last
 
-              # 1) Static catalog (envelope: {data, errorCode, errorMessage, statusCode})
-              r = _get("https://mobileapi.tegetamotors.ge/api/v1/EVs/ChargeStations", H)
-              catalog = (r.json() or {}).get("data") or []
+              # 1) Static catalog (envelope: {data, errorCode, errorMessage, statusCode}).
+              # Several fingerprints, because Cloudflare retires the older ones as
+              # the real Chrome moves on, and a single hard-coded profile is exactly
+              # the kind of thing that dies quietly.
+              def _live_catalog():
+                  last = None
+                  for imp in ("chrome131", "chrome124", "safari17_0"):
+                      for _ in range(2):
+                          try:
+                              r = cr.get(CATALOG, headers=H, impersonate=imp, timeout=60)
+                              if r.status_code == 200:
+                                  return (r.json() or {}).get("data") or []
+                              last = f"HTTP {r.status_code} ({imp})"
+                          except Exception as e:
+                              last = f"{type(e).__name__}: {e} ({imp})"
+                          time.sleep(2)
+                  print("  Tegeta catalog refused:", last)
+                  return None
+
+              def _cached_catalog():
+                  """The last catalog we managed to read, kept in the gist."""
+                  try:
+                      r = requests.get(
+                          f"https://gist.githubusercontent.com/raw/{GIST_ID}"
+                          f"/{TEGETA_CACHE_FILE}?cb={int(time.time())}", timeout=30)
+                      if r.status_code == 200:
+                          return (r.json() or {}).get("stations") or None
+                  except Exception as e:
+                      print("  Tegeta catalog cache unreadable:", e)
+                  return None
+
+              # Only the fields this parser reads, so the cached copy is ~25 KB
+              # instead of the 200 KB the API returns (images, amenities, banners
+              # and per-connector marketing text are all dropped).
+              def _trim(rows):
+                  return [{
+                      "id": s.get("id"),
+                      "nameTranslations":    s.get("nameTranslations"),
+                      "addressTranslations": s.get("addressTranslations"),
+                      "city": {"nameTranslations":
+                               (s.get("city") or {}).get("nameTranslations")},
+                      "latitude":  s.get("latitude"),
+                      "longitude": s.get("longitude"),
+                      "isDeactivated": s.get("isDeactivated"),
+                      "chargePoints": [{
+                          "id":            cp.get("id"),
+                          "isDeactivated": cp.get("isDeactivated"),
+                          "isPorsche":     cp.get("isPorsche"),
+                          "type": {"id": (cp.get("type") or {}).get("id")},
+                          "connectors": [{
+                              "id":    c.get("id"),
+                              "price": c.get("price"),
+                              "connectorType": {"typeTranslations":
+                                  (c.get("connectorType") or {}).get("typeTranslations")},
+                          } for c in (cp.get("connectors") or [])],
+                      } for cp in (s.get("chargePoints") or [])],
+                  } for s in rows]
+
+              catalog = _live_catalog()
+              if catalog:
+                  tegeta_catalog_fresh = _trim(catalog)
+              else:
+                  catalog = _cached_catalog()
+                  if not catalog:
+                      raise RuntimeError("catalog challenged and no cached copy in the gist")
+                  print(f"  Tegeta: catalog challenged — overlaying live status on "
+                        f"the cached copy ({len(catalog)} stations)")
 
               # 2) Live status from public Firestore REST.
               fs = "https://firestore.googleapis.com/v1/projects/tegeta-app-prod/databases/(default)/documents"
@@ -987,17 +1066,72 @@ jobs:
                   if "doubleValue"  in f: return f["doubleValue"]
                   return None
 
-              # station id -> ordered live connector statuses (lowercased),
-              # concatenated across that station's charge-point documents.
+              # Connector id -> (status, document updateTime). Keyed exactly, not
+              # by position: the catalog names each plug "<chargePointId>_<n>" and
+              # the Firestore doc id IS that chargePointId, so the two line up by
+              # name. Zipping the two lists by order happened to agree today, but
+              # Firestore already carries four charge points the catalog does not
+              # (and the catalog one that Firestore does not), and any such gap
+              # would silently shift every status after it onto the wrong plug.
               live = {}
               for d in docs:
-                  fl  = d.get("fields", {})
-                  sid = gv(fl["chargeStationId"]) if "chargeStationId" in fl else None
-                  if sid is None:
-                      continue
-                  for c in fl.get("connectors", {}).get("arrayValue", {}).get("values", []):
-                      st = gv(c.get("mapValue", {}).get("fields", {}).get("status", {})) or ""
-                      live.setdefault(sid, []).append(str(st).lower())
+                  doc_id = str(d.get("name") or "").rsplit("/", 1)[-1]
+                  upd    = d.get("updateTime") or ""
+                  for c in (d.get("fields", {}).get("connectors", {})
+                             .get("arrayValue", {}).get("values", [])):
+                      cf  = c.get("mapValue", {}).get("fields", {})
+                      cid = gv(cf.get("connectorId", {}))
+                      if cid is None:
+                          continue
+                      live[f"{doc_id}_{cid}"] = (
+                          str(gv(cf.get("status", {})) or "").lower(), upd)
+
+              # OCPP 1.6 vocabulary, mapped the way Tegeta's own app renders it:
+              # a plug mid-session reads "დაკავებულია" (occupied) and an
+              # Unavailable one is greyed out with no label at all. This pipeline
+              # had those two exactly the wrong way round, so a plug with a car on
+              # it published as out of order, and chargers that had been dead for
+              # seven weeks (Telavi since 9 July, Samgori since 8 August) published
+              # as merely busy.
+              BUSY = {"charging", "preparing", "finishing", "occupied",
+                      "reserved", "suspendedev", "suspendedevse"}
+              OUT  = {"unavailable", "faulted"}
+              # A reading nothing has confirmed in a month is not a live reading.
+              STALE_DAYS = 30
+
+              def _fresh(upd):
+                  m = re.match(r"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})", upd or "")
+                  if not m:
+                      return False
+                  seen = datetime.strptime(m.group(1), "%Y-%m-%dT%H:%M:%S") \
+                                 .replace(tzinfo=timezone.utc)
+                  return (datetime.now(timezone.utc) - seen).days < STALE_DAYS
+
+              def port_status(cp, conn_id):
+                  # Porsche Destination Charging units (isPorsche, doc ids PDC-*)
+                  # are wallboxes at partner hotels and resorts. Tegeta seeds one
+                  # placeholder Firestore doc per unit and never writes to it
+                  # again, so its permanent "Available" means "nobody ever told
+                  # us", not "free". Their own app agrees: those plugs are listed
+                  # with no colour, no label and no price, under a separate
+                  # PORSCHE tab. Reporting 49 of Tegeta's 80 plugs as free on the
+                  # strength of a placeholder is the one thing this feed must not
+                  # do, so they publish as status unknown.
+                  if cp.get("isPorsche"):
+                      return "unknown"
+                  st, upd = live.get(conn_id, (None, ""))
+                  if st is None:
+                      return "unknown"      # catalog plug with no Firestore doc
+                  if st in BUSY:
+                      return "busy"
+                  if st in OUT:
+                      return "out"
+                  if st == "available":
+                      # The same trap one step further in: a monitored charge point
+                      # whose document stopped moving is a source that went quiet,
+                      # not a plug anyone has confirmed is free.
+                      return "free" if _fresh(upd) else "unknown"
+                  return "unknown"          # "Undefined", and anything new
 
               def en(trs):  # pick the English translation (fall back to first)
                   for t in trs or []:
@@ -1034,10 +1168,11 @@ jobs:
                   sid = s.get("id")
 
                   # Flatten every live (non-deactivated) connector in catalog
-                  # order, capturing its chip type. Power isn't published, so DC
-                  # is inferred from the "Fast" charge-point type or a DC plug.
+                  # order, capturing its chip type, its own price and its status.
+                  # Power isn't published, so DC is inferred from the "Fast"
+                  # charge-point type or a DC plug.
                   conns, any_dc = set(), False
-                  rest_conns = []  # (chip_type, price_str, price_num) per connector, catalog order
+                  rest_conns = []  # (chip type, price string, price number, status)
                   for cp in s.get("chargePoints", []):
                       if cp.get("isDeactivated"):
                           continue
@@ -1050,19 +1185,12 @@ jobs:
                           pv = c.get("price")
                           pnum = float(pv) if pv is not None else None
                           pstr = f"{fmt_amt(pnum)} ₾/kWh" if pnum is not None else ""
-                          rest_conns.append((ct, pstr, pnum))
+                          rest_conns.append((ct, pstr, pnum, port_status(cp, c.get("id"))))
 
-                  # Overlay live status onto catalog connectors (zip by order) and
-                  # attach each connector's own price — Tegeta prices DC fast and
-                  # AC sockets differently. A plug the catalog lists but Firestore
-                  # omits reads as "out". Status vocab: Available/Unavailable/Undefined.
-                  statuses = live.get(sid, [])
+                  # Attach each connector's own price — Tegeta prices DC fast and
+                  # AC sockets differently.
                   port_details, price_nums = [], []
-                  for i, (ct, pstr, pnum) in enumerate(rest_conns):
-                      st = statuses[i] if i < len(statuses) else None
-                      if   st == "available":   ps = "free"
-                      elif st == "unavailable": ps = "busy"
-                      else:                     ps = "out"
+                  for ct, pstr, pnum, ps in rest_conns:
                       port = {"type": ct or "?", "status": ps}
                       if pstr:
                           port["price"] = pstr
@@ -1082,7 +1210,7 @@ jobs:
 
                   name = en(s.get("nameTranslations")) or en(s.get("addressTranslations")) or "Tegeta"
                   city = en((s.get("city") or {}).get("nameTranslations")) or name.split(",")[0]
-                  stations.append({
+                  row = {
                       "id": f"tegeta_{sid}",
                       "name": name,
                       "lat": lat,
@@ -1097,8 +1225,20 @@ jobs:
                       "connectors": sort_conns(conns),
                       "ports": port_details,
                       "last_updated": "Just now",
-                  })
-              print(f"Tegeta: {len(stations)} stations")
+                  }
+                  # The same flag the Turkish registry and OCM use for sources that
+                  # publish plug COUNTS and not availability. A site where every
+                  # plug is a Porsche wallbox has no live reading at all, and
+                  # "0 available" there would read as fully occupied; this makes
+                  # the app say "N plugs · live status not published" instead.
+                  if total and not any(p["status"] != "unknown" for p in port_details):
+                      row["live"] = False
+                  stations.append(row)
+              known = sum(1 for s in stations for p in s["ports"] if p["status"] != "unknown")
+              total_ports = sum(len(s["ports"]) for s in stations)
+              print(f"Tegeta: {len(stations)} stations "
+                    f"({known} plugs with live status, "
+                    f"{total_ports - known} unknown)")
               return stations
 
           # ── Charger Plus (public live status over WebSocket) ───────────────
@@ -1891,11 +2031,15 @@ jobs:
           }
 
           # Preserve every other file in the gist. chargers.json is rewritten
-          # below; config.json is deliberately left out so hand edits survive.
+          # below; config.json is deliberately left out so hand edits survive,
+          # and the Tegeta catalog cache is left out because re-sending an
+          # unchanged 25 KB file every couple of minutes is pure churn — a file
+          # the PATCH does not mention is left exactly as it is.
           files = {
               name: data
               for name, data in gist_data.get("files", {}).items()
-              if name not in ("chargers.json", CONFIG_FILE, KNOWN_FILE)
+              if name not in ("chargers.json", CONFIG_FILE, KNOWN_FILE,
+                              TEGETA_CACHE_FILE)
           }
 
           # Replace chargers.json with the freshly timestamped data
@@ -1919,6 +2063,33 @@ jobs:
                   "content": json.dumps(DEFAULT_CONFIG, ensure_ascii=False, indent=2)
               }
               print(f"Created {CONFIG_FILE} with default settings")
+
+          # Keep a copy of Tegeta's catalog, so a Cloudflare challenge costs us
+          # the catalog and not the live status laid over it. Only rewritten when
+          # the catalog itself moved (a few times a year); the "updated" stamp is
+          # deliberately outside the comparison, or every cycle would look changed.
+          if tegeta_catalog_fresh is not None:
+              try:
+                  pf = (gist_data.get("files") or {}).get(TEGETA_CACHE_FILE) or {}
+                  if pf.get("truncated") and pf.get("raw_url"):
+                      prev = requests.get(pf["raw_url"], headers=headers,
+                                          timeout=30).json().get("stations")
+                  else:
+                      prev = json.loads(pf.get("content") or "{}").get("stations")
+              except Exception as e:
+                  print("Tegeta catalog cache unreadable, rewriting:", e)
+                  prev = None
+              if prev != tegeta_catalog_fresh:
+                  files[TEGETA_CACHE_FILE] = {"content": json.dumps({
+                      "_readme": "Trimmed copy of Tegeta's REST catalog. The "
+                                 "updater falls back to this when Cloudflare "
+                                 "challenges the catalog request, so live status "
+                                 "keeps flowing. Rewritten only when it changes.",
+                      "updated": now,
+                      "stations": tegeta_catalog_fresh,
+                  }, ensure_ascii=False, indent=2)}
+                  print(f"Cached Tegeta catalog "
+                        f"({len(tegeta_catalog_fresh)} stations)")
 
           # ── Patch the gist ─────────────────────────────────────────────────
           patch = requests.patch(

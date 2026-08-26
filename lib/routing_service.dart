@@ -36,12 +36,17 @@ class ConnectorPort {
       {required this.type, required this.status, this.since, this.price = ''});
 
   final String    type;    // canonical chip label, e.g. "CCS2", "GB/T", "Type 2"
-  final String    status;  // 'free' | 'busy' | 'out'
+  // 'free' | 'busy' | 'out' | 'unknown'. "unknown" is a plug the operator
+  // publishes no live state for at all — not a claim that it is free, and not a
+  // claim that it is broken. Anything unrecognised is treated the same way.
+  final String    status;
   final DateTime? since;    // UTC session start (busy plugs only); null otherwise
   final String    price;   // per-plug price, e.g. "1.00 ₾/kWh" ('' if not published)
 
-  bool get isFree => status == 'free';
-  bool get isBusy => status == 'busy';
+  bool get isFree    => status == 'free';
+  bool get isBusy    => status == 'busy';
+  bool get isOut     => status == 'out';
+  bool get isUnknown => !isFree && !isBusy && !isOut;
 
   factory ConnectorPort.fromJson(Map<String, dynamic> j) => ConnectorPort(
         type:   (j['type'] as String?)?.trim().isNotEmpty == true

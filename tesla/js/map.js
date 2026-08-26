@@ -37,7 +37,10 @@ const PIN_UNKNOWN = '#4F7C9E';
 function stationOut(s) {
   return (
     s.available === 0 &&
-    s.ports && s.ports.length > 0 &&
+    // At least one plug REPORTED broken. A plug the operator publishes no
+    // status for (Tegeta's Porsche destination chargers) says nothing about the
+    // charger, so a site made only of those is unknown, not out of order.
+    s.ports && s.ports.some((p) => p.status === 'out') &&
     !s.ports.some((p) => p.status === 'free' || p.status === 'busy')
   );
 }

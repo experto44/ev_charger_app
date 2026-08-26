@@ -258,6 +258,11 @@ class AppStrings {
   static String get portFree => isGeorgian ? 'თავისუფალია' : 'Free';
   static String get portBusy => isGeorgian ? 'დაკავებულია' : 'Occupied';
   static String get portOut  => isGeorgian ? 'მწყობრიდან გამოსულია' : 'Out of order';
+  /// A plug whose operator publishes no real-time state (Tegeta's Porsche
+  /// destination chargers at partner hotels are the first of these). Says we do
+  /// not know, which is different from saying the plug is free or broken.
+  static String get portUnknown =>
+      isGeorgian ? 'სტატუსი არ ჩანს' : 'Status not published';
 
   /// Approximate "charging for ~N" line shown under a busy connector. Buckets to
   /// 5-min steps (and to hours past 60 min) since the exact figure isn't known.

@@ -233,4 +233,80 @@ void main() {
       );
     });
   });
+
+  // A plug whose operator publishes no state at all. Tegeta's Porsche
+  // destination chargers at partner hotels are the first of these: their
+  // Firestore documents were seeded once in 2025 and never written again, so
+  // the permanent "Available" they carry is a placeholder, not a free plug.
+  // The feed publishes those as status "unknown", and the whole site as
+  // live:false when NO plug there has a real reading.
+  group('plugs with no published status', () {
+    Map<String, dynamic> row(List<Map<String, String>> ports,
+            {bool? live, int available = 0}) =>
+        {
+          'id': 'tegeta_21',
+          'name': 'Porsche Center Tbilisi',
+          'city': 'Tbilisi',
+          'lat': 41.79, 'lng': 44.77,
+          'power': '—', 'type': 'Fast DC',
+          'price': '0.60–1.00 ₾/kWh',
+          'available_spots': '$available available',
+          'total_spots': ports.length,
+          'provider': 'Tegeta',
+          'connectors': const ['CCS2', 'Type 2'],
+          'ports': ports,
+          if (live != null) 'live': live,
+        };
+
+    test('an unknown plug is neither free, busy, nor out of order', () {
+      const p = ConnectorPort(type: 'Type 2', status: 'unknown');
+      expect(p.isFree, isFalse);
+      expect(p.isBusy, isFalse);
+      expect(p.isOut, isFalse);
+      expect(p.isUnknown, isTrue);
+    });
+
+    test('an unrecognised status is treated as unknown, never as free', () {
+      // The whole point: a value this build has never seen must not be
+      // promoted into a claim that the plug is available.
+      const p = ConnectorPort(type: 'CCS2', status: 'Preparing');
+      expect(p.isUnknown, isTrue);
+      expect(p.isFree, isFalse);
+    });
+
+    test('a site with no live reading parses as not-live and 0 available', () {
+      final s = Station.fromJson(row(const [
+        {'type': 'Type 2', 'status': 'unknown'},
+        {'type': 'CCS2', 'status': 'unknown'},
+      ], live: false));
+      expect(s.live, isFalse);
+      expect(s.available, 0);
+      expect(s.total, 2);
+      expect(s.ports.every((p) => p.isUnknown), isTrue);
+    });
+
+    test('a mixed site stays live and counts only the plugs it can see', () {
+      // Tegeta Vake: six monitored plugs plus two Porsche wallboxes.
+      final s = Station.fromJson(row(const [
+        {'type': 'Type 2', 'status': 'unknown'},
+        {'type': 'Type 2', 'status': 'unknown'},
+        {'type': 'CCS2', 'status': 'free'},
+        {'type': 'CCS2', 'status': 'free'},
+      ], available: 2));
+      expect(s.live, isTrue);
+      expect(s.available, 2);
+      expect(s.total, 4);
+      expect(s.ports.where((p) => p.isUnknown).length, 2);
+    });
+
+    test('sameLiveState notices a plug leaving unknown', () {
+      final before = _station(available: 0, ports: const [
+        ConnectorPort(type: 'Type 2', status: 'unknown'),
+      ]);
+      final after = _station(available: 1, ports: const [
+        ConnectorPort(type: 'Type 2', status: 'free'),
+      ]);
+      expect(sameLiveState(before, after), isFalse);
+    });
+  });
 }

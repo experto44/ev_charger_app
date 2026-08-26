@@ -13419,7 +13419,7 @@
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_37",
@@ -13448,7 +13448,7 @@
         "price": "1.00 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_36",
@@ -13458,7 +13458,7 @@
     "power": "—",
     "type": "AC",
     "price": "1.00 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Mestia",
     "provider": "Tegeta",
@@ -13468,16 +13468,17 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "1.00 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "1.00 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_35",
@@ -13487,7 +13488,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Batumi",
     "provider": "Tegeta",
@@ -13497,16 +13498,17 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_34",
@@ -13516,7 +13518,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Tbilisi",
     "provider": "Tegeta",
@@ -13526,16 +13528,16 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "out",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "out",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_33",
@@ -13564,7 +13566,7 @@
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_32",
@@ -13574,7 +13576,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "1 available",
+    "available_spots": "0 available",
     "total_spots": 1,
     "city": "Sagarejo",
     "provider": "Tegeta",
@@ -13584,11 +13586,12 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_31",
@@ -13598,7 +13601,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Tsalka",
     "provider": "Tegeta",
@@ -13608,16 +13611,17 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_30",
@@ -13627,7 +13631,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Khulo",
     "provider": "Tegeta",
@@ -13637,16 +13641,17 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_27",
@@ -13656,7 +13661,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Vazisubani",
     "provider": "Tegeta",
@@ -13666,16 +13671,17 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_26",
@@ -13685,7 +13691,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "1 available",
+    "available_spots": "0 available",
     "total_spots": 1,
     "city": "Gudauri",
     "provider": "Tegeta",
@@ -13695,11 +13701,12 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_25",
@@ -13709,7 +13716,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "1 available",
+    "available_spots": "0 available",
     "total_spots": 1,
     "city": "Gudauri",
     "provider": "Tegeta",
@@ -13719,11 +13726,12 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_24",
@@ -13733,7 +13741,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Bakuriani",
     "provider": "Tegeta",
@@ -13743,16 +13751,17 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_23",
@@ -13762,7 +13771,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Stepantsminda",
     "provider": "Tegeta",
@@ -13772,16 +13781,17 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_22",
@@ -13791,7 +13801,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Ozurgeti",
     "provider": "Tegeta",
@@ -13801,16 +13811,17 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_21",
@@ -13820,7 +13831,7 @@
     "power": "—",
     "type": "Fast DC",
     "price": "0.60–1.00 ₾/kWh",
-    "available_spots": "3 available",
+    "available_spots": "0 available",
     "total_spots": 6,
     "city": "Tbilisi",
     "provider": "Tegeta",
@@ -13831,36 +13842,37 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "CCS2",
-        "status": "out",
+        "status": "unknown",
         "price": "1.00 ₾/kWh"
       },
       {
         "type": "CCS2",
-        "status": "out",
+        "status": "unknown",
         "price": "1.00 ₾/kWh"
       },
       {
         "type": "CCS2",
-        "status": "free",
+        "status": "unknown",
         "price": "1.00 ₾/kWh"
       },
       {
         "type": "CCS2",
-        "status": "out",
+        "status": "unknown",
         "price": "1.00 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_20",
@@ -13870,7 +13882,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Oni",
     "provider": "Tegeta",
@@ -13880,16 +13892,17 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_19",
@@ -13899,7 +13912,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Akhaltsikhe",
     "provider": "Tegeta",
@@ -13909,16 +13922,17 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_18",
@@ -13928,7 +13942,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Tbilisi",
     "provider": "Tegeta",
@@ -13938,16 +13952,17 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_17",
@@ -13957,7 +13972,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Telavi",
     "provider": "Tegeta",
@@ -13967,16 +13982,17 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_16",
@@ -13986,7 +14002,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Kobuleti",
     "provider": "Tegeta",
@@ -13996,16 +14012,17 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_15",
@@ -14015,7 +14032,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Gurjaani",
     "provider": "Tegeta",
@@ -14025,16 +14042,17 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_14",
@@ -14044,7 +14062,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Telavi",
     "provider": "Tegeta",
@@ -14054,16 +14072,17 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_13",
@@ -14073,7 +14092,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Baghdati",
     "provider": "Tegeta",
@@ -14083,16 +14102,17 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_12",
@@ -14102,7 +14122,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Tbilisi",
     "provider": "Tegeta",
@@ -14112,16 +14132,17 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_11",
@@ -14131,7 +14152,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Tbilisi",
     "provider": "Tegeta",
@@ -14141,16 +14162,17 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "live": false,
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_10",
@@ -14160,7 +14182,7 @@
     "power": "—",
     "type": "Fast DC",
     "price": "1.00 ₾/kWh",
-    "available_spots": "2 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Telavi",
     "provider": "Tegeta",
@@ -14171,16 +14193,16 @@
     "ports": [
       {
         "type": "CCS2",
-        "status": "free",
+        "status": "out",
         "price": "1.00 ₾/kWh"
       },
       {
         "type": "CHAdeMO",
-        "status": "free",
+        "status": "out",
         "price": "1.00 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_9",
@@ -14201,16 +14223,16 @@
     "ports": [
       {
         "type": "CCS2",
-        "status": "busy",
+        "status": "out",
         "price": "1.00 ₾/kWh"
       },
       {
         "type": "CHAdeMO",
-        "status": "busy",
+        "status": "out",
         "price": "1.00 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_8",
@@ -14240,7 +14262,7 @@
         "price": "1.00 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_7",
@@ -14269,7 +14291,7 @@
         "price": "1.00 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_6",
@@ -14279,7 +14301,7 @@
     "power": "—",
     "type": "Fast DC",
     "price": "0.60–1.00 ₾/kWh",
-    "available_spots": "4 available",
+    "available_spots": "2 available",
     "total_spots": 4,
     "city": "Batumi",
     "provider": "Tegeta",
@@ -14290,12 +14312,12 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
@@ -14309,7 +14331,7 @@
         "price": "1.00 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_4",
@@ -14319,7 +14341,7 @@
     "power": "—",
     "type": "Fast DC",
     "price": "0.60–1.00 ₾/kWh",
-    "available_spots": "3 available",
+    "available_spots": "6 available",
     "total_spots": 8,
     "city": "Tbilisi",
     "provider": "Tegeta",
@@ -14331,22 +14353,22 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "out",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "out",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "CCS2",
-        "status": "busy",
+        "status": "free",
         "price": "1.00 ₾/kWh"
       },
       {
         "type": "CCS2",
-        "status": "busy",
+        "status": "free",
         "price": "1.00 ₾/kWh"
       },
       {
@@ -14356,7 +14378,7 @@
       },
       {
         "type": "Type 2",
-        "status": "busy",
+        "status": "free",
         "price": "0.60 ₾/kWh"
       },
       {
@@ -14370,7 +14392,7 @@
         "price": "1.00 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_3",
@@ -14380,7 +14402,7 @@
     "power": "—",
     "type": "AC",
     "price": "0.60 ₾/kWh",
-    "available_spots": "1 available",
+    "available_spots": "0 available",
     "total_spots": 2,
     "city": "Tbilisi",
     "provider": "Tegeta",
@@ -14390,16 +14412,16 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "out",
         "price": "0.60 ₾/kWh"
       },
       {
         "type": "Type 2",
-        "status": "out",
+        "status": "unknown",
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "tegeta_2",
@@ -14409,7 +14431,7 @@
     "power": "—",
     "type": "Fast DC",
     "price": "0.60–1.00 ₾/kWh",
-    "available_spots": "5 available",
+    "available_spots": "4 available",
     "total_spots": 6,
     "city": "Tbilisi",
     "provider": "Tegeta",
@@ -14426,7 +14448,7 @@
       },
       {
         "type": "Type 2",
-        "status": "free",
+        "status": "busy",
         "price": "0.60 ₾/kWh"
       },
       {
@@ -14441,7 +14463,7 @@
       },
       {
         "type": "Type 2",
-        "status": "busy",
+        "status": "out",
         "price": "0.60 ₾/kWh"
       },
       {
@@ -14450,7 +14472,7 @@
         "price": "0.60 ₾/kWh"
       }
     ],
-    "last_updated": "2026-07-01 22:49 UTC"
+    "last_updated": "2026-08-26 22:11 UTC"
   },
   {
     "id": "chargerplus_105",

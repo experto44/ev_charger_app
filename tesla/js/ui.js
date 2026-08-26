@@ -18,7 +18,10 @@ const PORT_LABEL = {
   free: 'statusFree',
   busy: 'statusBusy',
   out: 'statusOut',
-  unknown: 'statusUnknown', // registry data (Turkey): plug count, not availability
+  // Whole-station: registry data (Turkey) publishes a plug count, not
+  // availability. Per-plug: an operator that publishes nothing for this
+  // connector (Tegeta's Porsche destination chargers at partner hotels).
+  unknown: 'statusUnknown',
 };
 
 // Shared with the app: canonical connector order + minimum-power presets.
