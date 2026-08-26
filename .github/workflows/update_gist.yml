@@ -1192,7 +1192,12 @@ jobs:
                   port_details, price_nums = [], []
                   for ct, pstr, pnum, ps in rest_conns:
                       port = {"type": ct or "?", "status": ps}
-                      if pstr:
+                      # No status, no price. Tegeta hides the tariff on the
+                      # Porsche wallboxes for the same reason it hides their
+                      # state: you cannot start or pay for one through the app,
+                      # so the catalog's 0.60/1.00 is a default sitting in a
+                      # database, not a rate anybody is charged at that plug.
+                      if pstr and ps != "unknown":
                           port["price"] = pstr
                       port_details.append(port)
                       if pnum is not None:

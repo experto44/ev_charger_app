@@ -13468,13 +13468,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "1.00 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "1.00 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -13498,13 +13496,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -13586,8 +13582,7 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -13611,13 +13606,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -13641,13 +13634,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -13671,13 +13662,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -13701,8 +13690,7 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -13726,8 +13714,7 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -13751,13 +13738,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -13781,13 +13766,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -13811,13 +13794,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -13842,33 +13823,27 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "CCS2",
-        "status": "unknown",
-        "price": "1.00 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "CCS2",
-        "status": "unknown",
-        "price": "1.00 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "CCS2",
-        "status": "unknown",
-        "price": "1.00 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "CCS2",
-        "status": "unknown",
-        "price": "1.00 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -13892,13 +13867,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -13922,13 +13895,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -13952,13 +13923,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -13982,13 +13951,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -14012,13 +13979,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -14042,13 +14007,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -14072,13 +14035,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -14102,13 +14063,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -14132,13 +14091,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -14162,13 +14119,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "live": false,
@@ -14312,13 +14267,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "CCS2",
@@ -14353,13 +14306,11 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       },
       {
         "type": "CCS2",
@@ -14417,8 +14368,7 @@
       },
       {
         "type": "Type 2",
-        "status": "unknown",
-        "price": "0.60 ₾/kWh"
+        "status": "unknown"
       }
     ],
     "last_updated": "2026-08-26 22:11 UTC"
