@@ -7,6 +7,7 @@ import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show ValueListenable, kIsWeb;
+import 'package:flutter/gestures.dart' show TapGestureRecognizer;
 import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
@@ -36,7 +37,6 @@ import 'services/live_status_service.dart';
 import 'services/purchase_service.dart';
 import 'turkey_service.dart';
 import 'services/user_activity_service.dart';
-import 'settings_screen.dart';
 
 /// Background/terminated FCM handler. The "charger freed up" pushes carry a
 /// `notification` payload, so the OS displays them itself — nothing to do here.
@@ -141,11 +141,26 @@ final _kDefaultProviders = <String>[
     if (p != OcmService.kProvider && p != TurkeyService.kProvider) p,
 ];
 
-// CartoDB basemaps (free, retina-capable, great coverage for Georgia).
+// CartoDB basemaps (retina-capable, great coverage for Georgia).
 //  • Voyager     — bright, colourful streets + labels (Light Mode, default)
 //  • Dark Matter — dark theme with clear, high-contrast roads & city names
-const _kTileLight = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-const _kTileDark  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+//
+// These endpoints were open until 2026-08-26, when CARTO started requiring an
+// API key on them. Unauthenticated requests still answer 200 — they just return
+// tiles with "API KEY REQUIRED" printed across them, which is why every build
+// then in the wild broke at once with nothing to log. Key from
+// carto.com/basemaps/apikey; free up to 5M tiles/month.
+//
+// This is only what a build SHIPS with. `config.json` in the live feed can
+// replace either template at runtime (LiveConfig.tileLight/tileDark), so
+// rotating the key or moving to another provider is a Gist edit rather than a
+// store release. Prefer that path when this breaks again — and it will, since
+// CARTO's own docs say these raster tiles are being retired.
+const _kCartoKey  = 'cb1_284y_1_2a3597d5d012ed38ef23ec83';
+const _kTileLight =
+    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=$_kCartoKey';
+const _kTileDark  =
+    'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=$_kCartoKey';
 
 // The cloud feed's URL, its CDN-cache handling and its ETag bookkeeping all
 // live in LiveStatusService — fetching it from here directly would go back to
@@ -200,6 +215,16 @@ class _MapScreenState extends State<MapScreen>
   // Basemap style. Defaults to the bright CartoDB Voyager tiles; the top-right
   // toggle switches to CartoDB Dark Matter.
   bool             _darkMap          = false;
+
+  /// Tile template for the style currently selected. The live feed's
+  /// `config.json` wins over the compiled-in default when it carries a usable
+  /// one, which is how a broken or retired basemap gets fixed for phones that
+  /// are never going to install another build.
+  String get _tileUrl {
+    final cfg = LiveStatusService.I.config;
+    return _darkMap ? cfg.tileDark ?? _kTileDark : cfg.tileLight ?? _kTileLight;
+  }
+
   AnimationController? _moveAnim;
 
   bool             _filterDC         = false;
@@ -376,8 +401,16 @@ class _MapScreenState extends State<MapScreen>
     // without requiring an app restart. Uses the non-clobbering refresh so a
     // transient network failure never wipes the stations already on screen.
     _refreshTimer = Timer.periodic(_kRefreshInterval, (_) => _refreshStations());
+    // config.json is read in the background, so a basemap override lands after
+    // the map is already drawn. Repaint when it does, otherwise a build whose
+    // compiled-in tiles are dead would keep showing them for the whole session.
+    LiveStatusService.I.configListenable.addListener(_onRemoteConfig);
     // _locateMe() is called from MapOptions.onMapReady, which fires only
     // after FlutterMap has mounted and the MapController is fully attached.
+  }
+
+  void _onRemoteConfig() {
+    if (mounted) { setState(() {}); }
   }
 
   // Friendly daily Support/Premium prompt. Shown ONLY to non-premium users, and
@@ -498,6 +531,9 @@ class _MapScreenState extends State<MapScreen>
       ),
     );
     await _reloadProfileFilters();
+    // The country picker is reached from inside the profile now, so returning
+    // from it is the moment a country change has to reach the map.
+    await _reloadCountries();
   }
 
   // "Fast DC" chip tap → pick the minimum charger power for the map filter.
@@ -947,6 +983,7 @@ class _MapScreenState extends State<MapScreen>
     _ocmViewportDebounce?.cancel();
     _mapEventSub?.cancel();
     _refreshTimer?.cancel();
+    LiveStatusService.I.configListenable.removeListener(_onRemoteConfig);
     _openSheetStation.dispose();
     super.dispose();
   }
@@ -1256,12 +1293,18 @@ class _MapScreenState extends State<MapScreen>
               },
             ),
             children: [
-              // CartoDB basemap — Voyager (light) or Dark Matter (dark).
+              // CartoDB basemap — Voyager (light) or Dark Matter (dark), unless
+              // the feed's config.json names a different one (_tileUrl).
               // retinaMode pulls @2x tiles on high-DPI screens so streets and
               // city names stay crisp and easy to read.
+              //
+              // Keyed on the URL rather than on _darkMap so that a template
+              // arriving from config.json mid-session also rebuilds the layer;
+              // keying on the theme alone would leave a dead basemap on screen
+              // until the user happened to toggle it.
               TileLayer(
-                key: ValueKey(_darkMap),
-                urlTemplate: _darkMap ? _kTileDark : _kTileLight,
+                key: ValueKey(_tileUrl),
+                urlTemplate: _tileUrl,
                 subdomains: const ['a', 'b', 'c', 'd'],
                 userAgentPackageName: 'ge.geocharge.app',
                 retinaMode: RetinaMode.isHighDensity(context),
@@ -1383,32 +1426,14 @@ class _MapScreenState extends State<MapScreen>
                 ]),
               // Attribution for the third-party map tiles and station data.
               // Required by the CARTO / OpenStreetMap and Open Charge Map licences.
-              RichAttributionWidget(
-                alignment: AttributionAlignment.bottomLeft,
-                attributions: [
-                  TextSourceAttribution(
-                    'OpenStreetMap contributors',
-                    onTap: () => launchUrl(
-                      Uri.parse('https://www.openstreetmap.org/copyright'),
-                      mode: LaunchMode.externalApplication,
-                    ),
-                  ),
-                  TextSourceAttribution(
-                    'CARTO',
-                    onTap: () => launchUrl(
-                      Uri.parse('https://carto.com/attributions'),
-                      mode: LaunchMode.externalApplication,
-                    ),
-                  ),
-                  TextSourceAttribution(
-                    'Open Charge Map',
-                    onTap: () => launchUrl(
-                      Uri.parse('https://openchargemap.org/'),
-                      mode: LaunchMode.externalApplication,
-                    ),
-                  ),
-                ],
-              ),
+              //
+              // Deliberately NOT RichAttributionWidget: that one renders only
+              // logos and an "i" button permanently and keeps every
+              // TextSourceAttribution inside a popup, so these three credits sat
+              // one tap away rather than on screen. Visible attribution is the
+              // price of CARTO's free basemap tier, so they are drawn onto the
+              // map directly.
+              _MapAttribution(dark: _darkMap, bottomInset: navBottom),
             ],
           ),
 
@@ -1423,14 +1448,7 @@ class _MapScreenState extends State<MapScreen>
                     controller: _searchCtrl,
                     focusNode:  _searchFocus,
                     onChanged:  _onSearchChanged,
-                    onSettings: () async {
-                      await Navigator.push<void>(
-                        context,
-                        MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                      );
-                      await _reloadCountries(); // apply country changes immediately
-                    },
-                    onProfile: _openProfile,
+                    onProfile:  _openProfile,
                   ),
                   if (_suggestions.isNotEmpty) ...[
                     const SizedBox(height: 4),
@@ -1575,12 +1593,11 @@ class _MapScreenState extends State<MapScreen>
 class _SearchBarWidget extends StatelessWidget {
   const _SearchBarWidget({
     required this.controller, required this.focusNode, required this.onChanged,
-    required this.onSettings, required this.onProfile,
+    required this.onProfile,
   });
   final TextEditingController controller;
   final FocusNode             focusNode;
   final ValueChanged<String>  onChanged;
-  final VoidCallback          onSettings;
   final VoidCallback          onProfile;
 
   @override
@@ -1611,11 +1628,9 @@ class _SearchBarWidget extends StatelessWidget {
               ),
             ),
           ),
-          _IconBtn(
-            icon:  Icons.settings_outlined,
-            onTap: onSettings,
-          ),
-          const SizedBox(width: 8),
+          // No settings gear here any more: the only thing behind it was the
+          // country picker, which now lives in the profile next to the other
+          // per-user choices rather than as a second, competing entry point.
           _IconBtn(
             icon:  Icons.account_circle_outlined,
             onTap: onProfile,
@@ -2064,6 +2079,100 @@ bool _stationOutOfOrder(Station s) =>
 const _outGrey = Color(0xFF6B7A85);
 // Slate used for stations whose source publishes no live availability.
 const _unknownSlate = Color(0xFF4F7C9E);
+
+/// The map's permanent credit line: basemap tiles and station data.
+///
+/// Kept small and low-contrast so it does not compete with the pins, but always
+/// on screen — CARTO's basemap terms and the ODbL both ask for attribution to be
+/// visible, not merely reachable.
+///
+/// Laid out as one wrapping [Text.rich] rather than a Row of tappable labels:
+/// the line is long enough that a Row would overflow at large system font
+/// scales, and an attribution that throws a layout error is worse than none.
+class _MapAttribution extends StatefulWidget {
+  const _MapAttribution({required this.dark, required this.bottomInset});
+
+  /// Which basemap is underneath, since one is near-white and the other
+  /// near-black and the credit has to stay legible on both.
+  final bool dark;
+
+  /// System gesture inset, measured ABOVE the Scaffold and handed down.
+  ///
+  /// Reading MediaQuery here would give zero: a Scaffold strips the bottom
+  /// padding from its body whenever a bottomNavigationBar exists, and this one
+  /// always does — it is the free-tier ad banner, which collapses to an empty
+  /// box for premium users without giving the space back. The credit would then
+  /// sit under the gesture pill, which draws its handle straight through it.
+  final double bottomInset;
+
+  @override
+  State<_MapAttribution> createState() => _MapAttributionState();
+}
+
+class _MapAttributionState extends State<_MapAttribution> {
+  /// "OpenStreetMap contributors" is the wording the ODbL asks for; the other
+  /// two are the names their own attribution pages use.
+  static const _sources = <(String, String)>[
+    ('OpenStreetMap contributors', 'https://www.openstreetmap.org/copyright'),
+    ('CARTO',                      'https://carto.com/attributions'),
+    ('Open Charge Map',            'https://openchargemap.org/'),
+  ];
+
+  /// Built once and disposed with the widget: a TapGestureRecognizer holds
+  /// resources, so creating them inline in build() would leak one set per frame.
+  late final List<TapGestureRecognizer> _taps = [
+    for (final (_, url) in _sources)
+      TapGestureRecognizer()
+        ..onTap = () => launchUrl(
+              Uri.parse(url),
+              mode: LaunchMode.externalApplication,
+            ),
+  ];
+
+  @override
+  void dispose() {
+    for (final t in _taps) { t.dispose(); }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = widget.dark ? Colors.white70 : Colors.black87;
+    return Align(
+      alignment: Alignment.bottomLeft,
+      child: Padding(
+        padding: EdgeInsets.only(left: 4, right: 4, bottom: 4 + widget.bottomInset),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: (widget.dark ? Colors.black : Colors.white)
+                .withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+            child: Text.rich(
+              TextSpan(children: [
+                const TextSpan(text: '© '),
+                for (var i = 0; i < _sources.length; i++) ...[
+                  if (i > 0) const TextSpan(text: ' · '),
+                  TextSpan(
+                    text: _sources[i].$1,
+                    style: TextStyle(
+                      decoration: TextDecoration.underline,
+                      decorationColor: fg,
+                    ),
+                    recognizer: _taps[i],
+                  ),
+                ],
+              ]),
+              style: TextStyle(fontSize: 10, color: fg),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _AvailabilityPin extends StatelessWidget {
   const _AvailabilityPin({

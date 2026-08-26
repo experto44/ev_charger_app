@@ -147,6 +147,58 @@ void main() {
     });
   });
 
+  group('remote basemap', () {
+    test('a template pair from the feed replaces the shipped basemap', () {
+      final cfg = LiveConfig.fromJson(jsonDecode(
+              '{"basemap":{"light":"https://tiles.example/l/{z}/{x}/{y}.png?key=k",'
+              '"dark":"https://tiles.example/d/{z}/{x}/{y}.png?key=k"}}')
+          as Map<String, dynamic>);
+      expect(cfg.tileLight, 'https://tiles.example/l/{z}/{x}/{y}.png?key=k');
+      expect(cfg.tileDark, 'https://tiles.example/d/{z}/{x}/{y}.png?key=k');
+    });
+
+    test('overriding one style leaves the other on the shipped one', () {
+      final cfg = LiveConfig.fromJson(jsonDecode(
+              '{"basemap":{"light":"https://tiles.example/l/{z}/{x}/{y}.png"}}')
+          as Map<String, dynamic>);
+      expect(cfg.tileLight, isNotNull);
+      // Null is the signal for "keep the compiled-in default".
+      expect(cfg.tileDark, isNull);
+    });
+
+    test('an unusable template is ignored rather than blanking the map', () {
+      // This file is hand-edited under pressure, with a broken map as the very
+      // thing being fixed. A typo must cost nothing beyond the edit not landing.
+      const bad = [
+        '"http://tiles.example/{z}/{x}/{y}.png"', // not https
+        '"https://tiles.example/{z}/{x}.png"',    // no {y}
+        '"https://tiles.example/tiles.png"',      // no placeholders at all
+        '""',
+        '"   "',
+        '42',
+        'null',
+      ];
+      for (final v in bad) {
+        final cfg = LiveConfig.fromJson(
+            jsonDecode('{"basemap":{"light":$v,"dark":$v}}')
+                as Map<String, dynamic>);
+        expect(cfg.tileLight, isNull, reason: v);
+        expect(cfg.tileDark, isNull, reason: v);
+      }
+    });
+
+    test('a basemap-only config still leaves direct reads at their defaults',
+        () {
+      // The two sections are independent: swapping the basemap must not double
+      // as a kill-switch for the operator reads sitting next to it.
+      final cfg = LiveConfig.fromJson(jsonDecode(
+              '{"basemap":{"light":"https://tiles.example/{z}/{x}/{y}.png"}}')
+          as Map<String, dynamic>);
+      expect(cfg.directFetchEnabled, isTrue);
+      expect(cfg.directProviders, LiveConfig.fallback.directProviders);
+    });
+  });
+
   group('sameLiveState', () {
     test('spots a plug changing hands', () {
       final free = _station(available: 2, ports: const [

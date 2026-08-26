@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'app_constants.dart';
+import 'countries_screen.dart';
 import 'l10n/app_strings.dart';
 import 'screens/paywall_screen.dart';
 import 'services/auth_service.dart';
@@ -55,6 +56,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _loadVehiclePrefs();
     _loadPhone();
+    _loadCountries();
+  }
+
+  // ── Countries ─────────────────────────────────────────────────────────────
+  // Only the summary shown on the entry tile; the picker itself is
+  // CountriesScreen. Defaults to Georgia, matching the map's own fallback when
+  // the pref has never been written.
+  Set<String> _countries = const {'Georgia'};
+
+  Future<void> _loadCountries() async {
+    final p   = await SharedPreferences.getInstance();
+    final raw = p.getString(kActiveCountries);
+    if (!mounted || raw == null) { return; }
+    setState(() {
+      _countries =
+          (jsonDecode(raw) as List).map((e) => e as String).toSet();
+    });
   }
 
   @override
@@ -280,6 +298,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             // ── Premium upsell / status ───────────────────────────────────────
             const PremiumEntryTile(),
+            const SizedBox(height: 24),
+
+            // ── Countries ─────────────────────────────────────────────────────
+            // Used to hang off a gear icon beside the map's search bar. It is a
+            // per-user preference like everything else on this screen, and one
+            // setting with two entry points was one too many.
+            //
+            // Sits ABOVE the auth section on purpose: choosing which countries'
+            // stations to show has nothing to do with being signed in, and
+            // burying it inside that block would hide it from signed-out users
+            // who can still use the map.
+            const _Label('COUNTRIES'),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () async {
+                await Navigator.push<void>(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CountriesScreen()),
+                );
+                await _loadCountries();
+              },
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                decoration: BoxDecoration(
+                  color: _bgCard,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _bgSurface),
+                ),
+                child: Row(children: [
+                  const Icon(Icons.public, color: _textSec, size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _countries.isEmpty
+                          ? '—'
+                          : _countries.join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: _textPri, fontSize: 15),
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded,
+                      color: _textSec, size: 22),
+                ]),
+              ),
+            ),
             const SizedBox(height: 24),
 
             // ══ AUTH SECTION (only when signed in) ═══════════════════════════

@@ -28,7 +28,7 @@ library;
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart' show ValueNotifier, visibleForTesting;
 import 'package:http/http.dart' as http;
 
 import '../routing_service.dart' show ConnectorPort, Station;
@@ -130,10 +130,29 @@ class StationRefresh {
 /// next to the station data. Hand-editing that file in the Gist takes effect for
 /// every user within one poll.
 class LiveConfig {
-  const LiveConfig({required this.directFetchEnabled, required this.directProviders});
+  const LiveConfig({
+    required this.directFetchEnabled,
+    required this.directProviders,
+    this.tileLight,
+    this.tileDark,
+  });
 
   final bool directFetchEnabled;
   final Set<String> directProviders;
+
+  /// Basemap tile templates, when the feed overrides the ones compiled into the
+  /// app. Null means "keep what this build shipped with".
+  ///
+  /// The basemap is a third-party service that can change its terms overnight,
+  /// and every copy already installed keeps asking the old URL until its owner
+  /// updates. On 2026-08-26 CARTO began requiring an API key on the endpoint
+  /// this app had used since launch and answered unauthenticated requests with
+  /// tiles reading "API KEY REQUIRED" — a 200, so nothing in the app could even
+  /// detect it. Routing the templates through here makes the next such change,
+  /// whether a new key or a different provider, a Gist edit instead of a store
+  /// release measured in weeks.
+  final String? tileLight;
+  final String? tileDark;
 
   /// Used until the file has been read, and whenever it cannot be parsed. Direct
   /// reads default to ON: the switch exists for the case where an operator
@@ -144,16 +163,38 @@ class LiveConfig {
     directProviders: {'mart EV', 'MOVEO', 'Electrify Georgia', 'EV Power GE'},
   );
 
+  /// Each section is read on its own, so a file carrying only one of them still
+  /// applies it. Returning [fallback] wholesale on a missing `direct_fetch`
+  /// would silently discard a basemap override sitting right next to it.
   factory LiveConfig.fromJson(Map<String, dynamic> j) {
-    final d = j['direct_fetch'];
-    if (d is! Map<String, dynamic>) { return fallback; }
+    final d = j['direct_fetch'] is Map<String, dynamic>
+        ? j['direct_fetch'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final b = j['basemap'] is Map<String, dynamic>
+        ? j['basemap'] as Map<String, dynamic>
+        : const <String, dynamic>{};
     return LiveConfig(
       directFetchEnabled: d['enabled'] as bool? ?? fallback.directFetchEnabled,
       directProviders: (d['providers'] as List?)
               ?.whereType<String>()
               .toSet() ??
           fallback.directProviders,
+      tileLight: _template(b['light']),
+      tileDark:  _template(b['dark']),
     );
+  }
+
+  /// A template is only accepted if it is an https URL carrying the three tile
+  /// placeholders. A typo in a hand-edited Gist must leave the shipped basemap
+  /// alone; blanking the map for every user is far worse than ignoring the edit.
+  static String? _template(Object? v) {
+    if (v is! String) { return null; }
+    final s = v.trim();
+    if (!s.startsWith('https://')) { return null; }
+    for (final p in const ['{z}', '{x}', '{y}']) {
+      if (!s.contains(p)) { return null; }
+    }
+    return s;
   }
 }
 
@@ -166,8 +207,13 @@ class LiveStatusService {
   String? _feedETag;
   String? _configETag;
 
-  LiveConfig _config = LiveConfig.fallback;
-  LiveConfig get config => _config;
+  /// Exposed as a listenable because the basemap in [LiveConfig] can arrive
+  /// after the map is already on screen: `config.json` is read in the
+  /// background, so a build whose compiled-in tile URL is dead needs to be told
+  /// to repaint rather than wait for the user to restart the app.
+  final ValueNotifier<LiveConfig> configListenable =
+      ValueNotifier(LiveConfig.fallback);
+  LiveConfig get config => configListenable.value;
   DateTime _configCheckedAt = DateTime.fromMillisecondsSinceEpoch(0);
 
   /// Last direct read per station id, so repeat taps are answered from memory
@@ -242,7 +288,7 @@ class LiveStatusService {
       if (res.statusCode != 200) { return; }
       final j = jsonDecode(res.body);
       if (j is Map<String, dynamic>) {
-        _config = LiveConfig.fromJson(j);
+        configListenable.value = LiveConfig.fromJson(j);
         _configETag = res.headers['etag'];
       }
     } catch (_) {
@@ -263,8 +309,8 @@ class LiveStatusService {
   /// True when [s] can be read straight from its operator right now.
   bool canFetchDirect(Station s) =>
       _target(s.id) != null &&
-      _config.directFetchEnabled &&
-      _config.directProviders.contains(s.provider);
+      config.directFetchEnabled &&
+      config.directProviders.contains(s.provider);
 
   /// Re-read one station from its operator's own API, ~1s instead of waiting for
   /// the pipeline's next cycle.
