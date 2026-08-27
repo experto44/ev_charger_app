@@ -35,7 +35,7 @@ void main() {
       // isPremium:true to that account's Firestore doc, permanently.
       expect(
         svc.mayGrantTo(_Tx(PurchaseStatus.restored), freeloaderUid,
-            restoreWasAsked: false),
+            restoreWasAsked: false, ownPurchaseFlow: false),
         isFalse,
       );
     });
@@ -44,7 +44,7 @@ void main() {
         'paying user\'s only way back (App Store 2.1(b))', () {
       expect(
         svc.mayGrantTo(_Tx(PurchaseStatus.restored), null,
-            restoreWasAsked: false),
+            restoreWasAsked: false, ownPurchaseFlow: false),
         isTrue,
       );
     });
@@ -52,14 +52,14 @@ void main() {
     test('grants when the transaction is stamped with this account', () {
       final mine = _Tx(PurchaseStatus.restored,
           appAccountToken: PurchaseService.accountTokenFor(buyerUid));
-      expect(svc.mayGrantTo(mine, buyerUid, restoreWasAsked: false), isTrue);
+      expect(svc.mayGrantTo(mine, buyerUid, restoreWasAsked: false, ownPurchaseFlow: false), isTrue);
     });
 
     test('does not grant when the stamp belongs to a different account', () {
       final someoneElses = _Tx(PurchaseStatus.restored,
           appAccountToken: PurchaseService.accountTokenFor(buyerUid));
       expect(
-        svc.mayGrantTo(someoneElses, freeloaderUid, restoreWasAsked: false),
+        svc.mayGrantTo(someoneElses, freeloaderUid, restoreWasAsked: false, ownPurchaseFlow: false),
         isFalse,
       );
     });
@@ -67,16 +67,40 @@ void main() {
     test('grants when the user deliberately tapped Restore purchases', () {
       expect(
         svc.mayGrantTo(_Tx(PurchaseStatus.restored), buyerUid,
-            restoreWasAsked: true),
+            restoreWasAsked: true, ownPurchaseFlow: false),
         isTrue,
       );
     });
   });
 
-  test('a purchase completed in this session always grants', () {
+  test('a purchase this app actually put through always grants', () {
     expect(
       svc.mayGrantTo(_Tx(PurchaseStatus.purchased), freeloaderUid,
-          restoreWasAsked: false),
+          restoreWasAsked: false, ownPurchaseFlow: true),
+      isTrue,
+    );
+  });
+
+  test('a `purchased` event the app did not start is treated as a replay', () {
+    // The path that actually caused the report. On StoreKit 2 the plugin
+    // reports `.purchased` for everything arriving through Transaction.updates
+    // — renewals, other devices, and the entitlements replayed when the
+    // listener attaches on a fresh install. Only an explicit restorePurchases()
+    // call ever produces `.restored`, so gating on the status alone would have
+    // left this exact case wide open.
+    expect(
+      svc.mayGrantTo(_Tx(PurchaseStatus.purchased), freeloaderUid,
+          restoreWasAsked: false, ownPurchaseFlow: false),
+      isFalse,
+    );
+  });
+
+  test('a renewal of a subscription this account bought still grants', () {
+    final renewal = _Tx(PurchaseStatus.purchased,
+        appAccountToken: PurchaseService.accountTokenFor(buyerUid));
+    expect(
+      svc.mayGrantTo(renewal, buyerUid,
+          restoreWasAsked: false, ownPurchaseFlow: false),
       isTrue,
     );
   });

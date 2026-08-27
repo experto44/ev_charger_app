@@ -53,6 +53,33 @@ class PurchaseService {
   /// When the user last tapped "Restore purchases". See [mayGrantTo].
   DateTime? _restoreAskedAt;
 
+  /// The product [buy] is currently taking through the store's purchase sheet,
+  /// and when that started.
+  String? _buyingProductId;
+  DateTime? _buyingSince;
+
+  /// Whether [purchase] is the result of the purchase flow this app opened,
+  /// rather than a transaction the platform handed us on its own.
+  ///
+  /// `PurchaseStatus.purchased` does NOT mean "the user just bought this". On
+  /// StoreKit 2 the plugin reports `.purchased` for everything arriving through
+  /// `Transaction.updates` too — renewals, purchases made on another device, and
+  /// the entitlements replayed when the listener attaches on a fresh install.
+  /// (`.restored` is emitted from exactly one place: an explicit
+  /// `restorePurchases()` call.) So the status alone cannot tell a real purchase
+  /// from a replay, and trusting it is what let a freshly installed app hand
+  /// premium to whichever account was signed in.
+  ///
+  /// A pending purchase that only resolves after a relaunch (Ask to Buy, or a
+  /// bank confirmation) lands outside this window and is treated as a replay.
+  /// That fails safe: the user gets premium by tapping "Restore purchases",
+  /// whereas the opposite mistake hands it out for free.
+  @visibleForTesting
+  bool isOwnPurchaseFlow(PurchaseDetails purchase) =>
+      _buyingProductId == purchase.productID &&
+      _buyingSince != null &&
+      DateTime.now().difference(_buyingSince!) < const Duration(minutes: 10);
+
   /// True while `restored` events can still be attributed to that tap. The
   /// platform delivers the replay within a moment of the request; anything
   /// arriving long after is a connection-time replay, not a claim.
@@ -280,9 +307,13 @@ class PurchaseService {
       // maps `applicationUserName` onto the transaction's `appAccountToken`, and
       // Play onto the obfuscated account id. That stamp is what later lets a
       // replayed entitlement be told apart from one this account actually owns —
-      // see [_mayGrantTo].
+      // see [mayGrantTo].
       applicationUserName: uid == null ? null : accountTokenFor(uid),
     );
+    // Open the window in which an arriving `purchased` event really is this
+    // user completing this purchase. See [isOwnPurchaseFlow].
+    _buyingProductId = product.id;
+    _buyingSince = DateTime.now();
     await _iap.buyNonConsumable(purchaseParam: param);
   }
 
@@ -329,35 +360,38 @@ class PurchaseService {
 
         case PurchaseStatus.purchased:
         case PurchaseStatus.restored:
-          // The only paths that confer entitlement: a completed new purchase or
-          // a store-confirmed owned subscription. The store (StoreKit / Play
-          // Billing) only reports these statuses AFTER it has verified the
-          // transaction itself, so the status is the entitlement signal — we
-          // must NOT gate the grant on the local receipt string. On iOS in
-          // particular the App Store receipt (serverVerificationData) is often
-          // empty on a fresh sandbox install when the first `.purchased` event
-          // arrives; gating on it there silently drops a real purchase and the
-          // paying user is never credited (App Store review 2.1(b)).
+          // Both statuses mean the store has verified an active subscription —
+          // so we must NOT gate on the local receipt string. On iOS the App
+          // Store receipt (serverVerificationData) is often empty on a fresh
+          // sandbox install when the first event arrives; gating on it there
+          // silently drops a real purchase and the paying user is never
+          // credited (App Store review 2.1(b)).
+          //
+          // What the status does NOT tell us is WHOSE app account to credit —
+          // that is [mayGrantTo]'s job.
           if (_productIds.contains(purchase.productID)) {
             _ownedSeen = true; // store confirms an active owned subscription
+            final ownFlow = isOwnPurchaseFlow(purchase);
             if (mayGrantTo(purchase, FirebaseAuth.instance.currentUser?.uid,
-                restoreWasAsked: _restoreWasAsked)) {
+                restoreWasAsked: _restoreWasAsked,
+                ownPurchaseFlow: ownFlow)) {
               await _grantPremium();
               // Persist to the signed-in user's account so premium follows the
               // user, not the device.
               await _persistPremiumToFirestore(purchase);
               // Record a revenue event for the admin panel's financial
-              // analytics. ONLY for a genuinely new purchase — a `restored`
-              // event replays on every launch for an owned subscription, so
-              // recording it too would inflate revenue. Deduped by the store
-              // transaction id regardless.
-              if (purchase.status == PurchaseStatus.purchased) {
+              // analytics. ONLY for a purchase this app actually put through:
+              // replayed entitlements also arrive as `purchased`, and counting
+              // those would book the same subscription again on every fresh
+              // install. Deduped by the store transaction id regardless.
+              if (ownFlow) {
                 await _recordPurchaseEvent(purchase);
               }
             }
           }
           // Acknowledged either way: an entitlement we decline to grant must
           // still be finished, or the platform redelivers it forever.
+          _closeBuyWindow(purchase);
           await _finish(purchase);
           break;
 
@@ -365,6 +399,7 @@ class PurchaseService {
         case PurchaseStatus.canceled:
           // User dismissed the sheet or the flow failed. Do NOT touch premium;
           // just acknowledge so the platform stops re-delivering the transaction.
+          _closeBuyWindow(purchase);
           await _finish(purchase);
           break;
       }
@@ -394,8 +429,12 @@ class PurchaseService {
     PurchaseDetails purchase,
     String? uid, {
     required bool restoreWasAsked,
+    required bool ownPurchaseFlow,
   }) {
-    if (purchase.status == PurchaseStatus.purchased) return true;
+    // The user is completing this purchase right now, in this app, on this
+    // account. The only unambiguous case — and NOT the same as
+    // `status == purchased`, which the platform also uses for replays.
+    if (ownPurchaseFlow) return true;
 
     // Signed out: there is no account to leak into, and a restore is a paying
     // user's only way back to premium. Always honour it.
@@ -425,6 +464,16 @@ class PurchaseService {
       return token is String && token.isNotEmpty ? token : null;
     } catch (_) {
       return null; // no such field on this platform's PurchaseDetails
+    }
+  }
+
+  /// End the window opened by [buy] once its flow reaches a terminal state, so
+  /// a later replay of the same product is never mistaken for the purchase the
+  /// user made here.
+  void _closeBuyWindow(PurchaseDetails purchase) {
+    if (_buyingProductId == purchase.productID) {
+      _buyingProductId = null;
+      _buyingSince = null;
     }
   }
 
