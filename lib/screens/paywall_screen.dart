@@ -73,19 +73,66 @@ class _PaywallScreenState extends State<PaywallScreen> {
     }
   }
 
-  Future<void> _buy(ProductDetails? product) async {
-    if (product == null || _busy) {
-      if (product == null) _snack(AppStrings.storeUnavailable);
-      return;
-    }
+  Future<void> _buy(String productId) async {
+    if (_busy) return;
     setState(() => _busy = true);
     try {
+      // Resolve the product at tap time and retry the store once when it isn't
+      // there. The card is built from whatever loaded at startup, and a startup
+      // that failed to reach the store used to stay failed for the whole
+      // session — so the card showed a fallback price and the tap could only
+      // ever report an error, never open the purchase sheet.
+      var product = _svc.productById(productId);
+      if (product == null) {
+        await _svc.loadProducts();
+        product = _svc.productById(productId);
+      }
+      if (product == null) {
+        _snack(AppStrings.storeUnavailable);
+        return;
+      }
       await _svc.buy(product);
     } catch (_) {
       _snack(AppStrings.purchaseFailed);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// Hidden store diagnostics (long-press the paywall title). Selectable so the
+  /// text can be copied straight into a support reply.
+  void _showDiagnostics() {
+    showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: _bgCard,
+        title: const Text('Store diagnostics',
+            style: TextStyle(color: _textPri, fontSize: 16)),
+        content: SingleChildScrollView(
+          child: SelectableText(
+            _svc.diagnostics(),
+            style: const TextStyle(
+                color: _textPri, fontSize: 12, fontFamily: 'monospace'),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close', style: TextStyle(color: _teal)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// User-triggered re-query after the store failed to answer.
+  Future<void> _retryStore() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    await _svc.loadProducts();
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (_svc.products.isEmpty) _snack(AppStrings.storeUnavailable);
   }
 
   Future<void> _restore() async {
@@ -171,12 +218,18 @@ class _PaywallScreenState extends State<PaywallScreen> {
           ),
           const SizedBox(height: 18),
 
-          // Title
-          const Text(
-            'GeoCharge Premium',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: _textPri, fontSize: 24, fontWeight: FontWeight.w800),
+          // Title. Long-press is a hidden diagnostics readout: it prints what
+          // the store was asked for against what it actually returned. Invisible
+          // to users, and it turns "the buy button does nothing" from a
+          // guessing game into one screenshot.
+          GestureDetector(
+            onLongPress: _showDiagnostics,
+            child: const Text(
+              'GeoCharge Premium',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _textPri, fontSize: 24, fontWeight: FontWeight.w800),
+            ),
           ),
           const SizedBox(height: 8),
 
@@ -204,28 +257,47 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   child: Center(child: CircularProgressIndicator(color: _teal)),
                 );
               }
+              // Render ONLY the plans the store actually returned. A plan the
+              // store doesn't know cannot be bought, so advertising it — with a
+              // fallback price in the wrong currency, and a tap that can only
+              // fail — is worse than not offering it. This is exactly how the
+              // iOS yearly plan behaved: App Store Connect has no
+              // `geocharge_premium_yearly`, so the card showed the Android GEL
+              // list price and every tap dead-ended.
+              final yearly  = _svc.yearlyProduct;
+              final monthly = _svc.monthlyProduct;
               return Column(
                 children: [
-                  _PlanCard(
-                    title: AppStrings.planYearly,
-                    price: _storePrice(_svc.yearlyProduct, _kYearlyFallback),
-                    period: AppStrings.perYear,
-                    // Both plans use the same neutral/dark style: tapping either
-                    // opens the Play purchase sheet immediately, so a "selected"
-                    // highlight on yearly would be misleading. The -17% ribbon
-                    // stays — it's a value cue, not a selection indicator.
-                    highlighted: false,
-                    ribbon: '-17%',
-                    onTap: () => _buy(_svc.yearlyProduct),
-                  ),
-                  const SizedBox(height: 14),
-                  _PlanCard(
-                    title: AppStrings.planMonthly,
-                    price: _storePrice(_svc.monthlyProduct, _kMonthlyFallback),
-                    period: AppStrings.perMonth,
-                    highlighted: false,
-                    onTap: () => _buy(_svc.monthlyProduct),
-                  ),
+                  if (yearly != null)
+                    _PlanCard(
+                      title: AppStrings.planYearly,
+                      price: _storePrice(yearly, _kYearlyFallback),
+                      period: AppStrings.perYear,
+                      // Both plans use the same neutral/dark style: tapping
+                      // either opens the purchase sheet immediately, so a
+                      // "selected" highlight on yearly would be misleading. The
+                      // -17% ribbon stays — it's a value cue, not a selection
+                      // indicator.
+                      highlighted: false,
+                      ribbon: '-17%',
+                      onTap: () => _buy(PurchaseService.yearlyId),
+                    ),
+                  if (yearly != null && monthly != null)
+                    const SizedBox(height: 14),
+                  if (monthly != null)
+                    _PlanCard(
+                      title: AppStrings.planMonthly,
+                      price: _storePrice(monthly, _kMonthlyFallback),
+                      period: AppStrings.perMonth,
+                      highlighted: false,
+                      onTap: () => _buy(PurchaseService.monthlyId),
+                    ),
+                  // Nothing is for sale at all — say so and offer a retry rather
+                  // than showing a paywall with no plans on it. When only some
+                  // plans are missing the user simply sees the ones that work;
+                  // the gap is for us to fix in the store, not for them to read
+                  // about.
+                  if (_svc.products.isEmpty) _StoreNotice(onRetry: _retryStore),
                 ],
               );
             },
@@ -295,6 +367,58 @@ class _LegalLink extends StatelessWidget {
           decoration: TextDecoration.underline,
           decorationColor: _textSec,
         ),
+      ),
+    );
+  }
+}
+
+// ── Store-unavailable notice ──────────────────────────────────────────────────
+/// Shown under the plan cards when the store returned no products. Without it
+/// the paywall is indistinguishable from a working one — it renders the
+/// hardcoded fallback prices and the free-trial badge over a store that cannot
+/// sell anything.
+class _StoreNotice extends StatelessWidget {
+  const _StoreNotice({required this.onRetry});
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+      decoration: BoxDecoration(
+        color: _bgCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _bgSurface),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.info_outline_rounded, color: _textSec, size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  AppStrings.priceLoadFailed,
+                  style: const TextStyle(
+                      color: _textSec, fontSize: 12, height: 1.45),
+                ),
+              ),
+            ],
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: onRetry,
+              child: Text(
+                AppStrings.tryAgain,
+                style: const TextStyle(
+                    color: _teal, fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

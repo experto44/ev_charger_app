@@ -180,6 +180,26 @@ Future<void> _navigate(double lat, double lng) async {
 }
 
 // ── App root ──────────────────────────────────────────────────────────────────
+/// The app's single [ThemeData]. Named (rather than inlined into [EVChargerApp])
+/// so it can be asserted on in tests without standing up Firebase.
+ThemeData buildAppTheme() => ThemeData.dark().copyWith(
+  scaffoldBackgroundColor: _bgDark,
+  colorScheme: const ColorScheme.dark(primary: _emerald, surface: _bgCard),
+  textTheme: ThemeData.dark().textTheme.apply(fontFamily: 'Noto Sans Georgian'),
+  // Material 3 derives the SnackBar's text colour from
+  // `colorScheme.onInverseSurface`. We never set that, and its fallback is
+  // `colorScheme.surface` — which is _bgCard here. Every SnackBar that also
+  // passed `backgroundColor: _bgCard` therefore painted its text in exactly the
+  // background colour and rendered as an empty black bar (the paywall's "store
+  // unavailable" error was invisible this way). Pin the content colour instead
+  // of inheriting the derived one.
+  snackBarTheme: const SnackBarThemeData(
+    backgroundColor: _bgCard,
+    contentTextStyle: TextStyle(color: Colors.white, fontSize: 14),
+    actionTextColor: _emerald,
+  ),
+);
+
 class EVChargerApp extends StatelessWidget {
   const EVChargerApp({super.key});
 
@@ -189,11 +209,7 @@ class EVChargerApp extends StatelessWidget {
     debugShowCheckedModeBanner: false,
     // Lets foreground "charger freed up" pushes surface an in-app SnackBar.
     scaffoldMessengerKey: NotificationService.I.messengerKey,
-    theme: ThemeData.dark().copyWith(
-      scaffoldBackgroundColor: _bgDark,
-      colorScheme: const ColorScheme.dark(primary: _emerald, surface: _bgCard),
-      textTheme: ThemeData.dark().textTheme.apply(fontFamily: 'Noto Sans Georgian'),
-    ),
+    theme: buildAppTheme(),
     home: const MapScreen(),
   );
 }

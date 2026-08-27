@@ -30,9 +30,23 @@ class PurchaseService {
 
   static const String _prefsKey = 'is_premium';
 
-  final InAppPurchase _iap = InAppPurchase.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  // Both resolved on use rather than at construction. This is a lazily-created
+  // singleton, so eager `.instance` fields meant that merely touching
+  // [PurchaseService.I] reached for Firebase and opened a Play Billing
+  // connection — throwing wherever neither is up, and putting the paywall out of
+  // reach of widget tests. In the app the difference is nil: `init()` uses both
+  // immediately anyway.
+  InAppPurchase get _iap => InAppPurchase.instance;
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
   StreamSubscription<List<PurchaseDetails>>? _sub;
+
+  /// In-flight connection attempt, so a paywall opening while startup is still
+  /// connecting joins that attempt instead of racing a second one.
+  Future<bool>? _connecting;
+
+  /// Whether the one-shot entitlement reconciliation has already run. A retried
+  /// connection must not repeat it.
+  bool _reconciled = false;
 
   /// Set true the moment the store replays/confirms an owned subscription for
   /// this session. Used by [_reconcileEntitlement] to tell "really owns premium"
@@ -52,10 +66,15 @@ class PurchaseService {
   /// Resolved product details from the store (empty until [loadProducts] runs).
   List<ProductDetails> products = const [];
 
-  ProductDetails? get monthlyProduct => _productById(monthlyId);
-  ProductDetails? get yearlyProduct  => _productById(yearlyId);
+  /// Why the last product query produced nothing, or null when it succeeded.
+  /// Kept so a failing store is diagnosable instead of silently degrading into
+  /// the paywall's hardcoded fallback prices.
+  String? productsError;
 
-  ProductDetails? _productById(String id) {
+  ProductDetails? get monthlyProduct => productById(monthlyId);
+  ProductDetails? get yearlyProduct  => productById(yearlyId);
+
+  ProductDetails? productById(String id) {
     for (final p in products) {
       if (p.id == id) return p;
     }
@@ -78,14 +97,36 @@ class PurchaseService {
     isPremium.value = prefs.getBool(_prefsKey) ?? false;
     // Everything below can touch the network / Play Billing and must never
     // delay first paint — run it detached from the startup await chain.
-    unawaited(_connectStore());
+    // [loadProducts] connects first, so this warms both the connection and the
+    // paywall's prices.
+    unawaited(loadProducts());
   }
 
-  /// Connect to the store, subscribe to purchase updates, load products, and
-  /// reconcile the authoritative premium state. Runs in the background (see
-  /// [init]); [isAvailable] is bounded by a timeout so a hung Play Billing
-  /// bind can never wedge the flow.
-  Future<void> _connectStore() async {
+  /// Make sure the store connection is live, retrying it when an earlier attempt
+  /// failed.
+  ///
+  /// The launch-time attempt probes [isAvailable] behind an 8-second timeout, so
+  /// a cold start on a slow network (or before connectivity is up) resolves to
+  /// "unavailable". That verdict used to be permanent for the whole app session:
+  /// products were never queried, the paywall silently fell back to its
+  /// hardcoded prices, and every plan tap could only ever fail — nothing short
+  /// of restarting the app recovered. Call this whenever the user actually
+  /// reaches for the store so the failure is retried instead of latched.
+  ///
+  /// Concurrent callers join the in-flight attempt rather than starting a second.
+  Future<bool> ensureStoreReady() {
+    if (storeAvailable.value) return Future<bool>.value(true);
+    return _connecting ??= _connectStore().whenComplete(() {
+      _connecting = null; // cleared either way, so a failure is retryable
+    });
+  }
+
+  /// Connect to the store, subscribe to purchase updates, and reconcile the
+  /// authoritative premium state. Runs in the background (see [init]);
+  /// [isAvailable] is bounded by a timeout so a hung Play Billing bind can never
+  /// wedge the flow. Returns whether the store is usable. Products are loaded by
+  /// [loadProducts], which calls this first.
+  Future<bool> _connectStore() async {
     // Connect to the store (bounded — a stuck Play Billing bind resolves to
     // "unavailable" instead of hanging indefinitely).
     bool available = false;
@@ -97,18 +138,22 @@ class PurchaseService {
       available = false;
     }
     storeAvailable.value = available;
-    if (!available) return;
+    if (!available) {
+      // iOS reports this when in-app purchases are blocked by Screen Time's
+      // Content & Privacy Restrictions; both platforms report it when the store
+      // simply could not be reached in time.
+      productsError = 'store unavailable (isAvailable == false)';
+      return false;
+    }
 
     // Listen BEFORE querying so we never miss a restored/owned purchase that
-    // the platform replays on connection.
-    _sub = _iap.purchaseStream.listen(
+    // the platform replays on connection. `??=` because a retried connection
+    // must not attach a second listener and double-handle every purchase.
+    _sub ??= _iap.purchaseStream.listen(
       _onPurchaseUpdates,
       onDone: () => _sub?.cancel(),
       onError: (_) {/* transient stream error — ignore, next event recovers */},
     );
-
-    // Load product details for the paywall.
-    await loadProducts();
 
     // Establish the authoritative premium state.
     //   • Signed in  → the user's Firestore document is the source of truth, so
@@ -117,12 +162,17 @@ class PurchaseService {
     //   • Anonymous  → no account to consult; fall back to the store-based
     //     reconciliation that clears a stale cached flag.
     //   Both run unawaited so they never block; the cached flag drives the UI
-    //   instantly and is corrected a moment later.
-    if (FirebaseAuth.instance.currentUser != null) {
-      unawaited(syncPremiumFromFirestore());
-    } else if (isPremium.value) {
-      unawaited(_reconcileEntitlement());
+    //   instantly and is corrected a moment later. Once only — a retried
+    //   connection re-queries products but must not redo the reconciliation.
+    if (!_reconciled) {
+      _reconciled = true;
+      if (FirebaseAuth.instance.currentUser != null) {
+        unawaited(syncPremiumFromFirestore());
+      } else if (isPremium.value) {
+        unawaited(_reconcileEntitlement());
+      }
     }
+    return true;
   }
 
   /// Confirm a cached `premium=true` really reflects an owned subscription.
@@ -149,18 +199,63 @@ class PurchaseService {
     }
   }
 
-  /// Query (or re-query) the two subscription products from the store.
+  /// Query (or re-query) the two subscription products from the store,
+  /// reconnecting first if the store isn't up yet. Safe to call from the paywall
+  /// on open and on a user-triggered retry.
   Future<void> loadProducts() async {
-    if (!storeAvailable.value) return;
     loadingProducts.value = true;
     try {
-      final resp = await _iap.queryProductDetails(_productIds);
-      products = resp.productDetails;
-    } catch (_) {
-      // Leave whatever we had; the paywall falls back to default prices.
+      if (!await ensureStoreReady()) return; // _connectStore set productsError
+      await _queryProducts();
     } finally {
       loadingProducts.value = false;
     }
+  }
+
+  /// The bare product query, with the connection already established.
+  Future<void> _queryProducts() async {
+    try {
+      final resp = await _iap.queryProductDetails(_productIds);
+      products = resp.productDetails;
+      if (resp.error != null) {
+        productsError = 'query failed: ${resp.error!.code} ${resp.error!.message}';
+      } else if (products.isEmpty) {
+        // Store reachable but it knows none of our ids — wrong bundle id, the
+        // subscription not cleared for sale, or agreements pending.
+        productsError = 'not found: ${resp.notFoundIDs.join(', ')}';
+      } else {
+        productsError = null;
+      }
+    } catch (e) {
+      // Leave whatever we had; the paywall falls back to default prices.
+      productsError = 'query threw: $e';
+    }
+    // `loadingProducts` is owned by [loadProducts], the only caller — clearing
+    // it here too would flip the paywall out of its spinner a beat early.
+  }
+
+  /// A snapshot of what the store actually answered, for the paywall's hidden
+  /// diagnostics dialog (long-press the title). Reports of the "I tap buy and
+  /// nothing happens" kind are unactionable without this: it shows the ids we
+  /// asked for next to the ones the store returned, so a product missing for
+  /// *this* storefront is visible on the device instead of inferred.
+  String diagnostics() {
+    final b = StringBuffer()
+      ..writeln('platform: ${Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other')}')
+      ..writeln('storeAvailable: ${storeAvailable.value}')
+      ..writeln('loading: ${loadingProducts.value}')
+      ..writeln('requested: ${_productIds.join(', ')}');
+    if (products.isEmpty) {
+      b.writeln('returned: (none)');
+    } else {
+      for (final p in products) {
+        b.writeln('returned: ${p.id} = "${p.price}" '
+            '[${p.currencyCode} ${p.rawPrice}]');
+      }
+    }
+    b.writeln('error: ${productsError ?? '(none)'}');
+    b.write('premium: ${isPremium.value}');
+    return b.toString();
   }
 
   /// Start the purchase flow for [product] (a subscription → non-consumable).
@@ -173,7 +268,9 @@ class PurchaseService {
   /// Ask the store to replay previously bought subscriptions. Results arrive on
   /// the purchase stream and flip [isPremium] via [_onPurchaseUpdates].
   Future<void> restorePurchases() async {
-    if (!storeAvailable.value) return;
+    // Reconnect first — otherwise "Restore purchases" is a no-op button for the
+    // whole session whenever the launch-time store probe happened to fail.
+    if (!await ensureStoreReady()) return;
     try {
       await _iap.restorePurchases();
     } catch (_) {/* surfaced to the user by the caller's UI state */}
@@ -277,7 +374,7 @@ class PurchaseService {
 
     final plan     = purchase.productID == yearlyId ? 'yearly' : 'monthly';
     final platform = Platform.isIOS ? 'ios' : (Platform.isAndroid ? 'android' : 'other');
-    final product  = _productById(purchase.productID);
+    final product  = productById(purchase.productID);
     final gross    = (product != null && product.rawPrice > 0)
         ? product.rawPrice
         : (plan == 'yearly' ? 9.99 : 1.0); // GEL list-price fallback

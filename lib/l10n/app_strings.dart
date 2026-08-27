@@ -415,6 +415,12 @@ class AppStrings {
       : 'Store unavailable — please try again later';
   static String get purchaseFailed =>
       isGeorgian ? 'შესყიდვა ვერ მოხერხდა' : 'Purchase failed';
+  /// Shown on the paywall when the store returned no products, so the prices on
+  /// the cards are the app's own fallbacks rather than real store prices.
+  static String get priceLoadFailed => isGeorgian
+      ? 'ფასების ჩატვირთვა ვერ მოხერხდა. შეამოწმეთ ინტერნეტი და App Store-ის შეზღუდვები (Screen Time), შემდეგ სცადეთ ხელახლა.'
+      : 'Could not load prices. Check your connection and your App Store restrictions (Screen Time), then try again.';
+  static String get tryAgain => isGeorgian ? 'ხელახლა ცდა' : 'Try again';
   static String get noActiveSubscription => isGeorgian
       ? 'აქტიური გამოწერა ვერ მოიძებნა'
       : 'No active subscription found';
