@@ -860,15 +860,24 @@ body.is-picking #map { cursor: crosshair; }
 }
 .onboard__card h3 { font-size: 22px; }
 .onboard__card ul { padding-left: 22px; color: var(--text-dim); line-height: 1.9; font-size: 17px; }
-/* Prose body (the "why is there no status" explainer). Capped and scrollable so
-   a long explanation cannot push the OK button off a short in-car screen. */
+/* Prose body (the "why is there no status" explainer). The cap and the scroll
+   are a safety net for a screen too small to hold the text, not the normal
+   case: at the card width below it reads in full without scrolling on any
+   in-car screen. */
 .onboard__body {
   color: var(--text-dim);
   font-size: 17px;
   line-height: 1.6;
-  max-height: 46vh;
+  max-height: 60vh;
   overflow-y: auto;
 }
+/* Wider than the onboarding tip card, because this one carries three
+   paragraphs: at 520px they needed 490px of height and scrolled, at 860px they
+   need 273px and fit whole. Fixed rather than absolute so it centres on the
+   VIEWPORT — the overlay's parent is <main>, which starts below the header, and
+   on a short screen that pushed the bottom of the card off the display. */
+#port-info { position: fixed; }
+#port-info .onboard__card { width: 860px; max-width: 92vw; }
 /* pre-line so single newlines inside a paragraph survive: the copy breaks some
    lines deliberately, and HTML would otherwise collapse them into one. */
 .onboard__body p { margin: 0 0 14px; white-space: pre-line; }
