@@ -32,8 +32,13 @@ RoadSide parseSideFromName(String name) {
 // One physical connector at a station, with its live status so the detail sheet
 // can colour each plug (free/busy/out) and show how long a busy one has charged.
 class ConnectorPort {
-  const ConnectorPort(
-      {required this.type, required this.status, this.since, this.price = ''});
+  const ConnectorPort({
+    required this.type,
+    required this.status,
+    this.since,
+    this.price = '',
+    this.statusNote = '',
+  });
 
   final String    type;    // canonical chip label, e.g. "CCS2", "GB/T", "Type 2"
   // 'free' | 'busy' | 'out' | 'unknown'. "unknown" is a plug the operator
@@ -42,6 +47,12 @@ class ConnectorPort {
   final String    status;
   final DateTime? since;    // UTC session start (busy plugs only); null otherwise
   final String    price;   // per-plug price, e.g. "1.00 ₾/kWh" ('' if not published)
+  // WHY [status] is 'unknown', when the feed can say something specific.
+  // 'porsche' = a plug Tegeta flags as a Porsche charger. Empty means only that
+  // nothing is published, which is NOT the same claim — Tegeta also lists an
+  // ordinary charge point with no live record at all, and it must not inherit
+  // the Porsche explanation.
+  final String    statusNote;
 
   bool get isFree    => status == 'free';
   bool get isBusy    => status == 'busy';
@@ -55,6 +66,7 @@ class ConnectorPort {
         status: j['status'] as String? ?? 'free',
         since:  j['since'] is String ? DateTime.tryParse(j['since'] as String) : null,
         price:  (j['price'] as String?)?.trim() ?? '',
+        statusNote: (j['status_note'] as String?)?.trim() ?? '',
       );
 }
 

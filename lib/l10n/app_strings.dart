@@ -271,27 +271,29 @@ class AppStrings {
   static String get unknownInfoTitle =>
       isGeorgian ? 'რატომ არ ჩანს სტატუსი?' : 'Why is there no status?';
 
-  /// Tegeta lists Porsche Destination Charging wallboxes at partner hotels,
-  /// resorts and its own showrooms, but gets nothing back from them: their
-  /// records were written once and never updated. Tegeta's own app shows those
-  /// plugs with no colour, no label and no price, and says charging can only be
-  /// started on site. Everything below is what was verified in their app.
+  /// Shown only for plugs the FEED tagged `status_note: "porsche"`, i.e. ones
+  /// Tegeta's own catalogue marks `isPorsche: true`. That flag is the whole
+  /// basis for this text, so the text claims no more than the flag does: the
+  /// phrase "Porsche Destination Charging" appears nowhere in Tegeta's data or
+  /// app, only `isPorsche`, a PORSCHE tab and the PDC- prefix on the ids. The
+  /// rest (no live data, start on site, no price) was verified in their app.
   static String get unknownInfoPorsche => isGeorgian
-      ? 'ეს Porsche Destination Charging პროგრამის დამტენია. ის სასტუმროს, '
-          'კურორტის ან სალონის ტერიტორიაზე დგას და თეგეტას კატალოგში ჩანს, '
-          'მაგრამ თეგეტა მისგან რეალურ დროში მონაცემს არ იღებს.\n\n'
-          'ამიტომ ვერ გეტყვით, ახლა დაკავებულია თუ თავისუფალი. დატენვა მხოლოდ '
-          'ადგილზე ირთვება, აპლიკაციიდან ვერც ჩართავთ და ვერც გადაიხდით, '
-          'ამიტომ ფასს არ ვწერთ. იგივეს აკეთებს თეგეტას საკუთარი აპლიკაციაც.\n\n'
+      ? 'ეს პორშეს დამტენია. თეგეტას კატალოგში ის ცალკე ნიშნულით მოდის და '
+          'მათსავე აპლიკაციაში ცალკე PORSCHE ჩანართში ხვდება. დგას სასტუმროს, '
+          'კურორტის ან სალონის ტერიტორიაზე.\n\n'
+          'თეგეტა მისგან რეალურ დროში მონაცემს არ იღებს, ამიტომ ვერ გეტყვით, '
+          'ახლა დაკავებულია თუ თავისუფალი. დატენვა მხოლოდ ადგილზე ირთვება, '
+          'აპლიკაციიდან ვერც ჩართავთ და ვერც გადაიხდით, ამიტომ ფასს არ ვწერთ. '
+          'იგივეს აკეთებს თეგეტას საკუთარი აპლიკაციაც.\n\n'
           'ასეთი დამტენი ხშირად ობიექტის სტუმრებისთვისაა განკუთვნილი. სანამ '
           'გზას გაუყვებით, ჯობია წინასწარ დარეკოთ ან ადგილზე იკითხოთ.'
-      : 'This is a Porsche Destination Charging point. It stands on a hotel, '
-          'resort or showroom property and appears in Tegeta\'s catalogue, but '
-          'Tegeta receives no real-time data from it.\n\n'
-          'So we cannot tell you whether it is free or in use right now. '
-          'Charging is started on site, not from an app, and there is no payment '
-          'through the app either, so we do not quote a price. Tegeta\'s own app '
-          'does exactly the same.\n\n'
+      : 'This is a Porsche charger. Tegeta flags it separately in its catalogue '
+          'and puts it under its own PORSCHE tab in their app. It stands on a '
+          'hotel, resort or showroom property.\n\n'
+          'Tegeta receives no real-time data from it, so we cannot tell you '
+          'whether it is free or in use right now. Charging is started on site, '
+          'not from an app, and there is no payment through the app either, so '
+          'we do not quote a price. Tegeta\'s own app does exactly the same.\n\n'
           'Chargers like this are often meant for the venue\'s guests. Call '
           'ahead or ask on site before you rely on it.';
 

@@ -1185,12 +1185,14 @@ jobs:
                           pv = c.get("price")
                           pnum = float(pv) if pv is not None else None
                           pstr = f"{fmt_amt(pnum)} ₾/kWh" if pnum is not None else ""
-                          rest_conns.append((ct, pstr, pnum, port_status(cp, c.get("id"))))
+                          rest_conns.append((ct, pstr, pnum,
+                                             port_status(cp, c.get("id")),
+                                             bool(cp.get("isPorsche"))))
 
                   # Attach each connector's own price — Tegeta prices DC fast and
                   # AC sockets differently.
                   port_details, price_nums = [], []
-                  for ct, pstr, pnum, ps in rest_conns:
+                  for ct, pstr, pnum, ps, is_porsche in rest_conns:
                       port = {"type": ct or "?", "status": ps}
                       # No status, no price. Tegeta hides the tariff on the
                       # Porsche wallboxes for the same reason it hides their
@@ -1199,6 +1201,15 @@ jobs:
                       # database, not a rate anybody is charged at that plug.
                       if pstr and ps != "unknown":
                           port["price"] = pstr
+                      # WHY a plug has no state, but only where we can say
+                      # something specific. Not every stateless plug is a
+                      # Porsche one: Tegeta also lists TGM-EV1 at Auto Gallery,
+                      # an ordinary charge point that simply has no live record
+                      # at all, and handing its driver an explanation about
+                      # Porsche would be an invented answer. Absent = we only
+                      # know that nothing is published.
+                      if ps == "unknown" and is_porsche:
+                          port["status_note"] = "porsche"
                       port_details.append(port)
                       if pnum is not None:
                           price_nums.append(pnum)

@@ -299,6 +299,21 @@ void main() {
       expect(s.ports.where((p) => p.isUnknown).length, 2);
     });
 
+    test('only a tagged plug carries the specific explanation', () {
+      // The trap: 49 of Tegeta's 50 stateless plugs are ones it flags as
+      // Porsche chargers, and the 50th (TGM-EV1 at Auto Gallery) is an ordinary
+      // charge point with no live record at all. Deciding by provider would
+      // have told that one's driver a confident story about Porsche, so the
+      // reason has to travel with the plug, not be guessed from the station.
+      final s = Station.fromJson(row(const [
+        {'type': 'Type 2', 'status': 'unknown', 'status_note': 'porsche'},
+        {'type': 'Type 2', 'status': 'unknown'},
+      ]));
+      expect(s.ports[0].statusNote, 'porsche');
+      expect(s.ports[1].statusNote, isEmpty);
+      expect(s.ports.every((p) => p.isUnknown), isTrue);
+    });
+
     test('sameLiveState notices a plug leaving unknown', () {
       final before = _station(available: 0, ports: const [
         ConnectorPort(type: 'Type 2', status: 'unknown'),

@@ -39,10 +39,11 @@ const STRINGS = {
     // phone app, and every sentence in it was checked against Tegeta's own app.
     unknownInfoTitle: 'რატომ არ ჩანს სტატუსი?',
     unknownInfoPorsche:
-      'ეს Porsche Destination Charging პროგრამის დამტენია. ის სასტუმროს, ' +
-      'კურორტის ან სალონის ტერიტორიაზე დგას და თეგეტას კატალოგში ჩანს, ' +
-      'მაგრამ თეგეტა მისგან რეალურ დროში მონაცემს არ იღებს.\n\n' +
-      'ამიტომ ვერ გეტყვით, ახლა დაკავებულია თუ თავისუფალი. დატენვა მხოლოდ ' +
+      'ეს პორშეს დამტენია. თეგეტას კატალოგში ის ცალკე ნიშნულით მოდის და ' +
+      'მათსავე აპლიკაციაში ცალკე PORSCHE ჩანართში ხვდება. დგას სასტუმროს, ' +
+      'კურორტის ან სალონის ტერიტორიაზე.\n\n' +
+      'თეგეტა მისგან რეალურ დროში მონაცემს არ იღებს, ამიტომ ვერ გეტყვით, ' +
+      'ახლა დაკავებულია თუ თავისუფალი. დატენვა მხოლოდ ' +
       'ადგილზე ირთვება, აპლიკაციიდან ვერც ჩართავთ და ვერც გადაიხდით, ' +
       'ამიტომ ფასს არ ვწერთ. იგივეს აკეთებს თეგეტას საკუთარი აპლიკაციაც.\n\n' +
       'ასეთი დამტენი ხშირად ობიექტის სტუმრებისთვისაა განკუთვნილი. სანამ ' +
@@ -160,10 +161,11 @@ const STRINGS = {
     statusUnknown: 'Live status not published',
     unknownInfoTitle: 'Why is there no status?',
     unknownInfoPorsche:
-      'This is a Porsche Destination Charging point. It stands on a hotel, ' +
-      "resort or showroom property and appears in Tegeta's catalogue, but " +
-      'Tegeta receives no real-time data from it.\n\n' +
-      'So we cannot tell you whether it is free or in use right now. Charging ' +
+      'This is a Porsche charger. Tegeta flags it separately in its catalogue ' +
+      'and puts it under its own PORSCHE tab in their app. It stands on a ' +
+      'hotel, resort or showroom property.\n\n' +
+      'Tegeta receives no real-time data from it, so we cannot tell you ' +
+      'whether it is free or in use right now. Charging ' +
       'is started on site, not from an app, and there is no payment through ' +
       "the app either, so we do not quote a price. Tegeta's own app does " +
       'exactly the same.\n\n' +

@@ -13468,11 +13468,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -13496,11 +13498,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -13582,7 +13586,8 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -13606,11 +13611,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -13634,11 +13641,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -13662,11 +13671,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -13690,7 +13701,8 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -13714,7 +13726,8 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -13738,11 +13751,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -13766,11 +13781,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -13794,11 +13811,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -13823,27 +13842,33 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "CCS2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "CCS2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "CCS2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "CCS2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -13867,11 +13892,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -13895,11 +13922,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -13923,11 +13952,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -13951,11 +13982,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -13979,11 +14012,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -14007,11 +14042,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -14035,11 +14072,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -14063,11 +14102,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -14091,11 +14132,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -14119,11 +14162,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       }
     ],
     "live": false,
@@ -14267,11 +14312,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "CCS2",
@@ -14306,11 +14353,13 @@
     "ports": [
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "Type 2",
-        "status": "unknown"
+        "status": "unknown",
+        "status_note": "porsche"
       },
       {
         "type": "CCS2",

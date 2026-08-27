@@ -20,7 +20,7 @@ const PORT_LABEL = {
   out: 'statusOut',
   // Whole-station: registry data (Turkey) publishes a plug count, not
   // availability. Per-plug: an operator that publishes nothing for this
-  // connector (Tegeta's Porsche destination chargers at partner hotels).
+  // connector. Why it says nothing is a separate field (see openPortInfo).
   unknown: 'statusUnknown',
 };
 
@@ -158,24 +158,25 @@ export function showStation(s) {
 }
 
 /**
- * Explains a plug whose state the operator does not publish. The wording is
- * picked by provider, because a vague "the operator doesn't say" is a worse
- * answer than the specific one whenever we actually know it — and for Tegeta we
- * do: those are Porsche destination chargers at partner venues.
+ * Explains a plug whose state the operator does not publish. The specific
+ * wording is used only where the FEED says which case this is: 49 of Tegeta's
+ * 50 stateless plugs are ones it flags as Porsche chargers, and the 50th is an
+ * ordinary charge point with no live record at all. Guessing "Porsche" for that
+ * one would be a confident, wrong answer, so it gets the plain one.
  */
-function openPortInfo(provider) {
+function openPortInfo(statusNote) {
   const modal = document.getElementById('port-info');
   const body = document.getElementById('port-info-body');
   document.getElementById('port-info-title').textContent = t('unknownInfoTitle');
   body.textContent = '';
-  const text = t(provider === 'Tegeta' ? 'unknownInfoPorsche' : 'unknownInfoGeneric');
+  const text = t(statusNote === 'porsche' ? 'unknownInfoPorsche' : 'unknownInfoGeneric');
   for (const para of text.split('\n\n')) {
     const el = document.createElement('p');
     el.textContent = para;
     body.appendChild(el);
   }
   modal.classList.remove('is-hidden');
-  track('port_info_opened', { provider });
+  track('port_info_opened', { note: statusNote || 'none' });
 }
 
 // Wired once. Backdrop taps close it too: a modal that only one small button
@@ -232,7 +233,7 @@ function renderLive(panel, s) {
         : '');
     row
       .querySelector('.port__info')
-      ?.addEventListener('click', () => openPortInfo(s.provider));
+      ?.addEventListener('click', () => openPortInfo(p.statusNote));
     portsEl.appendChild(row);
   }
   if (!s.ports.length) {

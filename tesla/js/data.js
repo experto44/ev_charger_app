@@ -42,6 +42,10 @@ function normalize(raw) {
         type: p.type ?? '',
         status: (p.status ?? 'out').toLowerCase(),
         since: p.since,
+        // WHY the status is unknown, when the feed can say something specific
+        // ('porsche'). Empty means only that nothing is published, which is a
+        // different and smaller claim.
+        statusNote: p.status_note ?? '',
       }))
     : [];
 

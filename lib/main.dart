@@ -2633,11 +2633,12 @@ class _StationSheetState extends State<_StationSheet> {
         null                     => _textSec,
       };
 
-  // Explains a plug whose state the operator does not publish. The wording is
-  // picked by provider, because a vague "the operator doesn't say" is a worse
-  // answer than the specific one whenever we actually know it — and for Tegeta
-  // we do: those are Porsche destination chargers at partner venues.
-  void _showUnknownInfo() {
+  // Explains a plug whose state the operator does not publish. The specific
+  // wording is used only where the FEED says which case this is: 49 of Tegeta's
+  // 50 stateless plugs are ones it flags as Porsche chargers, and the 50th is an
+  // ordinary charge point with no live record at all. Guessing "Porsche" for
+  // that one would be a confident, wrong answer, so it gets the plain one.
+  void _showUnknownInfo(ConnectorPort p) {
     showDialog<void>(
       context: context,
       builder: (ctx) => AppStrings.wrap(AlertDialog(
@@ -2656,7 +2657,7 @@ class _StationSheetState extends State<_StationSheet> {
         ]),
         content: SingleChildScrollView(
           child: Text(
-            _station.provider == 'Tegeta'
+            p.statusNote == 'porsche'
                 ? AppStrings.unknownInfoPorsche
                 : AppStrings.unknownInfoGeneric,
             style: const TextStyle(color: _textSec, fontSize: 13, height: 1.45),
@@ -2747,7 +2748,7 @@ class _StationSheetState extends State<_StationSheet> {
           // it the row reads like a fault rather than a gap in what we are told.
           if (p.isUnknown) ...[
             const SizedBox(width: 8),
-            _PortInfoButton(onTap: _showUnknownInfo),
+            _PortInfoButton(onTap: () => _showUnknownInfo(p)),
           ],
           // Per-connector "notify me when THIS plug frees up". Only on a busy
           // plug (a free one needs no alert) and only when the station has a
