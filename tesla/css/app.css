@@ -377,6 +377,24 @@ button {
    destination chargers). Same slate as the station badge: not free, not broken,
    simply not reported. */
 .port--unknown { border-left-color: #4F7C9E; }
+/* The "i" on an unknown plug, sitting where a price would be. Full touch height
+   so it is hittable on a moving car's screen. */
+.port__info {
+  width: var(--touch);
+  height: var(--touch);
+  margin-left: 12px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 1px solid rgba(79, 124, 158, 0.55);
+  background: rgba(79, 124, 158, 0.18);
+  color: #8FB6D1;
+  font-size: 19px;
+  font-weight: 700;
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+  cursor: pointer;
+}
+.port__info:hover { background: rgba(79, 124, 158, 0.3); }
 .port__type   { font-weight: 600; }
 .port__right  { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
 .port__status { color: var(--text-dim); }
@@ -842,6 +860,17 @@ body.is-picking #map { cursor: crosshair; }
 }
 .onboard__card h3 { font-size: 22px; }
 .onboard__card ul { padding-left: 22px; color: var(--text-dim); line-height: 1.9; font-size: 17px; }
+/* Prose body (the "why is there no status" explainer). Capped and scrollable so
+   a long explanation cannot push the OK button off a short in-car screen. */
+.onboard__body {
+  color: var(--text-dim);
+  font-size: 17px;
+  line-height: 1.6;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+.onboard__body p { margin: 0 0 14px; }
+.onboard__body p:last-child { margin-bottom: 0; }
 
 /* ── Drive mode (turn-by-turn) ───────────────────────────────────── */
 /* Overlays float over the map; only the cards themselves catch touches. */

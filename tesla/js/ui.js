@@ -157,6 +157,38 @@ export function showStation(s) {
   panel.classList.add('is-open');
 }
 
+/**
+ * Explains a plug whose state the operator does not publish. The wording is
+ * picked by provider, because a vague "the operator doesn't say" is a worse
+ * answer than the specific one whenever we actually know it — and for Tegeta we
+ * do: those are Porsche destination chargers at partner venues.
+ */
+function openPortInfo(provider) {
+  const modal = document.getElementById('port-info');
+  const body = document.getElementById('port-info-body');
+  document.getElementById('port-info-title').textContent = t('unknownInfoTitle');
+  body.textContent = '';
+  const text = t(provider === 'Tegeta' ? 'unknownInfoPorsche' : 'unknownInfoGeneric');
+  for (const para of text.split('\n\n')) {
+    const el = document.createElement('p');
+    el.textContent = para;
+    body.appendChild(el);
+  }
+  modal.classList.remove('is-hidden');
+  track('port_info_opened', { provider });
+}
+
+// Wired once. Backdrop taps close it too: a modal that only one small button
+// can dismiss is the wrong thing to put on a screen someone taps while driving.
+document.getElementById('port-info-ok')?.addEventListener('click', () => {
+  document.getElementById('port-info').classList.add('is-hidden');
+});
+document.getElementById('port-info')?.addEventListener('click', (e) => {
+  if (e.target.id === 'port-info') {
+    document.getElementById('port-info').classList.add('is-hidden');
+  }
+});
+
 /** The parts of the panel a refresh replaces: status, plugs, freshness. */
 function renderLive(panel, s) {
   const status = stationStatus(s);
@@ -189,7 +221,18 @@ function renderLive(panel, s) {
       `<span class="port__right">` +
       `<span class="port__status">${t(PORT_LABEL[p.status] ?? 'statusOut')}</span>` +
       sub +
-      `</span>`;
+      `</span>` +
+      // "Live status not published" answers the wrong question on its own: the
+      // driver wants to know whose charger this is and whether it is still
+      // worth the detour. The "i" opens that answer.
+      (p.status === 'unknown'
+        ? `<button class="port__info" type="button" aria-label="${t(
+            'unknownInfoAria',
+          )}">i</button>`
+        : '');
+    row
+      .querySelector('.port__info')
+      ?.addEventListener('click', () => openPortInfo(s.provider));
     portsEl.appendChild(row);
   }
   if (!s.ports.length) {

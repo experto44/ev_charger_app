@@ -35,6 +35,24 @@ const STRINGS = {
     statusBusy: 'დაკავებულია',
     statusOut: 'არ მუშაობს',
     statusUnknown: 'სტატუსი უცნობია',
+    // Explains a plug the operator publishes no state for. Same wording as the
+    // phone app, and every sentence in it was checked against Tegeta's own app.
+    unknownInfoTitle: 'რატომ არ ჩანს სტატუსი?',
+    unknownInfoPorsche:
+      'ეს Porsche Destination Charging პროგრამის დამტენია. ის სასტუმროს, ' +
+      'კურორტის ან სალონის ტერიტორიაზე დგას და თეგეტას კატალოგში ჩანს, ' +
+      'მაგრამ თეგეტა მისგან რეალურ დროში მონაცემს არ იღებს.\n\n' +
+      'ამიტომ ვერ გეტყვით, ახლა დაკავებულია თუ თავისუფალი. დატენვა მხოლოდ ' +
+      'ადგილზე ირთვება, აპლიკაციიდან ვერც ჩართავთ და ვერც გადაიხდით, ' +
+      'ამიტომ ფასს არ ვწერთ. იგივეს აკეთებს თეგეტას საკუთარი აპლიკაციაც.\n\n' +
+      'ასეთი დამტენი ხშირად ობიექტის სტუმრებისთვისაა განკუთვნილი. სანამ ' +
+      'გზას გაუყვებით, ჯობია წინასწარ დარეკოთ ან ადგილზე იკითხოთ.',
+    unknownInfoGeneric:
+      'ამ დამტენზე ოპერატორი ცოცხალ მონაცემს არ გვიზიარებს. ვიცით, რომ ' +
+      'დამტენი იქ დგას, მაგრამ ვერ გეტყვით, ახლა დაკავებულია თუ ' +
+      'თავისუფალი, და ფასსაც იმიტომ არ ვწერთ, რომ დადასტურებული არ არის.\n\n' +
+      'სანამ გზას გაუყვებით, ჯობია წინასწარ გადაამოწმოთ.',
+    unknownInfoAria: 'რას ნიშნავს ეს სტატუსი',
     countries: 'ქვეყნები',
     reloadHint: 'განახლება',
     countryGeorgia: 'საქართველო',
@@ -140,6 +158,23 @@ const STRINGS = {
     statusBusy: 'Busy',
     statusOut: 'Out of service',
     statusUnknown: 'Live status not published',
+    unknownInfoTitle: 'Why is there no status?',
+    unknownInfoPorsche:
+      'This is a Porsche Destination Charging point. It stands on a hotel, ' +
+      "resort or showroom property and appears in Tegeta's catalogue, but " +
+      'Tegeta receives no real-time data from it.\n\n' +
+      'So we cannot tell you whether it is free or in use right now. Charging ' +
+      'is started on site, not from an app, and there is no payment through ' +
+      "the app either, so we do not quote a price. Tegeta's own app does " +
+      'exactly the same.\n\n' +
+      "Chargers like this are often meant for the venue's guests. Call ahead " +
+      'or ask on site before you rely on it.',
+    unknownInfoGeneric:
+      'The operator does not share live data for this plug. We know the ' +
+      'charger is there, but we cannot tell you whether it is free or in use ' +
+      'right now, and we will not quote a price we cannot confirm.\n\n' +
+      'Worth checking before you make the trip.',
+    unknownInfoAria: 'What this status means',
     countries: 'Countries',
     reloadHint: 'Reload',
     countryGeorgia: 'Georgia',
