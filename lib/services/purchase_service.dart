@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert' show utf8;
 import 'dart:io' show Platform;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart' show sha256;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
@@ -47,6 +49,16 @@ class PurchaseService {
   /// Whether the one-shot entitlement reconciliation has already run. A retried
   /// connection must not repeat it.
   bool _reconciled = false;
+
+  /// When the user last tapped "Restore purchases". See [mayGrantTo].
+  DateTime? _restoreAskedAt;
+
+  /// True while `restored` events can still be attributed to that tap. The
+  /// platform delivers the replay within a moment of the request; anything
+  /// arriving long after is a connection-time replay, not a claim.
+  bool get _restoreWasAsked =>
+      _restoreAskedAt != null &&
+      DateTime.now().difference(_restoreAskedAt!) < const Duration(seconds: 30);
 
   /// Set true the moment the store replays/confirms an owned subscription for
   /// this session. Used by [_reconcileEntitlement] to tell "really owns premium"
@@ -261,8 +273,31 @@ class PurchaseService {
   /// Start the purchase flow for [product] (a subscription → non-consumable).
   /// The result arrives asynchronously on the purchase stream.
   Future<void> buy(ProductDetails product) async {
-    final param = PurchaseParam(productDetails: product);
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final param = PurchaseParam(
+      productDetails: product,
+      // Stamps the transaction with the app account that is buying it: StoreKit
+      // maps `applicationUserName` onto the transaction's `appAccountToken`, and
+      // Play onto the obfuscated account id. That stamp is what later lets a
+      // replayed entitlement be told apart from one this account actually owns —
+      // see [_mayGrantTo].
+      applicationUserName: uid == null ? null : accountTokenFor(uid),
+    );
     await _iap.buyNonConsumable(purchaseParam: param);
+  }
+
+  /// A stable RFC-4122-shaped token for [uid]. StoreKit rejects an
+  /// `appAccountToken` that isn't a UUID, and a Firebase uid isn't one, so
+  /// derive a deterministic UUID from it rather than inventing a random one
+  /// (a random token could never be matched back on a later device).
+  static String accountTokenFor(String uid) {
+    final h = sha256.convert(utf8.encode('geocharge:$uid')).toString();
+    // Version nibble forced to 4 and the variant nibble to 8-b, as RFC 4122
+    // requires; the rest is hash material.
+    final variant =
+        (int.parse(h.substring(16, 17), radix: 16) & 0x3 | 0x8).toRadixString(16);
+    return '${h.substring(0, 8)}-${h.substring(8, 12)}-4${h.substring(13, 16)}'
+        '-$variant${h.substring(17, 20)}-${h.substring(20, 32)}';
   }
 
   /// Ask the store to replay previously bought subscriptions. Results arrive on
@@ -271,6 +306,12 @@ class PurchaseService {
     // Reconnect first — otherwise "Restore purchases" is a no-op button for the
     // whole session whenever the launch-time store probe happened to fail.
     if (!await ensureStoreReady()) return;
+    // Mark the window in which arriving `restored` events are the result of the
+    // user deliberately asking, rather than the platform replaying the store
+    // account's entitlements on connection. Only [restorePurchases] sets this —
+    // [_reconcileEntitlement] calls the plugin directly, precisely so its silent
+    // check can never be mistaken for a user's claim.
+    _restoreAskedAt = DateTime.now();
     try {
       await _iap.restorePurchases();
     } catch (_) {/* surfaced to the user by the caller's UI state */}
@@ -299,18 +340,24 @@ class PurchaseService {
           // paying user is never credited (App Store review 2.1(b)).
           if (_productIds.contains(purchase.productID)) {
             _ownedSeen = true; // store confirms an active owned subscription
-            await _grantPremium();
-            // Persist to the signed-in user's account so premium follows the
-            // user, not the device.
-            await _persistPremiumToFirestore(purchase);
-            // Record a revenue event for the admin panel's financial analytics.
-            // ONLY for a genuinely new purchase — a `restored` event replays on
-            // every launch for an owned subscription, so recording it too would
-            // inflate revenue. Deduped by the store transaction id regardless.
-            if (purchase.status == PurchaseStatus.purchased) {
-              await _recordPurchaseEvent(purchase);
+            if (mayGrantTo(purchase, FirebaseAuth.instance.currentUser?.uid,
+                restoreWasAsked: _restoreWasAsked)) {
+              await _grantPremium();
+              // Persist to the signed-in user's account so premium follows the
+              // user, not the device.
+              await _persistPremiumToFirestore(purchase);
+              // Record a revenue event for the admin panel's financial
+              // analytics. ONLY for a genuinely new purchase — a `restored`
+              // event replays on every launch for an owned subscription, so
+              // recording it too would inflate revenue. Deduped by the store
+              // transaction id regardless.
+              if (purchase.status == PurchaseStatus.purchased) {
+                await _recordPurchaseEvent(purchase);
+              }
             }
           }
+          // Acknowledged either way: an entitlement we decline to grant must
+          // still be finished, or the platform redelivers it forever.
           await _finish(purchase);
           break;
 
@@ -321,6 +368,63 @@ class PurchaseService {
           await _finish(purchase);
           break;
       }
+    }
+  }
+
+  /// Whether [purchase] may confer premium on the app account [uid].
+  ///
+  /// `purchased` and `restored` are NOT interchangeable, though both mean "the
+  /// store confirms this subscription is active".
+  ///
+  ///   • `purchased` was completed by the person using the app right now, so it
+  ///     belongs to whoever is signed in. Unambiguous.
+  ///   • `restored` replays the entitlement of the STORE account — the Apple ID
+  ///     or Google account signed into the device — which has no relationship to
+  ///     the app account. Treating it as a grant let a brand-new app account
+  ///     inherit premium from whoever owns the subscription on that device, and
+  ///     [_persistPremiumToFirestore] then wrote it to Firestore, making it
+  ///     permanent and survive on every other device. One subscription could
+  ///     mint unlimited premium accounts, invisibly: revenue rows are only
+  ///     written for `purchased`, so nothing showed up in the admin panel.
+  ///
+  /// Restores are still honoured wherever they cannot leak, so the App Store's
+  /// restore requirement (review guideline 2.1(b)) is unaffected.
+  @visibleForTesting
+  bool mayGrantTo(
+    PurchaseDetails purchase,
+    String? uid, {
+    required bool restoreWasAsked,
+  }) {
+    if (purchase.status == PurchaseStatus.purchased) return true;
+
+    // Signed out: there is no account to leak into, and a restore is a paying
+    // user's only way back to premium. Always honour it.
+    if (uid == null) return true;
+
+    // The transaction carries the stamp [buy] put on it, and it is this
+    // account's — so this really is their own subscription coming back.
+    if (_accountTokenOf(purchase) == accountTokenFor(uid)) return true;
+
+    // The user just tapped "Restore purchases", which is them deliberately
+    // claiming the store subscription for the account they are signed into.
+    if (restoreWasAsked) return true;
+
+    // Left over: the platform replaying the store account's entitlements when
+    // the connection opened. Says nothing about who is signed in — never a grant.
+    return false;
+  }
+
+  /// The `appAccountToken` a StoreKit 2 transaction carries, or null on Android,
+  /// on StoreKit 1, or for a purchase made before [buy] started stamping them.
+  /// Read dynamically because the field lives on the platform-specific subclass
+  /// (`SK2PurchaseDetails`), and reaching for that type would pull an iOS-only
+  /// package into the shared code path for the sake of one optional string.
+  String? _accountTokenOf(PurchaseDetails purchase) {
+    try {
+      final dynamic token = (purchase as dynamic).appAccountToken;
+      return token is String && token.isNotEmpty ? token : null;
+    } catch (_) {
+      return null; // no such field on this platform's PurchaseDetails
     }
   }
 

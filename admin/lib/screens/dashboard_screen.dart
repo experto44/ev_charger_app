@@ -67,8 +67,8 @@ class DashboardScreen extends StatelessWidget {
                 amountGel: grant.amountGel,
                 note: grant.note,
               ),
-              onRevokePremium: (user) =>
-                  AdminService.I.revokeManualPremium(user.uid),
+              onRevokePremium: (user) => AdminService.I
+                  .revokePremium(user.uid, wasManual: user.isManual),
             );
           },
         );
@@ -343,6 +343,8 @@ class _DashboardViewState extends State<DashboardView> {
                       child: UserTile(
                         user: u,
                         onManagePremium: () => _openGrant(u),
+                        onEndPremium:
+                            u.effectivePremium ? () => _confirmRevoke(u) : null,
                       ),
                     )),
             ],
@@ -513,7 +515,31 @@ class _DashboardViewState extends State<DashboardView> {
             Text(u.lastSeenAt == null ? '—' : _fmt.format(u.lastSeenAt!))),
         DataCell(Text(
             u.opensPerDay == null ? '—' : u.opensPerDay!.toStringAsFixed(1))),
-        DataCell(_grantButton(u)),
+        DataCell(_rowActions(u)),
+      ],
+    );
+  }
+
+  /// Actions on a user row: manual activation, plus ending a premium that is
+  /// live right now.
+  ///
+  /// The Premium tab is a register of manual grants only — it lists users with a
+  /// `premiumUntil`, which store subscriptions never have. So this row is the
+  /// ONLY place a store-sourced flag can be cleared, and until it existed a
+  /// premium the app had written by mistake could not be undone from the panel
+  /// at all.
+  Widget _rowActions(AppUser u) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _grantButton(u),
+        if (u.effectivePremium)
+          IconButton(
+            tooltip: 'End premium now',
+            icon: const Icon(Icons.cancel_outlined,
+                size: 18, color: Colors.redAccent),
+            onPressed: () => _confirmRevoke(u),
+          ),
       ],
     );
   }

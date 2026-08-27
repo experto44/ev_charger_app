@@ -8,12 +8,22 @@ import 'status_chip.dart';
 /// A single user rendered as a card. Used on narrow screens where the 8-column
 /// data table can't fit — the phone view the panel is most often opened on.
 class UserTile extends StatelessWidget {
-  const UserTile({super.key, required this.user, this.onManagePremium});
+  const UserTile({
+    super.key,
+    required this.user,
+    this.onManagePremium,
+    this.onEndPremium,
+  });
   final AppUser user;
 
   /// Opens the manual-activation dialog for this user. Omitted in contexts
   /// where granting isn't offered.
   final VoidCallback? onManagePremium;
+
+  /// Ends a premium that is live right now. Null when the user has none, or in
+  /// contexts where ending isn't offered. Store subscriptions never reach the
+  /// Premium tab, so on a phone this is the only way to clear one.
+  final VoidCallback? onEndPremium;
 
   static final DateFormat _fmt = DateFormat('yyyy-MM-dd HH:mm');
 
@@ -55,6 +65,14 @@ class UserTile extends StatelessWidget {
                     color: u.manualActive ? kEmerald : kTextSec,
                   ),
                   onPressed: onManagePremium,
+                ),
+              if (onEndPremium != null)
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  tooltip: 'End premium now',
+                  icon: const Icon(Icons.cancel_outlined,
+                      size: 18, color: Colors.redAccent),
+                  onPressed: onEndPremium,
                 ),
             ],
           ),

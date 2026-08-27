@@ -146,16 +146,24 @@ class AdminService {
     return until;
   }
 
-  /// End a manual subscription immediately: the flag goes false and the expiry
-  /// is set to now, so the ad-supported version returns on the next app open.
-  /// The revenue rows already recorded are left untouched (history is
-  /// append-only).
-  Future<void> revokeManualPremium(String uid) {
+  /// End a subscription immediately: the flag goes false and the ad-supported
+  /// version returns on the next app open. The revenue rows already recorded are
+  /// left untouched (history is append-only).
+  ///
+  /// [wasManual] distinguishes the two things this has to clear. A manual grant
+  /// also needs its expiry closed, or [AppUser.manualActive] would still read as
+  /// running. A store-sourced flag has no expiry to close, and stamping
+  /// `premiumSource: 'manual'` on it would misfile the account under "Premium ·
+  /// manual" in the breakdown — which is how store premium ends up looking like
+  /// something an admin handed out.
+  Future<void> revokePremium(String uid, {required bool wasManual}) {
     return _db.collection('users').doc(uid).set({
       'isPremium': false,
-      'premiumUntil': Timestamp.fromDate(DateTime.now()),
-      'premiumSource': 'manual',
       'premiumExpiredAt': FieldValue.serverTimestamp(),
+      if (wasManual) ...{
+        'premiumUntil': Timestamp.fromDate(DateTime.now()),
+        'premiumSource': 'manual',
+      },
     }, SetOptions(merge: true));
   }
 
