@@ -371,8 +371,10 @@ class PurchaseService {
           // that is [mayGrantTo]'s job.
           if (_productIds.contains(purchase.productID)) {
             _ownedSeen = true; // store confirms an active owned subscription
+            final uid = FirebaseAuth.instance.currentUser?.uid;
             final ownFlow = isOwnPurchaseFlow(purchase);
-            if (mayGrantTo(purchase, FirebaseAuth.instance.currentUser?.uid,
+            final ownStamp = isStampedFor(purchase, uid);
+            if (mayGrantTo(purchase, uid,
                 restoreWasAsked: _restoreWasAsked,
                 ownPurchaseFlow: ownFlow)) {
               await _grantPremium();
@@ -380,11 +382,14 @@ class PurchaseService {
               // user, not the device.
               await _persistPremiumToFirestore(purchase);
               // Record a revenue event for the admin panel's financial
-              // analytics. ONLY for a purchase this app actually put through:
-              // replayed entitlements also arrive as `purchased`, and counting
-              // those would book the same subscription again on every fresh
-              // install. Deduped by the store transaction id regardless.
-              if (ownFlow) {
+              // analytics, but only for a transaction we can actually attribute:
+              // one this app put through, or a renewal carrying this account's
+              // stamp. A renewal is real revenue and must still be booked —
+              // gating on the flow alone would have dropped every one of them.
+              // Replays are excluded because the row is keyed by the store
+              // transaction id, so a replayed id merges into the row it already
+              // wrote instead of booking the subscription twice.
+              if (ownFlow || ownStamp) {
                 await _recordPurchaseEvent(purchase);
               }
             }
@@ -408,19 +413,19 @@ class PurchaseService {
 
   /// Whether [purchase] may confer premium on the app account [uid].
   ///
-  /// `purchased` and `restored` are NOT interchangeable, though both mean "the
-  /// store confirms this subscription is active".
+  /// Both `purchased` and `restored` mean "the store confirms this subscription
+  /// is active" — neither says WHOSE app account should be credited. A store
+  /// transaction belongs to the STORE account (the Apple ID / Google account on
+  /// the device), which has no relationship to the app account signed in. Taking
+  /// the status as a grant let a brand-new app account inherit premium from
+  /// whoever owns the subscription on that device, and [_persistPremiumToFirestore]
+  /// then made it permanent across every other device.
   ///
-  ///   • `purchased` was completed by the person using the app right now, so it
-  ///     belongs to whoever is signed in. Unambiguous.
-  ///   • `restored` replays the entitlement of the STORE account — the Apple ID
-  ///     or Google account signed into the device — which has no relationship to
-  ///     the app account. Treating it as a grant let a brand-new app account
-  ///     inherit premium from whoever owns the subscription on that device, and
-  ///     [_persistPremiumToFirestore] then wrote it to Firestore, making it
-  ///     permanent and survive on every other device. One subscription could
-  ///     mint unlimited premium accounts, invisibly: revenue rows are only
-  ///     written for `purchased`, so nothing showed up in the admin panel.
+  /// So the question is never "what does the status say" but "can this
+  /// transaction be attributed to [uid]". It can when this app opened the
+  /// purchase flow, when nobody is signed in to leak into, when the transaction
+  /// carries the stamp [buy] put on it for this account (which is how renewals
+  /// keep working), or right after the user asked to restore.
   ///
   /// Restores are still honoured wherever they cannot leak, so the App Store's
   /// restore requirement (review guideline 2.1(b)) is unaffected.
@@ -442,7 +447,7 @@ class PurchaseService {
 
     // The transaction carries the stamp [buy] put on it, and it is this
     // account's — so this really is their own subscription coming back.
-    if (_accountTokenOf(purchase) == accountTokenFor(uid)) return true;
+    if (isStampedFor(purchase, uid)) return true;
 
     // The user just tapped "Restore purchases", which is them deliberately
     // claiming the store subscription for the account they are signed into.
@@ -452,6 +457,13 @@ class PurchaseService {
     // the connection opened. Says nothing about who is signed in — never a grant.
     return false;
   }
+
+  /// Whether [purchase] carries the account stamp [buy] writes for [uid]. True
+  /// for a renewal of a subscription this very account bought, which is what
+  /// keeps recurring revenue attributable without the user doing anything.
+  @visibleForTesting
+  bool isStampedFor(PurchaseDetails purchase, String? uid) =>
+      uid != null && _accountTokenOf(purchase) == accountTokenFor(uid);
 
   /// The `appAccountToken` a StoreKit 2 transaction carries, or null on Android,
   /// on StoreKit 1, or for a purchase made before [buy] started stamping them.
@@ -589,6 +601,12 @@ class PurchaseService {
   /// account's Firestore record is left untouched (premium belongs to that user).
   Future<void> clearLocalPremium() async {
     _ownedSeen = false;
+    // Close both attribution windows. Otherwise a logout inside the 30s after a
+    // "Restore purchases" tap, or mid-purchase, would let the NEXT account to
+    // sign in claim the transaction that arrives.
+    _restoreAskedAt = null;
+    _buyingProductId = null;
+    _buyingSince = null;
     isPremium.value = false;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_prefsKey, false);

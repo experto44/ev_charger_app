@@ -123,4 +123,79 @@ void main() {
           isNot(PurchaseService.accountTokenFor(freeloaderUid)));
     });
   });
+
+  group('nobody who actually paid is affected', () {
+    // The paths a real subscriber reaches premium by, none of which run through
+    // mayGrantTo's replay branch.
+    test('a renewal keeps a signed-in subscriber premium', () {
+      final renewal = _Tx(PurchaseStatus.purchased,
+          appAccountToken: PurchaseService.accountTokenFor(buyerUid));
+      expect(
+        svc.mayGrantTo(renewal, buyerUid,
+            restoreWasAsked: false, ownPurchaseFlow: false),
+        isTrue,
+      );
+      // ...and stays attributable, so the renewal is still booked as revenue.
+      expect(svc.isStampedFor(renewal, buyerUid), isTrue);
+    });
+
+    test('a subscriber who is signed out keeps premium on any replay', () {
+      for (final status in [PurchaseStatus.purchased, PurchaseStatus.restored]) {
+        expect(
+          svc.mayGrantTo(_Tx(status), null,
+              restoreWasAsked: false, ownPurchaseFlow: false),
+          isTrue,
+          reason: '$status must still grant when there is no account',
+        );
+      }
+    });
+
+    test('an unstamped legacy subscription is reclaimed by tapping Restore', () {
+      // Bought before buy() started stamping transactions: the replay alone is
+      // refused, but the explicit tap claims it for the signed-in account.
+      final legacy = _Tx(PurchaseStatus.restored);
+      expect(
+        svc.mayGrantTo(legacy, buyerUid,
+            restoreWasAsked: false, ownPurchaseFlow: false),
+        isFalse,
+      );
+      expect(
+        svc.mayGrantTo(legacy, buyerUid,
+            restoreWasAsked: true, ownPurchaseFlow: false),
+        isTrue,
+      );
+    });
+  });
+
+  group('a new purchase goes through on both platforms', () {
+    test('iOS: the stamp is a UUID, which StoreKit requires of appAccountToken',
+        () {
+      expect(
+        PurchaseService.accountTokenFor(buyerUid),
+        matches(RegExp(
+            r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')),
+      );
+    });
+
+    test('Android: the stamp fits setObfuscatedAccountId (hashed, <= 64 chars)',
+        () {
+      final token = PurchaseService.accountTokenFor(buyerUid);
+      expect(token.length, lessThanOrEqualTo(64));
+      // Play forbids cleartext PII in this field; it is a hash, so the uid must
+      // not be recoverable from or visible in it.
+      expect(token.contains(buyerUid), isFalse);
+    });
+
+    test('the buyer is granted whichever status the platform reports', () {
+      for (final status in [PurchaseStatus.purchased, PurchaseStatus.restored]) {
+        expect(
+          svc.mayGrantTo(_Tx(status), buyerUid,
+              restoreWasAsked: false, ownPurchaseFlow: true),
+          isTrue,
+          reason: 'a purchase this app opened must complete, whatever the '
+              'platform labels it',
+        );
+      }
+    });
+  });
 }
