@@ -869,7 +869,9 @@ body.is-picking #map { cursor: crosshair; }
   max-height: 46vh;
   overflow-y: auto;
 }
-.onboard__body p { margin: 0 0 14px; }
+/* pre-line so single newlines inside a paragraph survive: the copy breaks some
+   lines deliberately, and HTML would otherwise collapse them into one. */
+.onboard__body p { margin: 0 0 14px; white-space: pre-line; }
 .onboard__body p:last-child { margin-bottom: 0; }
 
 /* ── Drive mode (turn-by-turn) ───────────────────────────────────── */
