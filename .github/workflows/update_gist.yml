@@ -1334,13 +1334,29 @@ jobs:
               obj = ws_snapshot()
               rows = obj.get("data", []) if isinstance(obj, dict) else []
               stations = []
+              dropped = 0
               for x in rows:
                   try:
                       lat = float(x["latitude"]); lng = float(x["longitude"])
                   except Exception:
                       continue
-                  # Georgia only (drop the lone test point in Saudi Arabia)
+                  # Georgia only (drops the lone test point in Mecca, #128).
                   if not (41.0 <= lat <= 43.6 and 40.0 <= lng <= 46.9):
+                      dropped += 1
+                      continue
+                  # ...and the box alone is not enough, because its south-west
+                  # corner hangs over Turkey's Black Sea coast. #105 and #145
+                  # sit in that corner at 41.0020,41.0093: a forested slope
+                  # above Ortan, Çamlıhemşin, no road within a kilometre, no
+                  # building on the satellite imagery, nothing Google knows
+                  # within 400 m, and no Charger Plus site anywhere in Turkey.
+                  # Two ids on one identical coordinate — the only such pair in
+                  # the fleet, both alone in a "pool 1" nothing else uses — is a
+                  # placeholder, not a charger. The Georgian coast ends at Sarpi
+                  # (41.52 N) and the southernmost real station is Batumi, 13 km
+                  # north of it, so cutting this corner costs us nothing real.
+                  if lat < 41.52 and lng < 41.60:
+                      dropped += 1
                       continue
                   sid = x["id"]
                   conns = x.get("connectors", []) or []
@@ -1381,7 +1397,8 @@ jobs:
                       "ports": ports,
                       "last_updated": "Just now",
                   })
-              print(f"Charger Plus: {len(stations)} stations")
+              print(f"Charger Plus: {len(stations)} stations"
+                    + (f" ({dropped} off-map rows dropped)" if dropped else ""))
               return stations
 
           # ── E-Space (own backend — public map API, no user login) ──────────

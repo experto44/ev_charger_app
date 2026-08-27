@@ -14474,59 +14474,6 @@
     "last_updated": "2026-08-26 22:11 UTC"
   },
   {
-    "id": "chargerplus_105",
-    "name": "Charger Plus #105",
-    "lat": 41.001987,
-    "lng": 41.009346,
-    "power": "7 kW",
-    "type": "AC",
-    "price": "",
-    "available_spots": "1 available",
-    "total_spots": 1,
-    "city": "",
-    "provider": "Charger Plus",
-    "connectors": [
-      "Type 2"
-    ],
-    "ports": [
-      {
-        "type": "Type 2",
-        "power": "7 kW",
-        "status": "free"
-      }
-    ],
-    "last_updated": "2026-07-02 17:30 UTC"
-  },
-  {
-    "id": "chargerplus_145",
-    "name": "Charger Plus #145",
-    "lat": 41.001987,
-    "lng": 41.009346,
-    "power": "14 kW",
-    "type": "AC",
-    "price": "",
-    "available_spots": "2 available",
-    "total_spots": 2,
-    "city": "",
-    "provider": "Charger Plus",
-    "connectors": [
-      "Type 2"
-    ],
-    "ports": [
-      {
-        "type": "Type 2",
-        "power": "14 kW",
-        "status": "free"
-      },
-      {
-        "type": "Type 2",
-        "power": "14 kW",
-        "status": "free"
-      }
-    ],
-    "last_updated": "2026-07-02 17:30 UTC"
-  },
-  {
     "id": "chargerplus_104",
     "name": "Charger Plus #104",
     "lat": 41.710873,
