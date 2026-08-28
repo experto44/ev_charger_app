@@ -14,6 +14,8 @@ import 'firebase_options.dart';
 import 'l10n/app_strings.dart';
 import 'profile_screen.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/google_route_import.dart';
+import 'services/shared_link_service.dart';
 import 'screens/charger_alert_popup.dart';
 import 'screens/support_popup.dart';
 import 'services/auth_service.dart';
@@ -422,6 +424,18 @@ class _MapScreenState extends State<MapScreen>
     // service holds it and this drains it once the map can actually move.
     NotificationService.I.openStation.addListener(_onPushOpenStation);
     _onPushOpenStation();
+    // A route shared out of Google Maps (Android share sheet). Reading the link
+    // and sending it to the car both need a signed-in account, so the sheet
+    // decides what to do; here we only need to know one arrived.
+    SharedLinkService.start((url) {
+      // After the frame, not during it: a share that cold-started the app can
+      // arrive while this screen is still being built, and the sheet needs a
+      // Navigator that is actually mounted.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) { return; }
+        showGoogleRouteImport(context, url);
+      });
+    });
     // _locateMe() is called from MapOptions.onMapReady, which fires only
     // after FlutterMap has mounted and the MapController is fully attached.
   }

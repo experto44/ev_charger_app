@@ -13,6 +13,7 @@ import 'places_service.dart';
 import 'profile_screen.dart';
 import 'provider_logos.dart';
 import 'routing_service.dart';
+import 'services/tesla_route_service.dart';
 import 'turkey_service.dart';
 
 // ── Palette ───────────────────────────────────────────────────────────────────
@@ -419,37 +420,138 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
     return (batteryAtArrivalPct: pct, stopsNeeded: stops);
   }
 
-  // ── Open complete multi-stop route in native Google Maps ─────────────────
-  // Waypoint order rule: the user's manual stops ALWAYS keep the order they
-  // chose in the UI (a Tbilisi→Kutaisi→Batumi→Zugdidi→Tbilisi round trip must
-  // never be re-sorted geographically — the old progress-sort did exactly that
-  // and collapsed round trips entirely). Ticked charging stops are interleaved
-  // between the manual stops using their true along-route distance (alongKm)
-  // against the Directions legs' cumulative distances (legEndsKm).
+  // ── Waypoint order ───────────────────────────────────────────────────────
+  // The user's manual stops ALWAYS keep the order they chose in the UI (a
+  // Tbilisi→Kutaisi→Batumi→Zugdidi→Tbilisi round trip must never be re-sorted
+  // geographically — the old progress-sort did exactly that and collapsed
+  // round trips entirely). Ticked charging stops are interleaved between the
+  // manual stops using their true along-route distance (alongKm) against the
+  // Directions legs' cumulative distances (legEndsKm).
+  /// The intermediate stops the trip actually runs through, in road order.
+  ///
+  /// Shared by "open in Google Maps" and "send to the car", which have to
+  /// agree: the rule above is subtle enough that a second copy of it would
+  /// drift, and one plan would then produce two different trips.
+  Future<List<LatLng>> _orderedWaypoints() async {
+    // Every resolved stop in UI order — passed to the routing service so the
+    // Directions request (and therefore the road polyline chargers snap to)
+    // runs through any manual intermediate stops too.
+    final resolvedStops =
+        _stops.map((s) => s.coords).whereType<LatLng>().toList();
+
+    // Reuse the preview's result only when it matches the CURRENT stop list
+    // (a tap within the debounce window could otherwise pair fresh stops with
+    // a stale route); otherwise recompute against the actual road right now.
+    var routeResult = _routeResult;
+    if (routeResult == null ||
+        routeResult.legEndsKm.length != resolvedStops.length - 1) {
+      routeResult = await RoutingService.planRoute(
+        waypoints:         resolvedStops,
+        currentBatteryPct: _batteryPct,
+        stations:          _filteredStations,
+      );
+    }
+
+    final ordered = <LatLng>[];
+
+    if (routeResult != null && routeResult.legEndsKm.isNotEmpty) {
+      // Manual stop i (1..n-2) sits at the end of Directions leg i-1; ticked
+      // chargers carry their own along-route km. Sorting the combined list by
+      // that single axis interleaves chargers into the right legs while the
+      // manual stops keep their user-chosen order (their leg-end distances
+      // are monotonically increasing by construction, even on round trips).
+      final entries = <(double, LatLng)>[];
+      for (int i = 1; i < resolvedStops.length - 1; i++) {
+        entries.add((routeResult.legEndsKm[i - 1], resolvedStops[i]));
+      }
+      for (final o in routeResult.options) {
+        if (!_selectedKeys.contains(o.locationKey)) { continue; }
+        entries.add((o.alongKm, o.location));
+      }
+      entries.sort((a, b) => a.$1.compareTo(b.$1));
+      ordered.addAll(entries.map((e) => e.$2));
+    } else {
+      // Directions failed (offline / API error): keep manual stops in user
+      // order and slot each straight-line-estimated charger into the leg
+      // where it adds the least detour, ordered outward from the leg start.
+      final chargers = _chargingStationWaypoints(_evPreview.stopsNeeded);
+      final perLeg = List.generate(
+          resolvedStops.length - 1, (_) => <(double, LatLng)>[]);
+      for (final s in chargers) {
+        final pt = LatLng(s.lat, s.lng);
+        var bestLeg = 0;
+        var bestExtra = double.infinity;
+        for (int i = 0; i < resolvedStops.length - 1; i++) {
+          final a = resolvedStops[i], b = resolvedStops[i + 1];
+          final extra =
+              _haversine(a, pt) + _haversine(pt, b) - _haversine(a, b);
+          if (extra < bestExtra) { bestExtra = extra; bestLeg = i; }
+        }
+        perLeg[bestLeg].add((_haversine(resolvedStops[bestLeg], pt), pt));
+      }
+      for (int i = 0; i < resolvedStops.length - 1; i++) {
+        perLeg[i].sort((a, b) => a.$1.compareTo(b.$1));
+        ordered.addAll(perLeg[i].map((e) => e.$2));
+        if (i < resolvedStops.length - 2) {
+          ordered.add(resolvedStops[i + 1]);
+        }
+      }
+    }
+    return ordered;
+  }
+
+  /// Hand this trip to the car at tesla.geocharge.ge.
+  ///
+  /// The same stops the Google Maps button would open, written to the account
+  /// where the car is watching for them. Nothing is "started" from here: the
+  /// car offers the route and the driver decides, because the phone has no way
+  /// of knowing whether anyone is sitting in it.
+  Future<void> _sendToCar() async {
+    setState(() => _isPlanning = true);
+    try {
+      final destination = _stops.last.coords!;
+      final ordered = await _orderedWaypoints();
+      final name = _stops.last.controller.text.trim();
+
+      // Warn rather than block: the pairing may simply not have synced, and a
+      // route sitting in the account is harmless.
+      final linked = await TeslaRouteService.isCarLinked();
+
+      await TeslaRouteService.sendToCar(
+        TeslaRoute(
+          name: name.isEmpty ? AppStrings.teslaSendFallbackName : name,
+          destination: destination,
+          waypoints: ordered,
+        ),
+        source: 'app',
+      );
+      if (!mounted) { return; }
+      _toast(linked ? AppStrings.teslaSentOk : AppStrings.teslaSentNoCar);
+    } catch (_) {
+      if (!mounted) { return; }
+      _toast(AppStrings.teslaSendFailed);
+    } finally {
+      if (mounted) { setState(() => _isPlanning = false); }
+    }
+  }
+
+  void _toast(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      backgroundColor: _bgCard,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      content: Text(msg, style: const TextStyle(color: _textPri)),
+    ));
+  }
+
+  // ── Open the complete multi-stop route in native Google Maps ─────────────
   Future<void> _planRoute() async {
     setState(() => _isPlanning = true);
     try {
       final origin      = _stops.first.coords!;
       final destination = _stops.last.coords!;
 
-      // Every resolved stop in UI order — passed to the routing service so the
-      // Directions request (and therefore the road polyline chargers snap to)
-      // runs through any manual intermediate stops too.
-      final resolvedStops =
-          _stops.map((s) => s.coords).whereType<LatLng>().toList();
-
-      // Reuse the preview's result only when it matches the CURRENT stop list
-      // (a tap within the debounce window could otherwise pair fresh stops with
-      // a stale route); otherwise recompute against the actual road right now.
-      var routeResult = _routeResult;
-      if (routeResult == null ||
-          routeResult.legEndsKm.length != resolvedStops.length - 1) {
-        routeResult = await RoutingService.planRoute(
-          waypoints:         resolvedStops,
-          currentBatteryPct: _batteryPct,
-          stations:          _filteredStations,
-        );
-      }
+      final ordered = await _orderedWaypoints();
 
       String urlStr =
           'https://www.google.com/maps/dir/?api=1'
@@ -457,63 +559,10 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
           '&destination=${destination.latitude},${destination.longitude}'
           '&travelmode=driving';
 
-      // Ordered waypoint coordinate strings for the Google Maps URL.
-      final ordered = <String>[];
-
-      if (routeResult != null && routeResult.legEndsKm.isNotEmpty) {
-        // Manual stop i (1..n-2) sits at the end of Directions leg i-1; ticked
-        // chargers carry their own along-route km. Sorting the combined list by
-        // that single axis interleaves chargers into the right legs while the
-        // manual stops keep their user-chosen order (their leg-end distances
-        // are monotonically increasing by construction, even on round trips).
-        final entries = <(double, String)>[];
-        for (int i = 1; i < resolvedStops.length - 1; i++) {
-          final p = resolvedStops[i];
-          entries.add((
-            routeResult.legEndsKm[i - 1],
-            '${p.latitude},${p.longitude}',
-          ));
-        }
-        for (final o in routeResult.options) {
-          if (!_selectedKeys.contains(o.locationKey)) { continue; }
-          entries.add((o.alongKm, '${o.location.latitude},${o.location.longitude}'));
-        }
-        entries.sort((a, b) => a.$1.compareTo(b.$1));
-        ordered.addAll(entries.map((e) => e.$2));
-      } else {
-        // Directions failed (offline / API error): keep manual stops in user
-        // order and slot each straight-line-estimated charger into the leg
-        // where it adds the least detour, ordered outward from the leg start.
-        final chargers = _chargingStationWaypoints(_evPreview.stopsNeeded);
-        final perLeg = List.generate(
-            resolvedStops.length - 1, (_) => <(double, String)>[]);
-        for (final s in chargers) {
-          final pt = LatLng(s.lat, s.lng);
-          var bestLeg = 0;
-          var bestExtra = double.infinity;
-          for (int i = 0; i < resolvedStops.length - 1; i++) {
-            final a = resolvedStops[i], b = resolvedStops[i + 1];
-            final extra =
-                _haversine(a, pt) + _haversine(pt, b) - _haversine(a, b);
-            if (extra < bestExtra) { bestExtra = extra; bestLeg = i; }
-          }
-          perLeg[bestLeg].add((
-            _haversine(resolvedStops[bestLeg], pt),
-            '${s.lat},${s.lng}',
-          ));
-        }
-        for (int i = 0; i < resolvedStops.length - 1; i++) {
-          perLeg[i].sort((a, b) => a.$1.compareTo(b.$1));
-          ordered.addAll(perLeg[i].map((e) => e.$2));
-          if (i < resolvedStops.length - 2) {
-            final p = resolvedStops[i + 1];
-            ordered.add('${p.latitude},${p.longitude}');
-          }
-        }
-      }
-
       if (ordered.isNotEmpty) {
-        urlStr += '&waypoints=${ordered.join('|')}';
+        final pairs =
+            ordered.map((p) => '${p.latitude},${p.longitude}').join('|');
+        urlStr += '&waypoints=$pairs';
       }
 
       final uri = Uri.parse(urlStr);
@@ -707,6 +756,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
             total:         _stops.length,
             isPlanning:    _isPlanning || _loadingCountryData,
             onPlanRoute:   allResolved ? _planRoute : null,
+            onSendToCar:   allResolved ? _sendToCar : null,
           ),
         ],
       )),
@@ -1742,10 +1792,12 @@ class _BottomBar extends StatelessWidget {
     required this.total,
     required this.isPlanning,
     this.onPlanRoute,
+    this.onSendToCar,
   });
   final int           resolvedCount, total;
   final bool          isPlanning;
   final VoidCallback? onPlanRoute;
+  final VoidCallback? onSendToCar;
 
   @override
   Widget build(BuildContext context) {
@@ -1753,34 +1805,57 @@ class _BottomBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
       color: _bgCard,
-      child: GestureDetector(
-        onTap: ready ? onPlanRoute : null,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          height: 52,
-          decoration: BoxDecoration(
-            color: ready ? _emerald : _bgSurface,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Center(
-            child: isPlanning
-                ? const SizedBox(
-                    width: 22, height: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                  )
-                : Text(
-                    resolvedCount == total
-                        ? '${AppStrings.openInGoogleMaps}  →'
-                        : 'Set all stops  ($resolvedCount / $total)',
-                    style: TextStyle(
-                      color: ready ? Colors.black : _textSec,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+      child: Row(children: [
+        Expanded(
+          child: GestureDetector(
+            onTap: ready ? onPlanRoute : null,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 52,
+              decoration: BoxDecoration(
+                color: ready ? _emerald : _bgSurface,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Center(
+                child: isPlanning
+                    ? const SizedBox(
+                        width: 22, height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                      )
+                    : Text(
+                        resolvedCount == total
+                            ? '${AppStrings.openInGoogleMaps}  →'
+                            : 'Set all stops  ($resolvedCount / $total)',
+                        style: TextStyle(
+                          color: ready ? Colors.black : _textSec,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+              ),
+            ),
           ),
         ),
-      ),
+        // Sending the trip to the car. An icon rather than a second wide
+        // button: the primary action here is still the one people know, and a
+        // 52px square is a comfortable target beside it.
+        const SizedBox(width: 10),
+        GestureDetector(
+          onTap: ready ? onSendToCar : null,
+          child: Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: _bgSurface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                  color: ready ? _emerald : Colors.transparent, width: 1.5),
+            ),
+            child: Icon(Icons.directions_car_filled_outlined,
+                color: ready ? _emerald : _textSec, size: 24),
+          ),
+        ),
+      ]),
     );
   }
 }

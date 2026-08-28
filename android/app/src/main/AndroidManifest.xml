@@ -33,6 +33,15 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Google Maps' "share directions" is a plain text share, so this
+                 one filter is what puts GeoCharge in its share sheet. Handled
+                 in MainActivity.kt; the link itself is read server-side by the
+                 importGoogleRoute function. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="text/plain"/>
+            </intent-filter>
         </activity>
         <!-- AdMob App ID for GeoCharge. Banner/interstitial ad-unit ids live in
              lib/services/ad_service.dart. -->

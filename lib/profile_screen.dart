@@ -10,6 +10,7 @@ import 'app_constants.dart';
 import 'countries_screen.dart';
 import 'l10n/app_strings.dart';
 import 'screens/paywall_screen.dart';
+import 'screens/tesla_link_screen.dart';
 import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 
@@ -349,70 +350,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             // ══ AUTH SECTION (only when signed in) ═══════════════════════════
             if (_user != null) ...[
-              // Avatar + name/email
-              Center(
-                child: Stack(
-                  children: [
-                    Container(
-                      width: 80, height: 80,
-                      decoration: BoxDecoration(
-                        color: _bgCard,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: _emerald, width: 2),
-                        boxShadow: const [
-                          BoxShadow(color: Colors.black38, blurRadius: 12)
-                        ],
-                      ),
-                      child: _user!.photoURL != null
-                          ? ClipOval(
-                              child: Image.network(
-                                _user!.photoURL!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                    Icons.person_rounded,
-                                    color: _emerald, size: 38),
-                              ),
-                            )
-                          : const Icon(Icons.person_rounded,
-                              color: _emerald, size: 38),
-                    ),
-                    if (_user!.emailVerified)
-                      Positioned(
-                        right: 0, bottom: 0,
-                        child: Container(
-                          width: 22, height: 22,
-                          decoration: BoxDecoration(
-                            color: _emerald,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: _bgDark, width: 2),
-                          ),
-                          child: const Icon(Icons.check_rounded,
-                              color: Colors.black, size: 13),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              if (_user!.displayName != null) ...[
-                const SizedBox(height: 8),
-                Center(
-                  child: Text(
-                    _user!.displayName!,
-                    style: const TextStyle(
-                        color: _textPri,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 4),
-              Center(
-                child: Text(
-                  _user!.email ?? '',
-                  style: const TextStyle(color: _textSec, fontSize: 13),
-                ),
-              ),
-              const SizedBox(height: 24),
+              // No avatar/name/email header here on purpose: the Email tile
+              // directly below already shows the address AND whether it is
+              // verified, so the block was a second copy of the same fact
+              // taking a third of the screen.
 
               // Email tile
               _Label(AppStrings.email),
@@ -574,6 +515,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 28),
+
+              // ── Tesla ─────────────────────────────────────────────────────
+              // Signing the car in at tesla.geocharge.ge. It lives here, in the
+              // signed-in block, because approving the car's code IS the proof
+              // of account — the phone is already this subscriber.
+              const _Label('TESLA'),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () => Navigator.push<void>(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TeslaLinkScreen()),
+                ),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: _bgCard,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _bgSurface),
+                  ),
+                  child: Row(children: [
+                    const Icon(Icons.directions_car_filled_rounded,
+                        color: _textSec, size: 18),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        AppStrings.teslaTileIdle,
+                        maxLines: 2,
+                        style: AppStrings.font(const TextStyle(
+                            color: _textPri, fontSize: 15)),
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded,
+                        color: _textSec, size: 20),
+                  ]),
+                ),
+              ),
+
               const SizedBox(height: 28),
               const Divider(color: _bgSurface, thickness: 1),
               const SizedBox(height: 20),

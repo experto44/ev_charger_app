@@ -431,4 +431,110 @@ class AppStrings {
       : 'Subscription automatically renews unless cancelled at least 24 hours before the end of the current period. Payment is charged to your Apple ID at confirmation of purchase. You can manage or cancel anytime in your App Store account settings.';
   static String get termsOfUse =>
       isGeorgian ? 'მოხმარების წესები' : 'Terms of Use';
+
+  // ── Tesla pairing ──────────────────────────────────────────────────────────
+  // Signing in to tesla.geocharge.ge without a password: the car shows a code,
+  // this app approves it. See functions/tesla-pairing.js.
+  static String get teslaTitle => 'Tesla';
+  static String get teslaTileConnected =>
+      isGeorgian ? 'ავტომობილი დაკავშირებულია' : 'Car connected';
+  static String get teslaTileIdle => isGeorgian
+      ? 'დააკავშირე ავტომობილი tesla.geocharge.ge-სთან'
+      : 'Connect your car to tesla.geocharge.ge';
+  static String get teslaLead => isGeorgian
+      ? 'ავტომობილის ეკრანზე ნაჩვენები კოდი აქ შეიყვანე და ტესლა ამ ანგარიშით შემოვა. პაროლი საჭირო არაა.'
+      : 'Type the code shown on your car screen and the Tesla signs in with this account. No password needed.';
+  static String get teslaStep1 => isGeorgian
+      ? 'მანქანის ბრაუზერში გახსენი tesla.geocharge.ge'
+      : 'Open tesla.geocharge.ge in the car browser';
+  static String get teslaStep2 => isGeorgian
+      ? 'ეკრანზე გამოჩნდება 6 ნიშნა კოდი'
+      : 'A 6-digit code appears on the screen';
+  static String get teslaStep3 => isGeorgian
+      ? 'შეიყვანე კოდი აქ, სანამ ვადა არ გასვლია'
+      : 'Enter that code here before it expires';
+  static String get teslaConnect => isGeorgian ? 'დაკავშირება' : 'Connect';
+  static String get teslaDisconnect => isGeorgian ? 'გათიშვა' : 'Disconnect';
+  static String get teslaConnectedSince =>
+      isGeorgian ? 'დაკავშირდა' : 'Connected';
+  static String get teslaOneCarNote => isGeorgian
+      ? 'ერთ ანგარიშზე ერთი ავტომობილი შეიძლება იყოს დაკავშირებული.'
+      : 'One account can be connected to one car at a time.';
+  static String get teslaReplaceTitle =>
+      isGeorgian ? 'უკვე დაკავშირებულია' : 'Already connected';
+  static String get teslaReplaceBody => isGeorgian
+      ? 'ეს ანგარიში სხვა ავტომობილზეა დაკავშირებული. გავთიშოთ ის და დავაკავშიროთ ახალი?'
+      : 'This account is connected to another car. Disconnect it and connect this one?'
+      ;
+  static String get teslaReplaceConfirm =>
+      isGeorgian ? 'გათიშვა და დაკავშირება' : 'Disconnect and connect';
+  static String get teslaBadCode => isGeorgian
+      ? 'კოდი არასწორია ან ვადა გაუვიდა'
+      : 'That code is wrong or has expired';
+  static String get teslaTooMany => isGeorgian
+      ? 'ბევრი მცდელობა იყო. სცადე რამდენიმე წუთში'
+      : 'Too many attempts. Try again in a few minutes';
+  static String get teslaFailed => isGeorgian
+      ? 'ვერ მოხერხდა. შეამოწმე ინტერნეტი'
+      : 'Could not connect. Check your connection';
+  // ── Sending a route to the car ─────────────────────────────────────────────
+  // Two ways in: a trip built in the route planner, and a link shared out of
+  // the Google Maps app. Both end up in the same place — the car offers the
+  // route and the driver decides. See lib/services/tesla_route_service.dart.
+  static String get teslaSendToCar =>
+      isGeorgian ? 'მანქანაში გაგზავნა' : 'Send to the car';
+  static String get teslaSentOk => isGeorgian
+      ? 'მარშრუტი გაიგზავნა. ტესლას ეკრანზე დაგხვდება.'
+      : 'Route sent. It will be waiting on the car screen.';
+  static String get teslaSentNoCar => isGeorgian
+      ? 'მარშრუტი შენახულია, თუმცა ავტომობილი ჯერ დაკავშირებული არაა. დააკავშირე პროფილიდან.'
+      : 'Route saved, but no car is connected yet. Connect one from your profile.';
+  static String get teslaSendFailed => isGeorgian
+      ? 'ვერ გაიგზავნა. შეამოწმე ინტერნეტი და სცადე ხელახლა.'
+      : 'Could not send. Check your connection and try again.';
+  static String get teslaSendSignedOut => isGeorgian
+      ? 'მარშრუტის გასაგზავნად ჯერ ანგარიშში შედი.'
+      : 'Sign in first to send a route to the car.';
+  static String get teslaSendFallbackName =>
+      isGeorgian ? 'მარშრუტი' : 'Route';
+
+  // Importing a route shared out of Google Maps.
+  static String get teslaImportTitle =>
+      isGeorgian ? 'მარშრუტი Google Maps-იდან' : 'Route from Google Maps';
+  static String get teslaImportLead => isGeorgian
+      ? 'Google Maps-ში დაგეგმე მარშრუტი, დააჭირე გაზიარებას და ბმული აქ ჩასვი. გაჩერებები და ფასიანი გზების პარამეტრი გადმოყვება.'
+      : 'Plan the route in Google Maps, tap share, and paste the link here. The stops and the avoid-tolls setting come with it.';
+  static String get teslaImportPaste =>
+      isGeorgian ? 'ბმულის ჩასმა' : 'Paste link';
+  static String get teslaImportHint =>
+      isGeorgian ? 'https://maps.app.goo.gl/…' : 'https://maps.app.goo.gl/…';
+  static String get teslaImportRead =>
+      isGeorgian ? 'წაკითხვა' : 'Read the link';
+  static String get teslaImportBadLink => isGeorgian
+      ? 'ეს Google Maps-ის მარშრუტის ბმული არაა.'
+      : 'That is not a Google Maps route link.';
+  static String get teslaImportNotDriving => isGeorgian
+      ? 'ეს მარშრუტი მანქანისთვის არაა.'
+      : 'That route is not for driving.';
+  static String get teslaImportUnreadable => isGeorgian
+      ? 'ბმული ვერ წავიკითხეთ. სცადე ხელახლა გაზიარება.'
+      : 'Could not read that link. Try sharing it again.';
+  static String get teslaImportTooMany => isGeorgian
+      ? 'ბევრი ცდაა. სცადე ცოტა ხანში.'
+      : 'Too many attempts. Try again shortly.';
+  static String get teslaImportNoTolls =>
+      isGeorgian ? 'ფასიანი გზების გარეშე' : 'No toll roads';
+  /// "2 stops" / "1 stop". Georgian needs no plural, English does, and the
+  /// count is worth getting right on a card whose whole job is to say what the
+  /// route contains.
+  static String teslaImportStops(int n) =>
+      isGeorgian ? '$n გაჩერება' : (n == 1 ? '1 stop' : '$n stops');
+  static String get teslaImportDirect =>
+      isGeorgian ? 'პირდაპირ' : 'Direct';
+  static String get teslaImportDropped => isGeorgian
+      ? 'ერთი გაჩერება ვერ წავიკითხეთ და გამოვტოვეთ.'
+      : 'One stop could not be read and was skipped.';
+
+  static String get teslaDone =>
+      isGeorgian ? 'მზადაა, ავტომობილი შემოვიდა' : 'Done, the car is signed in';
 }
