@@ -47,3 +47,12 @@ export const FIREBASE_CONFIG = {
   appId: '1:518875377655:web:460e04cac1603f2545c8f2',
   measurementId: 'G-3DK8B61WL8',
 };
+
+// Pairing with the phone app (6-digit code) as the primary way to sign in.
+// Keep this false until an app version carrying the "Tesla" screen in Profile
+// is actually in people's hands — a code nobody can approve is worse than the
+// old form. Flip to true and redeploy the moment that release is out.
+// Live since 2026-08-28. The app release carrying Profile → TESLA is not out
+// yet, which is fine while the product has no wide audience: anyone without it
+// still signs in through "სხვა გზით შესვლა" under the code.
+export const PAIRING_ENABLED = true;

@@ -9,6 +9,7 @@ import {
   COUNTRIES,
   boundsVisible,
   countryCentre,
+  flagSvg,
   isSelected,
   selectedCountries,
   stationCountry,
@@ -24,15 +25,27 @@ import {
   setSearchPin,
   clearSearchPin,
   setTraffic,
+  zoomBy,
 } from './map.js';
+import { closeTopbarMenus } from './menus.js';
 import { initSearch } from './search.js';
+import { addFavorite, favoritesState, initFavorites, relabelFavorites } from './favorites.js';
+import { initHistory, historyState, relabelHistory } from './history.js';
+import { initNameDialog } from './name-dialog.js';
+import { initRoutes, relabelRoutes, routesState } from './routes.js';
+import { initTheme } from './theme.js';
+import { initPairing } from './pair.js';
+import { PAIRING_ENABLED } from './config.js';
+import { initCarPicker, relabelCar } from './car.js';
 import { initDrive, startDrive } from './drive.js';
 import {
   applyFilters,
   buildFilterDrawer,
+  hideMapCard,
   hideStation,
   setCount,
   setStationRefreshedHandler,
+  showMapCard,
   showStation,
   showToast,
   toggleFilterDrawer,
@@ -121,15 +134,35 @@ function renderCountryMenu() {
     btn.type = 'button';
     btn.innerHTML =
       `<span class="country-item__box">${on ? '☑' : '☐'}</span>` +
-      `<span class="country-item__flag">${c.flag}</span>` +
+      `<span class="country-item__flag">${flagSvg(c.code)}</span>` +
       `<span class="country-item__name">${t(c.key)}</span>` +
       `<span class="country-item__count">${counts.get(c.code) || ''}</span>`;
     btn.addEventListener('click', () => selectCountry(c.code));
     menu.appendChild(btn);
   }
 
-  document.getElementById('country-label').textContent =
-    `${COUNTRIES.filter((c) => isSelected(c.code)).map((c) => c.flag).join(' ')} ${t('countries')}`;
+  paintCountryButton();
+}
+
+/**
+ * The button is the flags and nothing else. The word "Countries" next to them
+ * said what the flags already say and cost width in a topbar that is tight at
+ * 1000px; one flag is the normal state, a second appears only when a driver
+ * actually switches a neighbour on.
+ *
+ * Painted from wireChrome as well as from the menu, because the menu is only
+ * built once the app boots and the topbar is on screen throughout the login
+ * and paywall screens — where an unpainted button would just be a blank box.
+ */
+function paintCountryButton() {
+  const btn = document.getElementById('btn-countries');
+  const label = document.getElementById('country-label');
+  if (!btn || !label) return;
+  label.innerHTML = COUNTRIES.filter((c) => isSelected(c.code))
+    .map((c) => flagSvg(c.code))
+    .join('');
+  btn.setAttribute('aria-label', t('countries'));
+  btn.title = t('countries');
 }
 
 // Built and wired before anything else in bootApp. It used to be created
@@ -145,6 +178,7 @@ export function initCountryPicker() {
 
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
+    closeTopbarMenus('country-menu');
     const hidden = menu.classList.toggle('is-hidden');
     btn.setAttribute('aria-expanded', String(!hidden));
   });
@@ -174,6 +208,7 @@ function selectCountry(code) {
 
 // ── Search result handlers ───────────────────────────────────────────────────
 let destPos = null;
+let destName = '';
 
 function openStation(s) {
   panTo({ lat: s.lat, lng: s.lng }, 15);
@@ -182,11 +217,11 @@ function openStation(s) {
 
 function openDestination(pos, name) {
   destPos = pos;
+  destName = name;
+  document.querySelector('#dest-card .dest-card__name').textContent = name;
+  showMapCard('dest-card'); // closes the resume / from-phone cards in this slot
   setSearchPin(pos);
   panTo(pos, 14);
-  const card = document.getElementById('dest-card');
-  card.querySelector('.dest-card__name').textContent = name;
-  card.classList.remove('is-hidden');
 }
 
 function wireMapControls() {
@@ -195,6 +230,9 @@ function wireMapControls() {
   getMap().addListener('idle', () => {
     if (isSelected('TR') && getTurkeyStations().length) repaint();
   });
+
+  document.getElementById('btn-zoom-in').addEventListener('click', () => zoomBy(1));
+  document.getElementById('btn-zoom-out').addEventListener('click', () => zoomBy(-1));
 
   document.getElementById('btn-locate').addEventListener('click', async () => {
     try {
@@ -217,14 +255,14 @@ function wireMapControls() {
   });
 
   document.getElementById('dest-close').addEventListener('click', () => {
-    document.getElementById('dest-card').classList.add('is-hidden');
+    hideMapCard('dest-card');
     clearSearchPin();
   });
   document.getElementById('dest-nav').addEventListener('click', () => {
     if (!destPos) return;
-    document.getElementById('dest-card').classList.add('is-hidden');
+    hideMapCard('dest-card');
     clearSearchPin();
-    startDrive({ destination: destPos });
+    startDrive({ destination: destPos, route: { id: null, name: destName } });
   });
   document.getElementById('dest-route').addEventListener('click', () => {
     if (destPos) {
@@ -232,7 +270,7 @@ function wireMapControls() {
       toggleFilterDrawer(false);
       toggleTripDrawer(true);
     }
-    document.getElementById('dest-card').classList.add('is-hidden');
+    hideMapCard('dest-card');
     clearSearchPin();
   });
 }
@@ -245,10 +283,15 @@ async function bootApp() {
 
   try {
     await loadMapsApi();
-    initMap(document.getElementById('map'));
+    initMap(document.getElementById('map')); // born in the page's current theme
     initTrip();
     initDrive();
-    initSearch({ getStations: () => allStations, onStation: openStation, onPlace: openDestination });
+    initSearch({
+      getStations: () => allStations,
+      onStation: openStation,
+      onPlace: openDestination,
+      onFavorite: addFavorite,
+    });
     wireMapControls();
   } catch (e) {
     document.getElementById('map').innerHTML =
@@ -293,6 +336,23 @@ async function bootApp() {
 }
 
 function wireChrome() {
+  // Day/night switch and the car picker. Wired here rather than in bootApp so
+  // they also work on the login and paywall screens, before the app boots.
+  initTheme();
+  initCarPicker();
+  // Saved places. Wired here too, so the star menu answers ("sign in first")
+  // rather than sitting dead while the login screen is up.
+  initNameDialog();
+  initFavorites();
+  // Saved routes and the offer to finish an interrupted one. Wired next to the
+  // places for the same reason: the star menu shows both, and the resume card
+  // has to be able to appear the moment the account's state arrives.
+  initRoutes();
+  // Past trips. Records from events, so it has to be listening before anything
+  // can be started.
+  initHistory();
+  paintCountryButton();
+
   // The logo doubles as "start over": reload, which also drops the map back to
   // MAP_CENTER / MAP_ZOOM. Cache-busted so a driver who taps it after an update
   // is guaranteed the new build rather than whatever the car cached.
@@ -304,7 +364,11 @@ function wireChrome() {
     btn.addEventListener('click', () => {
       setLang(btn.dataset.langBtn);
       if (drawerBuilt) buildFilterDrawer(allStations, repaint); // re-label chips
-      renderCountryMenu(); // country names + the button label are translated too
+      renderCountryMenu(); // country names + the button's title are translated too
+      relabelCar();
+      relabelFavorites();
+      relabelRoutes();
+      relabelHistory();
       relabelTrip();
       repaint();
     });
@@ -324,6 +388,18 @@ function wireChrome() {
 }
 
 function wireGateUi() {
+  // Pairing is the front door once the app can approve codes; until then the
+  // panel stays hidden and the classic form is all there is (config.js).
+  if (PAIRING_ENABLED) {
+    initPairing();
+    document.getElementById('pair-box').classList.remove('is-hidden');
+    document.getElementById('show-classic').classList.remove('is-hidden');
+    document.getElementById('classic-login').classList.add('is-hidden');
+    document.getElementById('show-classic').addEventListener('click', () => {
+      document.getElementById('classic-login').classList.toggle('is-hidden');
+    });
+  }
+
   const errEl = document.getElementById('login-error');
   const showErr = (key) => {
     errEl.textContent = t(key);
@@ -377,4 +453,9 @@ window.__gc = {
   setTripPoints,
   map: getMap,
   openTrip: () => { toggleFilterDrawer(false); toggleTripDrawer(true); },
+  favorites: favoritesState,
+  repaintFavorites: relabelFavorites,
+  routes: routesState,
+  repaintRoutes: relabelRoutes,
+  history: historyState,
 };

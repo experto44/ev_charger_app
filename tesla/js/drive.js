@@ -9,7 +9,7 @@
 // maneuver + distance, follow the camera, speak guidance, and reroute if they
 // leave the line. No second map vendor, no new tab.
 
-import { getMap, setUserLocation, setMarkersDimmed } from './map.js';
+import { getMap, setUserLocation, setMarkersDimmed, setUserStyle } from './map.js';
 import { showToast, hideToast } from './ui.js';
 import { t, getLang } from './i18n.js';
 import { track } from './analytics.js';
@@ -79,6 +79,20 @@ function fmtDist(m) {
 
 function fmtClock(date) {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+/**
+ * A duration a driver can read at a glance. Tbilisi to Istanbul came out as
+ * "1211 წთ", which is a number nobody converts in their head at the wheel.
+ */
+function fmtDuration(seconds) {
+  const ka = getLang() === 'ka';
+  const total = Math.max(0, Math.round(seconds / 60));
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (h === 0) return `${m} ${ka ? 'წთ' : 'min'}`;
+  if (m === 0) return `${h} ${ka ? 'სთ' : 'h'}`; // "1 h", not "1 h 0 min"
+  return `${h} ${ka ? 'სთ' : 'h'} ${m} ${ka ? 'წთ' : 'min'}`;
 }
 
 // ── Voice (best-effort; stays silent if no matching TTS voice) ───────────────
@@ -163,8 +177,61 @@ function project(pos) {
   return { offM, alongM };
 }
 
+// ── Progress reporting ───────────────────────────────────────────────────────
+/**
+ * Mark every stop we have now passed. Two tests, because either alone misses a
+ * real case: a charger 200 m off the road is never driven "close" to, and a
+ * stop we sail past at speed can be behind us before any fix lands near it.
+ */
+function markPassedWaypoints(pos, alongM) {
+  for (let i = 0; i < state.waypoints.length; i++) {
+    if (state.done.includes(i)) continue;
+    const behind = state.waypointAlong[i] < alongM - WAYPOINT_BEHIND_M;
+    if (behind || haversineM(pos, state.waypoints[i]) < WAYPOINT_DONE_M) state.done.push(i);
+  }
+}
+
+/**
+ * Where each remaining stop sits along the current route, worked out once when
+ * the route is built. project() walks the whole polyline — several thousand
+ * points on a Tbilisi → Batumi run — and doing that per stop per GPS fix is
+ * work for nothing when the answer cannot change until the route does.
+ */
+function indexWaypoints() {
+  state.waypointAlong = state.waypoints.map((w, i) =>
+    state.done.includes(i) ? -1 : project(w).alongM,
+  );
+}
+
+/**
+ * Publish where we are on the route. routes.js listens and writes it to the
+ * account; nothing here knows or cares whether anyone is listening, which is
+ * what keeps drive mode usable when signed out.
+ */
+function report(pos, remainM, force = false) {
+  const now = Date.now();
+  const movedEnough =
+    state.lastReportPos && haversineM(state.lastReportPos, pos) >= REPORT_M;
+  if (!force && now - state.lastReport < REPORT_MS && !movedEnough) return;
+  state.lastReport = now;
+  state.lastReportPos = pos;
+  document.dispatchEvent(
+    new CustomEvent('gc:drive-progress', {
+      detail: {
+        route: state.routeRef,
+        destination: state.destination,
+        waypoints: state.waypoints,
+        done: [...state.done],
+        pos,
+        remainM,
+      },
+    }),
+  );
+}
+
 // ── State ────────────────────────────────────────────────────────────────────
 const VOICE_KEY = 'gc_drive_voice';
+const DRIVE_ZOOM = 17; // street level — also what the recenter button restores
 const state = {
   active: false,
   route: null,
@@ -175,6 +242,12 @@ const state = {
   line: null,
   destMarker: null,
   firstFix: true,
+  // The camera follows the car until the driver drags the map — looking ahead
+  // at the route while every GPS fix pulls the map back is unusable. `lastPos`
+  // is what the recenter button flies back to.
+  following: true,
+  lastPos: null,
+  dragListener: null,
   prevPos: null,
   heading: null,
   announced: new Set(),  // "<stepIdx>:far" / ":near" voice guards
@@ -182,7 +255,28 @@ const state = {
   lastReroute: 0,
   arrived: false,
   voiceOn: localStorage.getItem(VOICE_KEY) !== '0',
+  // Which saved route this is, and how far through it we are. Reported out as
+  // `gc:drive-progress` events; routes.js is what writes them to the account,
+  // so drive mode itself knows nothing about Firestore.
+  routeRef: null,        // { id, name } | null for an ad-hoc drive
+  done: [],              // indices into state.waypoints already passed
+  waypointAlong: [],     // each stop's distance along the current route
+  lastReport: 0,
+  lastReportPos: null,
 };
+
+// A stop counts as passed when the car comes within this of it, or when it
+// falls behind us along the route. The first catches a charger set back from
+// the road; the second catches a stop we drove straight past.
+const WAYPOINT_DONE_M = 150;
+const WAYPOINT_BEHIND_M = 200;
+
+// How often progress is written out. A four-hour Tbilisi → Batumi run costs
+// about forty writes at these numbers, which is nothing, and either trigger on
+// its own would be wrong: time alone keeps writing while the car is parked,
+// distance alone writes nothing while it crawls through traffic.
+const REPORT_MS = 60000;
+const REPORT_M = 2000;
 
 const $ = (id) => document.getElementById(id);
 
@@ -190,9 +284,13 @@ const $ = (id) => document.getElementById(id);
 /**
  * Enter turn-by-turn drive mode. Origin is always the driver's live GPS — the
  * planned start/stops only supply the destination and intermediate waypoints.
- * @param {{destination:{lat,lng}, waypoints?:{lat,lng}[]}} opts
+ * That is also what makes resuming work: a trip picked up again in Gori is
+ * simply the same destination and the stops that are still ahead.
+ *
+ * @param {{destination:{lat,lng}, waypoints?:{lat,lng}[],
+ *          route?:{id:string,name:string}|null}} opts
  */
-export async function startDrive({ destination, waypoints = [] }) {
+export async function startDrive({ destination, waypoints = [], route: routeRef = null }) {
   if (state.active) endDrive();
   if (!navigator.geolocation) {
     showToast(t('driveNoLocation'));
@@ -200,8 +298,12 @@ export async function startDrive({ destination, waypoints = [] }) {
   }
 
   // Tell the trip planner to take its own route drawing off the map — drive
-  // mode draws its own line, and two overlapping routes read as a glitch.
-  document.dispatchEvent(new CustomEvent('gc:drive-start'));
+  // mode draws its own line, and two overlapping routes read as a glitch. The
+  // detail is also what history.js records: every drive is a trip the driver
+  // may want to repeat, whoever started it.
+  document.dispatchEvent(new CustomEvent('gc:drive-start', {
+    detail: { destination, waypoints, route: routeRef },
+  }));
 
   showToast(t('driveLocating'), 60000);
   let origin;
@@ -232,16 +334,32 @@ export async function startDrive({ destination, waypoints = [] }) {
   state.destination = destination;
   state.waypoints = waypoints.slice();
   state.firstFix = true;
+  state.lastPos = origin;
   state.prevPos = null;
   state.heading = null;
   state.announced = new Set();
   state.offCount = 0;
   state.lastReroute = Date.now();
   state.arrived = false;
+  state.routeRef = routeRef;
+  state.done = [];
+  indexWaypoints();
+  state.lastReport = 0;
+  state.lastReportPos = null;
 
   enterUi();
+  setUserStyle('car'); // the driver is a Tesla now, not a blue dot
+  setUserLocation(origin);
   drawRoute();
   track('drive_start', { stops: waypoints.length });
+
+  // `dragstart` fires for the driver's finger only — our own panTo/setZoom do
+  // not raise it — so it is exactly the signal that they took the map over.
+  state.dragListener = getMap().addListener('dragstart', () => setFollowing(false));
+
+  // First report goes out straight away: a trip that is interrupted two minutes
+  // in should still be resumable.
+  report(origin, route.totalM);
 
   // Follow the live position.
   state.watchId = navigator.geolocation.watchPosition(
@@ -260,11 +378,23 @@ export function isDriving() {
 }
 
 export function endDrive() {
+  // A last position before everything is torn down. Ending on purpose is not
+  // the same as arriving: the driver may be stopping for the night halfway,
+  // and that is exactly the trip they will want to pick up again.
+  if (state.active && !state.arrived && state.lastPos && state.route) {
+    report(state.lastPos, Math.max(0, state.route.totalM - project(state.lastPos).alongM), true);
+  }
   if (state.watchId != null) {
     navigator.geolocation.clearWatch(state.watchId);
     state.watchId = null;
   }
+  state.dragListener?.remove();
+  state.dragListener = null;
+  state.following = true;
+  state.lastPos = null;
+  $('drive-recenter').classList.add('is-hidden');
   if ('speechSynthesis' in window) speechSynthesis.cancel();
+  setUserStyle('dot');
   state.line?.setMap(null);
   state.casing?.setMap(null);
   state.destMarker?.setMap(null);
@@ -274,6 +404,8 @@ export function endDrive() {
   $('drive').classList.add('is-hidden');
   state.active = false;
   state.route = null;
+  state.routeRef = null;
+  document.dispatchEvent(new CustomEvent('gc:drive-end'));
 }
 
 // ── Map drawing ──────────────────────────────────────────────────────────────
@@ -315,9 +447,10 @@ function drawRoute() {
 // ── Per-fix update ───────────────────────────────────────────────────────────
 function onPosition(pos, geoHeading) {
   if (!state.active) return;
-  setUserLocation(pos);
+  state.lastPos = pos; // where the recenter button goes back to
 
-  // Heading: prefer the GPS value, else derive from movement.
+  // Heading: prefer the GPS value, else derive from movement. Worked out BEFORE
+  // the marker is moved, because the car silhouette is drawn pointing along it.
   let moving = false;
   if (state.prevPos) {
     const moved = haversineM(state.prevPos, pos);
@@ -332,6 +465,7 @@ function onPosition(pos, geoHeading) {
   if (geoHeading != null) state.heading = geoHeading;
   state.prevPos = pos;
 
+  setUserLocation(pos, state.heading);
   followCamera(pos, moving);
 
   const { offM, alongM } = project(pos);
@@ -344,13 +478,16 @@ function onPosition(pos, geoHeading) {
     return;
   }
 
+  markPassedWaypoints(pos, alongM);
+  report(pos, Math.max(0, state.route.totalM - alongM));
   updateBanner(alongM);
 }
 
 function followCamera(pos, moving) {
+  if (!state.following) return; // driver is looking somewhere else on the map
   const map = getMap();
   if (state.firstFix) {
-    map.setZoom(17);
+    map.setZoom(DRIVE_ZOOM);
     state.firstFix = false;
   }
   // Bias the camera ahead of the car so the road reads (nav convention).
@@ -363,6 +500,19 @@ function followCamera(pos, moving) {
     );
   }
   map.panTo(center);
+}
+
+/**
+ * Turn camera-follow on or off and show/hide the recenter button with it.
+ * Turning it back on flies to the last known fix at the driving zoom, however
+ * far the driver had panned or zoomed away.
+ */
+function setFollowing(on) {
+  state.following = on;
+  $('drive-recenter').classList.toggle('is-hidden', on);
+  if (!on || !state.lastPos) return;
+  getMap().setZoom(DRIVE_ZOOM);
+  followCamera(state.lastPos, state.heading != null);
 }
 
 function updateBanner(alongM) {
@@ -404,11 +554,13 @@ function updateBanner(alongM) {
   const remainS = totalM > 0 ? totalDurS * (remainM / totalM) : 0;
   const eta = new Date(Date.now() + remainS * 1000);
   $('drive-remain').textContent = fmtDist(remainM);
-  $('drive-eta').textContent = `${Math.round(remainS / 60)} ${getLang() === 'ka' ? 'წთ' : 'min'} · ${fmtClock(eta)}`;
+  $('drive-eta').textContent =
+    `${fmtDuration(remainS)} · ${t('driveArrivalAt')} ${fmtClock(eta)}`;
 }
 
 function onArrived() {
   state.arrived = true;
+  document.dispatchEvent(new CustomEvent('gc:drive-arrived', { detail: { route: state.routeRef } }));
   $('drive-icon').innerHTML = ARROW.flag;
   $('drive-dist').textContent = '';
   $('drive-road').textContent = t('driveArrived');
@@ -425,15 +577,23 @@ async function reroute(pos, currentAlong) {
   state.offCount = 0;
   $('drive-reroute').classList.remove('is-hidden');
 
-  // Keep only the planned stops that are still ahead of us on the old route.
-  const ahead = state.waypoints.filter((w) => {
-    const { alongM } = project(w);
-    return alongM > currentAlong + 200;
+  // Keep only the planned stops that are still ahead of us on the old route,
+  // and remember the ones we are dropping: `state.done` is what a resumed trip
+  // is rebuilt from, so a stop left behind here must be recorded as passed
+  // rather than silently vanishing from this route only.
+  const ahead = state.waypoints.filter((w, i) => {
+    if (state.done.includes(i)) return false;
+    if (project(w).alongM <= currentAlong + WAYPOINT_BEHIND_M) {
+      state.done.push(i);
+      return false;
+    }
+    return true;
   });
 
   try {
     const route = await computeRoute(pos, state.destination, ahead);
     state.route = route;
+    indexWaypoints();
     state.announced = new Set();
     state.arrived = false;
     $('drive-banner').classList.remove('is-arrived');
@@ -453,6 +613,8 @@ function enterUi() {
   document.body.classList.add('is-driving');
   const el = $('drive');
   el.classList.remove('is-hidden');
+  state.following = true;
+  $('drive-recenter').classList.add('is-hidden');
   $('drive-banner').classList.remove('is-arrived');
   $('drive-icon').innerHTML = ARROW.up;
   $('drive-dist').textContent = '';
@@ -475,6 +637,10 @@ export function initDrive() {
   $('drive-exit').addEventListener('click', () => {
     track('drive_exit', {});
     endDrive();
+  });
+  $('drive-recenter').addEventListener('click', () => {
+    track('drive_recenter', {});
+    setFollowing(true);
   });
   $('drive-voice').addEventListener('click', () => {
     state.voiceOn = !state.voiceOn;

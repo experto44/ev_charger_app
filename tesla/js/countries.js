@@ -11,6 +11,45 @@ import { TURKEY_BOUNDS } from './config.js';
 const STORAGE_KEY = 'gc_countries';
 
 /**
+ * Flags as inline SVG rather than emoji. The Tesla browser is Chromium on
+ * Linux, where the regional-indicator pairs behind 🇬🇪 / 🇹🇷 have no glyph and
+ * fall back to drawing the letters "GE" and "TR" instead of a flag. Three
+ * countries is three small drawings, and they render the same everywhere.
+ */
+const FLAG_SVG = {
+  GE:
+    '<svg class="flag" viewBox="0 0 24 16" aria-hidden="true">' +
+    '<rect width="24" height="16" rx="2" fill="#fff"/>' +
+    '<g fill="#d0021b">' +
+    '<rect x="9.6" y="0" width="4.8" height="16"/>' +
+    '<rect x="0" y="5.6" width="24" height="4.8"/>' +
+    '<rect x="4.2" y="2.2" width="1.2" height="3.6"/><rect x="3" y="3.4" width="3.6" height="1.2"/>' +
+    '<rect x="18.6" y="2.2" width="1.2" height="3.6"/><rect x="17.4" y="3.4" width="3.6" height="1.2"/>' +
+    '<rect x="4.2" y="10.2" width="1.2" height="3.6"/><rect x="3" y="11.4" width="3.6" height="1.2"/>' +
+    '<rect x="18.6" y="10.2" width="1.2" height="3.6"/><rect x="17.4" y="11.4" width="3.6" height="1.2"/>' +
+    '</g></svg>',
+  TR:
+    '<svg class="flag" viewBox="0 0 24 16" aria-hidden="true">' +
+    '<rect width="24" height="16" rx="2" fill="#e30a17"/>' +
+    '<circle cx="9.6" cy="8" r="4.2" fill="#fff"/>' +
+    '<circle cx="11.1" cy="8" r="3.4" fill="#e30a17"/>' +
+    '<polygon fill="#fff" points="15.3,5.6 15.84,7.26 17.58,7.26 16.17,8.28 16.71,9.94 ' +
+    '15.3,8.92 13.89,9.94 14.43,8.28 13.02,7.26 14.76,7.26"/>' +
+    '</svg>',
+  AM:
+    '<svg class="flag" viewBox="0 0 24 16" aria-hidden="true">' +
+    '<rect width="24" height="16" rx="2" fill="#f2a800"/>' +
+    '<path d="M2 0h20a2 2 0 012 2v3.33H0V2a2 2 0 012-2z" fill="#d90012"/>' +
+    '<rect y="5.33" width="24" height="5.34" fill="#0033a0"/>' +
+    '</svg>',
+};
+
+/** The country's flag as inline SVG markup. Empty string for an unknown code. */
+export function flagSvg(code) {
+  return FLAG_SVG[code] ?? '';
+}
+
+/**
  * Boxes mirror the CountryDef entries in lib/app_constants.dart.
  *
  * Listed in the order the driver sees them, which matches the app's Settings:
@@ -21,21 +60,18 @@ export const COUNTRIES = [
   {
     code: 'GE',
     key: 'countryGeorgia',
-    flag: '🇬🇪',
     bounds: { south: 41.0, north: 43.6, west: 40.0, east: 46.7 },
     centre: { lat: 42.0, lng: 43.5 },
   },
   {
     code: 'TR',
     key: 'countryTurkey',
-    flag: '🇹🇷',
     bounds: TURKEY_BOUNDS,
     centre: { lat: 39.5, lng: 33.5 },
   },
   {
     code: 'AM',
     key: 'countryArmenia',
-    flag: '🇦🇲',
     bounds: { south: 38.8, north: 41.3, west: 43.4, east: 46.6 },
     centre: { lat: 40.2, lng: 44.9 },
   },

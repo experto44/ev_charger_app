@@ -1,6 +1,7 @@
-// Google Map wrapper: dark style, status-coloured markers, clustering.
+// Google Map wrapper: day/night style, status-coloured markers, clustering.
 
 import { MAPS_API_KEY, MAP_CENTER, MAP_ZOOM } from './config.js';
+import { carIcon, onCarChange } from './car.js';
 
 // Dark style tuned to the app palette (surface #151c22 family).
 const NIGHT_STYLE = [
@@ -15,6 +16,26 @@ const NIGHT_STYLE = [
   { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#11181e' }] },
   { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#263038' }] },
 ];
+
+// Daylight style. Same restraint as the night one — POIs and transit off, so
+// the charger pins are the only thing competing for attention — but light
+// enough to survive direct sun on the car's screen.
+const DAY_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#eef2f5' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#46545f' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#dfe6eb' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#ffe6b8' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#efc98c' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#bcd8ea' }] },
+  { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#f4f6f8' }] },
+  { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#d3dbe1' }] },
+];
+
+const stylesFor = (theme) => (theme === 'light' ? DAY_STYLE : NIGHT_STYLE);
 
 const STATUS_COLORS = {
   free: '#2bd594',
@@ -72,9 +93,14 @@ export function initMap(container) {
   map = new google.maps.Map(container, {
     center: MAP_CENTER,
     zoom: MAP_ZOOM,
-    styles: NIGHT_STYLE,
+    // The theme is already on <html> before the first paint, so the map is born
+    // in the right one instead of flashing dark and then repainting.
+    styles: stylesFor(document.documentElement.dataset.theme),
     disableDefaultUI: true,
-    zoomControl: true,
+    // No Maps API zoom control: it drew itself in the bottom-right corner, under
+    // our own buttons, and at a size you cannot hit in a moving car. The column
+    // in index.html carries a full-size pair instead.
+    zoomControl: false,
     gestureHandling: 'greedy', // one-finger everything — it's a car screen
     clickableIcons: false,
   });
@@ -83,6 +109,11 @@ export function initMap(container) {
 
 export function getMap() {
   return map;
+}
+
+/** Repaint the map for 'light' / 'dark'. Silent before the map exists. */
+export function setMapTheme(theme) {
+  map?.setOptions({ styles: stylesFor(theme) });
 }
 
 /** Station-level colour: any free port → free; else any busy → busy; else out. */
@@ -241,26 +272,60 @@ export function setMarkersDimmed(dim) {
   for (const m of markers.values()) m.setOpacity(op);
 }
 
+/** Step the zoom by ±1 (our own zoom buttons). Clamped by the API itself. */
+export function zoomBy(delta) {
+  if (!map) return;
+  map.setZoom((map.getZoom() ?? MAP_ZOOM) + delta);
+}
+
 export function panTo(pos, zoom) {
   map.panTo(pos);
   if (zoom != null) map.setZoom(zoom);
 }
 
-// ── My-location blue dot ─────────────────────────────────────────────────────
-export function setUserLocation(pos) {
+// ── Where the driver is ──────────────────────────────────────────────────────
+// A blue dot while browsing the map, the car silhouette while navigating —
+// pointing wherever the car is pointing (see js/car.js).
+let userStyle = 'dot'; // 'dot' | 'car'
+let userHeading = 0;
+
+const DOT_ICON = () => ({
+  path: google.maps.SymbolPath.CIRCLE,
+  scale: 8,
+  fillColor: '#2196F3',
+  fillOpacity: 1,
+  strokeColor: '#ffffff',
+  strokeWeight: 3,
+});
+
+function applyUserIcon() {
+  if (!userMarker) return;
+  userMarker.setIcon(userStyle === 'car' ? carIcon(userHeading) : DOT_ICON());
+}
+
+// Changing car in the topbar has to show on a marker that is already drawn.
+onCarChange(applyUserIcon);
+
+/** Switch the marker between the browsing dot and the driving car. */
+export function setUserStyle(style) {
+  if (style === userStyle) return;
+  userStyle = style;
+  applyUserIcon();
+}
+
+/**
+ * Move the driver's marker. `heading` (degrees clockwise from north) only
+ * matters for the car silhouette; passing nothing keeps the last one, so a
+ * stationary fix does not spin the car back to north.
+ */
+export function setUserLocation(pos, heading) {
   if (!userMarker) {
-    userMarker = new google.maps.Marker({
-      map,
-      zIndex: 3000,
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 8,
-        fillColor: '#2196F3',
-        fillOpacity: 1,
-        strokeColor: '#ffffff',
-        strokeWeight: 3,
-      },
-    });
+    userMarker = new google.maps.Marker({ map, zIndex: 3000 });
+    applyUserIcon();
+  }
+  if (heading != null && Number.isFinite(heading)) {
+    userHeading = heading;
+    if (userStyle === 'car') applyUserIcon();
   }
   userMarker.setPosition(pos);
 }

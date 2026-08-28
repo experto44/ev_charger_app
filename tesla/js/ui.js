@@ -97,7 +97,10 @@ export function showStation(s) {
   navBtn.onclick = () => {
     track('navigate_station', { provider: s.provider });
     hideStation();
-    startDrive({ destination: { lat: s.lat, lng: s.lng } });
+    startDrive({
+      destination: { lat: s.lat, lng: s.lng },
+      route: { id: null, name: s.name },
+    });
   };
 
   // Live status, plug rows and the freshness line are re-rendered on their own
@@ -339,6 +342,24 @@ export function toggleFilterDrawer(open) {
 // ── Small helpers ────────────────────────────────────────────────────────────
 export function setCount(n) {
   document.getElementById('station-count').textContent = `${n} ${t('stationsShown')}`;
+}
+
+// ── Bottom-of-map cards ──────────────────────────────────────────────────────
+// Three different cards want the same slot: a searched destination, an
+// unfinished trip, and a route that just arrived from the phone. They are the
+// same size in the same place, so showing one has to put the others away.
+const MAP_CARDS = ['dest-card', 'resume-card', 'inbox-card'];
+
+/** Show one bottom card and close whichever of the others was up. */
+export function showMapCard(id) {
+  for (const c of MAP_CARDS) {
+    document.getElementById(c)?.classList.toggle('is-hidden', c !== id);
+  }
+}
+
+/** Close one bottom card, leaving the others alone. */
+export function hideMapCard(id) {
+  document.getElementById(id)?.classList.add('is-hidden');
 }
 
 export function showToast(msg, ms = 5000) {

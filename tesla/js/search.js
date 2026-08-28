@@ -62,8 +62,9 @@ function matchStations(query, stations) {
  * @param {() => Station[]} getStations
  * @param {(s: Station) => void} onStation  open a station
  * @param {(pos, name) => void} onPlace     a resolved destination was picked
+ * @param {(place:{lat,lng,name}) => void} onFavorite  the star was tapped
  */
-export function initSearch({ getStations, onStation, onPlace }) {
+export function initSearch({ getStations, onStation, onPlace, onFavorite }) {
   const input = document.getElementById('search-input');
   const dropdown = document.getElementById('search-results');
   const clearBtn = document.getElementById('search-clear');
@@ -86,37 +87,81 @@ export function initSearch({ getStations, onStation, onPlace }) {
       h.textContent = label;
       dropdown.appendChild(h);
     };
-    const addRow = (icon, main, sub, onClick) => {
-      const row = document.createElement('button');
+    // A row is a container, not a button: it holds the result itself plus the
+    // star that saves it. A <button> inside a <button> is invalid HTML and the
+    // inner one does not reliably receive taps.
+    const addRow = (icon, main, sub, onClick, onStar) => {
+      const row = document.createElement('div');
       row.className = 'search-row';
-      row.innerHTML =
+
+      const go = document.createElement('button');
+      go.className = 'search-row__go';
+      go.type = 'button';
+      go.innerHTML =
         `<span class="search-row__ico">${icon}</span>` +
         `<span class="search-row__txt"><span class="search-row__main">${main}</span>` +
         (sub ? `<span class="search-row__sub">${sub}</span>` : '') +
         `</span>`;
-      row.addEventListener('click', () => {
+      go.addEventListener('click', () => {
         close();
         input.value = main;
         clearBtn.hidden = false;
         onClick();
       });
+      row.appendChild(go);
+
+      if (onStar) {
+        const star = document.createElement('button');
+        star.className = 'search-row__star';
+        star.type = 'button';
+        star.textContent = '☆';
+        star.title = t('favAdd');
+        star.setAttribute('aria-label', t('favAdd'));
+        star.addEventListener('click', () => {
+          close();
+          onStar();
+        });
+        row.appendChild(star);
+      }
+
       dropdown.appendChild(row);
     };
 
     if (stations.length) {
       addHeader(t('searchStations'));
       for (const s of stations) {
-        addRow('⚡', s.name, `${s.provider}${s.city ? ' · ' + s.city : ''}`, () => onStation(s));
+        addRow(
+          '⚡',
+          s.name,
+          `${s.provider}${s.city ? ' · ' + s.city : ''}`,
+          () => onStation(s),
+          // A charger already carries its coordinates, so starring one costs
+          // no Places lookup at all.
+          onFavorite && (() => onFavorite({ lat: s.lat, lng: s.lng, name: s.name })),
+        );
       }
     }
     if (places.length) {
       addHeader(t('searchPlaces'));
       for (const p of places) {
         const sf = p.structured_formatting || {};
-        addRow('📍', sf.main_text || p.description, sf.secondary_text || '', async () => {
-          const pos = await resolvePlace(p.place_id);
-          if (pos) onPlace(pos, sf.main_text || p.description);
-        });
+        const label = sf.main_text || p.description;
+        addRow(
+          '📍',
+          label,
+          sf.secondary_text || '',
+          async () => {
+            const pos = await resolvePlace(p.place_id);
+            if (pos) onPlace(pos, label);
+          },
+          onFavorite &&
+            (async () => {
+              // A prediction is a name and an id, not a place: it has to be
+              // resolved before there is anything to save.
+              const pos = await resolvePlace(p.place_id);
+              if (pos) onFavorite({ lat: pos.lat, lng: pos.lng, name: label });
+            }),
+        );
       }
     }
     dropdown.classList.add('is-open');

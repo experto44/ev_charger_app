@@ -2,7 +2,11 @@
    Target: Tesla in-car browser, landscape ~1000–1400px wide, touch-first.
    Dark theme by default (night driving). Accent matches geocharge.ge. */
 
+/* Dark is the default (night driving). The light theme below repaints the same
+   surfaces for daylight; the attribute is set before first paint by the
+   bootstrap script in index.html, so there is no dark flash on a light car. */
 :root {
+  color-scheme: dark;
   --bg:        #0d1216;
   --surface:   #151c22;
   --surface-2: #1c252d;
@@ -14,8 +18,41 @@
   --busy:      #f5a623;
   --out:       #6b7a85;
   --danger:    #e5544b;
+  /* Green/orange used as TEXT rather than as a fill. On a dark surface the
+     brand colours themselves read fine, so these are the same colours here and
+     only darken in the light theme, where bright green on white does not. */
+  --accent-ink: #2bd594;
+  --busy-ink:   #f5a623;
+  /* Slate: the source publishes no live availability (Turkey's registry). */
+  --unknown:     #4F7C9E;
+  --unknown-ink: #8FB6D1;
+  --scrim:     rgba(13, 18, 22, 0.7);
+  --shadow-sm: 0 6px 20px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 26px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 34px rgba(0, 0, 0, 0.55);
   --radius:    14px;
   --touch:     48px; /* minimum touch target */
+}
+
+/* Daylight. Fills keep the brand green — near-black ink on #2bd594 is readable
+   on white too — so only the ink tokens, the surfaces and the shadows move. */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg:        #e8edf1;
+  --surface:   #ffffff;
+  --surface-2: #eef2f5;
+  --border:    #d2dbe1;
+  --text:      #0f171d;
+  --text-dim:  #5a6772;
+  --out:       #5a6772;
+  --danger:    #c3352c;
+  --accent-ink: #067a52;
+  --busy-ink:   #96590a;
+  --unknown-ink: #3a6d94;
+  --scrim:     rgba(20, 32, 41, 0.45);
+  --shadow-sm: 0 4px 14px rgba(16, 32, 45, 0.12);
+  --shadow-md: 0 8px 22px rgba(16, 32, 45, 0.16);
+  --shadow-lg: 0 14px 34px rgba(16, 32, 45, 0.2);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -31,7 +68,7 @@ html, body {
 
 body { display: flex; flex-direction: column; }
 
-.accent { color: var(--accent); }
+.accent { color: var(--accent-ink); }
 
 button {
   font: inherit;
@@ -95,6 +132,62 @@ button {
 
 .btn--ghost { background: transparent; color: var(--text-dim); }
 
+/* Icon-only button (the day/night switch). Square, so the topbar row keeps one
+   height, and it shows the theme it switches TO. */
+.btn--icon {
+  width: var(--touch);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+}
+/* Car picker: the button IS the car, drawn in the chosen model and colour, so
+   the driver sees what will appear on the map without opening anything. */
+.btn--car { padding: 0 4px; }
+.car-badge { display: block; width: 38px; height: 38px; }
+.car-badge svg { display: block; width: 100%; height: 100%; }
+.car-menu { min-width: 260px; padding: 10px; }
+.car-menu__label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 6px 4px 8px;
+}
+.car-menu__label + .car-menu__label, h3.car-menu__label ~ h3.car-menu__label { margin-top: 14px; }
+.car-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--touch);
+  padding: 0 10px;
+  border-radius: calc(var(--radius) - 4px);
+  text-align: left;
+  font-size: 17px;
+}
+.car-item:active { background: var(--border); }
+.car-item.is-on { background: var(--surface); }
+.car-item__art { flex: 0 0 auto; width: 34px; height: 34px; }
+.car-item__art svg { display: block; width: 100%; height: 100%; }
+.car-item__name { flex: 1 1 auto; }
+.car-item__tick { flex: 0 0 auto; width: 18px; color: var(--accent-ink); font-weight: 700; }
+.car-colors { display: flex; gap: 10px; padding: 2px 4px 4px; }
+.car-swatch {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+.car-swatch.is-on { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.theme-toggle__sun, .theme-toggle__moon { display: none; }
+:root:not([data-theme='light']) .theme-toggle__sun { display: block; }
+:root[data-theme='light'] .theme-toggle__moon { display: block; }
+
 .lang-switch {
   display: flex;
   border: 1px solid var(--border);
@@ -110,10 +203,31 @@ button {
 }
 .lang-switch__btn.is-active { background: var(--accent); color: #0d1216; }
 
+/* Every topbar dropdown anchors to its own wrapper. Without this the menu
+   falls back to the initial containing block: `right: 0` still lands under the
+   button by luck, but `top: calc(100% + 8px)` becomes eight pixels below the
+   whole viewport, so the menu opens correctly and is simply never on screen. */
+.country-select,
+.fav-select,
+.car-select { position: relative; }
+
+/* Country button: flags only. The label used to read "🇬🇪 Countries", which
+   spent topbar width on a word the flag already carries. */
+.btn--flags { padding: 0 12px; }
+.country-flags { display: inline-flex; align-items: center; gap: 7px; }
+.flag {
+  display: block;
+  width: 27px;
+  height: 18px;
+  border-radius: 3px;
+  /* A white flag (Georgia's) needs an edge of its own or it dissolves into the
+     light theme's button. */
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22);
+}
+
 /* ── Country picker (topbar) ─────────────────────────────────────── */
 /* Anchored dropdown rather than a native <select>: the driver picks several
    countries at once, and Tesla's browser renders native select popups badly. */
-.country-select { position: relative; }
 .country-menu {
   position: absolute;
   top: calc(100% + 8px);
@@ -124,7 +238,7 @@ button {
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-lg);
 }
 .country-menu.is-hidden { display: none; }
 .country-item {
@@ -145,10 +259,23 @@ button {
   font-size: 18px;
   color: var(--text-dim);
 }
-.country-item.is-on .country-item__box { color: var(--accent); }
-.country-item__flag { flex: 0 0 auto; font-size: 19px; }
+.country-item.is-on .country-item__box { color: var(--accent-ink); }
+.country-item__flag { flex: 0 0 auto; display: inline-flex; }
+.country-item__flag .flag { width: 24px; height: 16px; }
 .country-item__name { flex: 1 1 auto; }
 .country-item__count { flex: 0 0 auto; color: var(--text-dim); font-size: 14px; }
+
+/* Narrow in-car screens (Model 3/Y sit around 1000–1100 CSS px). The row is
+   fixed-height and must not wrap or scroll, so it tightens instead: the word
+   GeoCharge goes, the mark stays, buttons lose padding. */
+@media (max-width: 1250px) {
+  .topbar { gap: 12px; padding: 10px 12px; }
+  .topbar__actions { gap: 8px; }
+  .topbar__title { display: none; }
+  .btn { padding: 0 14px; }
+  .lang-switch__btn { min-width: 46px; }
+  .car-badge { width: 34px; height: 34px; }
+}
 
 /* ── Map stage ───────────────────────────────────────────────────── */
 .stage { position: relative; flex: 1; overflow: hidden; }
@@ -181,7 +308,7 @@ button {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-sm);
 }
 .search-bar__ico { font-size: 17px; opacity: 0.8; }
 .search-bar input {
@@ -224,26 +351,62 @@ button {
 .search-row {
   display: flex;
   align-items: center;
-  gap: 12px;
   width: 100%;
-  min-height: var(--touch);
-  padding: 8px 16px;
-  text-align: left;
   border-top: 1px solid var(--border);
 }
-.search-row:active { background: var(--surface-2); }
+.search-row__go {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--touch);
+  padding: 8px 4px 8px 16px;
+  text-align: left;
+}
+.search-row__go:active { background: var(--surface-2); }
 .search-row__ico { font-size: 18px; }
 .search-row__txt { display: flex; flex-direction: column; min-width: 0; }
+/* One line each. The star takes 48px off the row, so a long place name that
+   used to just fit now wraps to two or three lines and the list starts jumping
+   about as the driver types. */
+.search-row__main,
+.search-row__sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .search-row__main { font-size: 16px; color: var(--text); }
 .search-row__sub  { font-size: 13px; color: var(--text-dim); }
+/* Saves the result as a favourite instead of going there. Full touch height so
+   it can be hit without hitting the row it sits on. */
+.search-row__star {
+  flex: 0 0 auto;
+  width: var(--touch);
+  align-self: stretch;
+  min-height: var(--touch);
+  font-size: 24px;
+  line-height: 1;
+  color: var(--text-dim);
+  background: none;
+}
+.search-row__star:active { background: var(--surface-2); color: var(--accent-ink); }
 
 /* ── Map controls ────────────────────────────────────────────────── */
+/* One bottom-LEFT column holds every over-the-map control, so they can never
+   sit on top of each other: recenter (drive mode) → traffic → my location →
+   zoom. Left, because that is the driver's side of the car and the far edge of
+   a 15" screen is a stretch at the wheel. Bottom-anchored, so hiding any of
+   them just closes the gap.
+   The 44px bottom clears the Google logo, which sits in this same corner and
+   must stay visible (Maps terms). */
 .map-controls {
   position: absolute;
-  bottom: 24px;
-  right: 16px;
+  bottom: 44px;
+  left: 16px;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 12px;
   z-index: 15;
 }
@@ -257,10 +420,184 @@ button {
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-sm);
 }
 .map-ctrl.is-active { background: var(--accent); border-color: var(--accent); color: #0d1216; }
 .map-ctrl:active { background: var(--border); }
+
+/* Zoom pair, drawn as one block the way a map user expects. Replaces the Maps
+   API's own control, which put itself in this same corner underneath these
+   buttons — and at half the size of a target you can hit while moving. */
+.map-zoom {
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.map-zoom .map-ctrl { border-radius: 0; box-shadow: none; }
+.map-zoom .map-ctrl + .map-ctrl { margin-top: -1px; } /* one shared divider, not two */
+
+/* ── History button ──────────────────────────────────────────────── */
+/* Glued to the left edge of the search field at any width. The search box is
+   centred and `min(520px, 46vw)` wide, so half of it is `min(260px, 23vw)`;
+   right-anchoring past that keeps a 12px gap on a 1000px car screen and on a
+   1280px one alike. It cannot go on the RIGHT: the saved-places rail is there,
+   and at 1000px only 34px separate the two. */
+.map-pill {
+  position: absolute;
+  top: 16px;
+  right: calc(50% + min(260px, 23vw) + 12px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 52px;
+  padding: 0 18px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+  font-size: 16px;
+  font-weight: 500;
+  white-space: nowrap;
+  z-index: 15;
+}
+.map-pill:active { background: var(--border); }
+
+/* Past trips. Wider than the naming dialog and scrolling, because twenty rows
+   will not fit on a car screen. */
+.onboard__card.history-card { width: 620px; padding: 22px; gap: 10px; }
+.history-list { max-height: 58vh; overflow-y: auto; }
+.hist-item .fav-item__go { padding: 6px 12px; }
+/* When the trip was, in a column of its own so the dates line up down the list
+   rather than trailing behind names of every different length. */
+.hist-item__when {
+  flex: 0 0 auto;
+  padding-left: 10px;
+  font-size: 14px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Favourites ──────────────────────────────────────────────────── */
+/* Quick navigation, top right of the map. One tap starts driving there, which
+   is the whole reason these are on the map rather than only in the menu. The
+   column is empty (and so invisible) until the driver stars something. */
+.fav-rail {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  z-index: 15;
+}
+.fav-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  max-width: 220px;
+  padding: 0 16px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+  font-size: 17px;
+  font-weight: 500;
+}
+.fav-chip:active { background: var(--border); }
+.fav-chip__ico { font-size: 20px; line-height: 1; }
+.fav-chip__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* The full list: navigate, rename, remove. */
+.fav-menu { min-width: 300px; padding: 10px; }
+.fav-menu__empty {
+  padding: 4px 8px 8px;
+  color: var(--text-dim);
+  font-size: 15px;
+  line-height: 1.5;
+  max-width: 280px;
+}
+.fav-item { display: flex; align-items: center; gap: 4px; }
+.fav-item__go {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--touch);
+  padding: 0 12px;
+  font-size: 17px;
+  text-align: left;
+  border-radius: calc(var(--radius) - 4px);
+}
+.fav-item__go:active { background: var(--border); }
+.fav-item__ico { flex: 0 0 auto; font-size: 19px; }
+.fav-item__txt { display: flex; flex-direction: column; min-width: 0; }
+.fav-item__name,
+.fav-item__sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Routes carry a second line: how many stops, or how far is left on one the
+   driver is halfway through. */
+.fav-item__sub { font-size: 13px; color: var(--text-dim); }
+.fav-item__sub.is-accent { color: var(--accent-ink); font-weight: 600; }
+.fav-item__act {
+  flex: 0 0 auto;
+  width: 44px;
+  height: var(--touch);
+  border-radius: calc(var(--radius) - 4px);
+  font-size: 18px;
+  background: none;
+}
+.fav-item__act:active { background: var(--border); }
+
+/* Naming a favourite. Narrower than the onboarding card it borrows its look
+   from: it is one field and four icons, not a page of text. */
+/* Qualified with .onboard__card on purpose: that rule sets width: 520px and
+   sits further down the file, so an unqualified .fav-dialog width loses. */
+.onboard__card.fav-dialog { width: 460px; gap: 14px; }
+.fav-dialog__place { color: var(--text-dim); font-size: 15px; margin: -6px 0 0; }
+.fav-icons { display: flex; gap: 10px; }
+.fav-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: 26px;
+  line-height: 1;
+}
+.fav-icon.is-on { background: var(--accent); border-color: var(--accent); }
+.fav-dialog__actions { display: flex; justify-content: flex-end; gap: 12px; }
+
+/* An unfinished trip, offered once when the app opens. It borrows the
+   destination card's position and chrome — same slot, same shape, so the
+   driver reads it the same way — and adds the two lines that say which trip
+   this is and how far is left. */
+.resume-card { gap: 4px; }
+.resume-card__label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.resume-card__name {
+  font-size: 20px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.resume-card__sub { font-size: 15px; color: var(--accent-ink); }
+.resume-card .dest-card__actions { margin-top: 8px; }
+/* The from-phone card carries three actions rather than two, so its buttons
+   lose the wide padding they do not need. */
+#inbox-card .dest-card__actions .btn { padding: 0 12px; }
 
 /* ── Destination card ────────────────────────────────────────────── */
 .dest-card {
@@ -273,7 +610,7 @@ button {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-md);
   z-index: 16;
 }
 .dest-card__name { font-size: 18px; font-weight: 600; padding-right: 40px; margin-bottom: 14px; }
@@ -339,11 +676,11 @@ button {
   font-size: 15px;
   font-weight: 600;
 }
-.status--free { background: rgba(43, 213, 148, 0.15); color: var(--accent); }
-.status--busy { background: rgba(245, 166, 35, 0.15); color: var(--busy); }
+.status--free { background: rgba(43, 213, 148, 0.15); color: var(--accent-ink); }
+.status--busy { background: rgba(245, 166, 35, 0.15); color: var(--busy-ink); }
 .status--out  { background: rgba(107, 122, 133, 0.2);  color: var(--out); }
 /* Registry data (Turkey): no live availability, so neither green nor orange. */
-.status--unknown { background: rgba(79, 124, 158, 0.18); color: #8FB6D1; }
+.status--unknown { background: rgba(79, 124, 158, 0.18); color: var(--unknown-ink); }
 
 .panel__meta {
   display: flex;
@@ -376,7 +713,7 @@ button {
 /* A plug the operator publishes no live state for (Tegeta's Porsche
    destination chargers). Same slate as the station badge: not free, not broken,
    simply not reported. */
-.port--unknown { border-left-color: #4F7C9E; }
+.port--unknown { border-left-color: var(--unknown); }
 /* The "i" on an unknown plug, sitting where a price would be. Full touch height
    so it is hittable on a moving car's screen. */
 .port__info {
@@ -387,7 +724,7 @@ button {
   border-radius: 50%;
   border: 1px solid rgba(79, 124, 158, 0.55);
   background: rgba(79, 124, 158, 0.18);
-  color: #8FB6D1;
+  color: var(--unknown-ink);
   font-size: 19px;
   font-weight: 700;
   font-style: italic;
@@ -398,10 +735,10 @@ button {
 .port__type   { font-weight: 600; }
 .port__right  { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
 .port__status { color: var(--text-dim); }
-.port__sub    { font-size: 12px; color: var(--busy); opacity: 0.85; }
-.port--free .port__status { color: var(--accent); }
-.port--busy .port__status { color: var(--busy); }
-.port--unknown .port__status { color: #8FB6D1; }
+.port__sub    { font-size: 12px; color: var(--busy-ink); opacity: 0.85; }
+.port--free .port__status { color: var(--accent-ink); }
+.port--busy .port__status { color: var(--busy-ink); }
+.port--unknown .port__status { color: var(--unknown-ink); }
 
 /* Freshness line + refresh button. The button is a full touch target rather
    than a small icon: this is read and pressed in a car, often while parked
@@ -415,7 +752,7 @@ button {
 .panel__freshness-text { flex: 1; min-width: 0; }
 .panel__updated { color: var(--text-dim); font-size: 13px; }
 .panel__source  { color: var(--text-dim); font-size: 12px; opacity: 0.8; margin-top: 2px; }
-.panel__source.is-live { color: var(--accent); opacity: 1; }
+.panel__source.is-live { color: var(--accent-ink); opacity: 1; }
 
 .panel__refresh {
   display: flex;
@@ -446,8 +783,8 @@ button {
    anything else stays quiet, so the button can never imply it found news it
    did not. */
 .panel__refresh-note { margin-top: 8px; font-size: 13px; color: var(--text-dim); min-height: 18px; }
-.panel__refresh-note.is-changed { color: var(--accent); }
-.panel__refresh-note.is-failed  { color: var(--busy); }
+.panel__refresh-note.is-changed { color: var(--accent-ink); }
+.panel__refresh-note.is-failed  { color: var(--busy-ink); }
 
 /* ── Filter drawer ───────────────────────────────────────────────── */
 .drawer {
@@ -531,7 +868,7 @@ button {
   border-radius: 10px;
   background: var(--surface-2);
   border: 1px solid var(--border);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 .trip-stop__btn:active { background: var(--border); }
 .trip-stop__ar { font-size: 16px; color: var(--text-dim); font-weight: 700; }
@@ -550,7 +887,7 @@ button {
   margin: 16px 0 6px;
 }
 .trip-param { display: flex; flex-direction: column; gap: 8px; flex: 1; }
-.trip-param b { color: var(--accent); }
+.trip-param b { color: var(--accent-ink); }
 .input--small { min-height: 46px; width: 110px; }
 
 input[type='range'] { accent-color: var(--accent); height: var(--touch); }
@@ -563,7 +900,7 @@ input[type='range'] { accent-color: var(--accent); height: var(--touch); }
   margin: 14px 0 8px;
   flex-wrap: wrap;
 }
-.txt-accent { color: var(--accent); }
+.txt-accent { color: var(--accent-ink); }
 .txt-danger { color: var(--danger); }
 .txt-dim { color: var(--text-dim); font-weight: 400; font-size: 15px; }
 
@@ -606,14 +943,14 @@ input[type='range'] { accent-color: var(--accent); height: var(--touch); }
 .opt-badge {
   font-size: 10px;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--accent-ink);
   background: rgba(43, 213, 148, 0.18);
   padding: 2px 6px;
   border-radius: 6px;
 }
-.opt-uturn { color: var(--busy); font-size: 16px; }
+.opt-uturn { color: var(--busy-ink); font-size: 16px; }
 .opt-prov { display: flex; gap: 8px; font-size: 13px; margin-top: 3px; }
-.opt-prov b { color: var(--accent); }
+.opt-prov b { color: var(--accent-ink); }
 .opt-meta { color: var(--text-dim); font-size: 12px; margin-top: 5px; }
 /* Provider logo chip on the right of an option block. Logos are drawn for
    light backgrounds, so each sits on a white tile to stay legible. */
@@ -630,7 +967,7 @@ input[type='range'] { accent-color: var(--accent); height: var(--touch); }
 .trip-nav { margin-top: 18px; }
 .trip-nav:disabled { opacity: 0.4; }
 .trip-clear { margin-top: 10px; }
-.txt-busy { color: var(--busy); }
+.txt-busy { color: var(--busy-ink); }
 
 /* ── 50 km collapsible charger segments ─────────────────────────────────── */
 .trip-seg-hint { margin: 0 2px 12px; font-size: 12px; line-height: 1.35; }
@@ -665,7 +1002,7 @@ input[type='range'] { accent-color: var(--accent); height: var(--touch); }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.seg.has-selected .seg__sub { color: var(--accent); font-weight: 600; }
+.seg.has-selected .seg__sub { color: var(--accent-ink); font-weight: 600; }
 .seg__badge {
   flex-shrink: 0;
   background: var(--accent);
@@ -787,9 +1124,47 @@ body.is-picking #map { cursor: crosshair; }
   background: var(--border);
 }
 
+/* ── Pairing panel (sign in from the phone) ──────────────────────── */
+/* The code is the biggest thing on the screen: it is read from the driver's
+   seat and typed into a phone held somewhere else. */
+.pair { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.pair__code {
+  font-size: 52px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  line-height: 1.1;
+  padding: 14px 24px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1px solid var(--accent);
+  color: var(--accent-ink);
+  font-variant-numeric: tabular-nums;
+}
+.pair__timer { font-size: 14px; color: var(--text-dim); min-height: 20px; }
+.pair__steps {
+  text-align: left;
+  padding-left: 22px;
+  margin-top: 4px;
+  color: var(--text-dim);
+  font-size: 15px;
+  line-height: 1.85;
+}
+/* "Other ways to sign in" — deliberately quiet: it is the exception now. */
+.gate__link {
+  background: none;
+  border: 0;
+  color: var(--text-dim);
+  font-size: 14px;
+  text-decoration: underline;
+  min-height: var(--touch);
+}
+
 .gate__error { color: var(--danger); font-size: 15px; }
 .gate__note  { color: var(--text-dim); font-size: 14px; line-height: 1.5; }
 .gate__note--price {
+  /* three deliberate lines (paid service / free 24h / how to start it) — HTML
+     would otherwise run them together */
+  white-space: pre-line;
   margin-top: 4px;
   padding: 10px 14px;
   background: rgba(43, 213, 148, 0.1);
@@ -830,10 +1205,10 @@ body.is-picking #map { cursor: crosshair; }
   font-size: 14px;
   font-weight: 600;
   background: rgba(43, 213, 148, 0.15);
-  color: var(--accent);
+  color: var(--accent-ink);
   white-space: nowrap;
 }
-.badge--trial { background: rgba(245, 166, 35, 0.15); color: var(--busy); }
+.badge--trial { background: rgba(245, 166, 35, 0.15); color: var(--busy-ink); }
 
 .is-hidden { display: none !important; }
 
@@ -844,7 +1219,7 @@ body.is-picking #map { cursor: crosshair; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(13, 18, 22, 0.7);
+  background: var(--scrim);
   z-index: 45;
 }
 .onboard__card {
@@ -890,10 +1265,20 @@ body.is-picking #map { cursor: crosshair; }
 /* Hide the normal chrome while driving so the map fills the screen. */
 body.is-driving .topbar,
 body.is-driving #search-box,
-body.is-driving .map-controls,
+body.is-driving .map-pill,
+body.is-driving .fav-rail,
+body.is-driving #btn-locate,
 body.is-driving #dest-card,
+body.is-driving #resume-card,
+body.is-driving #inbox-card,
 body.is-driving #station-panel,
 body.is-driving .drawer { display: none !important; }
+/* Traffic is NOT in that list. Jams are the one thing a driver wants to see
+   most while actually driving, and it used to disappear the moment navigation
+   started — there was no way to switch it on or off for the rest of the trip.
+   Zoom stays too, lifted clear of the drive footer (which spans the full width
+   on a narrow in-car screen). */
+body.is-driving .map-controls { bottom: 112px; }
 
 .drive-banner {
   position: absolute;
@@ -909,10 +1294,10 @@ body.is-driving .drawer { display: none !important; }
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
+  box-shadow: var(--shadow-lg);
   pointer-events: auto;
 }
-.drive-banner__icon { flex-shrink: 0; color: var(--accent); }
+.drive-banner__icon { flex-shrink: 0; color: var(--accent-ink); }
 .drive-banner__icon svg { width: 60px; height: 60px; display: block; }
 .drive-banner__txt { min-width: 0; }
 .drive-banner__dist { font-size: 42px; font-weight: 700; line-height: 1; }
@@ -925,7 +1310,7 @@ body.is-driving .drawer { display: none !important; }
   white-space: nowrap;
 }
 .drive-banner.is-arrived .drive-banner__dist { display: none; }
-.drive-banner.is-arrived .drive-banner__road { color: var(--accent); font-size: 26px; font-weight: 600; }
+.drive-banner.is-arrived .drive-banner__road { color: var(--accent-ink); font-size: 26px; font-weight: 600; }
 
 .drive-reroute {
   position: absolute;
@@ -941,6 +1326,27 @@ body.is-driving .drawer { display: none !important; }
   pointer-events: auto;
 }
 
+/* Recenter. The camera follows the car, but the moment the driver drags the map
+   that follow stops — otherwise the next GPS fix would yank the map back out
+   from under their finger. This button is how they get the follow back, and it
+   only appears while the map is off the car. */
+.drive-recenter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 24px 0 18px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  color: var(--accent-ink);
+  font-size: 17px;
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+}
+.drive-recenter svg { width: 26px; height: 26px; flex-shrink: 0; }
+.drive-recenter:active { background: var(--surface-2); }
+
 .drive-foot {
   position: absolute;
   bottom: 16px;
@@ -955,7 +1361,7 @@ body.is-driving .drawer { display: none !important; }
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
+  box-shadow: var(--shadow-lg);
   pointer-events: auto;
 }
 .drive-foot__stats { display: flex; gap: 20px; flex: 1; align-items: baseline; }

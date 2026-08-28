@@ -65,6 +65,19 @@ service cloud.firestore {
                       && request.resource.data.startedAt == request.time;
         // update/delete intentionally absent → denied.
       }
+
+      // ── Car-side state (tesla.geocharge.ge) ────────────────────────────────
+      // The driver's own saved places and routes, tied to the account rather
+      // than to the car's browser storage so they survive a re-pair and follow
+      // the account into another Tesla. Ordinary owner-only data: unlike the
+      // trial flag above there is nothing here worth tamper-proofing — a user
+      // rewriting their own favourites is exactly what the buttons do.
+      //
+      // Documents: `favourites` (up to four saved places), and later `routes`
+      // plus `active` (a trip in progress, so it can be resumed).
+      match /tesla/{doc} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
     }
 
     // ── Admin allow-list ─────────────────────────────────────────────────────

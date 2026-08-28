@@ -7,8 +7,9 @@ import { getMap, panTo, setMarkersDimmed, locateMe } from './map.js';
 import { getStations, getTurkeyStations, loadTurkey } from './data.js';
 import { TURKEY_BOUNDS } from './config.js';
 import { startDrive } from './drive.js';
+import { saveRoute } from './routes.js';
 import { track } from './analytics.js';
-import { MIN_POWER_STEPS, sortConnectors } from './ui.js';
+import { MIN_POWER_STEPS, sortConnectors, toggleFilterDrawer } from './ui.js';
 import { providerLogo } from './format.js';
 import { t } from './i18n.js';
 
@@ -188,7 +189,19 @@ function armMapPick(i) {
 }
 
 function handleMapClick(e) {
-  if (state.pickTarget == null) return;
+  // Tapping the map is how the driver puts the map away. Both left-hand
+  // drawers cover a third of a car screen, and reaching for the small ✕ in
+  // their corner while parked at a charger is a fiddle.
+  //
+  // This handler owns the decision rather than main.js because a tap that is
+  // PLACING a stop must not close anything, and this is where that is known.
+  // Both listeners fire on the same click, in the order they were registered,
+  // so a second one elsewhere would already be looking at a cleared pickTarget.
+  if (state.pickTarget == null) {
+    toggleFilterDrawer(false);
+    toggleTripDrawer(false);
+    return;
+  }
   const pos = { lat: e.latLng.lat(), lng: e.latLng.lng() };
   const stop = state.stops[state.pickTarget];
   stop.coords = pos;
@@ -595,16 +608,17 @@ function clearPlan() {
 // ── Start navigation ─────────────────────────────────────────────────────────
 function updateNavButton() {
   $('trip-nav').disabled = !canPlan();
+  $('trip-save').disabled = !canPlan();
 }
 
-function startNavigation() {
+/**
+ * The stops drive mode will be sent through, in road order: manual stops placed
+ * by leg-end distance, ticked chargers by along-route distance — the app's
+ * _planRoute ordering. The origin is not among them; that is the driver's live
+ * GPS, taken inside startDrive.
+ */
+function plannedWaypoints() {
   const r = state.result;
-  const destination = state.stops[state.stops.length - 1].coords;
-  if (!canPlan()) return;
-
-  // Interleave manual intermediate stops (by leg-end distance) and ticked
-  // chargers (by along-route distance) — the app's _planRoute ordering. The
-  // origin is the driver's live GPS (added inside startDrive), not stop 0.
   const entries = [];
   if (r && r.legEndsKm.length) {
     for (let i = 1; i < state.stops.length - 1; i++) {
@@ -619,10 +633,30 @@ function startNavigation() {
     }
   }
   entries.sort((a, b) => a[0] - b[0]);
+  return entries.map((e) => e[1]);
+}
 
+function startNavigation() {
+  if (!canPlan()) return;
   track('trip_navigate', { stops: state.selectedKeys.size });
   toggleTripDrawer(false);
-  startDrive({ destination, waypoints: entries.map((e) => e[1]) });
+  startDrive({
+    destination: state.stops[state.stops.length - 1].coords,
+    waypoints: plannedWaypoints(),
+    route: { id: null, name: state.stops[state.stops.length - 1].label.trim() },
+  });
+}
+
+/** Keep this trip on the account, under a name the driver types. */
+function saveThisRoute() {
+  if (!canPlan()) return;
+  const from = state.stops[0].label.trim();
+  const to = state.stops[state.stops.length - 1].label.trim();
+  saveRoute({
+    destination: state.stops[state.stops.length - 1].coords,
+    waypoints: plannedWaypoints(),
+    suggestedName: from && to ? `${from} ${to}` : to || from,
+  });
 }
 
 // ── Public wiring ────────────────────────────────────────────────────────────
@@ -650,6 +684,7 @@ export function initTrip() {
 
   $('trip-add-stop').addEventListener('click', addStop);
   $('trip-nav').addEventListener('click', startNavigation);
+  $('trip-save').addEventListener('click', saveThisRoute);
   $('trip-clear-route').addEventListener('click', clearPlan);
 
   // Drive mode draws its own route line — take the planner preview off the

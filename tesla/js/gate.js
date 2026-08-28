@@ -5,15 +5,19 @@
 //   #paywall-screen  — signed in, trial expired, not premium
 //   the app itself   — signed in AND (premium OR trial active)
 
-import { ensureTrial, watchAuth, watchPremium, TRIAL_MS } from './auth.js';
+import { ensureTrial, logout, watchAuth, watchDeviceLink, watchPremium, TRIAL_MS } from './auth.js';
 import { track } from './analytics.js';
 import { t } from './i18n.js';
+import { PAIRING_ENABLED } from './config.js';
+import { deviceId, isPairedSession, newPairing, stopPairing } from './pair.js';
+import { showToast } from './ui.js';
 
 const state = {
   user: null,
   premium: false,
   trialEndsAt: null, // epoch ms
   stopPremium: null,
+  stopDevice: null,
   expiryTimer: null,
   countdownTimer: null,
 };
@@ -22,8 +26,15 @@ let onGranted = null;
 let granted = false;
 
 function show(screen) {
-  document.getElementById('login-screen').classList.toggle('is-open', screen === 'login');
+  const login = document.getElementById('login-screen');
+  const wasLogin = login.classList.contains('is-open');
+  login.classList.toggle('is-open', screen === 'login');
   document.getElementById('paywall-screen').classList.toggle('is-open', screen === 'paywall');
+
+  // A pairing code is only worth having while it is on screen.
+  if (!PAIRING_ENABLED) return;
+  if (screen === 'login' && !wasLogin) newPairing();
+  if (screen !== 'login' && wasLogin) stopPairing();
 }
 
 function trialActive() {
@@ -95,6 +106,8 @@ export function startGate(whenGranted) {
 
   watchAuth(async (user) => {
     state.stopPremium?.();
+    state.stopDevice?.();
+    state.stopDevice = null;
     state.user = user;
     state.premium = false;
     state.trialEndsAt = null;
@@ -106,6 +119,15 @@ export function startGate(whenGranted) {
     }
 
     document.getElementById('user-email').textContent = user.email ?? '';
+
+    // One account drives one car: if the phone pairs a different Tesla (or
+    // disconnects this one), this session ends here rather than quietly
+    // sharing a subscription between two cars.
+    state.stopDevice = watchDeviceLink(user.uid, deviceId(), isPairedSession(), (why) => {
+      showToast(t(why === 'unlinked' ? 'pairDisconnected' : 'pairRevoked'), 8000);
+      track('tesla_pair_revoked', { why });
+      logout();
+    });
 
     // Premium is realtime: buying on the phone unlocks this screen live.
     state.stopPremium = watchPremium(user.uid, (premium) => {

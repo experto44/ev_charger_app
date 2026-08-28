@@ -3,7 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark light">
   <title>GeoCharge for Tesla</title>
+  <!-- Theme before first paint. Inline and blocking on purpose: run from the
+       module later, a driver on the light theme would get a dark flash on every
+       load. Dark stays the default; without a stored choice we follow the car's
+       own day/night setting where the browser reports it. -->
+  <script>
+    (function () {
+      var t = 'dark';
+      try {
+        t = localStorage.getItem('gc_theme');
+        if (t !== 'light' && t !== 'dark') {
+          t = window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches
+            ? 'light' : 'dark';
+        }
+      } catch (e) { t = 'dark'; }
+      document.documentElement.dataset.theme = t;
+    })();
+  </script>
   <meta name="description" content="EV chargers across Georgia with live status — built for the Tesla in-car browser.">
   <link rel="icon" type="image/svg+xml" href="assets/mark.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,11 +42,30 @@
       <button id="btn-trip" class="btn" data-t="trip"></button>
       <button id="btn-filters" class="btn" data-t="filters"></button>
       <div class="country-select">
-        <button id="btn-countries" class="btn" aria-haspopup="true" aria-expanded="false">
-          <span id="country-label" data-t="countries"></span>
+        <button id="btn-countries" class="btn btn--flags" aria-haspopup="true" aria-expanded="false">
+          <span id="country-label" class="country-flags"></span>
         </button>
         <div id="country-menu" class="country-menu is-hidden" role="menu"></div>
       </div>
+      <!-- Saved places. The map carries the same list as one-tap buttons; this
+           is where they are renamed and removed. -->
+      <div class="fav-select">
+        <button id="btn-favs" class="btn btn--icon" type="button" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M12 17.3l-6.18 3.7 1.64-7.03L2 9.24l7.19-.62L12 2l2.81 6.62 7.19.62-5.46 4.73L18.18 21z"/></svg>
+        </button>
+        <div id="fav-menu" class="country-menu fav-menu is-hidden" role="menu"></div>
+      </div>
+      <!-- The driver's own car: model + colour, drawn live into the button. -->
+      <div class="car-select">
+        <button id="btn-car" class="btn btn--icon btn--car" type="button" aria-haspopup="true" aria-expanded="false">
+          <span id="car-badge" class="car-badge"></span>
+        </button>
+        <div id="car-menu" class="country-menu car-menu is-hidden" role="menu"></div>
+      </div>
+      <button id="btn-theme" class="btn btn--icon" type="button">
+        <svg class="theme-toggle__sun" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M12 17a5 5 0 110-10 5 5 0 010 10zm0-13.5a1 1 0 011 1V6a1 1 0 01-2 0V4.5a1 1 0 011-1zm0 15a1 1 0 011 1v1.5a1 1 0 01-2 0V19.5a1 1 0 011-1zM4.5 11H6a1 1 0 010 2H4.5a1 1 0 010-2zm13.5 0h1.5a1 1 0 010 2H18a1 1 0 010-2zM6.2 4.8l1.1 1.1a1 1 0 01-1.4 1.4L4.8 6.2a1 1 0 011.4-1.4zm10.5 10.5l1.1 1.1a1 1 0 01-1.4 1.4l-1.1-1.1a1 1 0 011.4-1.4zm2.5-10.5a1 1 0 010 1.4l-1.1 1.1a1 1 0 01-1.4-1.4l1.1-1.1a1 1 0 011.4 0zM7.3 15.3a1 1 0 010 1.4l-1.1 1.1a1 1 0 01-1.4-1.4l1.1-1.1a1 1 0 011.4 0z"/></svg>
+        <svg class="theme-toggle__moon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M21 13.2A9 9 0 1110.8 3a7.2 7.2 0 1010.2 10.2z"/></svg>
+      </button>
       <div class="lang-switch">
         <button class="lang-switch__btn" data-lang-btn="ka">ქა</button>
         <button class="lang-switch__btn" data-lang-btn="en">EN</button>
@@ -42,6 +79,13 @@
 
     <div id="loading" class="loading"><span data-t="loading"></span></div>
 
+    <!-- Past trips. Left of the search field rather than right: the saved
+         places rail is on the right, and at 1000px the two would collide. -->
+    <button id="btn-history" class="map-pill" type="button">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M13 3a9 9 0 00-9 9H1l3.9 3.9.1.1L9 12H6a7 7 0 117 7 6.9 6.9 0 01-4.9-2l-1.4 1.4A9 9 0 1013 3zm-1 5v5l4.3 2.5.7-1.2-3.5-2.1V8z"/></svg>
+      <span data-t="historyBtn"></span>
+    </button>
+
     <!-- Search (stations + destinations) -->
     <div id="search-box">
       <div class="search-bar">
@@ -52,14 +96,35 @@
       <div id="search-results"></div>
     </div>
 
-    <!-- Map controls -->
+    <!-- Saved places as one-tap navigation, top-right of the map. Empty until
+         the driver stars something, and hidden while driving (the turn banner
+         reaches this far on a narrow in-car screen). -->
+    <div id="fav-rail" class="fav-rail"></div>
+
+    <!-- Map controls. One bottom-right column: everything the driver can press
+         over the map lives here, so nothing can land on top of anything else.
+         The zoom pair is ours rather than the Maps API's, which drew itself in
+         the same corner (and drew it small). -->
     <div class="map-controls">
+      <!-- Drive mode only, and only once the driver has dragged the map off the car. -->
+      <button id="drive-recenter" class="drive-recenter is-hidden" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 8a4 4 0 100 8 4 4 0 000-8zm8.94 3a8.994 8.994 0 00-7.94-7.94V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19a7 7 0 110-14 7 7 0 010 14z"/></svg>
+        <span data-t="driveRecenter"></span>
+      </button>
       <button id="btn-traffic" class="map-ctrl" aria-label="Traffic" title="Traffic">
         <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M12 2a3 3 0 00-3 3v14a3 3 0 006 0V5a3 3 0 00-3-3zm0 3a1 1 0 011 1 1 1 0 01-2 0 1 1 0 011-1zm0 5a1 1 0 011 1 1 1 0 01-2 0 1 1 0 011-1zm0 5a1 1 0 011 1 1 1 0 01-2 0 1 1 0 011-1z"/></svg>
       </button>
       <button id="btn-locate" class="map-ctrl" aria-label="My location">
         <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M12 8a4 4 0 100 8 4 4 0 000-8zm8.94 3a8.994 8.994 0 00-7.94-7.94V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19a7 7 0 110-14 7 7 0 010 14z"/></svg>
       </button>
+      <div class="map-zoom">
+        <button id="btn-zoom-in" class="map-ctrl" data-t-aria="zoomIn" data-t-title="zoomIn">
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M11 5h2v14h-2zM5 11h14v2H5z"/></svg>
+        </button>
+        <button id="btn-zoom-out" class="map-ctrl" data-t-aria="zoomOut" data-t-title="zoomOut">
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M5 11h14v2H5z"/></svg>
+        </button>
+      </div>
     </div>
 
     <!-- Destination action card (after picking a searched place) -->
@@ -162,6 +227,7 @@
       <div id="trip-options"></div>
 
       <button id="trip-nav" class="btn btn--primary btn--wide trip-nav" data-t="startNav" disabled></button>
+      <button id="trip-save" class="btn btn--wide trip-save" data-t="routeSaveBtn" disabled></button>
       <button id="trip-clear-route" class="btn btn--ghost btn--wide trip-clear" data-t="tripClearRoute"></button>
     </aside>
 
@@ -209,12 +275,81 @@
       </div>
     </div>
 
+    <!-- An unfinished trip, offered once per session. The driver stopped in
+         Gori and switched the car off; this is how they carry on. -->
+    <div id="resume-card" class="dest-card resume-card is-hidden">
+      <div class="resume-card__label" data-t="resumeTitle"></div>
+      <div class="resume-card__name"></div>
+      <div class="resume-card__sub"></div>
+      <div class="dest-card__actions">
+        <button id="resume-go" class="btn btn--primary" data-t="routeContinue"></button>
+        <button id="resume-dismiss" class="btn btn--ghost" data-t="favCancel"></button>
+      </div>
+    </div>
+
+    <!-- Past trips, newest first. Everything that became a real trip is here
+         without the driver filing anything. -->
+    <div id="history-panel" class="onboard is-hidden">
+      <div class="onboard__card history-card">
+        <div class="drawer__head">
+          <h2 data-t="historyTitle"></h2>
+          <button id="history-close" class="panel__close" aria-label="Close">✕</button>
+        </div>
+        <div id="history-list" class="history-list"></div>
+      </div>
+    </div>
+
+    <!-- A route sent from the phone. Waits here until the driver deals with
+         it, so one sent from the sofa is still on offer at the car. -->
+    <div id="inbox-card" class="dest-card resume-card is-hidden">
+      <div class="resume-card__label" data-t="inboxTitle"></div>
+      <div class="resume-card__name"></div>
+      <div class="resume-card__sub"></div>
+      <div class="dest-card__actions">
+        <button id="inbox-go" class="btn btn--primary" data-t="navigate"></button>
+        <button id="inbox-save" class="btn" data-t="favSave"></button>
+        <button id="inbox-dismiss" class="btn btn--ghost" data-t="favCancel"></button>
+      </div>
+    </div>
+
+    <!-- Naming a favourite or a route -->
+    <div id="fav-dialog" class="onboard is-hidden">
+      <div class="onboard__card fav-dialog">
+        <h3 id="fav-dialog-title"></h3>
+        <p id="fav-dialog-place" class="fav-dialog__place"></p>
+        <input id="fav-name" class="input" type="text" maxlength="32" autocomplete="off">
+        <div id="fav-icons" class="fav-icons"></div>
+        <div class="fav-dialog__actions">
+          <button id="fav-cancel" class="btn btn--ghost" data-t="favCancel"></button>
+          <button id="fav-save" class="btn btn--primary" data-t="favSave"></button>
+        </div>
+      </div>
+    </div>
+
     <!-- Login (blocks the app until signed in) -->
     <section id="login-screen" class="gate">
       <div class="gate__card">
         <img src="assets/logo-dark.svg" alt="GeoCharge" class="gate__logo">
         <h2 data-t="signInTitle"></h2>
         <p class="gate__subtitle" data-t="signInSubtitle"></p>
+
+        <!-- Pairing: the car shows a code, the phone app approves it. Default
+             way in, because most accounts were made with Google and have no
+             password to type. -->
+        <div id="pair-box" class="pair is-hidden">
+          <div id="pair-code" class="pair__code">· · ·</div>
+          <p id="pair-timer" class="pair__timer"></p>
+          <ol class="pair__steps">
+            <li data-t="pairStep1"></li>
+            <li data-t="pairStep2"></li>
+            <li data-t="pairStep3"></li>
+          </ol>
+          <p id="pair-error" class="gate__error is-hidden"></p>
+          <button id="pair-refresh" class="btn btn--wide is-hidden" data-t="pairRefresh"></button>
+        </div>
+        <button id="show-classic" class="gate__link is-hidden" type="button" data-t="otherSignIn"></button>
+
+        <div id="classic-login">
         <form id="login-form">
           <input id="login-email" type="email" class="input" autocomplete="email" required data-t-placeholder="email">
           <input id="login-password" type="password" class="input" autocomplete="current-password" required data-t-placeholder="password">
@@ -226,6 +361,7 @@
           <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6C12.3 13.4 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.4 28.8a14.5 14.5 0 0 1 0-9.6l-7.8-6a24 24 0 0 0 0 21.6l7.8-6z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.4-5.6l-7.5-5.8c-2.1 1.4-4.8 2.3-7.9 2.3-6.3 0-11.7-3.9-13.6-9.6l-7.8 6C6.5 42.6 14.6 48 24 48z"/></svg>
           <span data-t="googleBtn"></span>
         </button>
+        </div><!-- /classic-login -->
         <p class="gate__note" data-t="noAccount"></p>
         <p class="gate__note gate__note--price" data-t="signInPrice"></p>
       </div>
