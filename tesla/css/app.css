@@ -1045,14 +1045,17 @@ body.is-picking #map { cursor: crosshair; }
   position: absolute;
   inset: 0;
   display: none;
-  align-items: center;
-  justify-content: center;
+  /* A card taller than the screen has to stay reachable. `align-items: center`
+     would push its top to a negative offset that no scrollbar can reach, so the
+     centring is done by the card's own auto margins instead. */
+  overflow-y: auto;
   background: var(--bg);
   z-index: 50;
 }
 .gate.is-open { display: flex; }
 
 .gate__card {
+  margin: auto;
   width: 460px;
   max-width: 92vw;
   background: var(--surface);
@@ -1148,6 +1151,35 @@ body.is-picking #map { cursor: crosshair; }
   color: var(--text-dim);
   font-size: 15px;
   line-height: 1.85;
+}
+
+/* A car screen is wide and short. Stacked, this panel is 781px tall and the
+   price note falls off the bottom of a 590px stage with no way to scroll to it.
+   Side by side it is 527px and fits whole, which is the point: the driver reads
+   the code and the three steps in one look, without touching anything. */
+@media (min-width: 900px) {
+  #login-screen .gate__card { width: 900px; }
+  .pair {
+    display: grid;
+    grid-template-columns: auto minmax(320px, 1fr);
+    column-gap: 34px;
+    row-gap: 8px;
+    align-items: center;
+    justify-items: center;
+  }
+  .pair__code  { grid-column: 1; grid-row: 1; }
+  .pair__timer { grid-column: 1; grid-row: 2; }
+  .pair__steps {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    justify-self: start;
+    margin-top: 0;
+    line-height: 1.7;
+  }
+  /* Both only appear when a code could not be issued, and then they belong
+     under the whole panel rather than in either column. */
+  #pair-error   { grid-column: 1 / -1; }
+  #pair-refresh { grid-column: 1 / -1; width: auto; padding: 0 28px; }
 }
 /* "Other ways to sign in" — deliberately quiet: it is the exception now. */
 .gate__link {

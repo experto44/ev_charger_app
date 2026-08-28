@@ -82,7 +82,7 @@ const STRINGS = {
     noAccount: 'ანგარიში არ გაქვს? დარეგისტრირდი GeoCharge-ის აპში ტელეფონზე.',
     // Three deliberate lines; .gate__note--price is pre-line so they survive.
     signInPrice:
-      'სერვისი ფასიანია. შეიძინეთ Premium გამოწერა GeoCharge-ის მობილურ აპლიკაციაში.\n' +
+      'შეიძინეთ Premium გამოწერა GeoCharge-ის მობილურ აპლიკაციაში.\n' +
       'ახალ მომხმარებელს 24 საათი უფასოდ.\n' +
       'უფასო 24 საათიანი რეჟიმის გასააქტიურებლად, ტელეფონზე გადმოწერე GeoCharge აპლიკაცია.',
     pairStep1: 'გახსენი GeoCharge-ის აპლიკაცია ტელეფონზე',
@@ -273,7 +273,7 @@ const STRINGS = {
     googleBtn: 'Sign in with Google',
     noAccount: "Don't have an account? Register in the GeoCharge app on your phone.",
     signInPrice:
-      'This is a paid service. Buy Premium in the GeoCharge mobile app.\n' +
+      'Buy Premium in the GeoCharge mobile app.\n' +
       'New users get 24 hours free.\n' +
       'To start the free 24 hours, download the GeoCharge app on your phone.',
     pairStep1: 'Open the GeoCharge app on your phone',
