@@ -38,6 +38,8 @@ import { initPairing } from './pair.js';
 import { PAIRING_ENABLED } from './config.js';
 import { initCarPicker, relabelCar } from './car.js';
 import { initDrive, startDrive } from './drive.js';
+import { initFollow, resumeFollow, startFollowWatch } from './follow.js';
+import { initUsage } from './usage.js';
 import {
   applyFilters,
   buildFilterDrawer,
@@ -237,6 +239,12 @@ function wireMapControls() {
   document.getElementById('btn-locate').addEventListener('click', async () => {
     try {
       await locateMe();
+      // Granting the permission here is also what lets the camera follow the
+      // car by itself later; the watch is free to start now. Asking to be
+      // shown is also the one camera move that re-arms the follow rather than
+      // suspending it — locateMe's own panTo has just suspended it.
+      startFollowWatch();
+      resumeFollow();
     } catch (e) {
       showToast(t('locationError'));
     }
@@ -264,9 +272,19 @@ function wireMapControls() {
     clearSearchPin();
     startDrive({ destination: destPos, route: { id: null, name: destName } });
   });
+  // A place that arrived from the phone, sent to the planner (routes.js raises
+  // this rather than calling in, so the two modules stay uncoupled).
+  document.addEventListener('gc:plan-to', (e) => {
+    const { pos, name } = e.detail ?? {};
+    if (!pos) return;
+    setTripDestination(pos, name);
+    toggleFilterDrawer(false);
+    toggleTripDrawer(true);
+  });
+
   document.getElementById('dest-route').addEventListener('click', () => {
     if (destPos) {
-      setTripDestination(destPos);
+      setTripDestination(destPos, destName);
       toggleFilterDrawer(false);
       toggleTripDrawer(true);
     }
@@ -280,12 +298,18 @@ async function bootApp() {
   // First, and outside the try: the picker must work even if the map or the
   // feed does not.
   initCountryPicker();
+  // Record the visit for the admin panel. Here rather than at page load, so a
+  // "session" means the driver actually got in — see js/usage.js.
+  initUsage();
 
   try {
     await loadMapsApi();
     initMap(document.getElementById('map')); // born in the page's current theme
     initTrip();
     initDrive();
+    // Close in on the car by itself once it starts moving. Never asks for the
+    // location permission — see js/follow.js.
+    initFollow();
     initSearch({
       getStations: () => allStations,
       onStation: openStation,

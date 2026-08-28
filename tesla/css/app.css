@@ -596,8 +596,12 @@ button {
 .resume-card__sub { font-size: 15px; color: var(--accent-ink); }
 .resume-card .dest-card__actions { margin-top: 8px; }
 /* The from-phone card carries three actions rather than two, so its buttons
-   lose the wide padding they do not need. */
+   lose the wide padding they do not need. A single PLACE from the phone has a
+   fourth (plan the route there), which is one too many for a row a driver can
+   still hit — those wrap into a 2x2 grid instead of four slivers. */
 #inbox-card .dest-card__actions .btn { padding: 0 12px; }
+#inbox-card.is-place .dest-card__actions { flex-wrap: wrap; }
+#inbox-card.is-place .dest-card__actions .btn { flex: 1 1 44%; }
 
 /* ── Destination card ────────────────────────────────────────────── */
 .dest-card {

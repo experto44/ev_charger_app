@@ -164,3 +164,52 @@ firebase deploy --only hosting --project geocharge-f6714
   `isPremium` when it launches, so ads can come back up to an hour (plus the
   user's next app open) after the date. The panel itself computes the status
   from `premiumUntil`, so it never shows a lapsed grant as Premium.
+
+## Tesla tab — car-app usage and the Google free tier
+
+Added 2026-08-29. Answers two questions in one place: **who uses
+tesla.geocharge.ge, and how much of Google Maps' free allowance that is
+spending.** Nothing here needed an app release — the car app is a web deploy and
+the Maps figures come from Google.
+
+**Where the usage comes from.** `tesla/js/usage.js` writes one document per
+visit to `teslaSessions/{id}`: `uid`, `email`, `startedAt`, `lastSeenAt`,
+`seconds`, `drives`. `seconds` is ACTIVE time — the clock stops while the
+browser tab is hidden, so a car parked overnight with the page open does not
+report a nine-hour session. Only signed-in visits are recorded (the app is
+behind a login anyway); someone who opens the page and never signs in is a GA4
+pageview and nothing more. The panel reads the last 30 days
+(`AdminService.teslaSessionsStream`) and folds them in `services/tesla_stats.dart`:
+visitors and sessions per day, and per-driver totals.
+
+**Where the Google figures come from.** `functions/maps-usage.js` (`pullMapsUsage`,
+hourly) reads Cloud Monitoring — the same source as the console's own usage
+graphs — and writes one row per Tbilisi day to `mapsUsage/{YYYY-MM-DD}` with the
+successful (2xx) request count per API. Counting our own calls in JavaScript
+would have missed every call the PHONE app makes, and changing it would have
+needed a release.
+
+> **One manual step, once.** The function runs in `geocharge-f6714` but the Maps
+> keys live in the Cloud project **`ev-charger-app-497408`**. Grant the
+> function's runtime service account
+> `518875377655-compute@developer.gserviceaccount.com` the role
+> **Monitoring Viewer** on `ev-charger-app-497408`
+> (IAM & Admin → Grant access), and make sure the **Cloud Monitoring API** is
+> enabled there. Without it every run logs a 403 and the card says the figures
+> could not be read — it never shows a confident zero.
+
+**Reading the card.** Per API: the month so far against the free tier (with the
+percentage LEFT), today against the daily quota cap set on the Maps project, and
+a warning when the current rate would overrun the month. The ceilings are
+editable (the tune icon) and persist in localStorage — Google changes its price
+list and we change our caps. Places is RAW requests, not billed sessions: with
+session tokens one search is 3-6 requests but bills as a single Place Details
+call, so judge it against the daily cap rather than the free tier.
+
+**Deploying it:**
+```bash
+firebase deploy --only firestore:rules,functions:pullMapsUsage --project geocharge-f6714
+firebase deploy --only hosting:geocharge-tesla --project geocharge-f6714
+cd admin && flutter build web --release && cd ..
+firebase deploy --only hosting:geocharge-f6714 --project geocharge-f6714
+```

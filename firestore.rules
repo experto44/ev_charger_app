@@ -117,6 +117,32 @@ service cloud.firestore {
       // delete intentionally absent → denied (revenue history is append-only).
     }
 
+    // ── Tesla web app usage ──────────────────────────────────────────────────
+    // One document per visit to tesla.geocharge.ge, written by the car itself
+    // (tesla/js/usage.js) and read only by the admin panel: who was in a car,
+    // when, and for how long. The driver may write rows that carry their own
+    // uid and nothing else — including on update, so a row cannot be handed to
+    // another account after the fact. Nobody deletes: the history is the point.
+    match /teslaSessions/{id} {
+      allow get, list: if isAdmin();
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid;
+      allow update: if request.auth != null
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.uid == request.auth.uid;
+      // delete intentionally absent → denied.
+    }
+
+    // ── Google Maps Platform usage ───────────────────────────────────────────
+    // One document per day, written ONLY by the `pullMapsUsage` scheduled
+    // function through the Admin SDK (which bypasses these rules), so that the
+    // panel can show how much of the monthly free tier is left. No client
+    // writes it and no client but an admin has any business reading it.
+    match /mapsUsage/{day} {
+      allow get, list: if isAdmin();
+      // write intentionally absent → only the Admin SDK.
+    }
+
     // ── Charger-free push alerts ─────────────────────────────────────────────
     // One doc per device, keyed by (a sanitized form of) the device's FCM token
     // — a secret bearer credential only that device knows. No login is required,

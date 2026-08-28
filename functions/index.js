@@ -196,3 +196,8 @@ Object.assign(exports, require("./tesla-pairing"));
 // to the car. Server-side because the URL format is undocumented and a fix must
 // not wait on an App Store review. See google-route.js.
 Object.assign(exports, require("./google-route"));
+
+// How much of Google Maps Platform's free tier is left, read from Cloud
+// Monitoring for the admin panel's usage gauge. See maps-usage.js — and note
+// that it reads a DIFFERENT Cloud project to the one it runs in.
+Object.assign(exports, require("./maps-usage"));

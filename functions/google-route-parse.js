@@ -241,6 +241,82 @@ function parseApiForm(u) {
   };
 }
 
+// ── A single place, rather than a route ──────────────────────────────────────
+// "I found the hotel on my phone, send it to the car." Google Maps' own share
+// button on a place produces the same maps.app.goo.gl link shape as a shared
+// route, so the only thing that tells the two apart is what it expands to.
+
+/** Decode one path segment: Google writes spaces as '+' in these. */
+function segment(raw) {
+  try {
+    return decodeURIComponent(raw).replace(/\+/g, " ").trim();
+  } catch (_) {
+    return String(raw).replace(/\+/g, " ").trim();
+  }
+}
+
+const coordOf = (v) => {
+  const c = String(v || "").trim().match(COORD);
+  return c ? { lat: Number(c[1]), lng: Number(c[2]) } : null;
+};
+
+/**
+ * The place's real coordinates, in order of how much they can be trusted.
+ *
+ * The `data=` blob is the place itself: `!8m2!3d<lat>!4d<lng>` is the same
+ * block a shared route carries per stop. `@lat,lng,17z` is only where the
+ * CAMERA was, which for a shared place is on it — close enough to drive to,
+ * but never preferred over the real thing.
+ */
+function placePoint(u) {
+  const data = (u.pathname.match(/\/data=([^/?]+)/) || [])[1] || u.search || "";
+  const exact = data.match(/!8m2!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/) ||
+    data.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
+  if (exact) return { lat: Number(exact[1]), lng: Number(exact[2]) };
+
+  // /maps/place/41.7,44.8 — a dropped pin has coordinates for a name.
+  const named = (u.pathname.match(/\/maps\/(?:place|search)\/([^/@]+)/) || [])[1];
+  const fromName = named ? coordOf(segment(named)) : null;
+  if (fromName) return fromName;
+
+  const q = u.searchParams;
+  for (const key of ["q", "query", "ll", "center", "sll", "daddr"]) {
+    const c = coordOf(q.get(key));
+    if (c) return c;
+  }
+
+  const at = u.pathname.match(/\/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+  if (at) return { lat: Number(at[1]), lng: Number(at[2]) };
+  return null;
+}
+
+/** The place's name, where the link carries one worth showing on a car screen. */
+function placeName(u) {
+  const seg = (u.pathname.match(/\/maps\/(?:place|search)\/([^/@]+)/) || [])[1];
+  const fromPath = seg ? segment(seg) : "";
+  if (fromPath && !COORD.test(fromPath)) return shortName(fromPath);
+
+  const q = u.searchParams.get("q") || u.searchParams.get("query") || "";
+  const decoded = q.trim();
+  if (decoded && !COORD.test(decoded)) return shortName(decoded);
+  return null;
+}
+
+/**
+ * Read a shared place. Throws when the link names somewhere we cannot put on a
+ * map — a `cid=` link or a bare search phrase carries no coordinates at all,
+ * and guessing one would send a driver to the wrong hotel.
+ */
+function parsePlace(u) {
+  const point = placePoint(u);
+  if (!point) {
+    throw new HttpsError("invalid-argument", "Could not read that location.", {
+      reason: "no-coords",
+    });
+  }
+  return { kind: "place", stop: { ...point, name: placeName(u) } };
+}
+
 /**
  * Pick the parser by the shape of the URL rather than by where the link came
  * from: the app cannot tell us which phone shared it, and a link forwarded
@@ -255,4 +331,31 @@ function parseRoute(u) {
   throw new HttpsError("invalid-argument", "That link is not a route, just a place.");
 }
 
-module.exports = { parseRoute, parseDirections, parseLegacy, parseApiForm, geocodePoints, shortName };
+/**
+ * A route where the link describes one, a single place where it describes that.
+ * Both end up in the car's inbox as somewhere to drive to; the difference is
+ * only how many points came with it.
+ *
+ * Order matters: a directions link also carries `@lat,lng` and would parse as
+ * a place, so every route shape is tried first and the place is the fallback.
+ */
+function parseTarget(u) {
+  if (/\/maps\/dir\/.+/.test(u.pathname)) return { kind: "route", ...parseDirections(u) };
+  if (u.searchParams.has("daddr")) return { kind: "route", ...parseLegacy(u) };
+  if (u.searchParams.get("api") === "1" && u.searchParams.has("destination")) {
+    return { kind: "route", ...parseApiForm(u) };
+  }
+  return parsePlace(u);
+}
+
+module.exports = {
+  parseRoute,
+  parseTarget,
+  parsePlace,
+  placeName,
+  parseDirections,
+  parseLegacy,
+  parseApiForm,
+  geocodePoints,
+  shortName,
+};

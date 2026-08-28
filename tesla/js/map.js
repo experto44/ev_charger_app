@@ -71,8 +71,12 @@ let markers = new Map(); // station.id -> google.maps.Marker
 let clusterer = null;
 let userMarker = null;   // blue "my location" dot
 let searchMarker = null; // red destination pin
-let watchId = null;
 let trafficLayer = null;
+
+// Where the locate button leaves the camera. Google Maps' own "my location"
+// lands at street level, and the old value here (13) showed a whole region
+// with a dot somewhere in it — technically the answer, useless in a car.
+const LOCATE_ZOOM = 16;
 
 /** Load the Maps JS API once; resolves when `google.maps` is usable. */
 export function loadMapsApi() {
@@ -278,9 +282,19 @@ export function zoomBy(delta) {
   map.setZoom((map.getZoom() ?? MAP_ZOOM) + delta);
 }
 
+/**
+ * Put the camera somewhere on purpose: a search result, a station, a country
+ * the driver just switched on.
+ *
+ * The event is what tells follow.js to stop pulling the map back to the car —
+ * without it, opening a charger while driving would show it for one second
+ * before the next GPS fix dragged the map away. Drive mode and follow mode move
+ * the camera through the map object directly, so neither raises it.
+ */
 export function panTo(pos, zoom) {
   map.panTo(pos);
   if (zoom != null) map.setZoom(zoom);
+  document.dispatchEvent(new CustomEvent('gc:camera-moved'));
 }
 
 // ── Where the driver is ──────────────────────────────────────────────────────
@@ -333,6 +347,10 @@ export function setUserLocation(pos, heading) {
 /**
  * Locate the user, centre on them, and keep the dot updated. Resolves with the
  * position, or rejects (denied/unavailable/timeout) so the caller can warn.
+ *
+ * Keeping the dot fresh afterwards is follow.js's job — it holds the one live
+ * watch this app has (outside drive mode), so granting the permission here is
+ * also what lets the camera start following the car by itself.
  */
 export function locateMe({ center = true } = {}) {
   return new Promise((resolve, reject) => {
@@ -341,15 +359,7 @@ export function locateMe({ center = true } = {}) {
       (p) => {
         const pos = { lat: p.coords.latitude, lng: p.coords.longitude };
         setUserLocation(pos);
-        if (center) panTo(pos, 13);
-        // Keep the dot fresh without moving the camera.
-        if (watchId == null) {
-          watchId = navigator.geolocation.watchPosition(
-            (q) => setUserLocation({ lat: q.coords.latitude, lng: q.coords.longitude }),
-            () => {},
-            { enableHighAccuracy: true, maximumAge: 15000 },
-          );
-        }
+        if (center) panTo(pos, LOCATE_ZOOM);
         resolve(pos);
       },
       (err) => reject(err),

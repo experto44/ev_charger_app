@@ -126,6 +126,32 @@ export function currentUid() {
   return auth.currentUser?.uid ?? null;
 }
 
+/** The signed-in account's email, where it has one. */
+export function currentEmail() {
+  return auth.currentUser?.email ?? '';
+}
+
+/**
+ * The server's clock, for a document field. A Tesla's browser clock can be
+ * minutes or days out, and a session filed under the wrong day is worse than
+ * no session at all.
+ */
+export function serverNow() {
+  return serverTimestamp();
+}
+
+/**
+ * Create or merge one usage-session document (`teslaSessions/{id}`).
+ *
+ * A top-level collection rather than something under users/{uid}: the admin
+ * panel wants "who was in a car today" across every account, which is one
+ * query here and a collection-group scan there. The rules keep a driver to
+ * writing rows that carry their own uid. See js/usage.js.
+ */
+export function saveSession(id, data) {
+  return setDoc(doc(db, 'teslaSessions', id), data, { merge: true });
+}
+
 /** Live contents of users/{uid}/tesla/{name}; cb(null) when there is none. */
 export function watchTeslaDoc(uid, name, cb) {
   return onSnapshot(

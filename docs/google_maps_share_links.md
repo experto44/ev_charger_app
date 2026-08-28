@@ -201,3 +201,28 @@ so a change made for one phone cannot quietly break the other:
 ```bash
 cd functions && node --test
 ```
+
+## A place, not a route
+
+Google's share button produces the same `maps.app.goo.gl/…` short link for a
+place as for a route, so which one it is can only be told from what the link
+expands to. `parseTarget()` tries every route shape first and falls back to
+`parsePlace()`, which reads a point out of, in order:
+
+| Source | Example |
+| --- | --- |
+| the data blob | `/maps/place/Name/data=…!8m2!3d41.7092!4d44.7862` |
+| a dropped pin | `/maps/place/41.71350,44.79700/…` |
+| the query | `?q=41.71,44.79`, `?query=…`, `?ll=…`, `?center=…` |
+| the camera | `/@41.7135,44.797,15z` — the map centre, so it is the last resort |
+
+A link that names a place only by id (`/maps/place//data=!4m2!3m1!1s0x40440…`)
+carries no coordinates at all. Rather than refuse the driver's hotel,
+`google-route.js` then fetches that same public page once and takes the position
+out of Google's own `og:image` static map (falling back to the `!3d…!4d…` block
+and the camera position). No API key and no Geocoding call is involved.
+
+The answer has the same shape as a route — a destination and no waypoints — so
+the app needs no change to send one: it writes the same `users/{uid}/tesla/inbox`
+document, and the car offers a place card with "navigate", "route here"
+(the trip planner, chargers and all) and "save".

@@ -726,9 +726,12 @@ export function relabelTrip() {
 }
 
 /** Prefill just the destination (from search "route here"). */
-export function setTripDestination(pos) {
+export function setTripDestination(pos, label = '') {
   state.stops[state.stops.length - 1].coords = pos;
-  state.stops[state.stops.length - 1].label = `${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)}`;
+  // A name where the caller has one ("Rooms Hotel"), coordinates where it does
+  // not — the field is what the driver reads back to check the right place.
+  state.stops[state.stops.length - 1].label =
+    label || `${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)}`;
   renderStops();
   scheduleCompute();
 }

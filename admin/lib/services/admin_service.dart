@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/app_user.dart';
+import '../models/maps_usage.dart';
 import '../models/purchase.dart';
+import '../models/tesla_session.dart';
 import 'premium_terms.dart';
 
 /// Data + auth layer for the admin panel.
@@ -77,6 +79,33 @@ class AdminService {
         return bd.compareTo(ad);
       });
       return list;
+    });
+  }
+
+  // ── Tesla web app usage ────────────────────────────────────────────────────
+  /// Visits to tesla.geocharge.ge over the last [days] days, written by the car
+  /// itself (tesla/js/usage.js).
+  ///
+  /// Bounded by date rather than fetched whole: one document per visit adds up,
+  /// and nothing on the panel looks further back than the chart does. The range
+  /// is on a single field, so Firestore needs no composite index for it.
+  Stream<List<TeslaSession>> teslaSessionsStream({int days = 30}) {
+    final cutoff = DateTime.now().subtract(Duration(days: days));
+    return _db
+        .collection('teslaSessions')
+        .where('startedAt', isGreaterThan: Timestamp.fromDate(cutoff))
+        .snapshots()
+        .map((snap) => snap.docs.map(TeslaSession.fromDoc).toList());
+  }
+
+  /// Daily Google Maps Platform usage, written hourly by `pullMapsUsage`.
+  /// Only the current month and a little either side is ever shown, so the
+  /// whole collection (35 rolling days) is small enough to take as it comes.
+  Stream<List<MapsUsageDay>> mapsUsageStream() {
+    return _db.collection('mapsUsage').snapshots().map((snap) {
+      final rows = snap.docs.map(MapsUsageDay.fromDoc).toList();
+      rows.sort((a, b) => a.day.compareTo(b.day));
+      return rows;
     });
   }
 

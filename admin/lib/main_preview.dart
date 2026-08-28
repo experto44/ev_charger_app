@@ -8,7 +8,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import 'models/app_user.dart';
+import 'models/maps_usage.dart';
 import 'models/purchase.dart';
+import 'models/tesla_session.dart';
 import 'screens/dashboard_screen.dart';
 import 'services/premium_terms.dart';
 import 'theme.dart';
@@ -27,6 +29,8 @@ class _PreviewApp extends StatelessWidget {
         email: 'miruashvili.k@gmail.com',
         users: users,
         purchases: _mockPurchases(users),
+        sessions: _mockSessions(users),
+        mapsUsage: _mockMapsUsage(),
         onSignOut: () {},
         onManageAdmins: () {},
         // No Firestore in the preview: pretend the grant succeeded and report
@@ -76,6 +80,62 @@ List<Purchase> _mockPurchases(List<AppUser> users) {
     ));
   }
   return out;
+}
+
+/// Mock visits to the car app: a handful of accounts, most of them occasional,
+/// one of them in the car nearly every day — enough for the chart, the table
+/// and the "one person, six sessions" case the two bar colours exist for.
+List<TeslaSession> _mockSessions(List<AppUser> users) {
+  final rnd = Random(23);
+  final now = DateTime.now();
+  final drivers = users.take(6).toList();
+  final out = <TeslaSession>[];
+  for (var day = 29; day >= 0; day--) {
+    for (var i = 0; i < drivers.length; i++) {
+      // The first driver is in the car most days; the rest now and then.
+      final chance = i == 0 ? 0.8 : 0.18 - i * 0.02;
+      if (rnd.nextDouble() > chance) continue;
+      final visits = 1 + (rnd.nextDouble() < 0.3 ? rnd.nextInt(3) : 0);
+      for (var v = 0; v < visits; v++) {
+        final started = now.subtract(Duration(days: day, hours: rnd.nextInt(12)));
+        final seconds = 120 + rnd.nextInt(2400);
+        out.add(TeslaSession(
+          id: 's${day}_${i}_$v',
+          uid: drivers[i].uid,
+          email: drivers[i].email,
+          startedAt: started,
+          lastSeenAt: started.add(Duration(seconds: seconds)),
+          seconds: seconds,
+          drives: rnd.nextDouble() < 0.4 ? 1 : 0,
+        ));
+      }
+    }
+  }
+  return out;
+}
+
+/// Mock Google usage, at a rate that puts Directions on course to overrun its
+/// free tier — which is the state the gauge exists to make obvious.
+List<MapsUsageDay> _mockMapsUsage() {
+  final rnd = Random(5);
+  final now = DateTime.now();
+  return [
+    for (var day = 34; day >= 0; day--)
+      () {
+        final d = now.subtract(Duration(days: day));
+        return MapsUsageDay(
+          day: '${d.year}-${d.month.toString().padLeft(2, '0')}-'
+              '${d.day.toString().padLeft(2, '0')}',
+          calls: {
+            'maps': 15 + rnd.nextInt(30),
+            'directions': 120 + rnd.nextInt(70),
+            'places': 180 + rnd.nextInt(200),
+            'geocoding': 0,
+          },
+          updatedAt: now,
+        );
+      }(),
+  ];
 }
 
 List<AppUser> _mockUsers(int n) {

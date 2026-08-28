@@ -172,19 +172,39 @@ function pending() {
   return i;
 }
 
+/**
+ * A single point rather than a trip: the driver looked a hotel up on the phone
+ * and sent where it is. Nothing in the document says which it is — the app
+ * sends both through the same field — so the stops are what tell them apart,
+ * and that is exactly the difference that matters here: with no stops there is
+ * nothing to lose by planning the way there from scratch.
+ */
+function isPlace(i) {
+  return !(i.waypoints ?? []).length;
+}
+
 function showInbox() {
   const i = pending();
   if (!i || isDriving()) return;
 
+  const place = isPlace(i);
   const card = $('inbox-card');
+  card.classList.toggle('is-place', place);
+  card.querySelector('.resume-card__label').textContent =
+    t(place ? 'inboxPlaceTitle' : 'inboxTitle');
   card.querySelector('.resume-card__name').textContent = i.name || t('routeUnnamed');
   const sub = card.querySelector('.resume-card__sub');
-  const bits = [stopsLabel((i.waypoints ?? []).length)];
+  const bits = place
+    // Coordinates, because a place sent from a phone is often a name the driver
+    // half-remembers and this is the one line that says WHERE it is.
+    ? [`${i.destination.lat.toFixed(4)}, ${i.destination.lng.toFixed(4)}`]
+    : [stopsLabel((i.waypoints ?? []).length)];
   if (i.avoidTolls) bits.push(t('routeNoTolls'));
   if ((i.dropped ?? []).length) bits.push(t('routeDropped'));
   sub.textContent = bits.join(' · ');
+  $('inbox-plan')?.classList.toggle('is-hidden', !place);
   showMapCard('inbox-card');
-  track('inbox_offer', { source: i.source ?? 'app' });
+  track('inbox_offer', { source: i.source ?? 'app', place: place ? 1 : 0 });
 }
 
 /** Mark it dealt with, so it is not offered again on the next launch. */
@@ -401,6 +421,10 @@ export function relabelRoutes() {
     state.resumeOffered = false;
     showResume();
   }
+  // The from-phone card writes its own label (a place and a route say different
+  // things), and applyStaticStrings has just overwritten it with the route one.
+  const inbox = $('inbox-card');
+  if (inbox && !inbox.classList.contains('is-hidden')) showInbox();
 }
 
 export function initRoutes() {
@@ -447,6 +471,19 @@ export function initRoutes() {
     ]);
     track('inbox_save', {});
     showToast(t('routeSaved'), 2500);
+  });
+  // A place from the phone, planned properly: the trip planner opens on it and
+  // works out where to charge on the way. Announced rather than called, because
+  // the planner already imports this module and a cycle between the two would
+  // be a needless trap.
+  $('inbox-plan')?.addEventListener('click', () => {
+    const i = pending();
+    consumeInbox();
+    if (!i || gated()) return;
+    track('inbox_plan', {});
+    document.dispatchEvent(new CustomEvent('gc:plan-to', {
+      detail: { pos: point(i.destination), name: i.name || '' },
+    }));
   });
   $('inbox-dismiss')?.addEventListener('click', () => {
     track('inbox_dismiss', {});

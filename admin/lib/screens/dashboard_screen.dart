@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/app_user.dart';
+import '../models/maps_usage.dart';
 import '../models/purchase.dart';
+import '../models/tesla_session.dart';
 import '../services/admin_service.dart';
 import '../services/export_service.dart';
 import '../services/finance.dart';
@@ -17,13 +19,14 @@ import '../widgets/revenue_chart.dart';
 import '../widgets/status_chip.dart';
 import '../widgets/user_tile.dart';
 import 'admins_screen.dart';
+import 'tesla_section.dart';
 
 /// Subscription-tier filter.
 enum StatusFilter { all, premium, free }
 
 /// Which top-level view is shown: the user directory, the manual-premium
-/// register, or the revenue analytics.
-enum SectionTab { users, premium, finance }
+/// register, the revenue analytics, or the car app's own usage.
+enum SectionTab { users, premium, finance, tesla }
 
 /// Grants [grant] to [user] and resolves with the new expiry date.
 typedef GrantPremiumFn = Future<DateTime> Function(
@@ -41,21 +44,28 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final email = AdminService.I.currentUser?.email ?? '';
-    // Two independent streams so a slow/failed purchases read never blocks the
-    // user directory (and vice-versa). The purchases stream is nested inside so
-    // both snapshots feed one DashboardView.
+    // Four independent streams, nested rather than combined: a slow or failed
+    // read of one (Tesla sessions, say) must never blank the user directory.
+    // Each snapshot is handed to the same DashboardView, which decides for
+    // itself what "still loading" looks like in the tab that needs it.
     return StreamBuilder<List<AppUser>>(
       stream: AdminService.I.usersStream(),
-      builder: (context, usersSnap) {
-        return StreamBuilder<List<Purchase>>(
-          stream: AdminService.I.purchasesStream(),
-          builder: (context, purchasesSnap) {
-            return DashboardView(
+      builder: (context, usersSnap) => StreamBuilder<List<Purchase>>(
+        stream: AdminService.I.purchasesStream(),
+        builder: (context, purchasesSnap) => StreamBuilder<List<TeslaSession>>(
+          stream: AdminService.I.teslaSessionsStream(),
+          builder: (context, sessionsSnap) => StreamBuilder<List<MapsUsageDay>>(
+            stream: AdminService.I.mapsUsageStream(),
+            builder: (context, usageSnap) => DashboardView(
               email: email,
               users: usersSnap.data,
               error: usersSnap.error?.toString(),
               purchases: purchasesSnap.data,
               purchasesError: purchasesSnap.error?.toString(),
+              sessions: sessionsSnap.data,
+              sessionsError: sessionsSnap.error?.toString(),
+              mapsUsage: usageSnap.data,
+              mapsUsageError: usageSnap.error?.toString(),
               onSignOut: () => AdminService.I.signOut(),
               onManageAdmins: () => Navigator.push(
                 context,
@@ -69,10 +79,10 @@ class DashboardScreen extends StatelessWidget {
               ),
               onRevokePremium: (user) => AdminService.I
                   .revokePremium(user.uid, wasManual: user.isManual),
-            );
-          },
-        );
-      },
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -88,6 +98,10 @@ class DashboardView extends StatefulWidget {
     this.error,
     this.purchases,
     this.purchasesError,
+    this.sessions,
+    this.sessionsError,
+    this.mapsUsage,
+    this.mapsUsageError,
     this.initialSection = SectionTab.users,
     required this.onSignOut,
     required this.onManageAdmins,
@@ -113,6 +127,14 @@ class DashboardView extends StatefulWidget {
 
   /// Non-null when the purchases stream failed.
   final String? purchasesError;
+
+  /// Visits to the Tesla web app over the last 30 days. `null` = loading.
+  final List<TeslaSession>? sessions;
+  final String? sessionsError;
+
+  /// Daily Google Maps Platform usage. `null` = loading.
+  final List<MapsUsageDay>? mapsUsage;
+  final String? mapsUsageError;
 
   final VoidCallback onSignOut;
   final VoidCallback onManageAdmins;
@@ -278,6 +300,11 @@ class _DashboardViewState extends State<DashboardView> {
                   icon: Icon(Icons.payments_outlined, size: 18),
                   label: Text('Finance'),
                 ),
+                ButtonSegment(
+                  value: SectionTab.tesla,
+                  icon: Icon(Icons.electric_car_outlined, size: 18),
+                  label: Text('Tesla'),
+                ),
               ],
               selected: {_section},
               showSelectedIcon: false,
@@ -304,6 +331,19 @@ class _DashboardViewState extends State<DashboardView> {
         return _premiumBody();
       case SectionTab.finance:
         return _financeBody();
+      case SectionTab.tesla:
+        return TeslaUsageView(
+          sessions: widget.sessions,
+          sessionsError: widget.sessionsError,
+          usage: widget.mapsUsage,
+          usageError: widget.mapsUsageError,
+          // The directory is already loaded for the Users tab; reusing it means
+          // a session row can show a name rather than a uid.
+          nameByUid: {
+            for (final u in widget.users ?? const <AppUser>[])
+              u.uid: u.name.isNotEmpty ? u.name : u.email,
+          },
+        );
     }
   }
 

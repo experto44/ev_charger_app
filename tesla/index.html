@@ -307,6 +307,10 @@
       <div class="resume-card__sub"></div>
       <div class="dest-card__actions">
         <button id="inbox-go" class="btn btn--primary" data-t="navigate"></button>
+        <!-- A single place sent from the phone ("here is the hotel") gets a
+             fourth action: plan the way there, chargers and all. Hidden for a
+             route, which already is a plan. -->
+        <button id="inbox-plan" class="btn is-hidden" data-t="planRouteHere"></button>
         <button id="inbox-save" class="btn" data-t="favSave"></button>
         <button id="inbox-dismiss" class="btn btn--ghost" data-t="favCancel"></button>
       </div>

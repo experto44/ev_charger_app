@@ -1,10 +1,15 @@
 "use strict";
 
-// Reading a route the driver shared out of the Google Maps app.
+// Reading a route — or a single place — the driver shared out of Google Maps.
 //
 // The phone sends the link it was given ("share directions" →
 // https://maps.app.goo.gl/…) and gets back the stops, so the car can drive it.
 // See docs/google_maps_share_links.md for the format and how it was worked out.
+//
+// A shared PLACE arrives through the same door and comes back as a trip with a
+// destination and no stops: "I found the hotel on my phone, send it to the
+// car." Google's share button produces the same short link for both, so which
+// one it is can only be told from what it expands to — parseTarget's job.
 //
 // The same short link expands to one of two entirely different URLs depending
 // on which Google Maps app made it. Android gives the modern
@@ -26,7 +31,7 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
 
 const { underLimit } = require("./rate-limit");
-const { parseRoute } = require("./google-route-parse");
+const { parseTarget, placeName } = require("./google-route-parse");
 
 // One driver sharing routes is doing it a handful of times a day. This is here
 // to stop a loop, not to ration a feature.
@@ -63,8 +68,14 @@ function isShort(u) {
 function isMaps(u) {
   if (!LONG_HOST.test(u.hostname)) return false;
   // The path test alone rejects every route shared off an iPhone: those land on
-  // maps.google.com with the whole trip in the query and "/" for a path.
-  return u.pathname.startsWith("/maps") || u.searchParams.has("daddr");
+  // maps.google.com with the whole trip in the query and "/" for a path. A
+  // shared place can land the same way, with the point in `q` or `ll`.
+  return (
+    u.pathname.startsWith("/maps") ||
+    u.searchParams.has("daddr") ||
+    u.searchParams.has("q") ||
+    u.searchParams.has("ll")
+  );
 }
 
 /**
@@ -105,6 +116,65 @@ async function expand(u) {
 
 const placed = (s) => Number.isFinite(s.lat) && Number.isFinite(s.lng);
 
+/**
+ * Last resort for a place whose URL carries no coordinates.
+ *
+ * Some shared place links are nothing but an id — `/maps/place//data=!4m2!3m1!
+ * !1s0x40440…` — which names a place Google knows and we do not. Rather than
+ * refuse the driver's hotel, fetch the page they were given and take the
+ * position out of it. Three sources, in order of how stable they are: the
+ * static-map image Google puts in its own og:image tag, the coordinate block
+ * in the embedded state, and the camera position.
+ *
+ * No API key and no Geocoding call: this is the same public page the link
+ * opens. Returns null rather than throwing — the caller already has an error
+ * worth reporting if this cannot help.
+ */
+async function placeFromPage(u) {
+  let html;
+  try {
+    const res = await fetch(u.toString(), {
+      headers: { "user-agent": UA, "accept-language": "en" },
+      redirect: "follow",
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return null;
+    // These pages are megabytes of script; the position is near the top.
+    html = (await res.text()).slice(0, 500000);
+  } catch (err) {
+    logger.warn("place page fetch failed", { err: String(err) });
+    return null;
+  }
+
+  const m =
+    html.match(/staticmap[^"']*?center=(-?\d+(?:\.\d+)?)(?:%2C|,)(-?\d+(?:\.\d+)?)/) ||
+    html.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/) ||
+    html.match(/\/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+  if (!m) return null;
+  const lat = Number(m[1]);
+  const lng = Number(m[2]);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  return { lat, lng, name: nameFromPage(html) };
+}
+
+/**
+ * The place's name as the page states it. Google writes it into both an
+ * itemprop and an og:title; the og:title is the one that survives their
+ * markup changes better, so it is the fallback rather than the first choice
+ * only because the itemprop is the more specific of the two.
+ */
+function nameFromPage(html) {
+  const m =
+    html.match(/<meta content="([^"]{1,120})" itemprop="name"/) ||
+    html.match(/<meta property="og:title" content="([^"]{1,120})"/);
+  if (!m) return null;
+  const name = m[1].replace(/&amp;/g, "&").replace(/&#39;/g, "'").trim();
+  // Google titles a place page "<Name> · <address>" (and, signed out, sometimes
+  // just "Google Maps"). Only the name goes on a card in a car.
+  const head = name.split(" · ")[0].trim();
+  return !head || head === "Google Maps" ? null : head;
+}
+
 // ── The callable ─────────────────────────────────────────────────────────────
 exports.importGoogleRoute = onCall(async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
@@ -120,7 +190,40 @@ exports.importGoogleRoute = onCall(async (request) => {
   }
 
   const full = await expand(input);
-  const parsed = parseRoute(full);
+  let parsed;
+  try {
+    parsed = parseTarget(full);
+  } catch (err) {
+    // A place the URL names but does not place. The page itself knows where it
+    // is; anything else is a link we genuinely cannot read.
+    if (err?.details?.reason !== "no-coords") throw err;
+    const found = await placeFromPage(full);
+    if (!found) throw err;
+    parsed = {
+      kind: "place",
+      stop: { lat: found.lat, lng: found.lng, name: placeName(full) ?? found.name },
+    };
+    logger.info("google place located from the page", { uid });
+  }
+
+  // ── A single place ─────────────────────────────────────────────────────────
+  // Answered in the same shape as a route so nothing downstream has to learn a
+  // second one: the app already sends "a destination and its stops" to the car,
+  // and this is that with the stops left out. `kind` is there for a client that
+  // wants to word its own screen differently; today's app ignores it.
+  if (parsed.kind === "place") {
+    logger.info("google place imported", { uid, named: Boolean(parsed.stop.name) });
+    return {
+      kind: "place",
+      origin: null,
+      waypoints: [],
+      destination: parsed.stop,
+      dropped: [],
+      avoidTolls: false,
+      avoidHighways: false,
+      avoidFerries: false,
+    };
+  }
 
   if (parsed.mode !== "0") {
     // A machine-readable reason alongside the message: the app has to tell
@@ -156,6 +259,7 @@ exports.importGoogleRoute = onCall(async (request) => {
   });
 
   return {
+    kind: "route",
     // Informational only: the car always starts from its own live GPS.
     origin: parsed.hasOrigin && placed(stops[0]) ? stops[0] : null,
     waypoints,

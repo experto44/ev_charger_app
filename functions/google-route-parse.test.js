@@ -14,9 +14,10 @@
 const test = require("node:test");
 const assert = require("node:assert");
 
-const { parseRoute } = require("./google-route-parse");
+const { parseRoute, parseTarget } = require("./google-route-parse");
 
 const route = (url) => parseRoute(new URL(url));
+const target = (url) => parseTarget(new URL(url));
 const near = (actual, expected, what) =>
   assert.ok(Math.abs(actual - expected) < 1e-5, what + ": " + actual + " is not " + expected);
 
@@ -176,4 +177,54 @@ test("a place is refused, and says so", () => {
   ]) {
     assert.throws(() => route(url), /not a route/, url);
   }
+});
+
+// ── A single place, shared instead of a route ────────────────────────────────
+// Same short link, same door, different shape at the other end: the driver
+// found a hotel on the phone and sent where it is, not how to get there.
+// parseRoute still refuses these (above); parseTarget is what reads them.
+
+test("a shared place gives its exact coordinates and its name", () => {
+  const p = target(
+    "https://www.google.com/maps/place/Rooms+Hotel+Tbilisi/@41.7092,44.7862,17z/" +
+      "data=!3m1!4b1!4m9!3m8!1s0x40440cd7e64f626b:0x1f0!5m2!4m1!1i2" +
+      "!8m2!3d41.7092123!4d44.7862456!16s%2Fg%2F1td_0abc"
+  );
+  assert.equal(p.kind, "place");
+  assert.equal(p.stop.name, "Rooms Hotel Tbilisi");
+  // The data blob, not the @ camera position two decimals coarser.
+  near(p.stop.lat, 41.7092123, "place lat");
+  near(p.stop.lng, 44.7862456, "place lng");
+});
+
+test("a dropped pin is a place with coordinates for a name", () => {
+  const p = target("https://www.google.com/maps/place/41.71350,44.79700/@41.7135,44.797,15z");
+  assert.equal(p.kind, "place");
+  assert.equal(p.stop.name, null);
+  near(p.stop.lat, 41.7135, "pin lat");
+});
+
+test("the old query forms of a place are read too", () => {
+  for (const url of [
+    "https://maps.google.com/?q=41.7135,44.7970",
+    "https://www.google.com/maps/search/?api=1&query=41.7135,44.7970",
+    "https://www.google.com/maps/@41.7135,44.797,14z",
+  ]) {
+    const p = target(url);
+    assert.equal(p.kind, "place", url);
+    near(p.stop.lng, 44.797, url);
+  }
+});
+
+test("a place with no coordinates anywhere is refused rather than guessed", () => {
+  assert.throws(
+    () => target("https://www.google.com/maps/place/Hotel+Astoria/data=!4m2!3m1!1s0x40440"),
+    /Could not read that location/
+  );
+});
+
+test("routes still parse as routes, not as the @ position they also carry", () => {
+  const r = target(IOS_SARPI);
+  assert.equal(r.kind, "route");
+  assert.equal(r.stops.length, 2);
 });
