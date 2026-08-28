@@ -1645,6 +1645,8 @@ class _PlaceFieldState extends State<_PlaceField> {
   final _focus  = FocusNode();
   Timer? _timer;
   List<PlacePrediction> _suggestions = const [];
+  // Each stop field is its own Places billing session (see PlacesSession).
+  final PlacesSession _session = PlacesSession();
 
   @override
   void initState() {
@@ -1665,7 +1667,8 @@ class _PlaceFieldState extends State<_PlaceField> {
     _timer?.cancel();
     if (q.trim().length < 2) { setState(() => _suggestions = const []); return; }
     _timer = Timer(const Duration(milliseconds: 400), () async {
-      final r = await PlacesService.autocomplete(q, bias: widget.searchBias);
+      final r = await PlacesService.autocomplete(q,
+          bias: widget.searchBias, session: _session);
       if (mounted) { setState(() => _suggestions = r); }
     });
   }
@@ -1673,7 +1676,7 @@ class _PlaceFieldState extends State<_PlaceField> {
   Future<void> _onSelect(PlacePrediction p) async {
     _focus.unfocus();
     setState(() => _suggestions = const []);
-    final coords = await PlacesService.getCoordinates(p.placeId);
+    final coords = await PlacesService.getCoordinates(p.placeId, session: _session);
     widget.onPlaceSelected(p, coords);
   }
 

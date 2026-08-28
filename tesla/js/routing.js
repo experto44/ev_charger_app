@@ -62,9 +62,22 @@ function planOffThread(input) {
   }).catch(() => planFromRoute(input)); // worker died → do it here instead
 }
 
-// ── Public entry point ───────────────────────────────────────────────────────
-export async function planRoute({ waypoints, currentBatteryPct, maxRangeKm, stations }) {
-  if (waypoints.length < 2) return null;
+// ── Cached road geometry ─────────────────────────────────────────────────────
+// The road depends ONLY on the waypoints. The battery slider and the connector
+// / min-kW chips re-plan on every nudge, and each one used to be its own billed
+// Directions call — by far the biggest source of our Maps traffic. So the road
+// is fetched once per waypoint list and the EV math alone re-runs on top of it.
+// Three entries also cover a driver toggling a stop off and back on; more than
+// that would just hold onto long international polylines for nothing.
+const ROAD_CACHE_MAX = 3;
+const roadCache = new Map();
+
+const roadKey = (waypoints) =>
+  waypoints.map((w) => `${w.lat.toFixed(5)},${w.lng.toFixed(5)}`).join('|');
+
+async function fetchRoad(waypoints) {
+  const key = roadKey(waypoints);
+  if (roadCache.has(key)) return roadCache.get(key);
 
   const svc = new google.maps.DirectionsService();
   let route;
@@ -81,6 +94,29 @@ export async function planRoute({ waypoints, currentBatteryPct, maxRangeKm, stat
   }
   if (!route) return null;
 
+  const road = roadFrom(route);
+  if (roadCache.size >= ROAD_CACHE_MAX) roadCache.delete(roadCache.keys().next().value);
+  roadCache.set(key, road);
+  return road;
+}
+
+// ── Public entry point ───────────────────────────────────────────────────────
+export async function planRoute({ waypoints, currentBatteryPct, maxRangeKm, stations }) {
+  if (waypoints.length < 2) return null;
+
+  const road = await fetchRoad(waypoints);
+  if (!road) return null;
+
+  return planOffThread({
+    ...road,
+    currentBatteryPct,
+    maxRangeKm,
+    stations,
+  });
+}
+
+// Turns one Google route into the plain data the EV core runs on.
+function roadFrom(route) {
   // Detailed road-following geometry: concatenate every step's decoded path.
   // (route.overview_path is simplified and visibly cuts corners on long routes.)
   // This is also where google.maps objects stop: everything below the handoff
@@ -104,12 +140,5 @@ export async function planRoute({ waypoints, currentBatteryPct, maxRangeKm, stat
     legEndsKm.push(totalDistKm);
   }
 
-  return planOffThread({
-    pts,
-    totalDistKm,
-    legEndsKm,
-    currentBatteryPct,
-    maxRangeKm,
-    stations,
-  });
+  return { pts, totalDistKm, legEndsKm };
 }

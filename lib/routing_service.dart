@@ -337,26 +337,42 @@ class EVRouteResult {
   final List<double>       legEndsKm;
 }
 
+// ── Cached road geometry ──────────────────────────────────────────────────────
+/// The part of a plan that depends ONLY on the waypoints: the road Google gives
+/// back. Battery level and charger filters change the EV math layered on top of
+/// it, never the road, so this is fetched once per set of waypoints and reused.
+class _Road {
+  const _Road(this.points, this.totalDistKm, this.legEndsKm);
+  final List<LatLng>   points;
+  final double         totalDistKm;
+  final List<double>   legEndsKm;
+}
+
 // ── Routing service ───────────────────────────────────────────────────────────
 class RoutingService {
   static const _directionsUrl =
       'https://maps.googleapis.com/maps/api/directions/json';
 
-  /// Plans an EV route: calls Directions API, decodes polyline, runs EV math.
-  static Future<EVRouteResult?> planRoute({
-    required List<LatLng>  waypoints,
-    required double        currentBatteryPct,
-    required List<Station> stations,
-  }) async {
-    if (waypoints.length < 2) { return null; }
+  /// Last few roads fetched, keyed by waypoint list. Every battery-slider nudge
+  /// and every filter chip re-plans, and without this each one was its own
+  /// billed Directions call — the single biggest source of our Maps traffic.
+  /// Three entries also cover a driver toggling a stop off and back on; more
+  /// than that would just hold onto long international polylines (a Tbilisi →
+  /// İstanbul route is ~38k points) for nothing.
+  static final Map<String, _Road> _roadCache = {};
+  static const _kRoadCacheMax = 3;
 
-    // Load driver's max range from SharedPreferences
-    final prefs      = await SharedPreferences.getInstance();
-    final maxRangeKm = double.tryParse(prefs.getString(kMaxRange) ?? '') ?? 300.0;
-    final effectiveKm = maxRangeKm * 0.90; // 90 % usable
-    final reserveKm   = maxRangeKm * 0.10; // 10 % safety reserve
+  static String _roadKey(List<LatLng> waypoints) => waypoints
+      .map((p) => '${p.latitude.toStringAsFixed(5)},'
+                  '${p.longitude.toStringAsFixed(5)}')
+      .join('|');
 
-    // Build Directions API params
+  /// Fetches the road for [waypoints], or returns the cached one.
+  static Future<_Road?> _fetchRoad(List<LatLng> waypoints) async {
+    final key = _roadKey(waypoints);
+    final hit = _roadCache[key];
+    if (hit != null) { return hit; }
+
     final mid = waypoints.sublist(1, waypoints.length - 1);
     final params = <String, String>{
       'origin':      '${waypoints.first.latitude},${waypoints.first.longitude}',
@@ -380,7 +396,6 @@ class RoutingService {
       if (routes.isEmpty) { return null; }
       final route = routes.first as Map<String, dynamic>;
 
-      // Decode polyline
       final pts = _decodePolyline(
           route['overview_polyline']['points'] as String);
 
@@ -394,6 +409,39 @@ class RoutingService {
             ((leg as Map<String, dynamic>)['distance']['value'] as int) / 1000.0;
         legEnds.add(totalDistKm);
       }
+
+      final road = _Road(pts, totalDistKm, legEnds);
+      if (_roadCache.length >= _kRoadCacheMax) {
+        _roadCache.remove(_roadCache.keys.first); // oldest insertion
+      }
+      _roadCache[key] = road;
+      return road;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Plans an EV route: fetches the road (cached), then runs the EV math.
+  static Future<EVRouteResult?> planRoute({
+    required List<LatLng>  waypoints,
+    required double        currentBatteryPct,
+    required List<Station> stations,
+  }) async {
+    if (waypoints.length < 2) { return null; }
+
+    // Load driver's max range from SharedPreferences
+    final prefs      = await SharedPreferences.getInstance();
+    final maxRangeKm = double.tryParse(prefs.getString(kMaxRange) ?? '') ?? 300.0;
+    final effectiveKm = maxRangeKm * 0.90; // 90 % usable
+    final reserveKm   = maxRangeKm * 0.10; // 10 % safety reserve
+
+    final road = await _fetchRoad(waypoints);
+    if (road == null) { return null; }
+
+    try {
+      final pts         = road.points;
+      final totalDistKm = road.totalDistKm;
+      final legEnds     = road.legEndsKm;
 
       // ── Cumulative along-route distance for every polyline point ───────────
       final cum = List<double>.filled(pts.length, 0.0);

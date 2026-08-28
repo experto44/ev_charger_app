@@ -8,6 +8,14 @@ import { t } from './i18n.js';
 
 let acService = null;
 let placesService = null;
+// One session token ties a keystroke burst to the Place Details call that ends
+// it, so Google bills the whole search once instead of per prediction request.
+let sessionToken = null;
+
+function token() {
+  if (!sessionToken) sessionToken = new google.maps.places.AutocompleteSessionToken();
+  return sessionToken;
+}
 
 function services() {
   if (!acService) acService = new google.maps.places.AutocompleteService();
@@ -26,6 +34,7 @@ function placePredictions(query) {
     ac.getPlacePredictions(
       {
         input: query,
+        sessionToken: token(),
         ...(centre
           ? { location: centre, radius: 300000 } // ~one country wide
           : {}),
@@ -36,12 +45,19 @@ function placePredictions(query) {
   });
 }
 
+// Only `geometry` is asked for: that keeps Details on the cheap location-only
+// billing tier (a Pro field such as `name` costs ~3x), and the label shown to
+// the driver already comes from the prediction we clicked.
 function resolvePlace(placeId) {
   const { placesService: ps } = services();
+  const tok = token();
+  // Details closes the session whatever it answers, so the next keystroke has
+  // to open a new one.
+  sessionToken = null;
   return new Promise((resolve) => {
-    ps.getDetails({ placeId, fields: ['geometry', 'name'] }, (res, status) => {
+    ps.getDetails({ placeId, fields: ['geometry'], sessionToken: tok }, (res, status) => {
       if (status === google.maps.places.PlacesServiceStatus.OK && res.geometry) {
-        resolve({ lat: res.geometry.location.lat(), lng: res.geometry.location.lng(), name: res.name });
+        resolve({ lat: res.geometry.location.lat(), lng: res.geometry.location.lng() });
       } else {
         resolve(null);
       }

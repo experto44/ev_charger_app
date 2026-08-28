@@ -94,8 +94,12 @@ function renderStops() {
     // centre) so short names still resolve nearby first.
     const bias = state.stops.slice(0, i).reverse().find((p2) => p2.coords)?.coords
       ?? getMap()?.getCenter()?.toJSON();
+    // Only `geometry` — the label comes from input.value, and asking for a Pro
+    // field like `name` would move Place Details onto the ~3x tier for nothing.
+    // The widget manages its own session token, so keystrokes are already
+    // billed together with the details lookup it fires.
     const ac = new google.maps.places.Autocomplete(input, {
-      fields: ['geometry', 'name'],
+      fields: ['geometry'],
       ...(bias
         ? {
             bounds: new google.maps.LatLngBounds(

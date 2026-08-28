@@ -329,6 +329,8 @@ class _MapScreenState extends State<MapScreen>
   bool                  _loading     = true;
   List<PlacePrediction> _suggestions = const [];
   Timer?                _debounce;
+  // One Places billing session for the map search field (see PlacesSession).
+  final PlacesSession   _placesSession = PlacesSession();
 
   // Country filter (Settings). Defaults to Georgia only; other countries load
   // live from Open Charge Map when selected.
@@ -1216,7 +1218,7 @@ class _MapScreenState extends State<MapScreen>
       // Rank around where the driver is (or is looking), now that search is no
       // longer hard-limited to Georgia.
       final r = await PlacesService.autocomplete(query,
-          bias: _userPos ?? _mapCtrl.camera.center);
+          bias: _userPos ?? _mapCtrl.camera.center, session: _placesSession);
       if (mounted) { setState(() => _suggestions = r); }
     });
   }
@@ -1225,7 +1227,8 @@ class _MapScreenState extends State<MapScreen>
     _searchCtrl.text = p.description;
     _searchFocus.unfocus();
     setState(() => _suggestions = const []);
-    final coords = await PlacesService.getCoordinates(p.placeId);
+    final coords =
+        await PlacesService.getCoordinates(p.placeId, session: _placesSession);
     if (coords == null || !mounted) { return; }
     final label = p.mainText.isNotEmpty ? p.mainText : p.description;
     setState(() {
