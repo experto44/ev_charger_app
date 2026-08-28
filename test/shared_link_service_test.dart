@@ -22,6 +22,20 @@ void main() {
     expect(SharedLinkService.mapsLinkIn('https://goo.gl/maps/abc'), isNotNull);
   });
 
+  // The shape an iPhone's share link expands to. Nobody shares one of these
+  // directly, but copying it out of a browser is a fair thing to do, and the
+  // server reads it.
+  test('accepts the old query form, which has no /maps in its path', () {
+    const url = 'https://maps.google.com/?geocode=Fbfc%3D%3D;FUeP%3D%3D'
+        '&daddr=Sarpi&saddr=41.6718630,44.8671428&dirflg=d';
+    expect(SharedLinkService.mapsLinkIn(url), url);
+    expect(
+        SharedLinkService.mapsLinkIn('https://www.google.com/?daddr=Batumi'), isNotNull);
+    // A Google link with no route in it is still not ours to open.
+    expect(SharedLinkService.mapsLinkIn('https://www.google.com/?q=batumi'), isNull);
+    expect(SharedLinkService.mapsLinkIn('https://www.google.com/search?q=daddr'), isNull);
+  });
+
   test('drops trailing prose punctuation', () {
     expect(SharedLinkService.mapsLinkIn('look (https://maps.app.goo.gl/abc123).'),
         'https://maps.app.goo.gl/abc123');

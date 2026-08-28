@@ -25,10 +25,16 @@ class SharedLinkService {
     // Host shapes must match what functions/google-route.js will accept, or the
     // app rejects a link the server would have read. `maps.google.com` is the
     // one that used to be missing here.
+    //
+    // The last alternative is the old query form an iPhone shares
+    // (`maps.google.com/?saddr=…&daddr=…`), which has no `/maps` in its path at
+    // all. A short link never arrives in that shape, but a link copied out of a
+    // browser does.
     final m = RegExp(
       r'https://(?:maps\.app\.goo\.gl/\S+'
       r'|goo\.gl/maps/\S+'
-      r'|(?:(?:www|maps)\.)?google\.[a-z.]{2,6}/maps/\S+)',
+      r'|(?:(?:www|maps)\.)?google\.[a-z.]{2,6}'
+      r'(?:/maps\S*|/?\?\S*daddr=\S*))',
     ).firstMatch(text);
     // Share text is prose as often as not: "look at this (<link>)." would
     // otherwise carry the bracket and full stop into the URL.
