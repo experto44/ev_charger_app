@@ -187,3 +187,12 @@ Object.assign(exports, require("./instagram-posters"));
 // Facebook cannot be handed the whole campaign at once, so its queue is topped
 // up week by week as the scheduling horizon moves. See facebook-posters.js.
 Object.assign(exports, require("./facebook-posters"));
+
+// Signing in to the Tesla web app by pairing it with the phone (6-digit code →
+// custom token). See tesla-pairing.js.
+Object.assign(exports, require("./tesla-pairing"));
+
+// Reading a route shared out of the Google Maps app, so the phone can hand it
+// to the car. Server-side because the URL format is undocumented and a fix must
+// not wait on an App Store review. See google-route.js.
+Object.assign(exports, require("./google-route"));
