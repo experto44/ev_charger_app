@@ -21,19 +21,29 @@ class AuthService {
   static final _functions = FirebaseFunctions.instance;
 
   // ── Session marker ────────────────────────────────────────────────────────────
-  // Firebase Auth restores a persisted session asynchronously, and on Android it
-  // is NOT finished when Firebase.initializeApp() returns: currentUser reads null
-  // and the first authStateChanges event can be a spurious null before the stored
-  // session is loaded. Nothing in the SDK distinguishes "still restoring" from
-  // "genuinely signed out", which is why waiting on the stream alone kept letting
-  // the Login screen through on launch (the reported Android bug — premium stayed
-  // on because it comes from the local cache, while auth looked signed out).
+  // A persisted note of whether a session is *expected*, so a null currentUser
+  // can be told apart from a genuine sign-out: written true on every successful
+  // sign-in and whenever a restored user is observed, false only on an explicit
+  // sign-out, account deletion, or a launch of an install that has never signed
+  // in at all.
   //
-  // So we keep our own marker: written true on every successful sign-in and
-  // whenever a restored user is observed, false only on an explicit sign-out or
-  // account deletion. It tells us whether a session is *expected*, and therefore
-  // whether a null currentUser is worth waiting out. iOS never hit this because
-  // its restore completes before the first frame.
+  // History, because the comment here used to claim otherwise. The recurring
+  // Android "asks for Google login on every launch, while premium stays on" was
+  // NOT a restore race. Android hands the restored user to Dart synchronously:
+  // Firebase.initializeApp() carries APP_CURRENT_USER in the plugin constants,
+  // and the native auth-state listener fires with the current user the moment it
+  // registers. A currentUser that is still null 40 seconds in — measured on a
+  // Pixel 7 — means the native store has nobody.
+  //
+  // The real cause was firebase-auth 23.2.1 (pinned by firebase_core 3.15.2 via
+  // BoM 33.16.0): it encrypted the persisted user and could not read that record
+  // back after an Android backup restore, which is what installing from Play
+  // performs. Reproduced exactly with `bmgr restore` and fixed by moving to
+  // firebase-auth 24.2.0 — see android/build.gradle and the backup exclusions in
+  // android/app/src/main/res/xml/.
+  //
+  // This marker stays as the belt to that fix's braces: it costs one boolean and
+  // keeps a genuinely signed-out user from ever waiting.
   static const _kHadSession = 'auth_had_session';
 
   static Future<void> _rememberSession(bool value) async {
@@ -68,7 +78,8 @@ class AuthService {
 
   static Future<User?> _waitForRestore(Duration timeout) async {
     final prefs = await SharedPreferences.getInstance();
-    if (prefs.getBool(_kHadSession) == false) { return null; }
+    final expected = prefs.getBool(_kHadSession);
+    if (expected == false) { return null; }
 
     final deadline = DateTime.now().add(timeout);
     while (DateTime.now().isBefore(deadline)) {
@@ -79,9 +90,24 @@ class AuthService {
         return user;
       }
     }
-    // Restore had its chance and produced nobody. Record that, so the wait above
-    // can't repeat on every launch of a never-signed-in install.
-    await _rememberSession(false);
+    // One last look. The loop exits on the clock, so a restore that landed
+    // during the final sleep would otherwise be thrown away — and on a busy
+    // launch the 100 ms timers slip, which can retire the whole budget in a
+    // single step without ever re-reading currentUser.
+    final settled = _auth.currentUser;
+    if (settled != null) {
+      unawaited(_rememberSession(true));
+      return settled;
+    }
+    // Nobody arrived. Record that ONLY when no session was expected to begin
+    // with (marker absent = a fresh install), so a never-signed-in device does
+    // not pay the wait on every launch.
+    //
+    // A timeout must never downgrade an expected session to "signed out". That
+    // is what this code used to do, and it turned one bad launch into a
+    // permanent one: with the marker false, every later launch skipped the wait
+    // entirely and answered the profile button with "log in again" instantly.
+    if (expected == null) { await _rememberSession(false); }
     return null;
   }
 
@@ -224,6 +250,11 @@ class AuthService {
       await cred.user?.updateDisplayName(fullName);
     }
 
+    // Remember that a session now exists, exactly as the Google and email paths
+    // do. Without this the marker was left to watchSession() to fill in, so an
+    // Apple sign-in was the one route that could reach a cold start with no
+    // record of itself.
+    await _rememberSession(true);
     await PurchaseService.I.syncPremiumFromFirestore();
     // Best-effort: stamp/refresh usage analytics for the admin panel.
     unawaited(UserActivityService.I.recordOpen());

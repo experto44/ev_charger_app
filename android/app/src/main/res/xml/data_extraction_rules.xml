@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ (android:dataExtractionRules). Same exclusions as backup_rules.xml,
+  applied to both cloud backup and device-to-device transfer — see the comment
+  there for why the Firebase Auth records must not travel with a backup.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref"
+            path="com.google.firebase.auth.api.Store.W0RFRkFVTFRd+MTo1MTg4NzUzNzc2NTU6YW5kcm9pZDozODQxNjNmNThhMmU0OWZlNDVjOGYy.xml" />
+        <exclude domain="sharedpref"
+            path="com.google.firebase.auth.api.crypto.W0RFRkFVTFRd+MTo1MTg4NzUzNzc2NTU6YW5kcm9pZDozODQxNjNmNThhMmU0OWZlNDVjOGYy.xml" />
+        <exclude domain="sharedpref" path="com.google.android.gms.appid.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref"
+            path="com.google.firebase.auth.api.Store.W0RFRkFVTFRd+MTo1MTg4NzUzNzc2NTU6YW5kcm9pZDozODQxNjNmNThhMmU0OWZlNDVjOGYy.xml" />
+        <exclude domain="sharedpref"
+            path="com.google.firebase.auth.api.crypto.W0RFRkFVTFRd+MTo1MTg4NzUzNzc2NTU6YW5kcm9pZDozODQxNjNmNThhMmU0OWZlNDVjOGYy.xml" />
+        <exclude domain="sharedpref" path="com.google.android.gms.appid.xml" />
+    </device-transfer>
+</data-extraction-rules>

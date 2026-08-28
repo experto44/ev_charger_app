@@ -71,8 +71,13 @@ class NotificationService {
   final GlobalKey<ScaffoldMessengerState> messengerKey =
       GlobalKey<ScaffoldMessengerState>();
 
-  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  // Resolved on use, not in the constructor. EVChargerApp.build reaches this
+  // singleton just for [messengerKey], so binding these eagerly made building
+  // the widget tree require an initialised Firebase app — which is why the
+  // widget smoke test threw [core/no-app] and could never pass. Both getters
+  // return the same cached platform instances, so this costs nothing.
+  FirebaseMessaging get _fcm => FirebaseMessaging.instance;
+  FirebaseFirestore get _db => FirebaseFirestore.instance;
 
   String? _token;
   bool _initialized = false;

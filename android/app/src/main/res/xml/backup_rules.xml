@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android Auto Backup, API 30 and below (android:fullBackupContent).
+
+  Everything is still backed up EXCEPT the two Firebase Auth preference files.
+  Since firebase-auth 23.2.1 the signed-in user is stored encrypted, and a copy
+  restored onto another install cannot be decrypted there — the app then reads
+  currentUser == null on every cold start and asks a signed-in user to log in
+  again, forever. The SDK bump in android/build.gradle fixes the read path;
+  keeping the record out of the backup removes the situation altogether, which
+  is also what Firebase recommends for auth state.
+
+  The file names carry FirebaseApp.getPersistenceKey(): base64url("[DEFAULT]")
+  + "+" + base64url(appId), no padding. They change only if the Firebase
+  Android app id in google-services.json changes.
+
+  com.google.android.gms.appid holds this install's FCM registration; a restored
+  copy would point the charger alerts at a token this device does not own.
+-->
+<full-backup-content>
+    <exclude domain="sharedpref"
+        path="com.google.firebase.auth.api.Store.W0RFRkFVTFRd+MTo1MTg4NzUzNzc2NTU6YW5kcm9pZDozODQxNjNmNThhMmU0OWZlNDVjOGYy.xml" />
+    <exclude domain="sharedpref"
+        path="com.google.firebase.auth.api.crypto.W0RFRkFVTFRd+MTo1MTg4NzUzNzc2NTU6YW5kcm9pZDozODQxNjNmNThhMmU0OWZlNDVjOGYy.xml" />
+    <exclude domain="sharedpref" path="com.google.android.gms.appid.xml" />
+</full-backup-content>

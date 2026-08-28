@@ -1,3 +1,21 @@
+// Firebase Android SDK version, overriding the one firebase_core pins.
+//
+// firebase_core 3.15.2 pins BoM 33.16.0, which ships firebase-auth 23.2.1 — the
+// release that moved the persisted Firebase user into encrypted storage and,
+// with it, shipped a regression: a Firebase Auth record that arrives through an
+// Android backup restore can never be read back, so `currentUser` is null on
+// every cold start while the encrypted blob sits on disk. Installing from Play
+// restores the app's backup, which is exactly how a user hits it — reproduced
+// on a Pixel 7 with `bmgr restore` (signed out) versus a plain restart (fine).
+// Google fixed it in firebase-auth 24.0.0 and warns that 24.0.0 itself has a
+// separate regression, so 24.0.1+ is the floor. BoM 34.18.0 ships 24.2.0.
+//
+// Safe with the current plugins: none of them depend on the -ktx artifacts that
+// BoM 34 dropped, and its minSdk 23 floor is below ours (24).
+rootProject.ext {
+    set('FlutterFire', [FirebaseSDKVersion: '34.18.0'])
+}
+
 allprojects {
     repositories {
         google()

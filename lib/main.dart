@@ -49,16 +49,12 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // Firebase Auth restores a persisted session asynchronously AFTER
-  // initializeApp returns. On Android that restore is still in flight here, and
-  // the FIRST authStateChanges event can be a spurious null — so waiting on the
-  // stream returned instantly with "signed out" and the app asked a signed-in
-  // user to log in again on every launch, while premium (read from the local
-  // cache) stayed on. AuthService keeps a persisted marker of whether a session
-  // is expected and waits only then. Started here but NOT awaited — the wait
-  // belongs in the background, not on the splash screen; whatever needs the
-  // answer (the profile button, arming a charger alert) joins this same
-  // in-flight restore rather than starting a countdown of its own.
+  // Warms the session so the profile button and the charger-alert check have an
+  // answer ready. Started here but NOT awaited — any wait belongs in the
+  // background, not on the splash screen; whatever needs the answer joins this
+  // same in-flight restore rather than starting a countdown of its own.
+  // (The Android "log in again on every launch" bug was a firebase-auth 23.2.1
+  // defect, not a race here — see the session-marker comment in AuthService.)
   unawaited(AuthService.restoreSession());
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await AppStrings.load(); // restore saved language (English/Georgian)
