@@ -1,18 +1,26 @@
 // In-browser turn-by-turn navigation ("drive mode").
 //
 // Tesla's own nav doesn't work in Georgia and Google Maps isn't installed, so
-// we drive right here in the browser. This reuses the SAME data the trip
-// planner already fetches — google.maps.DirectionsService — but at step level:
-// each DirectionsStep carries a `maneuver` (turn-left/right…), an already-decoded
-// `path`, a `distance`, and a Georgian instruction (the Maps API is loaded with
-// language=ka). We track the driver's live GPS along that path, show the next
-// maneuver + distance, follow the camera, speak guidance, and reroute if they
-// leave the line. No second map vendor, no new tab.
+// we drive right here in the browser. We track the driver's live GPS along a
+// road, show the next maneuver + distance, follow the camera, speak guidance,
+// and reroute if they leave the line. No second map vendor, no new tab.
+//
+// The road comes from OpenRouteService (through our own Cloud Function) and
+// from Google Directions only when that fails — the same order the trip planner
+// uses, for the same reason: Directions is the SKU that costs money, and every
+// reroute is another call. Both are normalised into one shape below, so nothing
+// past computeRoute() knows or cares which answered.
+//
+// The wording differs, though. Google shipped a ready Georgian sentence per
+// step; ORS gives a maneuver code and a road name, and turn-phrases.js turns
+// those into our own Georgian.
 
 import { getMap, setUserLocation, setMarkersDimmed, setUserStyle } from './map.js';
 import { showToast, hideToast } from './ui.js';
 import { t, getLang } from './i18n.js';
 import { track } from './analytics.js';
+import { callFn } from './auth.js';
+import { turnPhrase } from './turn-phrases.js';
 
 // ── Geometry helpers ─────────────────────────────────────────────────────────
 const rad = (d) => (d * Math.PI) / 180;
@@ -43,7 +51,10 @@ function projSeg(p, a, b) {
 
 function stripHtml(html) {
   const d = document.createElement('div');
-  d.innerHTML = html || '';
+  // Google separates the two halves of an instruction with block elements, and
+  // textContent runs them straight together — "მოუხვიეთ მარჯვნივდანიშნულების
+  // ადგილი იქნება მარცხნივ". Give those boundaries a space before flattening.
+  d.innerHTML = String(html || '').replace(/<(?:br|\/?div|\/?p)[^>]*>/gi, ' ');
   return (d.textContent || '').replace(/\s+/g, ' ').trim();
 }
 
@@ -60,14 +71,14 @@ const ARROW = {
   flag: SVG('<path d="M10 28 V5"/><path d="M10 6 H24 L20.5 10.5 L24 15 H10"/>'),
 };
 
-/** Map a Google maneuver string to one of our arrow glyphs. */
-function arrowFor(maneuver) {
+/** Map a Google maneuver string to one of our arrow names. */
+function googleArrowKey(maneuver) {
   const m = (maneuver || '').toLowerCase();
-  if (!m) return ARROW.up;
-  if (m.includes('uturn')) return ARROW.uturn;
-  if (m.includes('left')) return ARROW.left;
-  if (m.includes('right')) return ARROW.right;
-  return ARROW.up; // straight / merge / ferry / unknown
+  if (!m) return 'up';
+  if (m.includes('uturn')) return 'uturn';
+  if (m.includes('left')) return 'left';
+  if (m.includes('right')) return 'right';
+  return 'up'; // straight / merge / ferry / unknown
 }
 
 // ── Distance / time formatting ───────────────────────────────────────────────
@@ -125,8 +136,44 @@ function speak(text) {
   } catch (_) {/* TTS unavailable — text banner still guides */}
 }
 
-// ── Route building (step-level Directions) ───────────────────────────────────
-async function computeRoute(origin, destination, waypoints) {
+// ── Route building ───────────────────────────────────────────────────────────
+// Both providers hand back the same thing: a dense {lat,lng} path, the running
+// distance along it, and steps that say what to do and where. `endAlong` is
+// filled in once, here, so the two paths cannot disagree about it.
+function finish(path, steps, totalDurS) {
+  const cum = new Array(path.length).fill(0);
+  for (let i = 1; i < path.length; i++) cum[i] = cum[i - 1] + haversineM(path[i - 1], path[i]);
+  for (const st of steps) st.endAlong = cum[st.endIdx] || 0;
+  const totalM = cum.length ? cum[cum.length - 1] : 0;
+  return { path, cum, steps, totalM, totalDurS };
+}
+
+// OpenRouteService, via functions/ors-route.js. Returns null on anything we do
+// not fully understand — a route with no steps could still be driven, but it
+// would be driven in silence, so Google is the better answer.
+async function orsRoute(points) {
+  try {
+    const road = await callFn('orsRoute', { waypoints: points });
+    const pts = road && road.pts;
+    const steps = road && road.steps;
+    if (!Array.isArray(pts) || pts.length < 2) return null;
+    if (!Array.isArray(steps) || !steps.length) return null;
+
+    const lang = getLang();
+    const mapped = [];
+    for (const st of steps) {
+      if (!Number.isInteger(st.endIdx) || st.endIdx < 0 || st.endIdx >= pts.length) return null;
+      const { text, arrow } = turnPhrase(st, lang);
+      mapped.push({ arrowKey: arrow, text, endIdx: st.endIdx });
+    }
+    return finish(pts, mapped, road.totalDurS || 0);
+  } catch (e) {
+    console.warn('[drive] ORS unavailable, using Google:', e?.code || e?.message || e);
+    return null;
+  }
+}
+
+async function googleRoute(origin, destination, waypoints) {
   const svc = new google.maps.DirectionsService();
   const res = await svc.route({
     origin,
@@ -147,20 +194,19 @@ async function computeRoute(origin, destination, waypoints) {
         path.push(pt);
       });
       steps.push({
-        maneuver: step.maneuver || '',
+        arrowKey: googleArrowKey(step.maneuver),
         text: stripHtml(step.instructions),
         endIdx: path.length - 1,
       });
     }
   }
 
-  const cum = new Array(path.length).fill(0);
-  for (let i = 1; i < path.length; i++) cum[i] = cum[i - 1] + haversineM(path[i - 1], path[i]);
-  for (const st of steps) st.endAlong = cum[st.endIdx] || 0;
+  return finish(path, steps, route.legs.reduce((a, l) => a + l.duration.value, 0));
+}
 
-  const totalM = cum.length ? cum[cum.length - 1] : 0;
-  const totalDurS = route.legs.reduce((a, l) => a + l.duration.value, 0);
-  return { path, cum, steps, totalM, totalDurS };
+async function computeRoute(origin, destination, waypoints) {
+  const points = [origin, ...waypoints, destination];
+  return (await orsRoute(points)) || googleRoute(origin, destination, waypoints);
 }
 
 /** Nearest-point projection of a coordinate → {offM, alongM}. */
@@ -531,7 +577,7 @@ function updateBanner(alongM) {
 
   const next = steps[k + 1];
   const distToTurn = Math.max(0, steps[k].endAlong - alongM);
-  const icon = next ? arrowFor(next.maneuver) : ARROW.flag;
+  const icon = next ? (ARROW[next.arrowKey] || ARROW.up) : ARROW.flag;
   const road = next ? next.text : t('driveArrive');
   const stepIdx = next ? k + 1 : steps.length;
 

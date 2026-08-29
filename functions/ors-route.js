@@ -40,8 +40,13 @@ const UNSET = "unset";
 
 // api.openrouteservice.org is being retired in favour of api.heigit.org, and
 // the announcement gave no cut-off date. Rather than bet on one, try the
-// documented host and fall back to its replacement on a transport-level or
-// 404/410 failure — an expired host fails over instead of taking routing down.
+// documented host and fall back to its replacement when the first looks dead.
+//
+// "Looks dead" needs care: ORS answers 404 for ordinary ROUTING failures too —
+// a waypoint it cannot snap to a road within its ~350 m radius comes back 404
+// with a JSON error body. Treating that as a retired host wasted a second
+// request and hid the real reason. So a 404 carrying an ORS error payload is a
+// real answer; only a 404 that is not ORS speaking moves on to the next host.
 const ORS_HOSTS = [
   "https://api.openrouteservice.org",
   "https://api.heigit.org",
@@ -53,7 +58,13 @@ const ORS_PATH = "/v2/directions/driving-car/geojson";
 // router. Out-of-box requests fall back to Google on the client.
 const BBOX = { minLat: 34, maxLat: 45, minLng: 24, maxLng: 48 };
 
-const MAX_WAYPOINTS = 6;   // the planner allows 5 stops
+// Drive mode sends the origin, the driver's own stops AND every charging stop
+// they ticked, so a long trip is nowhere near "a handful": Tbilisi → İstanbul
+// alone plans three chargers and a driver may tick more. Capped well above any
+// real trip — the cost is per REQUEST, not per point, so a generous limit buys
+// nothing for an abuser and stops the long routes (the expensive ones) from
+// falling back to Google.
+const MAX_WAYPOINTS = 25;
 const PER_HOUR = 150;      // per signed-in user; planning is debounced client-side
 const TIMEOUT_MS = 12000;
 
@@ -124,15 +135,20 @@ exports.orsRoute = onCall(
       }
       lastStatus = res.status;
 
-      // A retired host answers 404/410; anything else is a real answer from a
-      // live host and there is no point asking the other one.
-      if (res.status === 404 || res.status === 410) {
-        logger.warn("ORS host retired", { host, status: res.status });
-        continue;
-      }
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        logger.error("ORS error", { host, status: res.status, body: text.slice(0, 300) });
+        let spokeOrs = false;
+        try { spokeOrs = Boolean(JSON.parse(text).error); } catch { /* not JSON */ }
+
+        if (!spokeOrs && (res.status === 404 || res.status === 410)) {
+          logger.warn("ORS host looks retired", { host, status: res.status });
+          continue; // ask the replacement host
+        }
+        // A real refusal — most often an unroutable waypoint. Google is more
+        // forgiving about snapping, so it is the right thing to fall back to.
+        logger.warn("ORS refused the route", {
+          host, status: res.status, body: text.slice(0, 300),
+        });
         break;
       }
 

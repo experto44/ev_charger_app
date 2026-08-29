@@ -113,6 +113,30 @@ function roundaboutExit(exit, ka) {
 // Maneuvers that read wrong with a road appended.
 const NO_ROAD_NAME = new Set(['arrive', 'uturn']);
 
+// "რუსთაველის გამზირი" is the name; what you turn onto is "რუსთაველის
+// გამზირზე". Only the last word of the phrase declines, and -ზე attaches to the
+// stem: a nominative -ი is dropped first ("გამზირი" → "გამზირზე"), while a name
+// already ending in a vowel just takes the suffix ("ქუჩა" → "ქუჩაზე"). Latin
+// letters and digits take a hyphen the way Georgian writes them ("E60-ზე").
+const MKHEDRULI = /[ა-ჿ]/;
+
+function toLocative(name) {
+  const words = name.split(/\s+/);
+  let last = words[words.length - 1];
+  if (!last) return name;
+
+  const tail = last[last.length - 1];
+  if (tail === 'ი' && last.length > 1) {
+    last = last.slice(0, -1) + 'ზე';
+  } else if (MKHEDRULI.test(tail)) {
+    last += 'ზე';
+  } else {
+    last += '-ზე';
+  }
+  words[words.length - 1] = last;
+  return words.join(' ');
+}
+
 // ORS writes "-" for a road it has no name for; so does a motorway link.
 function cleanRoad(name) {
   const s = String(name ?? '').trim();
@@ -149,5 +173,6 @@ export function turnPhrase(step, lang) {
   // no road name belongs on either.
   const bare = NO_ROAD_NAME.has(key) || (key === 'roundabout' && !exitPhrase);
   const road = bare ? '' : cleanRoad(step?.name);
-  return { text: road ? `${base}, ${road}` : base, arrow };
+  if (!road) return { text: base, arrow };
+  return { text: `${base}, ${ka ? toLocative(road) : road}`, arrow };
 }
