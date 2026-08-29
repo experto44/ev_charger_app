@@ -1,14 +1,22 @@
 // EV route planning — the transport half.
 //
-// This module only talks to Google: it asks DirectionsService for the road,
-// flattens the result into plain {lat,lng} points, and hands everything to the
-// planning core. The algorithm itself lives in route-core.js, a 1:1 port of
-// lib/routing_service.dart (planRoute), so it can also run inside a Worker.
+// This module fetches the road and hands it to the planning core. The algorithm
+// itself lives in route-core.js, a 1:1 port of lib/routing_service.dart
+// (planRoute), so it can also run inside a Worker.
+//
+// The road comes from OpenRouteService via our own Cloud Function, and from
+// Google Directions only when that fails — measured 2026-08-29, the two agree
+// to within ~1 km everywhere this app operates (all of Georgia, all of Turkey,
+// including Tbilisi → İstanbul at 1620 km), and Directions is the SKU that
+// costs us real money. Drive mode still routes through Google: it also needs
+// turn-by-turn instruction TEXT, which is a separate piece of work.
 //
 // The interactive "options blocks" list of the mobile planner is not ported;
 // this client shows the greedy recommended plan only.
 
 import { planFromRoute } from './route-core.js';
+import { callFn } from './auth.js';
+import { CHARGERS_BASE } from './config.js';
 
 export { parseSideFromName } from './route-core.js';
 
@@ -75,10 +83,70 @@ const roadCache = new Map();
 const roadKey = (waypoints) =>
   waypoints.map((w) => `${w.lat.toFixed(5)},${w.lng.toFixed(5)}`).join('|');
 
-async function fetchRoad(waypoints) {
-  const key = roadKey(waypoints);
-  if (roadCache.has(key)) return roadCache.get(key);
+// ── Remote kill-switch ───────────────────────────────────────────────────────
+// If ORS ever starts answering badly, `"routing": {"provider": "google"}` in
+// the feed's config.json puts every car back on Directions within CONFIG_TTL_MS
+// — no redeploy, no release. Same file and the same per-minute cache bucket
+// live.js already uses.
+const CONFIG_TTL_MS = 5 * 60 * 1000;
+let orsEnabled = true;
+let configCheckedAt = 0;
 
+async function refreshRoutingConfig() {
+  if (Date.now() - configCheckedAt < CONFIG_TTL_MS) return;
+  configCheckedAt = Date.now();
+  try {
+    const bucket = Math.floor(Date.now() / 60000);
+    const res = await fetch(`${CHARGERS_BASE}/config.json?t=${bucket}`, {
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!res.ok) return; // absent until the updater writes it — keep the default
+    const j = await res.json();
+    if (j && typeof j === 'object' && j.routing) {
+      orsEnabled = j.routing.provider !== 'google';
+    }
+  } catch {
+    /* keep whatever we already decided */
+  }
+}
+
+// A road we would rather refuse than plan against: the EV core projects every
+// charger onto these points, so a malformed one does not fail loudly, it
+// quietly recommends the wrong stops.
+function usableRoad(r) {
+  return Boolean(
+    r && Array.isArray(r.pts) && r.pts.length > 1 &&
+    r.pts.every((p) => p && Number.isFinite(p.lat) && Number.isFinite(p.lng)) &&
+    Number.isFinite(r.totalDistKm) && r.totalDistKm > 0 &&
+    Array.isArray(r.legEndsKm) && r.legEndsKm.length > 0 &&
+    r.legEndsKm.every(Number.isFinite),
+  );
+}
+
+// OpenRouteService, through functions/ors-route.js so the key stays on the
+// server. Every failure — key not configured yet, quota, outage, a shape we do
+// not recognise — returns null and Google answers instead.
+let orsConfigured = true; // until the server tells us the key is missing
+
+async function fromOrs(waypoints) {
+  if (!orsConfigured) return null;
+  try {
+    const road = await callFn('orsRoute', { waypoints });
+    if (usableRoad(road)) return road;
+    console.warn('[routing] ORS returned an unusable road; using Google');
+  } catch (e) {
+    const code = e?.code || '';
+    // "No key deployed yet" is the one failure that will not fix itself during
+    // this session, so stop asking: every later plan goes straight to Google
+    // instead of paying a round trip to be told the same thing. Every other
+    // failure (quota, a blip, an outage) is worth retrying on the next route.
+    if (code === 'functions/failed-precondition') orsConfigured = false;
+    console.warn('[routing] ORS unavailable, using Google:', code || e?.message || e);
+  }
+  return null;
+}
+
+async function fromGoogle(waypoints) {
   const svc = new google.maps.DirectionsService();
   let route;
   try {
@@ -93,8 +161,19 @@ async function fetchRoad(waypoints) {
     return null;
   }
   if (!route) return null;
-
   const road = roadFrom(route);
+  return usableRoad(road) ? road : null;
+}
+
+async function fetchRoad(waypoints) {
+  const key = roadKey(waypoints);
+  if (roadCache.has(key)) return roadCache.get(key);
+
+  await refreshRoutingConfig();
+  const road = (orsEnabled ? await fromOrs(waypoints) : null)
+    || (await fromGoogle(waypoints));
+  if (!road) return null;
+
   if (roadCache.size >= ROAD_CACHE_MAX) roadCache.delete(roadCache.keys().next().value);
   roadCache.set(key, road);
   return road;
@@ -115,7 +194,7 @@ export async function planRoute({ waypoints, currentBatteryPct, maxRangeKm, stat
   });
 }
 
-// Turns one Google route into the plain data the EV core runs on.
+// Turns one Google route into the same plain shape ORS gives us back.
 function roadFrom(route) {
   // Detailed road-following geometry: concatenate every step's decoded path.
   // (route.overview_path is simplified and visibly cuts corners on long routes.)

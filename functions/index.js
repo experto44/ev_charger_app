@@ -203,3 +203,8 @@ Object.assign(exports, require("./google-route"));
 // Monitoring for the admin panel's usage gauge. See maps-usage.js — and note
 // that it reads a DIFFERENT Cloud project to the one it runs in.
 Object.assign(exports, require("./maps-usage"));
+
+// Road geometry from OpenRouteService instead of Google Directions, for the car
+// app's trip planner. The ORS key stays in Secret Manager — see ors-route.js for
+// why this cannot be a fetch from the browser.
+Object.assign(exports, require("./ors-route"));
