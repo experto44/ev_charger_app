@@ -24,7 +24,8 @@
 const crypto = require("node:crypto");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
-const admin = require("firebase-admin");
+const { getFirestore } = require("firebase-admin/firestore");
+const { getAuth } = require("firebase-admin/auth");
 
 const CODE_TTL_MS = 5 * 60 * 1000; // a code on screen is worth 5 minutes
 const PAIRINGS = "teslaPairings";
@@ -36,7 +37,7 @@ const RATE = "teslaPairingRates";
 const CAR_CODES_PER_HOUR = 30; // the car re-issues every 5 min while it waits
 const PHONE_TRIES_PER_HOUR = 10;
 
-const db = () => admin.firestore();
+const db = () => getFirestore();
 const now = () => Date.now();
 const sha256 = (s) => crypto.createHash("sha256").update(String(s)).digest("hex");
 
@@ -187,7 +188,7 @@ exports.redeemTeslaPairing = onCall(async (request) => {
   // with no way back. Nothing is consumed until there is a token in hand.
   let token;
   try {
-    token = await admin.auth().createCustomToken(p.uid);
+    token = await getAuth().createCustomToken(p.uid);
   } catch (err) {
     logger.error("createCustomToken failed", err);
     throw new HttpsError("internal", "Could not finish sign-in. Try again.");

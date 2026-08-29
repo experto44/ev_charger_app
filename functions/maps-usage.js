@@ -25,7 +25,7 @@
 
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const logger = require("firebase-functions/logger");
-const admin = require("firebase-admin");
+const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const { GoogleAuth } = require("google-auth-library");
 
 // The project the Maps API keys live in (NOT the Firebase project). Both the
@@ -167,7 +167,7 @@ async function refresh() {
     throw new Error(`maps usage: no API was readable in ${MAPS_PROJECT}`);
   }
 
-  const db = admin.firestore();
+  const db = getFirestore();
   const existing = await db
     .collection("mapsUsage")
     .where("day", ">=", tbilisiDay(startMs))
@@ -198,7 +198,7 @@ async function refresh() {
         // Which APIs this row could not be refreshed from, so the panel can say
         // "Directions is stale" instead of showing a confident zero.
         stale: failed,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       },
       { merge: true },
     );

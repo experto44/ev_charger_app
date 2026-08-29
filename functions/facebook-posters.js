@@ -21,7 +21,7 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
-const admin = require("firebase-admin");
+const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 
 const CONTENT = require("./poster-content.json");
 
@@ -54,7 +54,7 @@ async function graph(path, params, method = "GET") {
 }
 
 async function topUp() {
-  const db = admin.firestore();
+  const db = getFirestore();
   const ref = db.doc(STATE);
   const snap = await ref.get();
   const queued = (snap.exists && snap.data().queued) || [];
@@ -94,7 +94,7 @@ async function topUp() {
     // Written after every post so a mid-batch failure cannot make the next run
     // queue the same poster twice.
     await ref.set(
-      { queued: added, lastRun: admin.firestore.FieldValue.serverTimestamp() },
+      { queued: added, lastRun: FieldValue.serverTimestamp() },
       { merge: true }
     );
     logger.info(`facebook posters: scheduled ${p.slug}`, { id: r.id, at: p.at });

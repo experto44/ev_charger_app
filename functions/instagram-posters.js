@@ -20,7 +20,7 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
-const admin = require("firebase-admin");
+const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 
 const CONTENT = require("./poster-content.json");
 
@@ -62,7 +62,7 @@ async function waitReady(id, token, tries = 6) {
 }
 
 async function publishNext() {
-  const db = admin.firestore();
+  const db = getFirestore();
   const ref = db.doc(STATE);
   const snap = await ref.get();
   const posted = (snap.exists && snap.data().posted) || [];
@@ -98,7 +98,7 @@ async function publishNext() {
           mediaId: published.id,
         },
       ],
-      lastRun: admin.firestore.FieldValue.serverTimestamp(),
+      lastRun: FieldValue.serverTimestamp(),
     },
     { merge: true }
   );

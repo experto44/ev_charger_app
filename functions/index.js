@@ -6,6 +6,8 @@ const { defineSecret } = require("firebase-functions/params");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
+const { getFirestore, FieldValue, Timestamp } = require("firebase-admin/firestore");
+const { getAuth } = require("firebase-admin/auth");
 const nodemailer = require("nodemailer");
 
 const { buildVerificationEmail } = require("./email_template");
@@ -66,7 +68,7 @@ exports.sendVerificationEmail = onCall(
     }
 
     const uid = request.auth.uid;
-    const user = await admin.auth().getUser(uid);
+    const user = await getAuth().getUser(uid);
 
     if (!user.email) {
       throw new HttpsError("failed-precondition", "Account has no email address.");
@@ -79,7 +81,7 @@ exports.sendVerificationEmail = onCall(
     // Firebase mints the one-time verification action link for this address.
     let link;
     try {
-      link = await admin.auth().generateEmailVerificationLink(user.email);
+      link = await getAuth().generateEmailVerificationLink(user.email);
       // Swap only the host → geocharge.ge, preserving oobCode/apiKey/lang.
       const u = new URL(link);
       u.hostname = LINK_DOMAIN;
@@ -132,8 +134,8 @@ exports.expireManualPremium = onSchedule(
     retryCount: 1,
   },
   async () => {
-    const db = admin.firestore();
-    const now = admin.firestore.Timestamp.now();
+    const db = getFirestore();
+    const now = Timestamp.now();
 
     const snap = await db
       .collection("users")
@@ -161,7 +163,7 @@ exports.expireManualPremium = onSchedule(
           doc.ref,
           {
             isPremium: false,
-            premiumExpiredAt: admin.firestore.FieldValue.serverTimestamp(),
+            premiumExpiredAt: FieldValue.serverTimestamp(),
           },
           { merge: true }
         );

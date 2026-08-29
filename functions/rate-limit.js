@@ -6,7 +6,7 @@
 // own collection; it is deployed and working, and moving a live login path for
 // tidiness is not worth the risk. New callers use this one.
 
-const admin = require("firebase-admin");
+const { getFirestore } = require("firebase-admin/firestore");
 
 const COLLECTION = "rateWindows";
 const WINDOW_MS = 3600000;
@@ -19,7 +19,7 @@ const WINDOW_MS = 3600000;
  * @param {number} limit calls allowed per hour
  */
 async function underLimit(key, limit) {
-  const db = admin.firestore();
+  const db = getFirestore();
   const ref = db.collection(COLLECTION).doc(key);
   return db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
