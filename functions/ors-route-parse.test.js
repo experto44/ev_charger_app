@@ -64,6 +64,62 @@ test("falls back to the summary when there are no segments", () => {
   assert.equal(road.totalDistKm, 357.5);
 });
 
+// ── Steps, which only drive mode reads ──────────────────────────────────────
+
+const withSteps = () => {
+  const b = twoLeg();
+  b.features[0].properties.segments[0].steps = [
+    { type: 11, name: "რუსთაველის გამზირი", way_points: [0, 1] },
+    { type: 1,  name: "-",                  way_points: [1, 2] },
+  ];
+  b.features[0].properties.segments[1].steps = [
+    { type: 8,  name: "E60", exit_number: 2, way_points: [2, 3] },
+    { type: 10, name: "",                    way_points: [3, 3] },
+  ];
+  return b;
+};
+
+test("flattens steps across legs and keeps where each one ends", () => {
+  const road = roadFrom(withSteps());
+  assert.equal(road.steps.length, 4);
+  assert.deepEqual(road.steps.map((s) => s.endIdx), [1, 2, 3, 3]);
+  assert.deepEqual(road.steps.map((s) => s.type), [11, 1, 8, 10]);
+  assert.equal(road.steps[0].name, "რუსთაველის გამზირი");
+  assert.equal(road.steps[2].exit, 2);
+  assert.equal(road.steps[1].exit, null);
+});
+
+test("carries the total duration from the summary", () => {
+  assert.equal(roadFrom(withSteps()).totalDurS, 17100);
+  const noSummary = withSteps();
+  delete noSummary.features[0].properties.summary;
+  assert.equal(roadFrom(noSummary).totalDurS, 0);
+});
+
+test("a road with no steps is still a road", () => {
+  const road = roadFrom(twoLeg());
+  assert.ok(road);
+  assert.deepEqual(road.steps, []);
+  assert.ok(road.totalDistKm > 0);
+});
+
+// Drive mode indexes into pts with endIdx, so a step pointing past the end of
+// the geometry would read undefined and mis-place every later turn. Drop the
+// lot instead: no steps means drive mode uses Google, which is safe.
+test("drops all steps when one points outside the geometry", () => {
+  const b = withSteps();
+  b.features[0].properties.segments[1].steps[0].way_points = [2, 999];
+  const road = roadFrom(b);
+  assert.ok(road);
+  assert.deepEqual(road.steps, []);
+});
+
+test("drops all steps when a step has no way_points", () => {
+  const b = withSteps();
+  delete b.features[0].properties.segments[0].steps[1].way_points;
+  assert.deepEqual(roadFrom(b).steps, []);
+});
+
 // ── Everything below must return null, so the caller falls back to Google ────
 
 test("null for an empty or missing answer", () => {
