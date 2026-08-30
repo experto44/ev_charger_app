@@ -537,4 +537,112 @@ class AppStrings {
 
   static String get teslaDone =>
       isGeorgian ? 'მზადაა, ავტომობილი შემოვიდა' : 'Done, the car is signed in';
+
+  // ── Expenses ───────────────────────────────────────────────────────────────
+  // The driver's own charging-cost log: a paid charge is the amount they paid
+  // in the provider's app, a home charge is worked out from their tariff.
+  static String get expensesTitle => isGeorgian ? 'ხარჯები' : 'Expenses';
+  static String get expensesTileHint => isGeorgian
+      ? 'დატენის ხარჯების აღრიცხვა'
+      : 'Track what charging costs you';
+  static String get expensesThisMonth => isGeorgian ? 'ამ თვეში' : 'This month';
+  static String get expensesAllTime => isGeorgian ? 'სულ' : 'All time';
+  static String get expensesHome => isGeorgian ? 'სახლში' : 'Home';
+  static String get expensesPaid => isGeorgian ? 'ფასიანი' : 'Paid';
+  static String get expensesByMonth => isGeorgian ? 'თვეების მიხედვით' : 'By month';
+  static String get expensesRecords => isGeorgian ? 'ჩანაწერები' : 'Records';
+  static String get expensesEmptyTitle =>
+      isGeorgian ? 'ჯერ ჩანაწერი არ გაქვს' : 'Nothing recorded yet';
+  static String get expensesEmptyBody => isGeorgian
+      ? 'დატენის შემდეგ დააჭირე პლიუსს და ჩაწერე, რა დაგიჯდა.'
+      : 'After a charge, tap the plus and record what it cost.';
+  static String get expensesSignedOutHint => isGeorgian
+      ? 'ჩანაწერები ამ ტელეფონზეა შენახული. ანგარიშში შესვლის შემდეგ სხვა ტელეფონზეც გადმოგყვება.'
+      : 'Records are kept on this phone. Sign in and they follow you to another one.';
+
+  // Adding and editing
+  static String get expensesAddTitle => isGeorgian ? 'როგორ დატენე?' : 'How did you charge?';
+  static String get expensesPaidCharge =>
+      isGeorgian ? 'ფასიან დამტენზე' : 'At a paid charger';
+  static String get expensesHomeCharge => isGeorgian ? 'სახლის დამტენზე' : 'At home';
+  static String get expensesPaidTitle =>
+      isGeorgian ? 'ფასიანი დატენვა' : 'Paid charge';
+  static String get expensesHomeTitle =>
+      isGeorgian ? 'სახლში დატენვა' : 'Home charge';
+  static String get expensesPaidHint => isGeorgian
+      ? 'ჩაწერე თანხა, რომელიც პროვაიდერის აპლიკაციაში გადაიხადე.'
+      : "Type the amount you paid in the provider's own app.";
+  static String get expensesHomeHint => isGeorgian
+      ? 'ჩაწერე, რამდენი პროცენტიდან რამდენამდე დატენე. ხარჯს შენი ტარიფით დავთვლით.'
+      : 'Type the percentage you started and finished at. We work the cost out from your tariff.';
+  static String get expensesAmount => isGeorgian ? 'თანხა' : 'Amount';
+  static String get expensesDate => isGeorgian ? 'თარიღი' : 'Date';
+  static String get expensesFromPercent => isGeorgian ? 'საიდან' : 'From';
+  static String get expensesToPercent => isGeorgian ? 'სადამდე' : 'To';
+  static String get expensesEnergy => isGeorgian ? 'ენერგია' : 'Energy';
+  static String get expensesEstimated => isGeorgian ? 'ხარჯი' : 'Cost';
+  static String get expensesEdit => isGeorgian ? 'რედაქტირება' : 'Edit';
+  static String get expensesDeleteTitle =>
+      isGeorgian ? 'ჩანაწერი წაიშალოს?' : 'Delete this record?';
+  static String get expensesDeleteBody => isGeorgian
+      ? 'ჩანაწერი სამუდამოდ წაიშლება.'
+      : 'The record will be gone for good.';
+  static String get expensesDeleted => isGeorgian ? 'ჩანაწერი წაიშალა' : 'Record deleted';
+  static String get expensesNeedAmount =>
+      isGeorgian ? 'შეიყვანე თანხა' : 'Enter an amount';
+  static String get expensesSaveFailed => isGeorgian
+      ? 'ჩანაწერი ვერ შეინახა. სცადე ხელახლა.'
+      : 'Could not save the record. Try again.';
+  static String get expensesNeedPercents => isGeorgian
+      ? 'პროცენტები 0-დან 100-მდე უნდა იყოს და დასრულება დაწყებაზე მეტი.'
+      : 'Percentages run from 0 to 100, and the end must be above the start.';
+
+  // Settings (battery, tariff, loss)
+  static String get expensesSettings => isGeorgian ? 'პარამეტრები' : 'Settings';
+  static String get expensesBattery =>
+      isGeorgian ? 'ბატარეის ტევადობა' : 'Battery capacity';
+  static String get expensesBatteryHint => isGeorgian
+      ? 'რამდენი კილოვატსაათია შენი ბატარეა. მაგალითად 60'
+      : 'How many kilowatt-hours your battery holds. For example 60';
+  static String get expensesTariff => isGeorgian ? 'დენის ტარიფი' : 'Electricity tariff';
+  static String get expensesTariffHint => isGeorgian
+      ? 'რა ღირს ერთი კილოვატსაათი შენს ტარიფში. მაგალითად 0.29'
+      : 'What one kilowatt-hour costs on your tariff. For example 0.29';
+  static String get expensesLoss => isGeorgian ? 'დატენის დანაკარგი' : 'Charging loss';
+  static String get expensesLossHint => isGeorgian
+      ? 'ქსელიდან აღებული ენერგიის ნაწილი ბატარეამდე ვერ აღწევს. ჩვეულებრივ 8-დან 12 პროცენტამდე.'
+      : 'Some of the energy drawn from the meter never reaches the battery. Usually 8 to 12 percent.';
+  static String get expensesSettingsNeeded => isGeorgian
+      ? 'ჯერ შეავსე ბატარეის ტევადობა და დენის ტარიფი.'
+      : 'Fill in your battery capacity and electricity tariff first.';
+  static String get expensesOpenSettings =>
+      isGeorgian ? 'პარამეტრების შევსება' : 'Fill them in';
+  static String get expensesNeedSettingsValues => isGeorgian
+      ? 'ტევადობა და ტარიფი ნულზე მეტი უნდა იყოს.'
+      : 'Capacity and tariff must be above zero.';
+
+  /// "20% → 80%", the subtitle under a home record.
+  static String expensesRange(int from, int to) => '$from% → $to%';
+
+  /// Short month name for the chart and the record list headings.
+  static String monthShort(int m) {
+    const ka = ['იან', 'თებ', 'მარ', 'აპრ', 'მაი', 'ივნ',
+                'ივლ', 'აგვ', 'სექ', 'ოქტ', 'ნოე', 'დეკ'];
+    const en = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final i = (m - 1).clamp(0, 11);
+    return isGeorgian ? ka[i] : en[i];
+  }
+
+  /// Full month name, used on the list's month headings.
+  static String monthLong(int m) {
+    const ka = ['იანვარი', 'თებერვალი', 'მარტი', 'აპრილი', 'მაისი', 'ივნისი',
+                'ივლისი', 'აგვისტო', 'სექტემბერი', 'ოქტომბერი', 'ნოემბერი',
+                'დეკემბერი'];
+    const en = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November',
+                'December'];
+    final i = (m - 1).clamp(0, 11);
+    return isGeorgian ? ka[i] : en[i];
+  }
 }

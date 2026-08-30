@@ -11,6 +11,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+import 'expenses_service.dart';
 import 'purchase_service.dart';
 import 'user_activity_service.dart';
 
@@ -276,8 +277,17 @@ class AuthService {
   static Future<void> deleteAccount() async {
     final user = _auth.currentUser;
     if (user == null) { return; }
+    final uid = user.uid;
 
     Future<void> wipeAndDelete() async {
+      // Subcollections do not go with the parent document, so the expense log
+      // has to be cleared explicitly or it would outlive the account it
+      // belongs to.
+      try {
+        final expenses = await _firestore
+            .collection('users').doc(user.uid).collection('expenses').get();
+        for (final doc in expenses.docs) { await doc.reference.delete(); }
+      } catch (_) {/* offline or empty — the account deletion still proceeds */}
       try {
         await _firestore.collection('users').doc(user.uid).delete();
       } catch (_) {/* no data / offline — proceed to auth deletion anyway */}
@@ -294,6 +304,7 @@ class AuthService {
 
     await _rememberSession(false);
     await PurchaseService.I.clearLocalPremium();
+    await ExpensesService.I.clearLocal(uid: uid);
     try { await _google.signOut(); } catch (_) {}
   }
 

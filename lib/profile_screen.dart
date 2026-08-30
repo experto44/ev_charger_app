@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'app_constants.dart';
 import 'countries_screen.dart';
 import 'l10n/app_strings.dart';
+import 'screens/expenses_screen.dart';
 import 'screens/paywall_screen.dart';
 import 'screens/tesla_link_screen.dart';
 import 'services/auth_service.dart';
@@ -339,6 +340,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: _textPri, fontSize: 15),
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded,
+                      color: _textSec, size: 22),
+                ]),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // ── Expenses ──────────────────────────────────────────────────────
+            // The charging-cost log. Deliberately ABOVE the auth section: it
+            // works signed out too (records live on the phone until an account
+            // adopts them), so hiding it behind a login would be a lie.
+            _Label(AppStrings.expensesTitle),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () => Navigator.push<void>(
+                context,
+                MaterialPageRoute(builder: (_) => const ExpensesScreen()),
+              ),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                decoration: BoxDecoration(
+                  color: _bgCard,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _bgSurface),
+                ),
+                child: Row(children: [
+                  const Icon(Icons.receipt_long_rounded,
+                      color: _textSec, size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      AppStrings.expensesTileHint,
+                      maxLines: 2,
+                      style: AppStrings.font(const TextStyle(
+                          color: _textPri, fontSize: 15)),
                     ),
                   ),
                   const Icon(Icons.chevron_right_rounded,
