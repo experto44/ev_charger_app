@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
@@ -59,6 +60,81 @@ class PlacesService {
   static const _detailsUrl =
       'https://maps.googleapis.com/maps/api/place/details/json';
 
+  /// Shortest query worth asking Google about. Two characters matched half the
+  /// country and cost a request for every search that passed through them; by
+  /// the third character the predictions are about the place the driver has in
+  /// mind. Both search fields use this so the list clears at the same point the
+  /// requests stop.
+  static const int kMinQueryChars = 3;
+
+  /// How long a field stays quiet before it asks. At 400 ms an ordinarily typed
+  /// word asked three or four questions on the way to its answer; 600 ms is
+  /// still under the pause between words, so the list appears while the driver
+  /// is looking at the keyboard rather than after it.
+  static const Duration kDebounce = Duration(milliseconds: 600);
+
+  // ── Prediction cache ────────────────────────────────────────────────────────
+  // Typing repeats itself in a way that costs requests: every backspace re-asks
+  // a question answered a second ago, and reopening the planner to change one
+  // stop retypes the other from scratch. Twenty answers cover both.
+  //
+  // In memory only, gone with the process — Google's Places policy allows
+  // caching content briefly (place IDs indefinitely), and a cache that outlived
+  // the session would start showing places that have since moved.
+  static const int _kCacheMax = 20;
+
+  /// Insertion-ordered, so the oldest key is simply the first one. Deliberately
+  /// not a true LRU: at twenty entries the bookkeeping would cost more than the
+  /// occasional early eviction.
+  static final Map<String, List<PlacePrediction>> _cache = {};
+
+  /// Queries Google had nothing for. Autocomplete matches from the front, so a
+  /// longer query beginning with one of these has nothing either and is
+  /// answered without a request — this is what stops a mistyped destination
+  /// from billing a request per remaining keystroke.
+  ///
+  /// No bias in the key: the request sets no country component, so location
+  /// only RANKS predictions. Nothing means nothing wherever the driver stands.
+  static final Set<String> _emptyQueries = {};
+
+  static String _normalise(String s) =>
+      s.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+
+  /// Bias is bucketed to ~11 km. It reorders predictions rather than filtering
+  /// them, so the cache has to notice a driver who has moved to another city
+  /// and ignore every metre of the drive there.
+  static String _cacheKey(String q, LatLng? bias) => bias == null
+      ? q
+      : '$q|${bias.latitude.toStringAsFixed(1)},'
+        '${bias.longitude.toStringAsFixed(1)}';
+
+  static void _remember(String key, List<PlacePrediction> predictions) {
+    if (_cache.length >= _kCacheMax) { _cache.remove(_cache.keys.first); }
+    _cache[key] = predictions;
+  }
+
+  static void _rememberEmpty(String q) {
+    if (_emptyQueries.length >= _kCacheMax) {
+      _emptyQueries.remove(_emptyQueries.first);
+    }
+    _emptyQueries.add(q);
+  }
+
+  /// The one call that leaves the phone. It is a field rather than a direct
+  /// `http.get` so a test can count requests — which is the only way to check
+  /// work that is defined by the requests it does NOT make.
+  @visibleForTesting
+  static Future<http.Response> Function(Uri) send =
+      (uri) => http.get(uri).timeout(const Duration(seconds: 5));
+
+  /// Empties the caches between tests. Nothing in the app calls this: the
+  /// caches are meant to live as long as the process.
+  @visibleForTesting
+  static void resetCache() {
+    _cache.clear();
+    _emptyQueries.clear();
+  }
+
   /// Returns up to 5 autocomplete predictions for [query], ranked around
   /// [bias] (the user's position, or the map centre) when one is given.
   ///
@@ -70,15 +146,28 @@ class PlacesService {
   ///
   /// Pass the field's [session] so the keystroke burst is billed once with the
   /// following Place Details call (see [PlacesSession]).
+  ///
+  /// May answer without calling Google at all — see the prediction cache and
+  /// [kMinQueryChars].
   static Future<List<PlacePrediction>> autocomplete(
     String query, {
     LatLng? bias,
     PlacesSession? session,
   }) async {
-    if (query.trim().length < 2) { return const []; }
+    final q = _normalise(query);
+    if (q.length < kMinQueryChars) { return const []; }
+
+    // Already answered, or provably empty. Either way no request goes out, and
+    // the session token is untouched — a search served from the cache still
+    // bills as the one Place Details call that ends it.
+    final key = _cacheKey(q, bias);
+    final hit = _cache[key];
+    if (hit != null) { return hit; }
+    if (_emptyQueries.any(q.startsWith)) { return const []; }
+
     try {
       final uri = Uri.parse(_autocompleteUrl).replace(queryParameters: {
-        'input':    query,
+        'input':    q,
         'key':      _kApiKey,
         'language': 'ka',
         if (session != null) 'sessiontoken': session.token,
@@ -89,14 +178,22 @@ class PlacesService {
           'radius':   '300000',
         },
       });
-      final res = await http.get(uri).timeout(const Duration(seconds: 5));
+      final res = await send(uri);
       if (res.statusCode != 200) { return const []; }
       final body = jsonDecode(res.body) as Map<String, dynamic>;
-      if (body['status'] != 'OK') { return const []; }
-      return (body['predictions'] as List)
+      final status = body['status'] as String?;
+      // ZERO_RESULTS is an answer, not a failure — remember it. Every other
+      // non-OK status is a transient the next keystroke should retry, so it
+      // must NOT be recorded as "Google has nothing".
+      if (status == 'ZERO_RESULTS') { _rememberEmpty(q); return const []; }
+      if (status != 'OK') { return const []; }
+
+      final out = (body['predictions'] as List)
           .map((e) => PlacePrediction.fromJson(e as Map<String, dynamic>))
           .take(5)
           .toList();
+      if (out.isEmpty) { _rememberEmpty(q); } else { _remember(key, out); }
+      return out;
     } catch (_) {
       return const [];
     }
@@ -117,7 +214,7 @@ class PlacesService {
       });
       // The token is spent whatever comes back; the next search needs a new one.
       session?.reset();
-      final res = await http.get(uri).timeout(const Duration(seconds: 5));
+      final res = await send(uri);
       if (res.statusCode != 200) { return null; }
       final body = jsonDecode(res.body) as Map<String, dynamic>;
       if (body['status'] != 'OK') { return null; }

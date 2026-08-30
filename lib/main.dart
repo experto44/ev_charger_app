@@ -1210,11 +1210,11 @@ class _MapScreenState extends State<MapScreen>
   void _onSearchChanged(String query) {
     setState(() {});
     _debounce?.cancel();
-    if (query.trim().length < 2) {
+    if (query.trim().length < PlacesService.kMinQueryChars) {
       setState(() => _suggestions = const []);
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 400), () async {
+    _debounce = Timer(PlacesService.kDebounce, () async {
       // Rank around where the driver is (or is looking), now that search is no
       // longer hard-limited to Georgia.
       final r = await PlacesService.autocomplete(query,

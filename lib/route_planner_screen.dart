@@ -1665,8 +1665,11 @@ class _PlaceFieldState extends State<_PlaceField> {
 
   void _onChanged(String q) {
     _timer?.cancel();
-    if (q.trim().length < 2) { setState(() => _suggestions = const []); return; }
-    _timer = Timer(const Duration(milliseconds: 400), () async {
+    if (q.trim().length < PlacesService.kMinQueryChars) {
+      setState(() => _suggestions = const []);
+      return;
+    }
+    _timer = Timer(PlacesService.kDebounce, () async {
       final r = await PlacesService.autocomplete(q,
           bias: widget.searchBias, session: _session);
       if (mounted) { setState(() => _suggestions = r); }
