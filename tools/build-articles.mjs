@@ -23,6 +23,8 @@ const CACHE = path.join(ROOT, 'tools', '.cache', 'chargers.json');
 const GIST = 'https://gist.githubusercontent.com/experto44/36f39392ce7a4abe14ab065aa8e846bd/raw/chargers.json';
 const FUEL_CACHE = path.join(ROOT, 'tools', '.cache', 'fuel.json');
 const FUEL_SRC = 'https://tarifebi.ge/fuel';
+// How stale a cached petrol price may be before the build refuses to ship it.
+const FUEL_MAX_AGE = 14;
 
 // Comparing an EV against petrol is only worth publishing if the petrol side is
 // today's price, so it is read at build time from tarifebi.ge, which lists every
@@ -31,22 +33,25 @@ const FUEL_SRC = 'https://tarifebi.ge/fuel';
 async function fuelPrices() {
   try {
     // tarifebi.ge answers 403 to a bare Node fetch, so it gets a browser
-    // User-Agent. Without this the scrape silently falls back to the cache and
-    // the petrol comparison in the guides quietly goes stale.
+    // User-Agent. Without this every run lands in the catch below.
     const res = await fetch(FUEL_SRC, { headers: { 'User-Agent':
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36' } });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const html = await res.text();
-    const raw = (/var priceData=(\[[\s\S]*?\]);/.exec(html) || [])[1];
-    if (!raw) throw new Error('priceData block not found');
+    // The page used to carry `var priceData=[{cat, items}]`. It now ships one
+    // JSON blob on window.FU2, whose `prices` map holds a row per chain per
+    // fuel and whose `updated` is the site's own timestamp rather than ours.
+    const raw = (/window\.FU2\s*=\s*(\{[\s\S]*?\})\s*;?\s*<\/script>/.exec(html) || [])[1];
+    if (!raw) throw new Error('window.FU2 block not found');
     const data = JSON.parse(raw);
     const cat = (c) => {
-      const items = (data.find((d) => d.cat === c) || {}).items || [];
+      const items = (data.prices || {})[c] || [];
       if (!items.length) throw new Error(`no prices for ${c}`);
-      return { med: median(items.map((i) => i.price)), n: items.length,
-        min: Math.min(...items.map((i) => i.price)), max: Math.max(...items.map((i) => i.price)) };
+      const p = items.map((i) => i.price).filter((x) => typeof x === 'number');
+      if (!p.length) throw new Error(`no numeric prices for ${c}`);
+      return { med: median(p), n: p.length, min: Math.min(...p), max: Math.max(...p) };
     };
-    const out = { checked: new Date().toISOString().slice(0, 10),
+    const out = { checked: (data.updated || '').slice(0, 10) || new Date().toISOString().slice(0, 10),
       regular: cat('regular'), premium: cat('premium'), diesel: cat('diesel') };
     await mkdir(path.dirname(FUEL_CACHE), { recursive: true });
     await writeFile(FUEL_CACHE, JSON.stringify(out, null, 1), 'utf8');
@@ -55,7 +60,16 @@ async function fuelPrices() {
   } catch (e) {
     if (!existsSync(FUEL_CACHE)) throw new Error(`fuel prices unavailable and no cache: ${e.message}`);
     const cached = JSON.parse(await readFile(FUEL_CACHE, 'utf8'));
-    console.warn(`  !! fuel prices unavailable (${e.message}), falling back to ${cached.checked}`);
+    // The cache exists so one bad afternoon does not block a build. It is NOT
+    // a licence to publish last season's petrol price: the scrape broke once
+    // when tarifebi.ge changed its markup and nothing failed, so the guides
+    // quoted a stale figure for weeks. Past FUEL_MAX_AGE the build stops.
+    const age = Math.round((Date.now() - Date.parse(cached.checked)) / 86400000);
+    if (!(age >= 0) || age > FUEL_MAX_AGE) {
+      throw new Error(`fuel prices unavailable (${e.message}) and the cache is `
+        + `${age} days old, past the ${FUEL_MAX_AGE} day limit. Fix the scrape in fuelPrices().`);
+    }
+    console.warn(`  !! fuel prices unavailable (${e.message}), falling back to ${cached.checked} (${age} days old)`);
     return cached;
   }
 }
