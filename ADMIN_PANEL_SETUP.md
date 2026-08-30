@@ -62,13 +62,18 @@ be **Enabled** (it already is, since the mobile app uses Google sign-in).
 cd admin
 flutter build web --release
 cd ..
-firebase deploy --only hosting --project geocharge-f6714
+firebase deploy --only hosting:geocharge-f6714 --project geocharge-f6714
 ```
 This publishes to `https://geocharge-f6714.web.app`. Open it and sign in with
 `miruashvili.k@gmail.com` to verify the dashboard loads.
 
-> Tip: you can deploy rules + hosting together with
-> `firebase deploy --only firestore:rules,hosting --project geocharge-f6714`.
+> Tip: you can deploy rules + the panel together with
+> `firebase deploy --only firestore:rules,hosting:geocharge-f6714 --project geocharge-f6714`.
+>
+> Always name the site. `firebase.json` now lists three of them — the panel
+> (`geocharge-f6714`), geocharge.ge (`geocharge-web`) and tesla.geocharge.ge
+> (`geocharge-tesla`) — so a bare `--only hosting` publishes all three,
+> including whatever is uncommitted in `site/` and `tesla/`.
 
 ## Step 7 — Connect the custom domain admin.geocharge.ge **[YOU]**
 1. Firebase Console → **Hosting** → **Add custom domain** → enter
@@ -136,7 +141,7 @@ back to free immediately. Recorded revenue is kept.
 ```bash
 firebase deploy --only firestore:rules,functions:expireManualPremium --project geocharge-f6714
 cd admin && flutter build web --release && cd ..
-firebase deploy --only hosting --project geocharge-f6714
+firebase deploy --only hosting:geocharge-f6714 --project geocharge-f6714
 ```
 The first deploy of the scheduled function creates a Cloud Scheduler job — this
 requires the **Blaze** plan (the project is already on it for the verification
@@ -145,7 +150,7 @@ emails).
 ## Redeploying after code changes
 ```bash
 cd admin && flutter build web --release && cd ..
-firebase deploy --only hosting --project geocharge-f6714
+firebase deploy --only hosting:geocharge-f6714 --project geocharge-f6714
 ```
 
 ## Notes & limitations
@@ -204,7 +209,11 @@ a warning when the current rate would overrun the month. The ceilings are
 editable (the tune icon) and persist in localStorage — Google changes its price
 list and we change our caps. Places is RAW requests, not billed sessions: with
 session tokens one search is 3-6 requests but bills as a single Place Details
-call, so judge it against the daily cap rather than the free tier.
+call. The card no longer leaves that to the reader — Places carries
+`rawRequests: true`, so its bar, its percentage and its caption are all drawn
+from the daily cap, which counts the same unit, and it never raises the
+"on track to go over the free tier" warning. Every other API is still
+measured against the monthly tier.
 
 **Deploying it:**
 ```bash

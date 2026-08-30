@@ -9,6 +9,7 @@ class ApiLimit {
     required this.label,
     required this.freeMonthly,
     required this.dailyCap,
+    this.rawRequests = false,
     this.note = '',
   });
 
@@ -24,6 +25,18 @@ class ApiLimit {
   /// close today is to this number matters as much as the monthly tier.
   final int dailyCap;
 
+  /// This API's counter is RAW HTTP requests rather than billed calls, so the
+  /// monthly free tier is not a ceiling it can be compared to.
+  ///
+  /// Cloud Monitoring only ever counts raw requests. For most APIs that is also
+  /// the billed unit, so the comparison holds. Places is the exception: with a
+  /// session token one search is 3-6 requests and bills as a single Place
+  /// Details call, so measuring 5,640 requests against a 5,000 *billed* free
+  /// tier paints the card red while nothing is being billed. The daily cap is
+  /// counted in the same unit as the metric, so that is what the gauge uses
+  /// instead — see [MapsLimits._defaults].
+  final bool rawRequests;
+
   /// Anything the number does not say for itself.
   final String note;
 
@@ -32,6 +45,7 @@ class ApiLimit {
         label: label,
         freeMonthly: freeMonthly ?? this.freeMonthly,
         dailyCap: dailyCap ?? this.dailyCap,
+        rawRequests: rawRequests,
         note: note,
       );
 }
@@ -69,9 +83,11 @@ class MapsLimits extends ChangeNotifier {
       label: 'Places API',
       freeMonthly: 5000,
       dailyCap: 1000,
-      note: 'RAW requests, not billed sessions — with session tokens one '
-          'search is 3-6 requests but bills as a single Place Details call, so '
-          'read this against the daily cap rather than the free tier.',
+      rawRequests: true,
+      note: 'Counted in RAW requests, not billed sessions — with session '
+          'tokens one search is 3-6 requests but bills as a single Place '
+          'Details call. The gauge therefore shows today against the daily '
+          'cap, which is the same unit; the month figure is context only.',
     ),
     ApiLimit(
       key: 'geocoding',

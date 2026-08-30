@@ -157,18 +157,32 @@ class ApiUsage {
   double get monthFraction =>
       limit.freeMonthly <= 0 ? 0 : monthCalls / limit.freeMonthly;
 
-  /// What the driver of this panel actually asked for: how much is LEFT.
-  double get percentLeft =>
-      limit.freeMonthly <= 0 ? 100 : ((1 - monthFraction) * 100).clamp(-999, 100);
-
-  int get callsLeft => (limit.freeMonthly - monthCalls).clamp(-1 << 30, 1 << 30);
-
   double get dayFraction =>
       limit.dailyCap <= 0 ? 0 : todayCalls / limit.dailyCap;
 
-  /// The free tier will not survive the month at this rate.
+  /// The ceiling this API is actually judged against — the daily cap when the
+  /// metric counts raw requests, the monthly free tier otherwise. Without the
+  /// split, Places reads as an overrun the moment its raw request count passes
+  /// a free tier denominated in billed calls, which is a different unit
+  /// entirely (see [ApiLimit.rawRequests]).
+  double get gaugeFraction => limit.rawRequests ? dayFraction : monthFraction;
+
+  /// What the driver of this panel actually asked for: how much is LEFT of
+  /// whichever ceiling [gaugeFraction] is measured against.
+  double get percentLeft {
+    final ceiling = limit.rawRequests ? limit.dailyCap : limit.freeMonthly;
+    return ceiling <= 0 ? 100 : ((1 - gaugeFraction) * 100).clamp(-999, 100);
+  }
+
+  int get callsLeft => (limit.freeMonthly - monthCalls).clamp(-1 << 30, 1 << 30);
+
+  /// The free tier will not survive the month at this rate. Never true for an
+  /// API counted in raw requests: projecting a raw month total onto a billed
+  /// free tier would only forecast the wrong number more confidently.
   bool get willOverrun =>
-      limit.freeMonthly > 0 && projectedMonth > limit.freeMonthly;
+      !limit.rawRequests &&
+      limit.freeMonthly > 0 &&
+      projectedMonth > limit.freeMonthly;
 }
 
 /// Fold the daily usage rows into one figure per API for the current month.

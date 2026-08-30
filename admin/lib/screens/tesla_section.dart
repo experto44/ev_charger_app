@@ -442,7 +442,8 @@ class _MapsLimitsCardState extends State<_MapsLimitsCard> {
               ],
             ),
             Text(
-              '$monthName so far, against what Google gives away each month.',
+              '$monthName against what Google gives away each month — or today '
+              'against our daily cap, where the counter is raw requests.',
               style: const TextStyle(color: kTextSec, fontSize: 12, height: 1.35),
             ),
             const SizedBox(height: 14),
@@ -485,6 +486,24 @@ class _ApiBar extends StatelessWidget {
 
   static final _n = NumberFormat.decimalPattern();
 
+  /// The numbers under the bar, with the one the bar is drawn from first.
+  /// An API counted in raw requests is led by today against the daily cap —
+  /// the only pair here measured in the same unit — and its month total
+  /// follows as context rather than as a fraction of a billed free tier.
+  static String _caption(ApiUsage u) {
+    final today = u.limit.dailyCap > 0
+        ? 'today ${_n.format(u.todayCalls)} / ${_n.format(u.limit.dailyCap)} cap'
+        : '';
+    if (u.limit.rawRequests) {
+      return today.isEmpty
+          ? '${_n.format(u.monthCalls)} requests this month'
+          : '$today · ${_n.format(u.monthCalls)} requests this month';
+    }
+    final month =
+        '${_n.format(u.monthCalls)} / ${_n.format(u.limit.freeMonthly)} this month';
+    return today.isEmpty ? month : '$month · $today';
+  }
+
   @override
   Widget build(BuildContext context) {
     final left = usage.percentLeft;
@@ -514,7 +533,7 @@ class _ApiBar extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: usage.monthFraction.clamp(0, 1).toDouble(),
+              value: usage.gaugeFraction.clamp(0, 1).toDouble(),
               minHeight: 7,
               backgroundColor: kBgSurface,
               valueColor: AlwaysStoppedAnimation<Color>(colour),
@@ -522,10 +541,18 @@ class _ApiBar extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(
-            '${_n.format(usage.monthCalls)} / ${_n.format(usage.limit.freeMonthly)} this month'
-            '${usage.limit.dailyCap > 0 ? ' · today ${_n.format(usage.todayCalls)} / ${_n.format(usage.limit.dailyCap)} cap' : ''}',
+            _caption(usage),
             style: const TextStyle(color: kTextSec, fontSize: 11.5),
           ),
+          if (usage.limit.rawRequests)
+            const Padding(
+              padding: EdgeInsets.only(top: 3),
+              child: Text(
+                'Raw requests, not billed calls: one search is 3-6 of them but '
+                'bills as one.',
+                style: TextStyle(color: kTextSec, fontSize: 11.5, height: 1.35),
+              ),
+            ),
           if (usage.willOverrun)
             Padding(
               padding: const EdgeInsets.only(top: 3),

@@ -116,6 +116,28 @@ void main() {
       expect(d.percentLeft, lessThan(0));
     });
 
+    test('Places is judged by its daily cap, because its metric is raw requests', () {
+      // The real 2026-08-30 shape: 5,800 raw requests against a 5,000 free tier
+      // that is denominated in billed calls. Read that way the card said "-16%
+      // left, on track to go over"; read against the 1,000/day raw cap, which
+      // is the same unit the metric is in, today is comfortable.
+      final rows = [
+        for (var i = 1; i <= 29; i++)
+          MapsUsageDay(
+            day: '2026-08-${i.toString().padLeft(2, '0')}',
+            calls: const {'places': 200},
+          ),
+      ];
+      final p = mapsUsageSummary(rows, now: now)
+          .firstWhere((u) => u.limit.key == 'places');
+
+      expect(p.monthCalls, 5800);
+      expect(p.projectedMonth, greaterThan(p.limit.freeMonthly));
+      expect(p.willOverrun, isFalse); // raw requests are not billed calls
+      expect(p.gaugeFraction, closeTo(0.2, 0.001)); // 200 of a 1,000/day cap
+      expect(p.percentLeft, closeTo(80, 0.5));
+    });
+
     test('an API nothing calls sits at a full free tier rather than dividing by zero', () {
       final u = mapsUsageSummary([day('2026-08-29')], now: now)
           .firstWhere((u) => u.limit.key == 'geocoding');
