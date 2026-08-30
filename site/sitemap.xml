@@ -1136,24 +1136,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://geocharge.ge/turketi/izmir/</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/izmir/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/izmir/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/turketi/izmir/"/>
-    <lastmod>2026-08-30</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://geocharge.ge/en/turkey/izmir/</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/izmir/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/izmir/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/turketi/izmir/"/>
-    <lastmod>2026-08-30</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://geocharge.ge/turketi/bursa/</loc>
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/bursa/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/bursa/"/>
@@ -1167,6 +1149,24 @@
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/bursa/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/bursa/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/turketi/bursa/"/>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/turketi/izmir/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/izmir/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/izmir/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/turketi/izmir/"/>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/turkey/izmir/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/izmir/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/izmir/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/turketi/izmir/"/>
     <lastmod>2026-08-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -1496,6 +1496,24 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://geocharge.ge/turketi/nevsehir/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/nevsehir/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/nevsehir/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/turketi/nevsehir/"/>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/turkey/nevsehir/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/nevsehir/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/nevsehir/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/turketi/nevsehir/"/>
+    <lastmod>2026-08-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://geocharge.ge/turketi/diyarbakir/</loc>
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/diyarbakir/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/diyarbakir/"/>
@@ -1527,24 +1545,6 @@
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/gaziantep/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/gaziantep/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/turketi/gaziantep/"/>
-    <lastmod>2026-08-30</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://geocharge.ge/turketi/nevsehir/</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/nevsehir/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/nevsehir/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/turketi/nevsehir/"/>
-    <lastmod>2026-08-30</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://geocharge.ge/en/turkey/nevsehir/</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/nevsehir/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/nevsehir/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/turketi/nevsehir/"/>
     <lastmod>2026-08-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -1640,24 +1640,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://geocharge.ge/turketi/ordu/</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/ordu/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/ordu/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/turketi/ordu/"/>
-    <lastmod>2026-08-30</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://geocharge.ge/en/turkey/ordu/</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/ordu/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/ordu/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/turketi/ordu/"/>
-    <lastmod>2026-08-30</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://geocharge.ge/turketi/kahramanmaras/</loc>
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/kahramanmaras/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/kahramanmaras/"/>
@@ -1676,19 +1658,19 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://geocharge.ge/turketi/sanliurfa/</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/sanliurfa/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/sanliurfa/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/turketi/sanliurfa/"/>
+    <loc>https://geocharge.ge/turketi/ordu/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/ordu/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/ordu/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/turketi/ordu/"/>
     <lastmod>2026-08-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://geocharge.ge/en/turkey/sanliurfa/</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/sanliurfa/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/sanliurfa/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/turketi/sanliurfa/"/>
+    <loc>https://geocharge.ge/en/turkey/ordu/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/turketi/ordu/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/turkey/ordu/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/turketi/ordu/"/>
     <lastmod>2026-08-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
