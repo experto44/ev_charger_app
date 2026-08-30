@@ -485,6 +485,134 @@ ${rows.map((r, i) => {
   return T;
 }
 
+/* ── Tesla guide figures ─────────────────────────────────────────────────────
+   Two shapes carry the Tesla buying guide. The first is the only decision that
+   matters before money changes hands: whether the car's own screen says it can
+   take a CCS adapter. The second is a year bar per feature, drawn on one shared
+   axis for both models, because "which year gained what" is the question the
+   whole guide answers and a table of ticks reads far slower than a bar. */
+
+const CCS_T = {
+  ka: {
+    alt: 'როგორ მოწმდება ტესლაზე CCS ადაპტერის მხარდაჭერა',
+    s1: 'მანქანის ეკრანზე:',
+    s2: 'Controls, შემდეგ Software,',
+    s3: 'Additional Vehicle Information',
+    okH: 'CCS adapter support: Installed',
+    ok1: 'საკმარისია CCS2 ადაპტერი NACS-ზე.',
+    ok2: 'მანქანა ნებისმიერ სწრაფ დამტენზე იტენება.',
+    noH: 'CCS adapter support: Not installed',
+    no1: 'ადაპტერი მარტო ვერაფერს შველის.',
+    no2: 'საჭიროა პორტის ბლოკის, ანუ ECU-ს, შეცვლა.',
+    cap: 'ერთადერთი საიმედო შემოწმება ეს ეკრანია. გამოშვების წელი მხოლოდ ორიენტირია: ტესლა ცვლილებებს წლის შუაში ატარებდა და ერთი და იმავე წლის ორ მანქანას სხვადასხვა პასუხი შეიძლება ჰქონდეს.',
+  },
+  en: {
+    alt: 'How CCS adapter support is checked on a Tesla',
+    s1: 'On the car’s screen:',
+    s2: 'Controls, then Software, then',
+    s3: 'Additional Vehicle Information',
+    okH: 'CCS adapter support: Installed',
+    ok1: 'A CCS2 to NACS adapter is all you need.',
+    ok2: 'The car charges at any fast charger in Georgia.',
+    noH: 'CCS adapter support: Not installed',
+    no1: 'An adapter on its own will not help.',
+    no2: 'The charge port controller has to be replaced.',
+    cap: 'This screen is the only reliable check. The build year is a guide only: Tesla changed things mid year, and two cars from the same year can give different answers.',
+  },
+};
+
+const figCcs = (lang) => ((t) => `<figure class="fig">
+<div class="fs"><svg viewBox="0 0 760 252" role="img" aria-label="${esc(t.alt)}">
+<rect x="6" y="70" width="284" height="112" rx="16" fill="#fff" stroke="var(--line)" stroke-width="1.5"/>
+<text x="24" y="102" class="fk">${esc(t.s1)}</text>
+<text x="24" y="126" class="fx">${esc(t.s2)}</text>
+<text x="24" y="148" class="fx">${esc(t.s3)}</text>
+<g stroke="#8B98A1" stroke-width="2" fill="none">
+<path d="M290 126 H312 M312 126 V62 H322 M312 126 V190 H322"/>
+</g>
+<polygon points="322,56 336,62 322,68" fill="#8B98A1"/>
+<polygon points="322,184 336,190 322,196" fill="#8B98A1"/>
+<rect x="340" y="14" width="412" height="96" rx="16" fill="var(--mint)" stroke="var(--mint-b)" stroke-width="1.5"/>
+<text x="360" y="46" class="fk">${esc(t.okH)}</text>
+<text x="360" y="70" class="fx">${esc(t.ok1)}</text>
+<text x="360" y="92" class="fx">${esc(t.ok2)}</text>
+<rect x="340" y="142" width="412" height="96" rx="16" fill="#FDF1E7" stroke="#EFC9A6" stroke-width="1.5"/>
+<text x="360" y="174" class="fk">${esc(t.noH)}</text>
+<text x="360" y="198" class="fx">${esc(t.no1)}</text>
+<text x="360" y="220" class="fx">${esc(t.no2)}</text>
+</svg></div>
+<figcaption>${esc(t.cap)}</figcaption>
+</figure>`)(CCS_T[lang]);
+
+// Both model figures share this axis, so the Model Y bars sit under the Model 3
+// bars at the same years and the two guides can be compared by eye.
+const Y0 = 2017, Y1 = 2026.8;
+const yrX = (y) => 268 + ((y - Y0) / (Y1 - Y0)) * 462;
+const YR_TICKS = [2017, 2019, 2021, 2023, 2025];
+
+const figYears = (rows, cap, alt) => {
+  const H = 46 + rows.length * 46;
+  return `<figure class="fig">
+<div class="fs"><svg viewBox="0 0 760 ${H}" role="img" aria-label="${esc(alt)}">
+<g stroke="var(--line)" stroke-width="1">
+${YR_TICKS.map((y) => `<line x1="${yrX(y).toFixed(1)}" y1="10" x2="${yrX(y).toFixed(1)}" y2="${H - 30}"/>`).join('')}
+</g>
+<g class="fx" text-anchor="middle">
+${YR_TICKS.map((y) => `<text x="${yrX(y).toFixed(1)}" y="${H - 10}">${y}</text>`).join('')}
+</g>
+${rows.map((r, i) => {
+    const y = 18 + i * 46;
+    const x1 = yrX(Math.max(r.from, Y0)), x2 = yrX(Math.min(r.to, Y1));
+    return `<text x="10" y="${y + 21}" class="fk">${esc(r.label)}</text>
+<rect x="268" y="${y}" width="462" height="30" rx="9" fill="#fff" stroke="var(--line)" stroke-width="1.5"/>
+<rect x="${x1.toFixed(1)}" y="${y}" width="${(x2 - x1).toFixed(1)}" height="30" rx="9"
+fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1.5"/>`;
+  }).join('\n')}
+</svg></div>
+<figcaption>${cap}</figcaption>
+</figure>`;
+};
+
+// The bars are drawn from the production dates in the body text, so moving a
+// date here means moving it in the prose too.
+const M3_ROWS = {
+  ka: [
+    { label: 'ავტოპილოტი HW3', from: 2019.28, to: 2026.8 },
+    { label: 'თბოტუმბო', from: 2020.76, to: 2026.8 },
+    { label: 'შავი მოლდინგები', from: 2020.76, to: 2026.8 },
+    { label: 'AMD Ryzen ეკრანი', from: 2021.95, to: 2026.8 },
+    { label: 'ლითიუმის 12 ვოლტი', from: 2021.95, to: 2026.8 },
+    { label: 'პარკირების სენსორები', from: 2017.6, to: 2022.78 },
+  ],
+  en: [
+    { label: 'HW3 Autopilot computer', from: 2019.28, to: 2026.8 },
+    { label: 'Heat pump', from: 2020.76, to: 2026.8 },
+    { label: 'Black trim, new interior', from: 2020.76, to: 2026.8 },
+    { label: 'AMD Ryzen screen', from: 2021.95, to: 2026.8 },
+    { label: 'Lithium 12 volt battery', from: 2021.95, to: 2026.8 },
+    { label: 'Parking sensors', from: 2017.6, to: 2022.78 },
+  ],
+};
+
+const MY_ROWS = {
+  ka: [
+    { label: 'თბოტუმბო', from: 2020.2, to: 2026.8 },
+    { label: 'ავტოპილოტი HW3', from: 2020.2, to: 2026.8 },
+    { label: 'ორმაგი წინა შუშები', from: 2021.0, to: 2026.8 },
+    { label: 'AMD Ryzen ეკრანი', from: 2021.95, to: 2026.8 },
+    { label: 'ლითიუმის 12 ვოლტი', from: 2021.95, to: 2026.8 },
+    { label: 'პარკირების სენსორები', from: 2020.2, to: 2022.78 },
+  ],
+  en: [
+    { label: 'Heat pump', from: 2020.2, to: 2026.8 },
+    { label: 'HW3 Autopilot computer', from: 2020.2, to: 2026.8 },
+    { label: 'Double glazed front windows', from: 2021.0, to: 2026.8 },
+    { label: 'AMD Ryzen screen', from: 2021.95, to: 2026.8 },
+    { label: 'Lithium 12 volt battery', from: 2021.95, to: 2026.8 },
+    { label: 'Parking sensors', from: 2020.2, to: 2022.78 },
+  ],
+};
+
 const buildArticles = (N, F, T) => [
   {
     slug: 'datenvis-fasi',
@@ -2645,6 +2773,354 @@ ${figSoh('en')}
       ],
     },
   },
+  {
+    slug: 'tesla-model-3-y',
+    date: '2026-08-30',
+    ka: {
+      title: 'ტესლა Model 3 და Model Y: რას უნდა მიაქციოთ ყურადღება ყიდვამდე',
+      metaTitle: 'ტესლა Model 3 და Model Y ყიდვამდე: წლები, ბატარეა, პრობლემები',
+      desc: 'რომელი წლის ტესლა იტენება საქართველოში ადაპტერით, რა შეიცვალა წლების მიხედვით, რომელ წელს რა ნაკლი ჰქონდა და RWD თუ AWD.',
+      key: [
+        'მოკლე პასუხი: ამერიკიდან ჩამოსული ტესლა საქართველოში სწრაფ დამტენზე მხოლოდ მაშინ დაიტენება, თუ მანქანის ეკრანზე CCS ადაპტერის მხარდაჭერა ჩართულია. 2022 წლიდან ეს პრაქტიკულად ყველა მანქანას აქვს, 2020 წლის ოქტომბრამდე გაშვებულ Model 3-ს კი დატენვის პორტის ბლოკის შეცვლა სჭირდება.',
+        'მეორე ზღვარი იმავე თარიღზეა: 2020 წლის ოქტომბრიდან Model 3-ს თბოტუმბო აქვს და ზამთარში ბევრად ნაკლებ ენერგიას ხარჯავს გათბობაზე. Model Y-ს თბოტუმბო პირველი დღიდან ჰქონდა.',
+      ],
+      body: `
+<h2>ერთი ეკრანი, რომელიც სამ კითხვას პასუხობს</h2>
+<p>ტესლას დათვალიერება ერთი ადგილიდან იწყება და ეს კაპოტის ქვეშ არ არის. მანქანის ეკრანზე გახსენით Controls, შემდეგ Software და ბოლოს Additional Vehicle Information. ამ სიაში სამი სტრიქონია, რომელიც ფასზე პირდაპირ მოქმედებს: CCS ადაპტერის მხარდაჭერა, Autopilot Computer და ინფოგასართობი სისტემის პროცესორი.</p>
+<p>ეს სია მანქანამ თვითონ იცის. გამყიდველის სიტყვასა და განცხადებაში მითითებულ წელს ის ჯობია, რადგან ტესლა კონვეიერზე ცვლილებებს წლის შუაში ატარებდა და ერთი და იმავე წლის ორი მანქანა სხვადასხვანაირად შეიძლება იყოს აწყობილი. სანამ სხვა რამეს შეხედავთ, ამ ეკრანს ფოტო გადაუღეთ.</p>
+
+<h2>დაიტენება თუ არა ეს მანქანა საქართველოში</h2>
+<p>ამერიკული ტესლა NACS პორტით მოდის, საქართველოს სწრაფი დამტენები კი CCS2-ია: ამჟამად ${N.ccs2} სადგური. ეს ორი კონექტორი ერთმანეთს ფიზიკურად არ უდგება, ამიტომ შუაში ადაპტერი დგება. ადაპტერი კი მხოლოდ მაშინ მუშაობს, თუ თვითონ მანქანაშია CCS-ის მხარდაჭერა ჩართული. ეს დატენვის პორტის ბლოკზეა დამოკიდებული და არა ადაპტერზე, ანუ ძვირიანი ადაპტერი უმწეო მანქანას ვერაფერს უშველის.</p>
+${figCcs('ka')}
+<p>ორიენტირი ასეთია. 2020 წლის ოქტომბრამდე გაშვებულ Model 3-ს, იმას, რომელსაც ფანჯრების ქრომირებული მოლდინგები აქვს, მხარდაჭერა არ აქვს და პორტის ბლოკის შეცვლა სჭირდება. 2022 წლიდან და მერე თითქმის ყველა მანქანას ჩართული აქვს. შუაში კი გამონაკლისებია: 2021 წლის ივნისიდან სექტემბრამდე გაშვებული ნაწილი CCS-ის ჩიპის გარეშე დარჩა, ანუ 2021 წლის მანქანაზე მარტო წელს ვერ დაეყრდნობით.</p>
+<p>თუ ეკრანი Not installed-ს აჩვენებს, გამოსავალი დატენვის პორტის ბლოკის, ანუ ECU-ს შეცვლაა. ნაწილი თვითონ არც ისე ძვირია, ძველ Model 3-ზე კი დამატებით გაყვანილობის კომპლექტიც სჭირდება. ამერიკაში ამას ტესლას სერვისი აკეთებს. საქართველოში ტესლას ოფიციალური სერვისი არ არის, ანუ ნაწილის ჩამოტანაზეც და სამუშაოზეც თქვენ იზრუნებთ. სწორედ ამიტომ ჩართული მხარდაჭერა რეალურ ფულს ნიშნავს და ფასში უნდა ჩანდეს.</p>
+<div class="tw"><table>
+<thead><tr><th>დატენვის სახე</th><th>რა გჭირდებათ</th><th>რეალური სიმძლავრე</th></tr></thead>
+<tbody>
+<tr><td>სწრაფი DC დამტენი</td><td>CCS2 კონექტორის ადაპტერი NACS-ზე და ჩართული CCS მხარდაჭერა</td><td>საქართველოს დამტენების უმეტესობაზე 60-დან 120 კილოვატამდე</td></tr>
+<tr><td>საჯარო ნელი AC დამტენი</td><td>Type 2 კონექტორის ადაპტერი NACS-ზე</td><td>7.4 კილოვატი, 22 კილოვატიან სვეტზეც კი</td></tr>
+<tr><td>სახლი</td><td>იგივე ადაპტერი ან NACS კაბელიანი კედლის დამტენი</td><td>3.5-დან 7.4 კილოვატამდე</td></tr>
+</tbody></table></div>
+<p class="note">უკანა წამყვან ვერსიებს ბორტზე მყოფი დამმუხტველი 32 ამპერზეა, Long Range და ოთხივე წამყვან ვერსიებს კი 48-ზე. ამერიკული ტესლა მხოლოდ ერთფაზიან დენს იღებს, ამიტომ სამფაზიან დამტენზე დგომა მას ვერაფერს მატებს.</p>
+<p>თუ თურქეთში მგზავრობას გეგმავთ, იმავე CCS2 ადაპტერით ტესლას საკუთარ სუპერჩარჯერებზეც დაიტენებით, რადგან ისინი იქ CCS2 კაბელით მუშაობს. ერთი პირობით, რომელზეც ქვემოთ ცალკე ვწერთ: salvage სტატუსის მანქანას ტესლა სუპერჩარჯერს სამუდამოდ უთიშავს. კონექტორების ლოგიკა უფრო დაწვრილებით <a href="/blog/konektorebi/">კონექტორების გზამკვლევშია</a>.</p>
+
+<h2>Model 3, წლების მიხედვით</h2>
+${figYears(M3_ROWS.ka, 'ყოველი ზოლი აჩვენებს, რომელი წლიდან რომელ წლამდე გაშვებულ Model 3-ს აქვს თითოეული მათგანი. თარიღები წარმოების და არა მოდელის წელია, ამიტომ ერთი კალენდარული წლის ორი მანქანა შეიძლება ზოლის ორ მხარეს აღმოჩნდეს.', 'რომელ წლებში რა ჰქონდა Model 3-ს')}
+<h3>2017-2020: პირველი სახე</h3>
+<p>ეს ის Model 3-ია, რომელსაც ფანჯრებზე ქრომირებული მოლდინგები აქვს. პირველი ორი წლის აწყობის ხარისხი ყველაზე სუსტია: არათანაბარი ღრიჭოები, საღებავი, სალონის რახრახი. 2019 წლის აპრილიდან მანქანებს HW3 ავტოპილოტის კომპიუტერი დაუდგა, მანამდე HW2.5 იყო და ის ახალ ფუნქციებს დიდი ხანია ვეღარ იღებს. თბოტუმბო არ არის, ანუ ზამთარში სალონს ჩვეულებრივი ელექტრო გამათბობელი ათბობს და ენერგიას პირდაპირ ბატარეიდან ხარჯავს.</p>
+<h3>2020 ოქტომბერი: განახლება, რომელიც ყველაზე მეტს ცვლის</h3>
+<p>ერთ თარიღზე რამდენიმე რამ ერთად შეიცვალა: შავი მოლდინგები ქრომის ნაცვლად, თბოტუმბო, ელექტრო ბარგული, ორმაგი წინა შუშები, ახალი ცენტრალური კონსოლი და უფრო ტევადი ბატარეა Long Range ვერსიაზე. აქედან იწყება CCS-ის მხარდაჭერაც. თუ ერთსა და იმავე ბიუჯეტში ირჩევთ 2020 წლის დასაწყისისა და 2021 წლის მანქანას შორის, ეს ზღვარი გარბენის სხვაობაზე მნიშვნელოვანია.</p>
+<h3>2022-2023: ნაკლებად თვალსაჩინო, მაგრამ საჭირო ცვლილებები</h3>
+<p>უკანა წამყვან ვერსიას LFP ბატარეა დაუდგა, რომელიც ყოველდღიურად სრულ 100 პროცენტამდე ტენდება. ეკრანი AMD Ryzen პროცესორზე გადავიდა და საგრძნობლად აჩქარდა, 12 ვოლტიანი აკუმულატორი კი მჟავიანიდან ლითიუმზე. მინუსებიც არის: 2021 წლის გაზაფხულზე რადარი მოხსნეს, 2022 წლის ოქტომბრიდან კი პარკირების ულტრაბგერითი სენსორები, ანუ პარკირებას ამის შემდეგ მხოლოდ კამერები უყურებს.</p>
+<h3>2024 და შემდეგ: Highland</h3>
+<p>განახლებული Model 3 ამერიკაში 2024 წლის იანვრიდან იყიდება. გარედან ახალი წინა და უკანა ფარები, შიგნით ბერკეტების გარეშე საჭე, უკანა ეკრანი, უკეთესი ხმის იზოლაცია და უფრო რბილი სავალი ნაწილი. მეორად ბაზარზე ჯერჯერობით ძვირია, სამაგიეროდ დატენვის კითხვა მასზე საერთოდ არ დგას.</p>
+<div class="tw"><table>
+<thead><tr><th>ვერსია</th><th>წლები</th><th>ბატარეა</th><th>გარბენი, EPA</th><th>წამყვანი</th></tr></thead>
+<tbody>
+<tr><td>Standard Range Plus</td><td>2019-2021</td><td>დაახლოებით 54 კვტსთ</td><td>386-დან 423 კმ-მდე</td><td>უკანა</td></tr>
+<tr><td>RWD, LFP ბატარეით</td><td>2022-2024</td><td>დაახლოებით 60 კვტსთ</td><td>438 კმ</td><td>უკანა</td></tr>
+<tr><td>Long Range</td><td>2017-2020</td><td>დაახლოებით 75 კვტსთ</td><td>499-დან 531 კმ-მდე</td><td>უკანა ან ოთხივე</td></tr>
+<tr><td>Long Range AWD</td><td>2021-2023</td><td>დაახლოებით 82 კვტსთ</td><td>568-დან 576 კმ-მდე</td><td>ოთხივე</td></tr>
+<tr><td>Performance</td><td>2018-2023</td><td>75-დან 82 კვტსთ-მდე</td><td>481-დან 518 კმ-მდე</td><td>ოთხივე</td></tr>
+<tr><td>Highland Long Range RWD</td><td>2024 წლიდან</td><td>დაახლოებით 78 კვტსთ</td><td>584 კმ</td><td>უკანა</td></tr>
+</tbody></table></div>
+<p class="note">გარბენი ამერიკული EPA ციკლითაა, რომელიც ევროპულ WLTP-ზე უფრო ახლოსაა რეალობასთან. ზამთარში მთაში ამ ციფრს ვერ ნახავთ, დეტალები <a href="/blog/zamtari/">ზამთრის სტატიაშია</a>.</p>
+
+<h2>Model Y, წლების მიხედვით</h2>
+${figYears(MY_ROWS.ka, 'ღერძი იგივეა, რაც Model 3-ის დიაგრამაზე, ანუ ორი მოდელი პირდაპირ შეედრება. Model Y სამი წლით გვიან გამოვიდა და ის, რაც Model 3-მა 2020 წელს შეიძინა, მას თითქმის მთლიანად პირველივე დღიდან ჰქონდა.', 'რომელ წლებში რა ჰქონდა Model Y-ს')}
+<h3>2020-2021: ახალი მოდელის პირველი წლები</h3>
+<p>Model Y თბოტუმბოთი დაიბადა და ეს მისი დიდი უპირატესობაა იმავე წლების Model 3-თან შედარებით. სამაგიეროდ პირველი წლების აწყობა ჩქარობდა: სწორედ 2020 და 2021 წლების მანქანებზე მოდის ყველაზე მეტი გამოწვევა სავალ ნაწილზე და ღვედების სამაგრებზე. აქვე დაიწყო უკანა ფარებიდან და ბარგულის სახურავიდან წყლის შემოსვლის ისტორია, რომელიც გამოწვევა არ ყოფილა, მაგრამ ტესლას სერვისულ ბიულეტენებში წლების განმავლობაში ბრუნავდა.</p>
+<h3>2022-2023: ორი სხვადასხვა Model Y ერთი სახელით</h3>
+<p>2022 წლის აპრილიდან ტეხასის ქარხანამ Model Y-ის ცალკე ვერსია გამოუშვა 4680 ელემენტებითა და სტრუქტურული ბატარეით, ანუ ბატარეა კუზოვის ნაწილია. მისი EPA გარბენი 449 კილომეტრია, დატენვის სიჩქარე კი 30 პროცენტის შემდეგ საგრძნობლად ეცემა. მთავარი კითხვა ასეთ მანქანაზე შეკეთებაა: სტრუქტურული ბატარეა ცალკეულ მოდულებად პრაქტიკულად არ იშლება. თუ ავარიულ მანქანას ყიდულობთ, ეს ვერსია ცალკე რისკია. ტეხასში აწყობილი მანქანა VIN-ის დასაწყისით იცნობა: 7SA ნიშნავს ტეხასს, 5YJ კალიფორნიას.</p>
+<h3>2025 წლიდან: Juniper</h3>
+<p>განახლებული Model Y 2025 წელს გამოვიდა: ახალი წინა და უკანა ნაწილი, უფრო დიდი ეკრანი, უკეთესი ხმის იზოლაცია. მეორად ბაზარზე ჯერ იშვიათია.</p>
+<div class="tw"><table>
+<thead><tr><th>ვერსია</th><th>წლები</th><th>ბატარეა</th><th>გარბენი, EPA</th><th>წამყვანი</th></tr></thead>
+<tbody>
+<tr><td>Long Range AWD</td><td>2020-2021</td><td>დაახლოებით 75 კვტსთ</td><td>509-დან 525 კმ-მდე</td><td>ოთხივე</td></tr>
+<tr><td>Long Range AWD</td><td>2022-2023</td><td>დაახლოებით 81 კვტსთ</td><td>531 კმ</td><td>ოთხივე</td></tr>
+<tr><td>Performance</td><td>2020-2023</td><td>75-დან 81 კვტსთ-მდე</td><td>468-დან 507 კმ-მდე</td><td>ოთხივე</td></tr>
+<tr><td>AWD, 4680 ბატარეით</td><td>2022-2023</td><td>დაახლოებით 68 კვტსთ</td><td>449 კმ</td><td>ოთხივე</td></tr>
+<tr><td>RWD და Standard Range</td><td>2021-2024</td><td>დაახლოებით 60 კვტსთ, ნაწილზე პროგრამულად შეზღუდული უფრო დიდი ბატარეა</td><td>393-დან 418 კმ-მდე</td><td>უკანა</td></tr>
+<tr><td>Juniper Long Range AWD</td><td>2025 წლიდან</td><td>დაახლოებით 78 კვტსთ</td><td>500 კმ</td><td>ოთხივე</td></tr>
+</tbody></table></div>
+
+<h2>RWD თუ AWD</h2>
+<p>ეს კითხვა საქართველოში ისე არ წყდება, როგორც ვაკე ქვეყანაში. აი, რაც რეალურად განასხვავებს ამ ორს.</p>
+<ul>
+<li><strong>ზამთარი და აღმართი.</strong> უკანა წამყვანი ტესლა ზამთრის საბურავებით გუდაურამდე ან ბაკურიანამდე ავა, მაგრამ თოვლიან სერპანტინზე ოთხივე წამყვანი ბევრად მშვიდია. თუ მთაში ხშირად დადიხართ, ეს ფასის სხვაობას ღირს.</li>
+<li><strong>საბურავები უფრო მნიშვნელოვანია, ვიდრე წამყვანი.</strong> თოვლში ზამთრის საბურავებიანი უკანა წამყვანი მანქანა ჯობია ზაფხულის საბურავებიან ოთხივე წამყვანს. ეს არა მოსაზრება, არამედ ის, რაც ყოველ ზამთარს გუდაურის გზაზე ხდება.</li>
+<li><strong>გარბენი.</strong> ერთსა და იმავე ბატარეაზე ოთხივე წამყვანი ვერსია ცოტათი მეტს ხარჯავს, სამაგიეროდ Long Range ვერსიები ყველა ოთხივე წამყვანია და ბატარეაც უფრო დიდი აქვთ, ანუ პრაქტიკაში სწორედ ისინი დადიან შორს.</li>
+<li><strong>ბატარეის ქიმია.</strong> უკანა წამყვან ვერსიებზე 2022 წლიდან LFP ბატარეაა, რომელიც უფრო გამძლეა და ყოველდღიურად სრულად ტენდება. ოთხივე წამყვანებზე ნიკელის ბატარეაა, უფრო ტევადი, მაგრამ ყოველდღიურად 80 პროცენტამდე უნდა დატენოთ.</li>
+<li><strong>რემონტი.</strong> ორმოტორიან მანქანას ერთით მეტი მოტორი და ერთით მეტი ინვერტორი აქვს. საქართველოში ტესლას ოფიციალური სერვისი არ არის, ამიტომ ეს მარტივი არითმეტიკაა.</li>
+</ul>
+
+<h2>ბატარეა: რომელი ქიმია და რას ნიშნავს ეს ყოველდღიურად</h2>
+<p>ტესლა ბატარეის ზუსტ ტევადობას არასდროს აქვეყნებს, ამიტომ ყველა ციფრი, რომელსაც ზემოთ ცხრილში ხედავთ, დამოუკიდებელი გაზომვებიდანაა და დაახლოებითია. მნიშვნელობა კი უფრო ქიმიას აქვს, ვიდრე ერთ კილოვატსაათს.</p>
+<ul>
+<li><strong>LFP, ანუ ლითიუმ რკინა ფოსფატი.</strong> უკანა წამყვან ვერსიებზე 2022 წლიდან. ყოველდღიურად 100 პროცენტამდე ტენდება, უფრო ნელა ცვდება, სამაგიეროდ სიცივეში დატენვა უფრო ნელია და მუხტის მაჩვენებელს პერიოდულად სრული დატენვა სჭირდება, რომ სიზუსტე არ დაკარგოს.</li>
+<li><strong>ნიკელის ბატარეა.</strong> Long Range და Performance ვერსიებზე. მეტი ტევადობა და მეტი სიმძლავრე, მაგრამ ყოველდღიური ზღვარი 80 პროცენტია და სრულ დატენვას მხოლოდ შორ გზაზე უშვებენ.</li>
+</ul>
+<p>რამდენად ცვდება ბატარეა და რა ციფრს უნდა ელოდოთ კონკრეტული ასაკის მანქანისგან, ცალკე <a href="/blog/batareis-cveta/">ბატარეის ცვეთის სტატიაშია</a>. ტესლაზე ჯანმრთელობის პროცენტი მენიუში პირდაპირ არ წერია, ამიტომ პრაქტიკული გზა სრულ დატენვაზე ნაჩვენები გარბენის შედარებაა ქარხნულ ციფრთან, ან სპეციალიზებული აპლიკაცია. რაც ამის გარდა უნდა შეამოწმოთ, <a href="/blog/meoradi-shemowmeba/">მეორადი ელექტრომობილის შემოწმების სიაშია</a>.</p>
+
+<h2>ცნობილი პრობლემები წლების მიხედვით</h2>
+<p>ქვემოთ ის გამოწვევებია, რომლებიც რკინას ეხება და არა პროგრამულ წვრილმანს. ცხრილში ისიც წერია, რამდენ მანქანას შეეხო: ეს განსხვავებას ქმნის მასობრივ პრობლემასა და ცალკეულ პარტიას შორის.</p>
+<div class="tw"><table>
+<thead><tr><th>მოდელი და წლები</th><th>რა პრობლემაა</th><th>მანქანების რაოდენობა</th></tr></thead>
+<tbody>
+<tr><td>Model 3, 2017-2020</td><td>უკანა ხედვის კამერის კაბელი ბარგულის სახურავის ღიობში ცვდება და კამერა ქრება</td><td>356 309</td></tr>
+<tr><td>Model 3, 2018-2020 და Model Y, 2019-2021</td><td>წინა ღვედის სამაგრი შუა სვეტზე შეიძლება სუსტად იყოს დამაგრებული</td><td>5 530</td></tr>
+<tr><td>Model 3, 2019-2021 და Model Y, 2020-2021</td><td>სამუხრუჭე სუპორტის ჭანჭიკები იშლება</td><td>5 974</td></tr>
+<tr><td>Model 3, 2019-2021 და Model Y, 2020-2021</td><td>წინა სავალი ნაწილის ბერკეტის სამაგრი იშლება</td><td>2 791</td></tr>
+<tr><td>Model Y, 2020-2022</td><td>სავალი ნაწილის მუშტი, ინგლისურად knuckle, შეიძლება გატყდეს</td><td>826</td></tr>
+<tr><td>Model Y, 2020</td><td>წინა ზედა ბერკეტის ჭანჭიკები არ იყო სათანადოდ მოჭერილი</td><td>401</td></tr>
+<tr><td>Model 3 და Model Y, 2020-2022</td><td>თბოტუმბოს სარქველის პროგრამული შეცდომა, შუშა ცუდად თბება</td><td>26 681</td></tr>
+<tr><td>Model 3, 2023 და Model Y, 2020-2023</td><td>უკანა ფარები დროდადრო არ ინთება</td><td>321 628</td></tr>
+<tr><td>Model Y, 2022-2023</td><td>მეორე რიგის სავარძლის ზურგის ჭანჭიკები სუსტად იყო მოჭერილი</td><td>3 470</td></tr>
+<tr><td>Model Y, 2022-2023</td><td>საჭის სამაგრი ჭანჭიკი შეიძლება მოშვებული იყოს</td><td>137</td></tr>
+<tr><td>Model 3 და Model Y, 2023</td><td>საჭის გამაძლიერებლის დაფა, დგომის შემდეგ დაძვრისას საჭე მძიმდება, პროგრამულად სწორდება</td><td>376 241</td></tr>
+<tr><td>Model 3, 2017-2023 და Model Y, 2020-2023</td><td>ახლო შუქი ნორმაზე კაშკაშაა, გამოსავალი ჯერ დამუშავების პროცესშია</td><td>20 349</td></tr>
+</tbody></table></div>
+<p>ერთი მნიშვნელოვანი დეტალი: გამოწვევაზე შეკეთება ტესლას სერვისში უფასოა, საქართველოში კი ტესლას სერვისი არ არის. ანუ თუ მანქანას ეს სამუშაო ამერიკაში არ ჩაუტარდა, ის თქვენი ხარჯი ხდება. VIN-ით შემოწმება უფასოა NHTSA-ის საიტზე და ორ წუთს ჯდება.</p>
+<p>გამოწვევების გარდა არის რამდენიმე ქრონიკული ჭირვეულობაც, რომელიც ოფიციალურ სიაში არ ხვდება:</p>
+<ul>
+<li><strong>წყალი ბარგულში.</strong> 2020-დან 2023 წლამდე Model Y-ს უკანა ფარებისა და ბარგულის სახურავის ჰერმეტიზაცია ხშირად უშვებდა წყალს. ტესლამ ამაზე რამდენჯერმე შეცვალა სამუშაო ინსტრუქცია. სველი ბარგულის ხალიჩა და ჟანგის კვალი სათადარიგოს ნიშაში დათვალიერებისას პირდაპირ ჩანს.</li>
+<li><strong>12 ვოლტიანი აკუმულატორი.</strong> 2021 წლის ბოლომდე გაშვებულ მანქანებში ის მჟავიანია და დაახლოებით სამ წელიწადში კვდება. მისი გაწოვა მთელ მანქანას აჩერებს, სავსე მთავარი ბატარეის მიუხედავად.</li>
+<li><strong>ეკრანის ყვითელი კიდე.</strong> ძველ მანქანებზე გავრცელებული კოსმეტიკური დეფექტია. ტესლა მას ულტრაიისფერი ლამპით ასწორებდა, საქართველოში ეს სამუშაო თითქმის არავის აქვს.</li>
+<li><strong>დისკების ჟანგი.</strong> რეკუპერაციის გამო მუხრუჭები იშვიათად მუშაობს და დისკები ჟანგდება. ეს გაცვეთაზე უფრო ხშირი პრობლემაა.</li>
+<li><strong>აწყობის ხარისხი.</strong> 2017-2019 წლების Model 3 და 2020 წლის Model Y ამ სიაში ყველაზე სუსტია: ღრიჭოები, საღებავი, ხმაური სალონში.</li>
+</ul>
+
+<h2>იმპორტის რისკები, რომლებზეც განცხადებაში არ წერია</h2>
+<h3>ბატარეა მანქანის იატაკია</h3>
+<p>ტესლას ბატარეა ცალკე ყუთი არ არის, რომელიც სადმე გვერდზე დევს. ის მანქანის მთელ ფსკერს იკავებს და ერთდროულად კუზოვის ნაწილიცაა. Model 3-ის კლირენსი დაახლოებით 14 სანტიმეტრია, Model Y-ის 17. ამიტომ ყველაფერი, რაც მანქანას ქვემოდან ეხება, პირდაპირ ბატარეას ეხება.</p>
+<p>პორტში მანქანებს ჩამტვირთველით, ანუ პოგრუზჩიკით, ამოძრავებენ ხოლმე და ჩანგლები ზუსტად იმ სიმაღლეზე შედის, სადაც ტესლას ბატარეის კორპუსია. ტესლა თვითონ მკაცრად წერს, რომ მანქანა მხოლოდ ოთხ სპეციალურ წერტილში უნდა აიწიოს. ჩანგლით აწევა ან ქვემოდან ბიძგი კორპუსს ჭყლეტს, სამაგრებს ჭრის და გაგრილების კონტურს არღვევს. ყველაზე ცუდი ის არის, რომ ასეთი დაზიანება ხშირად მაშინვე შეცდომას არ იძლევა და თვეების შემდეგ ჟანგით ან მუხტის დაკარგვით გამოჩნდება.</p>
+<p>რას აკეთებთ პრაქტიკულად: მანქანა ქვემოდან უნდა ნახოთ, სასურველია ლიფტზე. ეძებთ ბატარეის კორპუსზე ჩაზნექილ ადგილს, ნაფხაჭნს, დამრეც ან დაკარგულ პლასტმასის ფარებს, ჰერმეტიკის დარღვეულ ნაკერს და სველ ან თეთრად შემშრალ კვალს ბატარეის კიდეზე, რაც ანტიფრიზის კვალია. თუ მანქანას პორტიდან ან საწყობიდან იბარებთ, ქვედა მხარეს ფოტოები გადაუღეთ ჯერ კიდევ იქ, სანამ ფული გადადის, და დააზუსტეთ, ვინ აგებს პასუხს ჩამოტვირთვისას მიღებულ დაზიანებაზე.</p>
+<h3>salvage სტატუსი უფრო მეტს ნიშნავს, ვიდრე ჩანს</h3>
+<p>ამერიკული აუქციონიდან ჩამოსული ტესლების დიდ ნაწილს salvage სტატუსი აქვს. ტესლასთვის ეს მხოლოდ ჩანაწერი არ არის, არამედ მოქმედება:</p>
+<ul>
+<li>სუპერჩარჯერზე დატენვა ასეთ მანქანას სამუდამოდ ეთიშება. საქართველოში სუპერჩარჯერი არ არის, თურქეთში კი დაახლოებით ოცდაათი სადგურია და იქ ეს უკვე იგრძნობა.</li>
+<li>ქარხნული გარანტია ბათილდება. ჩვეულებრივ ბატარეისა და მოტორის გარანტია 8 წელია და მეორე მფლობელზეც გადადის, salvage სტატუსი კი მას შლის.</li>
+<li>მაღალი ძაბვის სისტემაზე ტესლა სამუშაოს მხოლოდ ცალკე უსაფრთხოების შემოწმების შემდეგ იღებს, თქვენივე ხარჯით.</li>
+</ul>
+<p>ეს იმას არ ნიშნავს, რომ ასეთი მანქანა არ ღირს. ნიშნავს იმას, რომ ფასში ეს უკვე ჩადებული უნდა იყოს. რა უნდა შეამოწმოთ აუქციონის მანქანაზე, <a href="/blog/amerikuli-importi/">ამერიკული იმპორტის სტატიაშია</a>, განბაჟების ციფრები კი <a href="/ganbajeba/">განბაჟების გვერდზე</a>.</p>
+<h3>მანქანა ტესლას ანგარიშზე</h3>
+<p>ტესლა ერთ VIN-ს ერთ ანგარიშზე ინახავს. თუ წინა მფლობელმა მანქანა თავისი ანგარიშიდან არ მოხსნა, თქვენ მას ვერ დაამატებთ და აპლიკაცია არ გექნებათ, ანუ არც კარის დისტანციური გაღება, არც სალონის წინასწარი გათბობა და არც პროგრამული განახლებების მართვა. ეს გვარდება, მაგრამ ტესლასთან მიმოწერას და მფლობელობის დამადასტურებელ საბუთებს მოითხოვს. ყიდვამდე ჰკითხეთ გამყიდველს, მანქანა ვინმეს ანგარიშზეა თუ არა.</p>
+<h3>წყალი, აირბალიშები, კუზოვი</h3>
+<p>ელექტრომობილში წყლის დაზიანება ბენზინის მანქანაზე უფრო საშიშია, რადგან მარილიანი წყალი კონტაქტებს ჟანგავს იმის გარეშეც, რომ თვითონ ბატარეამდე მიაღწიოს. აუქციონის ფოტოებზე ნაჩვენები წყლის დონე და salvage-ის მიზეზი ცალკე უნდა წაიკითხოთ. აირბალიშების გახსნის შემდეგ აღდგენილ მანქანაზე კი აუცილებლად ნახეთ, თვითონ ბალიშები და მათი მართვის ბლოკი ნამდვილი ნაწილებია თუ არა.</p>
+
+<h2>ოცი წუთი დათვალიერებაზე</h2>
+<ul>
+<li><strong>ეკრანი.</strong> Controls, Software, Additional Vehicle Information. CCS ადაპტერის მხარდაჭერა, Autopilot Computer და პროცესორი, სამივეს ფოტო.</li>
+<li><strong>გარბენი სრულ მუხტზე.</strong> დატენეთ ან იკითხეთ, რამდენს აჩვენებს 100 პროცენტზე, და შეადარეთ ცხრილში მოცემულ ქარხნულ ციფრს.</li>
+<li><strong>სწრაფი დატენვის ტესტი.</strong> 30 პროცენტამდე ჩამოცლილი მანქანა სწრაფ დამტენზე მიიყვანეთ ადაპტერით და ნახეთ, რამდენ კილოვატს იღებს. ეს ერთდროულად ამოწმებს ადაპტერს, პორტს და ბატარეას.</li>
+<li><strong>ქვედა მხარე.</strong> ბატარეის კორპუსი, ფარები, ჰერმეტიკის ნაკერი, ანტიფრიზის კვალი.</li>
+<li><strong>ბარგული.</strong> ხალიჩა ასწიეთ, სათადარიგო ნიშა შეამოწმეთ, უკანა ფარებთან სინესტე ეძებეთ.</li>
+<li><strong>გამოწვევები VIN-ით.</strong> NHTSA-ის საიტზე უფასოა.</li>
+<li><strong>ანგარიში.</strong> მანქანა წინა მფლობელის ტესლას ანგარიშიდან მოხსნილია თუ არა.</li>
+</ul>
+<p>რამდენად დაგიჯდებათ დატენვა თქვენს ტარიფზე, <a href="/kalkulatori/">კალკულატორში</a> გამოთვალეთ, უახლოესი სწრაფი დამტენები კი <a href="/damtenebi/">დამტენების სიაშია</a>. თუ ტესლას იყიდით, გაითვალისწინეთ ერთი რამ: მისი ჩაშენებული ნავიგაცია საქართველოში დატენვის დაგეგმვას ვერ ახერხებს. ამისთვის მანქანის ბრაუზერში <a href="https://tesla.geocharge.ge">tesla.geocharge.ge</a> გაიხსნება, სადაც ცოცხალი რუკა და მარშრუტის დამგეგმავია ტესლას ეკრანზე მორგებული.</p>
+`,
+      faq: [
+        ['რომელი წლის ტესლა იტენება საქართველოში სწრაფ დამტენზე?',
+          'ნებისმიერი, რომელსაც ეკრანზე CCS ადაპტერის მხარდაჭერა ჩართული აქვს, პლუს CCS2 ადაპტერი. 2022 წლიდან და მერე გაშვებულ მანქანებს ეს პრაქტიკულად ყველას აქვს, 2020 წლის ოქტომბრამდე გაშვებულ Model 3-ს კი არა და მას დატენვის პორტის ბლოკის შეცვლა სჭირდება. 2021 წელი შუალედურია და ინდივიდუალურად უნდა შემოწმდეს.'],
+        ['როგორ შევამოწმო, აქვს თუ არა ტესლას CCS მხარდაჭერა?',
+          'მანქანის ეკრანზე გახსენით Controls, შემდეგ Software და Additional Vehicle Information. იქ წერია CCS ადაპტერის მხარდაჭერა, Installed ან Not installed. იმავე სიაში ჩანს ავტოპილოტის კომპიუტერის თაობა და ეკრანის პროცესორიც.'],
+        ['რომელი ტესლა სჯობს საქართველოსთვის, RWD თუ AWD?',
+          'თუ ხშირად დადიხართ მთაში ან ზამთარში გუდაურისა და ბაკურიანის მიმართულებით, ოთხივე წამყვანი ვერსია საგრძნობლად მშვიდია. ქალაქისთვის უკანა წამყვანი სავსებით საკმარისია და 2022 წლიდან მას უფრო გამძლე LFP ბატარეაც აქვს. საბურავებს ორივე შემთხვევაში წამყვანზე მეტი მნიშვნელობა აქვს.'],
+        ['რომელ ტესლას აქვს თბოტუმბო?',
+          'Model Y-ს ყველა წლის, პირველი დღიდან. Model 3-ს კი 2020 წლის ოქტომბრის განახლებიდან, ანუ იმ მანქანებს, რომლებსაც ფანჯრებზე შავი და არა ქრომირებული მოლდინგები აქვს. ზამთარში ეს გარბენში დიდ სხვაობას იძლევა.'],
+        ['რა პრობლემა აქვს აუქციონიდან ჩამოსულ salvage ტესლას?',
+          'ტესლა ასეთ მანქანას სუპერჩარჯერზე დატენვას სამუდამოდ უთიშავს და ქარხნულ გარანტიას ბათილად ცნობს, მაღალი ძაბვის სისტემაზე სამუშაოს კი მხოლოდ ცალკე უსაფრთხოების შემოწმების შემდეგ იღებს. საქართველოში სუპერჩარჯერი არ არის, ამიტომ პირველი პუნქტი მხოლოდ თურქეთში მგზავრობისას იგრძნობა.'],
+        ['ღირს თუ არა 4680 ბატარეიანი Model Y?',
+          'ეს 2022 და 2023 წლების ტეხასში აწყობილი ვერსიაა, VIN-ის დასაწყისით 7SA. მისი გარბენი 449 კილომეტრია და სწრაფი დატენვა 30 პროცენტის შემდეგ ნელდება. მთავარი დათქმა შეკეთებაა: სტრუქტურული ბატარეა პრაქტიკულად არ იშლება, ამიტომ ავარიულ მანქანაზე ეს ცალკე რისკია.'],
+        ['რა უნდა შევამოწმო ტესლას ქვედა მხარეს?',
+          'ბატარეა მანქანის ფსკერია, ამიტომ ქვედა მხარეს ჩაზნექილი ადგილი, ნაფხაჭნი, დაზიანებული ფარები, დარღვეული ჰერმეტიკის ნაკერი და ანტიფრიზის კვალი პირდაპირ ბატარეის დაზიანების ნიშნებია. ასეთი დაზიანება პორტში ჩამტვირთველით მანევრირებისას ხდება ხოლმე და შეცდომას ხშირად მაშინვე არ იძლევა.'],
+      ],
+      sources: [
+        ['NHTSA: გამოწვევების ოფიციალური ბაზა და შემოწმება VIN-ით', 'https://www.nhtsa.gov/recalls'],
+        ['EPA fueleconomy.gov: ტესლას ოფიციალური გარბენის ციფრები წლების მიხედვით', 'https://www.fueleconomy.gov/feg/PowerSearch.do?action=noform&path=1&year1=2018&year2=2026&make=Tesla'],
+        ['Tesla: ბატარეისა და მოტორის გარანტიის პირობები', 'https://www.tesla.com/support/vehicle-warranty'],
+        ['Tesla: ბორტზე მყოფი დამმუხტველის სიმძლავრეები', 'https://www.tesla.com/support/charging/onboard-charger'],
+        ['ტესლას პოლიტიკა salvage სტატუსის მანქანებზე', 'https://blog.onlyusedtesla.com/teslas-official-salvage-policy-e6e32489b1fa'],
+        ['CCS მხარდაჭერის ჩართვა და პორტის ბლოკის შეცვლა ძველ Model 3 და Model Y-ზე', 'https://www.2muchsun.com/single-post/how-to-enable-ccs-adapter-support-on-model-3-and-y'],
+        ['Wikipedia: Tesla Model 3-ის წარმოების ისტორია და განახლებები', 'https://en.wikipedia.org/wiki/Tesla_Model_3'],
+        ['Wikipedia: Tesla Model Y-ის წარმოების ისტორია და განახლებები', 'https://en.wikipedia.org/wiki/Tesla_Model_Y'],
+      ],
+    },
+    en: {
+      title: 'Tesla Model 3 and Model Y: what to check before you buy',
+      metaTitle: 'Buying a used Tesla Model 3 or Model Y: years, battery, known faults',
+      desc: 'Which years can fast charge in Georgia with an adapter, what changed year by year, what went wrong on which car, and RWD or AWD.',
+      key: [
+        'Short answer: an American Tesla will only fast charge in Georgia if the car’s own screen says CCS adapter support is installed. Cars built from 2022 onwards almost all have it; a Model 3 built before October 2020 needs its charge port controller replaced first.',
+        'The second dividing line falls on the same date: from October 2020 the Model 3 has a heat pump and spends far less energy on heating in winter. The Model Y had one from day one.',
+      ],
+      body: `
+<h2>One screen answers three questions</h2>
+<p>Inspecting a Tesla starts in one place, and it is not under the bonnet. On the car’s screen open Controls, then Software, then Additional Vehicle Information. Three lines in that list move the price: CCS adapter support, Autopilot Computer, and the infotainment processor.</p>
+<p>The car knows this about itself. It beats the seller’s word and the year in the advert, because Tesla changed things mid year on the line and two cars from the same calendar year can be built differently. Before you look at anything else, photograph that screen.</p>
+
+<h2>Will this car charge in Georgia</h2>
+<p>An American Tesla arrives with a NACS inlet, while Georgia’s fast chargers are CCS2: ${N.ccs2} stations at the moment. The two connectors do not fit each other, so an adapter goes in between. The adapter only works if CCS support is switched on in the car itself, which depends on the charge port controller and not on the adapter. An expensive adapter cannot rescue a car that lacks it.</p>
+${figCcs('en')}
+<p>The rule of thumb runs like this. A Model 3 built before October 2020, the one with chrome window trim, does not have the support and needs a new charge port controller. Cars built from 2022 onwards almost all have it enabled. In between there are exceptions: a batch built between June and September 2021 left the factory without the CCS chip, so on a 2021 car the year alone tells you nothing.</p>
+<p>If the screen reads Not installed, the fix is a new charge port controller, the ECU. The part itself is not expensive, and an older Model 3 needs a small wiring kit as well. In America Tesla Service does this. In Georgia there is no Tesla service centre, so importing the part and finding someone to fit it is your problem. That is exactly why support already switched on is worth real money and should show in the price.</p>
+<div class="tw"><table>
+<thead><tr><th>Type of charging</th><th>What you need</th><th>What you actually get</th></tr></thead>
+<tbody>
+<tr><td>DC fast charger</td><td>A CCS2 to NACS adapter and CCS support enabled in the car</td><td>60 to 120 kW on most Georgian chargers</td></tr>
+<tr><td>Public AC charger</td><td>A Type 2 to NACS adapter</td><td>7.4 kW, even on a 22 kW post</td></tr>
+<tr><td>At home</td><td>The same adapter, or a wallbox with a NACS cable</td><td>3.5 to 7.4 kW</td></tr>
+</tbody></table></div>
+<p class="note">Rear wheel drive versions have a 32 amp onboard charger, Long Range and dual motor versions 48 amps. An American Tesla takes single phase power only, so a three phase charger adds nothing.</p>
+<p>If you plan to drive to Turkey, the same CCS2 adapter also gets you onto Tesla’s own Superchargers there, which run CCS2 cables. With one condition covered further down: Tesla disables Supercharging permanently on a salvage titled car. The connector logic is set out in the <a href="/en/blog/konektorebi/">connector guide</a>.</p>
+
+<h2>The Model 3 year by year</h2>
+${figYears(M3_ROWS.en, 'Each bar shows the build years of the Model 3 that have the feature. These are production dates rather than model years, so two cars from the same calendar year can fall on opposite sides of a bar.', 'What the Model 3 gained in which years')}
+<h3>2017 to 2020: the first face</h3>
+<p>This is the Model 3 with chrome window trim. Build quality in the first two years is the weakest of the run: uneven panel gaps, paint, interior rattles. From April 2019 cars left the line with the HW3 Autopilot computer; before that it was HW2.5, which stopped receiving new features long ago. There is no heat pump, so in winter a plain resistive heater warms the cabin and eats straight out of the pack.</p>
+<h3>October 2020: the update that changes the most</h3>
+<p>Several things changed on one date: black trim instead of chrome, a heat pump, a powered boot, double glazed front windows, a new centre console and a larger battery on the Long Range. CCS support starts here too. If the same budget buys either an early 2020 car or a 2021 one, this line matters more than the difference in mileage.</p>
+<h3>2022 to 2023: less visible, still worth having</h3>
+<p>The rear wheel drive version moved to an LFP battery, which is charged to a full 100 percent every day. The screen moved to an AMD Ryzen processor and got noticeably quicker, and the 12 volt battery went from lead acid to lithium. There are losses too: radar was dropped in the spring of 2021 and the ultrasonic parking sensors in October 2022, after which cameras alone watch the parking.</p>
+<h3>2024 onwards: Highland</h3>
+<p>The updated Model 3 went on sale in America in January 2024. New lights front and rear outside; inside a steering wheel with no stalks, a rear screen, better sound insulation and a softer ride. It is still expensive used, but the charging question does not arise on it at all.</p>
+<div class="tw"><table>
+<thead><tr><th>Version</th><th>Years</th><th>Battery</th><th>EPA range</th><th>Drive</th></tr></thead>
+<tbody>
+<tr><td>Standard Range Plus</td><td>2019-2021</td><td>about 54 kWh</td><td>386 to 423 km</td><td>rear</td></tr>
+<tr><td>RWD with LFP</td><td>2022-2024</td><td>about 60 kWh</td><td>438 km</td><td>rear</td></tr>
+<tr><td>Long Range</td><td>2017-2020</td><td>about 75 kWh</td><td>499 to 531 km</td><td>rear or all</td></tr>
+<tr><td>Long Range AWD</td><td>2021-2023</td><td>about 82 kWh</td><td>568 to 576 km</td><td>all</td></tr>
+<tr><td>Performance</td><td>2018-2023</td><td>75 to 82 kWh</td><td>481 to 518 km</td><td>all</td></tr>
+<tr><td>Highland Long Range RWD</td><td>2024 onwards</td><td>about 78 kWh</td><td>584 km</td><td>rear</td></tr>
+</tbody></table></div>
+<p class="note">Range is the American EPA figure, which sits closer to reality than the European WLTP one. You will not see it in the mountains in winter; the detail is in the <a href="/en/blog/zamtari/">winter guide</a>.</p>
+
+<h2>The Model Y year by year</h2>
+${figYears(MY_ROWS.en, 'The axis is the same as the Model 3 chart above, so the two models can be read against each other. The Model Y arrived three years later already carrying almost everything the Model 3 gained in 2020.', 'What the Model Y gained in which years')}
+<h3>2020 to 2021: the first years of a new model</h3>
+<p>The Model Y was born with a heat pump, and that is its large advantage over a Model 3 of the same years. Against that, the early build was rushed: the 2020 and 2021 cars carry most of the suspension and seat belt fastener recalls. This is also where water ingress through the tail lights and the liftgate begins, never a recall but a subject Tesla’s service bulletins returned to for years.</p>
+<h3>2022 to 2023: two different cars under one name</h3>
+<p>From April 2022 the Texas factory built its own version of the Model Y with 4680 cells and a structural pack, meaning the battery is part of the body. Its EPA range is 449 km and charging slows markedly after about 30 percent. The real question on such a car is repair: a structural pack effectively cannot be opened up module by module, so on a damaged car this version is a risk of its own. A Texas built car is identified by the start of the VIN: 7SA is Texas, 5YJ is California.</p>
+<h3>2025 onwards: Juniper</h3>
+<p>The updated Model Y arrived in 2025 with a new front and rear, a larger screen and better sound insulation. It is still rare on the used market.</p>
+<div class="tw"><table>
+<thead><tr><th>Version</th><th>Years</th><th>Battery</th><th>EPA range</th><th>Drive</th></tr></thead>
+<tbody>
+<tr><td>Long Range AWD</td><td>2020-2021</td><td>about 75 kWh</td><td>509 to 525 km</td><td>all</td></tr>
+<tr><td>Long Range AWD</td><td>2022-2023</td><td>about 81 kWh</td><td>531 km</td><td>all</td></tr>
+<tr><td>Performance</td><td>2020-2023</td><td>75 to 81 kWh</td><td>468 to 507 km</td><td>all</td></tr>
+<tr><td>AWD with 4680 cells</td><td>2022-2023</td><td>about 68 kWh</td><td>449 km</td><td>all</td></tr>
+<tr><td>RWD and Standard Range</td><td>2021-2024</td><td>about 60 kWh, on some cars a larger pack limited in software</td><td>393 to 418 km</td><td>rear</td></tr>
+<tr><td>Juniper Long Range AWD</td><td>2025 onwards</td><td>about 78 kWh</td><td>500 km</td><td>all</td></tr>
+</tbody></table></div>
+
+<h2>RWD or AWD</h2>
+<p>This question does not settle the same way here as it does in a flat country. What actually separates the two:</p>
+<ul>
+<li><strong>Winter and gradients.</strong> A rear wheel drive Tesla on winter tyres will climb to Gudauri or Bakuriani, but on a snowed in mountain road the dual motor car is far calmer. If you go up often, that is worth the difference in price.</li>
+<li><strong>Tyres matter more than drive.</strong> A rear wheel drive car on winter tyres beats a dual motor car on summer tyres in snow. That is not an opinion, it is what happens on the Gudauri road every winter.</li>
+<li><strong>Range.</strong> On the same pack a dual motor car uses slightly more, but every Long Range version is dual motor and carries the bigger battery, so in practice those are the cars that go far.</li>
+<li><strong>Battery chemistry.</strong> Rear wheel drive versions from 2022 use LFP, which lasts better and is charged full every day. Dual motor cars use nickel chemistry: more capacity, but 80 percent is the daily ceiling.</li>
+<li><strong>Repairs.</strong> A dual motor car has one more motor and one more inverter. With no Tesla service centre in Georgia, that is simple arithmetic.</li>
+</ul>
+
+<h2>The battery: which chemistry, and what it means daily</h2>
+<p>Tesla has never published exact pack capacities, so every figure in the tables above comes from independent measurement and is approximate. What matters more than a kilowatt hour either way is the chemistry.</p>
+<ul>
+<li><strong>LFP, lithium iron phosphate.</strong> On rear wheel drive cars from 2022. Charged to 100 percent daily, wears more slowly, but charges more slowly in the cold and needs an occasional full charge to keep the state of charge reading honest.</li>
+<li><strong>Nickel chemistry.</strong> On Long Range and Performance cars. More capacity and more power, but the daily ceiling is 80 percent and a full charge is for long trips only.</li>
+</ul>
+<p>How fast a pack wears and what figure to expect from a car of a given age is covered in the <a href="/en/blog/batareis-cveta/">battery degradation guide</a>. A Tesla shows no health percentage in the menus, so the practical route is comparing the range shown at a full charge against the factory figure, or using a specialised app. Everything else worth checking is in the <a href="/en/blog/meoradi-shemowmeba/">used EV inspection list</a>.</p>
+
+<h2>Known faults by year</h2>
+<p>What follows are the recalls that concern metal rather than a software detail. The table also gives how many cars each one covered, which is what separates a mass problem from a single bad batch.</p>
+<div class="tw"><table>
+<thead><tr><th>Model and years</th><th>The fault</th><th>Cars affected</th></tr></thead>
+<tbody>
+<tr><td>Model 3, 2017-2020</td><td>The rearview camera harness chafes in the boot lid opening and the camera image disappears</td><td>356,309</td></tr>
+<tr><td>Model 3, 2018-2020 and Model Y, 2019-2021</td><td>The front seat belt fastener on the b-pillar may not be properly attached</td><td>5,530</td></tr>
+<tr><td>Model 3, 2019-2021 and Model Y, 2020-2021</td><td>Brake caliper bolts work loose</td><td>5,974</td></tr>
+<tr><td>Model 3, 2019-2021 and Model Y, 2020-2021</td><td>Front suspension lateral link fasteners work loose</td><td>2,791</td></tr>
+<tr><td>Model Y, 2020-2022</td><td>Front and rear suspension knuckles may fracture</td><td>826</td></tr>
+<tr><td>Model Y, 2020</td><td>Front upper control arm bolts not properly tightened</td><td>401</td></tr>
+<tr><td>Model 3 and Model Y, 2020-2022</td><td>A heat pump valve software fault leaves the windscreen poorly defrosted</td><td>26,681</td></tr>
+<tr><td>Model 3, 2023 and Model Y, 2020-2023</td><td>One or both tail lights intermittently fail to light</td><td>321,628</td></tr>
+<tr><td>Model Y, 2022-2023</td><td>Second row seat back frame bolts not securely tightened</td><td>3,470</td></tr>
+<tr><td>Model Y, 2022-2023</td><td>The steering wheel fastener may be loose</td><td>137</td></tr>
+<tr><td>Model 3 and Model Y, 2023</td><td>The power steering board can lose assist when pulling away from a stop, fixed in software</td><td>376,241</td></tr>
+<tr><td>Model 3, 2017-2023 and Model Y, 2020-2023</td><td>Low beam headlights brighter than the legal maximum, remedy still being developed</td><td>20,349</td></tr>
+</tbody></table></div>
+<p>One detail matters here. Recall work is free at Tesla Service, and there is no Tesla Service in Georgia. If the job was never done in America, it becomes your bill. Checking the VIN is free on the NHTSA site and takes two minutes.</p>
+<p>Beyond the recalls there are a few chronic complaints that never made an official list:</p>
+<ul>
+<li><strong>Water in the boot.</strong> Between 2020 and 2023 the Model Y’s tail light and liftgate sealing often let water through. Tesla revised the repair instruction more than once. A wet boot liner and rust in the spare wheel well show up on the viewing.</li>
+<li><strong>The 12 volt battery.</strong> On cars built up to the end of 2021 it is lead acid and dies at around three years. A flat one stops the whole car, however full the main pack is.</li>
+<li><strong>Yellow screen border.</strong> A common cosmetic defect on older cars. Tesla cured it with an ultraviolet lamp; almost nobody in Georgia has that machine.</li>
+<li><strong>Rusty discs.</strong> Regenerative braking means the friction brakes are rarely used and the discs corrode. Rust is a more common problem here than wear.</li>
+<li><strong>Build quality.</strong> The 2017 to 2019 Model 3 and the 2020 Model Y are the weakest of the run: gaps, paint, cabin noise.</li>
+</ul>
+
+<h2>Import risks the advert does not mention</h2>
+<h3>The battery is the floor of the car</h3>
+<p>A Tesla’s battery is not a box sitting off to one side. It occupies the entire floor and is part of the structure. Ground clearance is about 14 cm on a Model 3 and 17 on a Model Y. So anything that touches the car from below touches the battery.</p>
+<p>At the port cars are shifted around with forklifts, and the tines go in at exactly the height of a Tesla’s pack housing. Tesla is strict that the car may only be lifted at four designated points. Lifting or shoving it on tines crushes the housing, shears fasteners and can breach the cooling circuit. The worst of it is that this kind of damage often throws no error at the time and shows up months later as corrosion or lost capacity.</p>
+<p>What that means in practice: look at the car from below, ideally on a lift. You are looking for dents in the pack housing, deep scrapes, bent or missing plastic underbody panels, a disturbed sealant seam and wet or white dried residue along the edge of the pack, which is coolant. If you are collecting the car from the port or a warehouse, photograph the underside there, before the money moves, and establish who carries the risk for damage done during unloading.</p>
+<h3>A salvage title means more than it looks</h3>
+<p>A large share of the Teslas coming from American auctions carry a salvage title. To Tesla that is not just a note on a document:</p>
+<ul>
+<li>Supercharging is disabled permanently on such a car. There are no Superchargers in Georgia, but Turkey has roughly thirty stations and there it starts to matter.</li>
+<li>The factory warranty is void. Normally the battery and drive unit warranty runs eight years and passes to the next owner; a salvage title erases it.</li>
+<li>Tesla will only take on high voltage work after a separate safety inspection, at your expense.</li>
+</ul>
+<p>None of that means such a car is not worth buying. It means the price should already reflect it. What to check on an auction car is in the <a href="/en/blog/amerikuli-importi/">guide to American imports</a>, and the customs figures are on the <a href="/en/customs/">import duty page</a>.</p>
+<h3>The car sits on somebody’s Tesla account</h3>
+<p>Tesla keeps one VIN on one account. If the previous owner never removed the car from theirs, you cannot add it and you have no app: no remote unlock, no preheating the cabin, no control over software updates. It can be sorted out, but it takes correspondence with Tesla and proof of ownership. Ask the seller before you buy whether the car is still on anyone’s account.</p>
+<h3>Water, airbags, bodywork</h3>
+<p>Water damage is worse on an electric car than on a petrol one, because salt water does not have to reach the pack to corrode connectors. Read the water line in the auction photographs and the stated reason for the salvage title separately. On a car rebuilt after the airbags went off, check that the airbags themselves and their control module are genuine parts.</p>
+
+<h2>Twenty minutes at the viewing</h2>
+<ul>
+<li><strong>The screen.</strong> Controls, Software, Additional Vehicle Information. CCS adapter support, Autopilot Computer, processor. Photograph all three.</li>
+<li><strong>Range at a full charge.</strong> Charge it, or ask what it shows at 100 percent, and hold that against the factory figure in the tables above.</li>
+<li><strong>A fast charging test.</strong> Bring the car to a DC charger at around 30 percent with the adapter and watch what power it takes. That single test checks the adapter, the port and the pack at once.</li>
+<li><strong>Underneath.</strong> Pack housing, underbody panels, sealant seam, coolant traces.</li>
+<li><strong>The boot.</strong> Lift the liner, check the spare wheel well, look for damp around the tail lights.</li>
+<li><strong>Recalls by VIN.</strong> Free on the NHTSA site.</li>
+<li><strong>The account.</strong> Whether the car has been removed from the previous owner’s Tesla account.</li>
+</ul>
+<p>What charging will cost you on your own tariff is in the <a href="/en/calculator/">calculator</a>, and the nearest fast chargers are in the <a href="/en/chargers/">charger list</a>. One more thing if you do buy a Tesla: its built in navigation cannot plan charging in Georgia. For that, open <a href="https://tesla.geocharge.ge">tesla.geocharge.ge</a> in the car’s browser, where the live map and a route planner are laid out for the Tesla screen.</p>
+`,
+      faq: [
+        ['Which years of Tesla can fast charge in Georgia?',
+          'Any car whose screen says CCS adapter support is installed, plus a CCS2 adapter. Cars built from 2022 onwards essentially all have it; a Model 3 built before October 2020 does not and needs its charge port controller replaced. 2021 sits in between and has to be checked car by car.'],
+        ['How do I check whether a Tesla has CCS support?',
+          'On the car’s screen open Controls, then Software, then Additional Vehicle Information. CCS adapter support is listed there as Installed or Not installed. The same list also shows the Autopilot computer generation and the infotainment processor.'],
+        ['RWD or AWD for Georgia?',
+          'If you often drive in the mountains, or towards Gudauri and Bakuriani in winter, the dual motor version is noticeably calmer. For city use rear wheel drive is plenty, and from 2022 it also carries the more durable LFP battery. Tyres matter more than drive either way.'],
+        ['Which Teslas have a heat pump?',
+          'Every Model Y, from the first day. The Model 3 from the October 2020 update, which is to say the cars with black rather than chrome window trim. In winter it makes a large difference to range.'],
+        ['What is wrong with a salvage titled Tesla from an auction?',
+          'Tesla disables Supercharging on it permanently, treats the factory warranty as void, and will only take on high voltage work after a separate safety inspection. There are no Superchargers in Georgia, so the first point only bites on a trip to Turkey.'],
+        ['Is the 4680 Model Y worth buying?',
+          'That is the 2022 and 2023 Texas built version, VIN starting 7SA. Its range is 449 km and fast charging slows after about 30 percent. The real caveat is repair: a structural pack effectively cannot be taken apart, which is a risk of its own on a damaged car.'],
+        ['What should I check underneath a Tesla?',
+          'The battery is the floor of the car, so a dent, a deep scrape, damaged underbody panels, a disturbed sealant seam or coolant traces underneath are all signs of pack damage. This kind of damage happens when cars are manoeuvred with forklifts at the port, and it often throws no error at the time.'],
+      ],
+      sources: [
+        ['NHTSA: the official recall database and VIN lookup', 'https://www.nhtsa.gov/recalls'],
+        ['EPA fueleconomy.gov: official Tesla range figures by year', 'https://www.fueleconomy.gov/feg/PowerSearch.do?action=noform&path=1&year1=2018&year2=2026&make=Tesla'],
+        ['Tesla: battery and drive unit warranty terms', 'https://www.tesla.com/support/vehicle-warranty'],
+        ['Tesla: onboard charger ratings', 'https://www.tesla.com/support/charging/onboard-charger'],
+        ['Tesla’s policy on salvage titled vehicles', 'https://blog.onlyusedtesla.com/teslas-official-salvage-policy-e6e32489b1fa'],
+        ['Enabling CCS support and replacing the charge port controller on older Model 3 and Model Y', 'https://www.2muchsun.com/single-post/how-to-enable-ccs-adapter-support-on-model-3-and-y'],
+        ['Wikipedia: Tesla Model 3 production history and updates', 'https://en.wikipedia.org/wiki/Tesla_Model_3'],
+        ['Wikipedia: Tesla Model Y production history and updates', 'https://en.wikipedia.org/wiki/Tesla_Model_Y'],
+      ],
+    },
+  },
 ];
 
 const L = {
@@ -2722,17 +3198,18 @@ const ART_META = {
   'datenvis-fasi':      { cat: 'charging', pop: 1, icon: '<circle cx="12" cy="12" r="8.4"/><path d="M12 7.6v8.8M9.4 10.2h5.2M9.4 13.8h5.2"/>' },
   konektorebi:          { cat: 'charging', pop: 2, icon: '<path d="M9 3v4.6M15 3v4.6"/><path d="M6.2 7.6h11.6v3.1a5.8 5.8 0 0 1-11.6 0V7.6Z"/><path d="M12 16.5V21"/>' },
   '100-km-fasi':        { cat: 'charging', pop: 3, icon: '<path d="M4 18.5a8 8 0 1 1 16 0"/><path d="m12 14.5 4-4.2"/><circle cx="12" cy="18.5" r="1.3"/>' },
-  'sakhlis-damteni':    { cat: 'charging', pop: 4, icon: '<path d="m3.4 10.2 8.6-6.7 8.6 6.7v9.3a1 1 0 0 1-1 1H4.4a1 1 0 0 1-1-1v-9.3Z"/><path d="M12.6 9.6 10.4 13.6h3.2L11.4 17.6"/>' },
-  'shori-mgzavroba':    { cat: 'travel',   pop: 5, icon: '<path d="M12 3.4v3M12 10.5v3M12 17.6v3"/><path d="M5.2 20.6 8 3.4M18.8 20.6 16 3.4"/>' },
-  batarea:              { cat: 'battery',  pop: 6, icon: '<rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="M6.4 10.6v2.8M10.2 10.6v2.8"/>' },
-  'chinuri-importi':    { cat: 'buying',   pop: 7, icon: '<path d="M3.4 8.2 12 4.1l8.6 4.1v7.6L12 19.9l-8.6-4.1V8.2Z"/><path d="m3.4 8.2 8.6 4.1 8.6-4.1M12 12.3v7.6"/>' },
-  'amerikuli-importi':  { cat: 'buying',   pop: 8, icon: '<path d="M3 17.4c1.4 1 2.8 1 4.2 0s2.8-1 4.2 0 2.8 1 4.2 0 2.8-1 4.2 0"/><path d="M5.4 13.8V9.2h13.2l-1.8 4.6"/><path d="M9.2 9.2V5h5.6v4.2"/>' },
-  'ac-da-dc':           { cat: 'charging', pop: 9, icon: '<path d="M13.2 2.6 4.6 14.2h6.6L10 21.4l8.6-11.6H12l1.2-7.2Z"/>' },
-  zamtari:              { cat: 'travel',   pop: 10, icon: '<path d="M12 2.6v18.8M4.2 6.6l15.6 10.8M19.8 6.6 4.2 17.4"/><path d="m9.2 4.6 2.8 2.8 2.8-2.8M9.2 19.4l2.8-2.8 2.8 2.8"/>' },
-  'batareis-cveta':     { cat: 'battery',  pop: 11, icon: '<rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="m5.4 14.2 3-3 2.6 2 3.6-4"/>' },
-  'meoradi-shemowmeba': { cat: 'buying',   pop: 12, icon: '<circle cx="10.8" cy="10.8" r="6.8"/><path d="m20.4 20.4-4.6-4.6"/><path d="m7.8 10.8 2.2 2.2 4-4.2"/>' },
-  'tbilisi-stambuli':   { cat: 'travel',   pop: 13, icon: '<path d="M12 3v18"/><path d="M12 5.2h6.6l2 2.4-2 2.4H12z"/><path d="M12 13.4H5.4l-2 2.4 2 2.4H12z"/>' },
-  'turketshi-mgzavroba':{ cat: 'travel',   pop: 14, icon: '<circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/><path d="M12 3.4a14 14 0 0 1 0 17.2 14 14 0 0 1 0-17.2Z"/>' },
+  'sakhlis-damteni':    { cat: 'charging', pop: 5, icon: '<path d="m3.4 10.2 8.6-6.7 8.6 6.7v9.3a1 1 0 0 1-1 1H4.4a1 1 0 0 1-1-1v-9.3Z"/><path d="M12.6 9.6 10.4 13.6h3.2L11.4 17.6"/>' },
+  'shori-mgzavroba':    { cat: 'travel',   pop: 6, icon: '<path d="M12 3.4v3M12 10.5v3M12 17.6v3"/><path d="M5.2 20.6 8 3.4M18.8 20.6 16 3.4"/>' },
+  batarea:              { cat: 'battery',  pop: 7, icon: '<rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="M6.4 10.6v2.8M10.2 10.6v2.8"/>' },
+  'chinuri-importi':    { cat: 'buying',   pop: 8, icon: '<path d="M3.4 8.2 12 4.1l8.6 4.1v7.6L12 19.9l-8.6-4.1V8.2Z"/><path d="m3.4 8.2 8.6 4.1 8.6-4.1M12 12.3v7.6"/>' },
+  'amerikuli-importi':  { cat: 'buying',   pop: 9, icon: '<path d="M3 17.4c1.4 1 2.8 1 4.2 0s2.8-1 4.2 0 2.8 1 4.2 0 2.8-1 4.2 0"/><path d="M5.4 13.8V9.2h13.2l-1.8 4.6"/><path d="M9.2 9.2V5h5.6v4.2"/>' },
+  'ac-da-dc':           { cat: 'charging', pop: 10, icon: '<path d="M13.2 2.6 4.6 14.2h6.6L10 21.4l8.6-11.6H12l1.2-7.2Z"/>' },
+  zamtari:              { cat: 'travel',   pop: 11, icon: '<path d="M12 2.6v18.8M4.2 6.6l15.6 10.8M19.8 6.6 4.2 17.4"/><path d="m9.2 4.6 2.8 2.8 2.8-2.8M9.2 19.4l2.8-2.8 2.8 2.8"/>' },
+  'batareis-cveta':     { cat: 'battery',  pop: 12, icon: '<rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="m5.4 14.2 3-3 2.6 2 3.6-4"/>' },
+  'meoradi-shemowmeba': { cat: 'buying',   pop: 13, icon: '<circle cx="10.8" cy="10.8" r="6.8"/><path d="m20.4 20.4-4.6-4.6"/><path d="m7.8 10.8 2.2 2.2 4-4.2"/>' },
+  'tbilisi-stambuli':   { cat: 'travel',   pop: 14, icon: '<path d="M12 3v18"/><path d="M12 5.2h6.6l2 2.4-2 2.4H12z"/><path d="M12 13.4H5.4l-2 2.4 2 2.4H12z"/>' },
+  'turketshi-mgzavroba':{ cat: 'travel',   pop: 15, icon: '<circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/><path d="M12 3.4a14 14 0 0 1 0 17.2 14 14 0 0 1 0-17.2Z"/>' },
+  'tesla-model-3-y':    { cat: 'buying',   pop: 4, icon: '<path d="M3.2 15.4v-3.6l1.9-4.4a1 1 0 0 1 .9-.6h11.8a1 1 0 0 1 .9.6l1.9 4.4v3.6"/><path d="M3.2 11.8h17.6"/><circle cx="7.2" cy="15.6" r="1.9"/><circle cx="16.8" cy="15.6" r="1.9"/>' },
 };
 
 const CATS = {
