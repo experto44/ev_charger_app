@@ -40,8 +40,8 @@ export function sortConnectors(list) {
 // ── Active filters (persisted, unlike the app — the driver wants them to stick) ─
 const FILTERS_KEY = 'gc_tesla_filters';
 export const filters = {
-  provider: null,      // null = all
-  connector: null,     // null = all
+  providers: [],       // empty = all; several may be picked at once
+  connectors: [],      // empty = all; several may be picked at once
   fastDcOnly: false,
   availableOnly: false, // free/busy status filter
   minKw: 0,            // 0 = any power
@@ -49,7 +49,16 @@ export const filters = {
 
 (function loadFilters() {
   try {
-    Object.assign(filters, JSON.parse(localStorage.getItem(FILTERS_KEY) || '{}'));
+    const saved = JSON.parse(localStorage.getItem(FILTERS_KEY) || '{}');
+    Object.assign(filters, saved);
+    // Drivers who used the old single-pick drawer have `provider`/`connector`
+    // in storage; carry the one they had picked into the new lists.
+    if (typeof saved.provider === 'string') filters.providers = [saved.provider];
+    if (typeof saved.connector === 'string') filters.connectors = [saved.connector];
+    delete filters.provider;
+    delete filters.connector;
+    if (!Array.isArray(filters.providers)) filters.providers = [];
+    if (!Array.isArray(filters.connectors)) filters.connectors = [];
   } catch (_) {/* corrupt value — keep defaults */}
 })();
 
@@ -60,11 +69,13 @@ function saveFilters() {
 }
 
 export function applyFilters(stations) {
-  const ci = filters.connector?.toLowerCase();
+  // Within a group the picks are OR-ed (any of the chosen connectors will do),
+  // across groups they are AND-ed — same as the trip planner.
+  const conns = filters.connectors.map((c) => c.toLowerCase());
   return stations.filter(
     (s) =>
-      (!filters.provider || s.provider === filters.provider) &&
-      (!ci || s.connectors.some((c) => c.toLowerCase() === ci)) &&
+      (!filters.providers.length || filters.providers.includes(s.provider)) &&
+      (!conns.length || s.connectors.some((c) => conns.includes(c.toLowerCase()))) &&
       (!filters.fastDcOnly || s.isDC) &&
       (!filters.availableOnly || s.available > 0) &&
       // Min power: hide only rated chargers below the threshold (kw==0 kept).
@@ -274,14 +285,27 @@ export function buildFilterDrawer(stations, onChange) {
     onChange();
   };
 
-  const chip = (label, group, value) => {
+  // Provider and connector are lists: clicking a chip toggles it, so several
+  // can be on at once. Min power stays a single pick — two thresholds at once
+  // would be meaningless. `value === null` is the group's "all" chip.
+  const chip = (label, group, value, multi = false) => {
     const b = document.createElement('button');
     b.className = 'chip';
     b.textContent = label;
     b.dataset.group = group;
     b.__value = value;
+    b.__multi = multi;
     b.addEventListener('click', () => {
-      filters[group] = value;
+      if (!multi) {
+        filters[group] = value;
+      } else if (value === null) {
+        filters[group] = [];
+      } else {
+        const list = filters[group];
+        const i = list.indexOf(value);
+        if (i === -1) list.push(value);
+        else list.splice(i, 1);
+      }
       syncChips();
       notify();
     });
@@ -289,12 +313,12 @@ export function buildFilterDrawer(stations, onChange) {
   };
 
   provEl.replaceChildren(
-    chip(t('allProviders'), 'provider', null),
-    ...providers.map((p) => chip(p, 'provider', p)),
+    chip(t('allProviders'), 'providers', null, true),
+    ...providers.map((p) => chip(p, 'providers', p, true)),
   );
   connEl.replaceChildren(
-    chip(t('allConnectors'), 'connector', null),
-    ...connectors.map((c) => chip(c, 'connector', c)),
+    chip(t('allConnectors'), 'connectors', null, true),
+    ...connectors.map((c) => chip(c, 'connectors', c, true)),
   );
   powerEl.replaceChildren(
     chip(t('anyPower'), 'minKw', 0),
@@ -316,8 +340,8 @@ export function buildFilterDrawer(stations, onChange) {
   };
 
   document.getElementById('filter-clear').onclick = () => {
-    filters.provider = null;
-    filters.connector = null;
+    filters.providers = [];
+    filters.connectors = [];
     filters.fastDcOnly = false;
     filters.availableOnly = false;
     filters.minKw = 0;
@@ -326,8 +350,16 @@ export function buildFilterDrawer(stations, onChange) {
   };
 
   function syncChips() {
-    for (const b of document.querySelectorAll('.chip')) {
-      b.classList.toggle('is-active', filters[b.dataset.group] === b.__value);
+    // Only this drawer's chips — the trip planner has its own `.chip` rows
+    // with their own state.
+    for (const b of [provEl, connEl, powerEl].flatMap((el) => [...el.children])) {
+      const picked = filters[b.dataset.group];
+      const on = b.__multi
+        ? b.__value === null
+          ? picked.length === 0 // "all" lights up only while nothing is picked
+          : picked.includes(b.__value)
+        : picked === b.__value;
+      b.classList.toggle('is-active', on);
     }
     dcToggle.classList.toggle('is-active', filters.fastDcOnly);
     availToggle.classList.toggle('is-active', filters.availableOnly);
