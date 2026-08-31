@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ელექტრომობილის დატენვის ხარჯები: აღრიცხვა აპლიკაციაში | GeoCharge</title>
+<meta name="description" content="როგორ აღრიცხოთ, რა დაგიჯდათ დატენვა: ფასიან დამტენზე გადახდილი თანხა, სახლში დატენვის გამოთვლა პროცენტებიდან და თვის ჯამი GeoCharge-ის ხარჯების ჟურნალში.">
+<meta name="theme-color" content="#11161A">
+<link rel="canonical" href="https://geocharge.ge/blog/datenvis-kharjebi/">
+<link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/datenvis-kharjebi/">
+<link rel="alternate" hreflang="en" href="https://geocharge.ge/en/blog/datenvis-kharjebi/">
+<link rel="alternate" hreflang="x-default" href="https://geocharge.ge/blog/datenvis-kharjebi/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GeoCharge">
+<meta property="og:locale" content="ka_GE">
+<meta property="og:url" content="https://geocharge.ge/blog/datenvis-kharjebi/">
+<meta property="og:title" content="ელექტრომობილის დატენვის ხარჯები: აღრიცხვა აპლიკაციაში | GeoCharge">
+<meta property="og:description" content="როგორ აღრიცხოთ, რა დაგიჯდათ დატენვა: ფასიან დამტენზე გადახდილი თანხა, სახლში დატენვის გამოთვლა პროცენტებიდან და თვის ჯამი GeoCharge-ის ხარჯების ჟურნალში.">
+<meta property="og:image" content="https://geocharge.ge/assets/og/datenvis-kharjebi-ka.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ელექტრომობილის დატენვის ხარჯები: აღრიცხვა აპლიკაციაში | GeoCharge">
+<meta name="twitter:description" content="როგორ აღრიცხოთ, რა დაგიჯდათ დატენვა: ფასიან დამტენზე გადახდილი თანხა, სახლში დატენვის გამოთვლა პროცენტებიდან და თვის ჯამი GeoCharge-ის ხარჯების ჟურნალში.">
+<meta name="twitter:image" content="https://geocharge.ge/assets/og/datenvis-kharjebi-ka.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
+<link rel="apple-touch-icon" href="/assets/icon-1024.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&amp;family=Noto+Sans+Georgian:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "BreadcrumbList",
+   "itemListElement": [
+    {
+     "@type": "ListItem",
+     "position": 1,
+     "name": "მთავარი",
+     "item": "https://geocharge.ge/"
+    },
+    {
+     "@type": "ListItem",
+     "position": 2,
+     "name": "სტატიები",
+     "item": "https://geocharge.ge/blog/"
+    },
+    {
+     "@type": "ListItem",
+     "position": 3,
+     "name": "ელექტრომობილის დატენვის ხარჯები"
+    }
+   ]
+  },
+  {
+   "@type": "Article",
+   "@id": "https://geocharge.ge/blog/datenvis-kharjebi/#article",
+   "headline": "ელექტრომობილის დატენვის ხარჯები",
+   "description": "როგორ აღრიცხოთ, რა დაგიჯდათ დატენვა: ფასიან დამტენზე გადახდილი თანხა, სახლში დატენვის გამოთვლა პროცენტებიდან და თვის ჯამი GeoCharge-ის ხარჯების ჟურნალში.",
+   "url": "https://geocharge.ge/blog/datenvis-kharjebi/",
+   "inLanguage": "ka",
+   "datePublished": "2026-08-31",
+   "dateModified": "2026-08-31",
+   "author": {
+    "@type": "Organization",
+    "@id": "https://geocharge.ge/#org",
+    "name": "GeoCharge"
+   },
+   "publisher": {
+    "@id": "https://geocharge.ge/#org"
+   },
+   "image": "https://geocharge.ge/assets/og/datenvis-kharjebi-ka.png",
+   "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://geocharge.ge/#website"
+   }
+  },
+  {
+   "@type": "FAQPage",
+   "inLanguage": "ka",
+   "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "სად არის ხარჯების აღრიცხვა GeoCharge-ის აპლიკაციაში?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "პროფილის მენიუში, განყოფილებაში ხარჯები. იქვეა პლიუსის ღილაკი ახალი ჩანაწერისთვის და პარამეტრები, სადაც ბატარეის ტევადობას, დენის ტარიფსა და დატენვის დანაკარგს უთითებთ."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "ფასიანია ხარჯების აღრიცხვა?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "არა, ფუნქცია უფასოა და ანგარიშის გარეშეც მუშაობს. ჩანაწერები ტელეფონზე ინახება. ანგარიშში შესვლის შემდეგ ისინი სხვა ტელეფონზეც გადმოგყვებათ."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "როგორ ითვლება სახლში დატენვის ღირებულება?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "ბატარეის ტევადობა მრავლდება პროცენტების სხვაობაზე და დენის ტარიფზე, შედეგი კი იყოფა დატენვის მარგი ქმედების კოეფიციენტზე, რადგან ენერგიის ნაწილი ბატარეამდე ვერ აღწევს. 10 პროცენტიანი დანაკარგი ნიშნავს გაყოფას 0.9-ზე. 60 კილოვატსაათიანი ბატარეა 30 პროცენტიდან 80 პროცენტამდე 33.3 კილოვატსაათს მოიხმარს და 0.25 ლარიან ტარიფზე 8.33 ლარი ჯდება."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "დაიკარგება ჩანაწერები, თუ ტელეფონს შევცვლი?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "თუ ანგარიშში შესული ხართ, არა. ჩანაწერები ანგარიშს მიჰყვება და ახალ ტელეფონზე იმავე ანგარიშით შესვლისთანავე ჩამოიტვირთება. ანგარიშის გარეშე ჟურნალი მხოლოდ იმ ტელეფონზეა, სადაც შეიქმნა."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "რატომ არ ითვლის აპლიკაცია ხარჯს ავტომატურად?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "იმიტომ, რომ დატენვის გადახდები პროვაიდერების საკუთარ ანგარიშებში ხდება და GeoCharge მათთან მიერთებული არ არის. ამიტომ ფასიან დატენვაზე თანხას თქვენ უთითებთ, სახლის დატენვას კი აპლიკაცია თქვენივე პარამეტრებით ითვლის."
+     }
+    }
+   ]
+  }
+ ]
+}
+</script>
+<style>
+:root{--ink:#11161A;--ink-2:#5A6671;--dark:#11161A;--dark-2:#0D1115;
+--accent:#2BD594;--accent-d:#17995F;--on-accent:#0D1A13;--mint:#ECFAF3;--mint-b:#C8EFDD;
+--soft:#F6FAF8;--line:#E3EEE8;--on-dark:#A7B4BD;--on-dark-2:#B9C4CB}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font-family:'Poppins','Noto Sans Georgian',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+::selection{background:var(--accent);color:var(--ink)}
+a{color:inherit}
+.hdr{position:sticky;top:0;z-index:60;background:rgba(17,22,26,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.07)}
+.hdr-in{max-width:1100px;margin:0 auto;padding:0 clamp(16px,4vw,40px);height:64px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.lang{display:flex;border:1px solid #39434C;border-radius:999px;overflow:hidden}
+.lang a{padding:7px 13px;font-weight:600;font-size:12.5px;text-decoration:none;color:#B9C4CB}
+.lang a[aria-current="true"]{background:var(--accent);color:var(--on-accent)}
+.hnav{display:flex;align-items:center;gap:clamp(12px,1.6vw,24px);flex-shrink:0}
+.hnav a{color:var(--on-dark-2);text-decoration:none;font-size:clamp(13px,1.05vw,14px);font-weight:500;white-space:nowrap}
+.hnav a:hover{color:#fff}
+@media (max-width:899px){.hnav{display:none}}
+main{max-width:1100px;margin:0 auto;padding:clamp(28px,5vw,48px) clamp(20px,5vw,40px) clamp(56px,8vw,90px)}
+.crumbs{font-size:13.5px;color:#8B98A1;margin:0 0 18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.crumbs a{color:var(--accent-d);text-decoration:none}
+.crumbs a:hover{text-decoration:underline}
+h1{font-size:clamp(28px,4.4vw,42px);font-weight:700;letter-spacing:-.02em;margin:0 0 14px;text-wrap:balance}
+h2{font-size:clamp(21px,2.6vw,26px);font-weight:700;letter-spacing:-.02em;margin:44px 0 16px}
+.intro{color:var(--ink-2);font-size:17px;line-height:1.7;margin:0;max-width:760px;text-wrap:pretty}
+.upd{color:#8B98A1;font-size:13px;margin:16px 0 0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:28px 0 0}
+.stat{background:var(--mint);border:1px solid var(--mint-b);border-radius:16px;padding:20px 18px;text-align:center}
+.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em}
+.stat span{display:block;font-size:13.5px;font-weight:500;color:#3D4A52;margin-top:6px;line-height:1.35}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14.5px}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--soft);font-weight:600;font-size:13px;color:#3D4A52;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td a{color:var(--accent-d);text-decoration:none;font-weight:500}
+td a:hover{text-decoration:underline}
+.tag{display:inline-block;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+.dc{background:var(--mint);color:var(--mint-ink,#137A4C);border:1px solid var(--mint-b)}
+.ac{background:#F1F4F6;color:#5A6671;border:1px solid #E1E7EB}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:0}
+.chip{background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:8px 15px;font-size:14px;font-weight:500}
+.chip b{color:var(--accent-d);font-weight:700}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin:0}
+.links a{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:9px 14px;
+font-size:14px;font-weight:500;text-decoration:none;color:var(--ink)}
+.links a:hover{border-color:var(--accent);color:var(--accent-d)}
+.cta{background-color:var(--dark);background-image:radial-gradient(600px 400px at 50% 0%,rgba(43,213,148,.16),transparent 65%);
+border-radius:20px;padding:clamp(28px,5vw,44px);margin:48px 0 0;text-align:center;color:#fff}
+.cta h2{color:#fff;margin:0 0 12px}
+.cta p{color:var(--on-dark);font-size:16px;line-height:1.65;margin:0 auto 24px;max-width:560px;text-wrap:pretty}
+.cta .row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.cta a{background:var(--accent);color:var(--on-accent);text-decoration:none;border-radius:11px;
+padding:13px 22px;font-size:15px;font-weight:600}
+.cta a:hover{background:#25C486}
+.faq details{border:1px solid var(--line);border-radius:14px;padding:0 20px;margin-bottom:10px;background:#fff}
+.faq summary{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:16px 0;
+cursor:pointer;font-size:15.5px;font-weight:600;list-style:none}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";color:var(--accent-d);font-size:20px;flex-shrink:0}
+.faq details[open] summary::after{content:"–"}
+.faq details p{color:var(--ink-2);font-size:15px;line-height:1.68;margin:0;padding:0 0 16px;text-wrap:pretty}
+footer{background:var(--dark-2);color:#8B98A1}
+.f-in{max-width:1100px;margin:0 auto;padding:26px clamp(20px,5vw,40px);display:flex;flex-wrap:wrap;
+gap:12px 26px;justify-content:space-between;align-items:center;font-size:13px}
+.f-in a{color:#B9C4CB;text-decoration:none;font-weight:500}
+.f-in a:hover{color:var(--accent)}
+/* The footer carries the full map of the site, including the sections that are
+   deliberately not in the header nav (Turkey). One link from every page is what
+   makes a section reachable at all, for a reader and for a crawler. */
+.fnav{max-width:1100px;margin:0 auto;padding:30px clamp(20px,5vw,40px) 4px;
+display:flex;flex-wrap:wrap;gap:10px 22px;border-bottom:1px solid rgba(255,255,255,.07)}
+.fnav a{color:#B9C4CB;text-decoration:none;font-size:13.5px;font-weight:500}
+.fnav a:hover{color:var(--accent)}
+.fnav a.hi{color:#fff}
+.fnav a.hi::before{content:"🇹🇷";margin-right:6px;font-size:12px}
+.note{color:#8B98A1;font-size:13px;margin:12px 0 0}
+.calc{display:grid;grid-template-columns:minmax(260px,1fr) minmax(240px,320px);gap:24px;
+background:var(--soft);border:1px solid var(--line);border-radius:20px;padding:clamp(20px,3vw,30px);margin:28px 0 0}
+.calc-in{display:grid;gap:14px;align-content:start}
+.calc-in label{display:grid;gap:6px;font-size:14px;font-weight:600;color:var(--ink)}
+.calc-in input,.calc-in select{width:100%;padding:11px 14px;border:1px solid #D7E0DB;border-radius:11px;
+font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#fff;outline:none}
+.calc-in input:focus,.calc-in select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(43,213,148,.18)}
+.calc-out{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;align-self:start}
+.calc-big b{display:block;font-size:clamp(30px,4.5vw,40px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em;line-height:1.1}
+.calc-big span{display:block;font-size:13.5px;color:#5A6671;margin-top:4px}
+.calc-small{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.calc-small b{display:block;font-size:19px;font-weight:700;color:var(--ink)}
+.calc-small span{display:block;font-size:12.5px;color:#77848C;margin-top:3px;line-height:1.35}
+.calc-time{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:#77848C}
+.calc-time b{display:block;color:var(--ink);font-weight:600;margin-top:4px;line-height:1.6}
+@media (max-width:700px){.calc{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="hdr-in">
+    <a href="/" aria-label="GeoCharge"><img src="/assets/logo-dark.svg" alt="GeoCharge" height="28" style="height:28px;display:block"></a>
+    <nav class="hnav" aria-label="ნავიგაცია">
+      <a href="/damtenebi/">დამტენები</a>
+      <a href="/tarifebi/">ტარიფები</a>
+      <a href="/kalkulatori/">კალკულატორი</a>
+      <a href="/ganbajeba/">განბაჟება</a>
+      <a href="/marshruti/">მარშრუტები</a>
+      <a href="/blog/">სტატიები</a>
+    </nav>
+    <div class="lang" role="group" aria-label="ენა">
+      <a href="/blog/datenvis-kharjebi/" aria-current="true" hreflang="ka">ქარ</a>
+      <a href="/en/blog/datenvis-kharjebi/" hreflang="en">ENG</a>
+    </div>
+  </div>
+</header>
+<main>
+<style>.prose{max-width:760px}
+.prose p{color:var(--ink-2);font-size:17px;line-height:1.75;margin:0 0 18px;text-wrap:pretty}
+.prose h2{font-size:clamp(21px,2.6vw,27px);margin:40px 0 14px}
+.prose h3{font-size:19px;font-weight:600;margin:28px 0 10px}
+.prose ul{margin:0 0 18px;padding:0;list-style:none;display:grid;gap:12px}
+/* NOT display:flex — that turns a leading <strong> into its own flex column and
+   strands the rest of the sentence in a second one. Keep the li a block so the
+   bold lead-in stays inline, and float the bullet out with absolute positioning. */
+.prose li{position:relative;padding-left:20px;color:var(--ink-2);font-size:16.5px;line-height:1.7;text-wrap:pretty}
+.prose li::before{content:"";position:absolute;left:0;top:.6em;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.prose strong{color:var(--ink);font-weight:600}
+.prose a{color:var(--accent-d);font-weight:500;text-decoration:none}
+.prose a:hover{text-decoration:underline}
+.key{background:var(--mint);border:1px solid var(--mint-b);border-radius:16px;padding:22px 24px;margin:0 0 28px}
+.key p{margin:0;color:#1B5E42;font-size:16.5px;line-height:1.7}
+.key p+p{margin-top:10px}
+.meta{color:#8B98A1;font-size:13.5px;margin:0 0 28px}
+/* Figures are hand-authored inline SVG: no external asset, no layout shift, and
+   they inherit the palette below, so a token change repaints them for free. */
+.fig{margin:0 0 26px;border:1px solid var(--line);border-radius:18px;
+padding:20px clamp(12px,2.4vw,22px) 14px;background:var(--soft)}
+/* Below ~600px the figure scrolls sideways instead of shrinking its labels into
+   illegibility, the same trade the .tw tables already make. */
+.fig .fs{overflow-x:auto}
+.fig svg{display:block;width:100%;min-width:560px;height:auto}
+.fig figcaption{color:var(--ink-2);font-size:14px;line-height:1.6;margin-top:14px;text-wrap:pretty}
+/* A phone screenshot rather than a drawn figure: capped narrow so a portrait shot
+   does not push the prose apart, and centred inside the same card. */
+.fig.shot{display:flex;flex-direction:column;align-items:center;text-align:center}
+.fig.shot img{width:min(258px,70%);height:auto;border-radius:20px;display:block}
+.fig.shot figcaption{max-width:520px}
+.fig .fx{font:500 14.5px 'Poppins','Noto Sans Georgian',sans-serif;fill:var(--ink-2)}
+.fig .fk{font:600 15px 'Poppins','Noto Sans Georgian',sans-serif;fill:var(--ink)}
+/* An ol, so .prose ul rules do not reach it; the inherited .prose li dot would
+   double up with the number, hence the reset. */
+.src{margin:0 0 18px;padding-left:24px;display:grid;gap:11px}
+.src li{padding-left:0;color:var(--ink-2);font-size:15px;line-height:1.65}
+.src li::before{content:none}
+.src a{color:var(--accent-d);font-weight:500;text-decoration:none}
+.src a:hover{text-decoration:underline}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:18px;margin:0}
+/* A card is a link, so the whole thing has to read as pressable: the icon tile
+   and the arrow give it the two affordances plain text never had. */
+.acard{position:relative;display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);
+border-radius:20px;padding:22px 22px 20px;text-decoration:none;overflow:hidden;
+transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+.acard::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:var(--accent);
+transform:scaleX(0);transform-origin:left;transition:transform .22s ease}
+.acard:hover{border-color:var(--accent);box-shadow:0 16px 36px -20px rgba(23,153,95,.45);transform:translateY(-2px)}
+.acard:hover::before{transform:scaleX(1)}
+.acard:focus-visible{outline:2px solid var(--accent-d);outline-offset:3px}
+.acard .ai{width:44px;height:44px;border-radius:13px;background:var(--mint);border:1px solid var(--mint-b);
+display:flex;align-items:center;justify-content:center;margin-bottom:16px;flex-shrink:0}
+.acard .ai svg{display:block}
+.acard b{display:block;font-size:17.5px;font-weight:600;color:var(--ink);line-height:1.4;margin-bottom:8px}
+.acard span{display:block;color:var(--ink-2);font-size:14.5px;line-height:1.6}
+.acard b+span{margin-bottom:16px}
+.acard .am{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:14px;
+border-top:1px solid var(--line);color:#8B98A1;font-size:12.5px;font-weight:500}
+.acard .am .rd{margin-left:auto;color:var(--accent-d);font-weight:600;display:flex;align-items:center;gap:5px}
+.acard:hover .am .rd svg{transform:translateX(3px)}
+.acard .am .rd svg{transition:transform .18s ease}
+/* Filter and sort bar on the guides index. Rendered hidden and revealed by the
+   script, so a reader without JS is never shown controls that do nothing. */
+.ctrl{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:0 0 26px}
+.ctrl[hidden]{display:none}
+.chips-f{display:flex;flex-wrap:wrap;gap:8px}
+.chips-f button{font:600 13.5px 'Poppins','Noto Sans Georgian',sans-serif;color:var(--ink-2);
+background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 15px;cursor:pointer;
+transition:all .16s ease}
+.chips-f button:hover{border-color:var(--accent);color:var(--accent-d)}
+.chips-f button[aria-pressed="true"]{background:var(--mint);border-color:var(--mint-b);color:#1B5E42}
+.sortw{margin-left:auto;display:flex;align-items:center;gap:8px;color:#8B98A1;font-size:13px}
+.sortw select{font:600 13.5px 'Poppins','Noto Sans Georgian',sans-serif;color:var(--ink);
+background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px;cursor:pointer}
+.sortw select:hover{border-color:var(--accent)}
+.nores{color:var(--ink-2);font-size:15.5px;margin:0}
+@media (max-width:560px){.sortw{margin-left:0;width:100%}}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin:0}</style>
+<nav class="crumbs" aria-label="breadcrumb"><a href="/">მთავარი</a><span aria-hidden="true">›</span><a href="/blog/">სტატიები</a><span aria-hidden="true">›</span><span>ელექტრომობილის დატენვის ხარჯები</span></nav>
+<div class="prose">
+<h1>ელექტრომობილის დატენვის ხარჯები</h1>
+<p class="meta">განახლდა 2026 წლის აგვისტოში</p>
+<div class="key"><p>GeoCharge-ის ხარჯების ჟურნალი ორ რამეს იწერს: ფასიან დამტენზე გადახდილ თანხას, რომელსაც თავად უთითებთ, და სახლში დატენვის ღირებულებას, რომელსაც აპლიკაცია პროცენტებიდან ითვლის.</p><p>ფუნქცია უფასოა და ანგარიშის გარეშეც მუშაობს. ანგარიშში შესვლის შემდეგ ჩანაწერები სხვა ტელეფონზეც გადმოგყვებათ.</p></div>
+<h2>რატომ არ ჩანს დატენვის ხარჯი</h2>
+<p>ბენზინზე დახარჯული თანხა თავისით ჩანს: ერთი გადახდა, ერთი ჩეკი. დატენვის ხარჯი კი ორად იყოფა და ორივე ნაწილი იმალება. საჯარო დამტენზე ფული პროვაიდერის აპლიკაციაში რჩება, თითოეულ ქსელს კი თავისი აპლიკაცია აქვს. სახლში დატენვა დენის საერთო ანგარიშში ერევა, სადაც მანქანას გამათბობლისა და მაცივრისგან ვეღარ გამოაცალკევებთ.</p>
+<p>ამიტომ მძღოლების უმეტესობა თვის ხარჯს დაახლოებით ვარაუდობს. ეს საკმარისი არ არის, როცა ბენზინთან შედარება გინდათ ან როცა უნდა გადაწყვიტოთ, ღირს თუ არა სახლის დამტენის დაყენება.</p>
+
+<h2>რას აკეთებს ხარჯების ჟურნალი</h2>
+<p>GeoCharge-ის აპლიკაციაში, პროფილის მენიუში, არის განყოფილება ხარჯები. ის ერთ სიაში კრებს დატენვის ყველა ხარჯს, ფასიანსაც და სახლისასაც. ერთი ჩანაწერი ერთი დატენვაა.</p>
+<p>ჩაწერა ხელით ხდება, დატენვის შემდეგ, პლიუსის ღილაკით. ეს განზრახ არის ასე: აპლიკაცია პროვაიდერების ანგარიშებთან მიერთებული არ არის და თქვენს გადახდებს ვერსად ხედავს. სამაგიეროდ სიაში ზუსტად ის ციფრები დგას, რომლებიც თქვენ იცით.</p>
+
+<h2>ორი სახის ჩანაწერი</h2>
+<h3>ფასიანი დატენვა</h3>
+<p>საჯარო დამტენზე ზუსტი თანხა უკვე გაქვთ, რადგან პროვაიდერის აპლიკაციაში წერია. ჩანაწერში მხოლოდ თანხასა და თარიღს უთითებთ. კილოვატსაათების დათვლა აქ საჭირო არ არის, გადახდილი თანხა თავად არის საბოლოო ციფრი.</p>
+<h3>სახლში დატენვა</h3>
+<p>სახლში დატენვისას მზა თანხა არსად წერია, დენის ანგარიში კი თვის ბოლოს მოდის და ყველაფერს ერთად აჩვენებს. ამიტომ აქ სხვა გზაა: უთითებთ, ბატარეის რამდენი პროცენტიდან რამდენ პროცენტამდე დატენეთ, დანარჩენს აპლიკაცია ითვლის.</p>
+<p>გამოთვლა ასეთია: ბატარეის ტევადობა მრავლდება პროცენტების სხვაობაზე, შედეგი იყოფა დატენვის მარგი ქმედების კოეფიციენტზე და მრავლდება დენის ტარიფზე.</p>
+<p>მაგალითი. 60 კილოვატსაათიანი ბატარეა 30 პროცენტიდან 80 პროცენტამდე. ბატარეაში შედის 30 კილოვატსაათი, მრიცხველი კი 10 პროცენტიანი დანაკარგის გამო 33.3 კილოვატსაათს დაითვლის. 0.25 ლარიან ტარიფზე ეს 8.33 ლარია.</p>
+
+<h2>საიდან მოდის ეს ციფრები</h2>
+<p>სახლის გამოთვლას სამი პარამეტრი სჭირდება. ისინი ერთხელ უნდა შეავსოთ ხარჯების ეკრანის პარამეტრებში.</p>
+<ul>
+<li><strong>ბატარეის ტევადობა.</strong> სასარგებლო ტევადობა კილოვატსაათებში, ანუ ის ენერგია, რომელსაც მანქანა რეალურად იყენებს. ჩვეულებრივ მწარმოებლის მითითებულ ციფრზე ოდნავ ნაკლებია.</li>
+<li><strong>დენის ტარიფი.</strong> რა გიჯდებათ ერთი კილოვატსაათი სახლში, დღის, ღამისა და საფეხურის გათვალისწინებით. ღამის ტარიფზე დატენილი მანქანა შესამჩნევად იაფი ჯდება.</li>
+<li><strong>დატენვის დანაკარგი.</strong> მრიცხველიდან აღებული ენერგიის ნაწილი ბატარეამდე ვერ აღწევს: სითბოდ იკარგება დამტენში, კაბელსა და თავად ბატარეაში. ნაგულისხმევია 10 პროცენტი, მისი შეცვლა შეგიძლიათ.</li>
+</ul>
+<p>სწორედ ამ დანაკარგის გამო არ არის სწორი მარტივი ნამრავლი ტევადობასა და ტარიფს შორის. მრიცხველი ყოველთვის იმაზე მეტს ითვლის, ვიდრე ბატარეაში შედის.</p>
+
+<h2>რას ხედავთ ეკრანზე</h2>
+<figure class="fig shot">
+<img src="/assets/shot-expenses.jpg" alt="GeoCharge-ის ხარჯების ეკრანი: ამ თვეში 120.47 ლარი, სახლში დატენვა 29 პროცენტი, ფასიანი დატენვა 71 პროცენტი და ჩანაწერების სია" width="569" height="1173" loading="lazy">
+<figcaption>ხარჯების ეკრანი: თვის ჯამი, სახლისა და ფასიანი დატენვის წილი, თვეების დიაგრამა და ჩანაწერების სია.</figcaption>
+</figure>
+<p>ეკრანი ოთხ ნაწილად იკითხება:</p>
+<ul>
+<li><strong>ამ თვეში და სულ.</strong> მიმდინარე თვის ჯამი და მთელი ისტორიის ჯამი ერთად.</li>
+<li><strong>სახლისა და ფასიანის წილი.</strong> ერთი ზოლი და ორი ციფრი, რომელიც აჩვენებს, ხარჯის რამდენი პროცენტი მოდის სახლში დატენვაზე და რამდენი საჯარო დამტენებზე.</li>
+<li><strong>ბოლო ექვსი თვე.</strong> სვეტოვანი დიაგრამა, სადაც თითო თვე სახლისა და ფასიანი ნაწილისგან შედგება. აქ ჩანს, ხარჯი იზრდება თუ მცირდება.</li>
+<li><strong>ჩანაწერები.</strong> თვეების მიხედვით დაჯგუფებული სია, თითოეული თვის ჯამით. სახლის ჩანაწერს პროცენტების დიაპაზონი და კილოვატსაათებიც აწერია. ჩანაწერის რედაქტირება და წაშლა სამწერტილიანი მენიუდან ხდება.</li>
+</ul>
+
+<h2>ჩანაწერი ისტორიას არ გადაწერს</h2>
+<p>სახლის თითოეულ ჩანაწერს ის პარამეტრები აქვს ჩაბეჭდილი, რომლითაც შეიქმნა: ტევადობა, ტარიფი და დანაკარგი. თუ ტარიფი გაიზრდება ან მანქანას შეცვლით, ძველი ჩანაწერები უცვლელი დარჩება.</p>
+<p>ეს მნიშვნელოვანია, რადგან სხვაგვარად ერთი პარამეტრის შეცვლა მთელ ისტორიას გადათვლიდა და შარშანდელი დატენვა უცებ სხვა ფასს აჩვენებდა.</p>
+
+<h2>რამდენად საჭიროა</h2>
+<p>თუ მხოლოდ საჯარო დამტენებით ტენით და თვეში ორჯერ, ჟურნალი დიდ სიახლეს არ გეტყვით. სამ შემთხვევაში კი ის ერთადერთი ხერხია, რომ რეალური ციფრი დაინახოთ:</p>
+<ul>
+<li><strong>თუ სახლში ტენით.</strong> ეს ხარჯი დენის ანგარიშში იკარგება და სხვაგვარად ვერსად დაითვლით.</li>
+<li><strong>თუ ბენზინს ადარებთ.</strong> შედარებას აზრი მაშინ აქვს, როცა ერთ მხარეს რეალური ჩანაწერები დგას და არა ვარაუდი. თავად შედარება ცალკე სტატიაშია: <a href="/blog/100-km-fasi/">ელექტრომობილი თუ ბენზინი, 100 კილომეტრის რეალური ღირებულება</a>.</li>
+<li><strong>თუ მანქანით მუშაობთ.</strong> ტაქსი, მიწოდება ან სამსახურებრივი გარბენი: აქ თვიური ჯამი პირდაპირ შემოსავალზე აისახება.</li>
+</ul>
+<p>კიდევ ერთი შემთხვევა სახლის დამტენის ყიდვაა. სანამ დახარჯავთ, ჯობია რამდენიმე თვის რეალური ჩანაწერი გქონდეთ, რომ დაინახოთ, რამდენს დაზოგავთ. რა სჭირდება დაყენებას, აქ წერია: <a href="/blog/sakhlis-damteni/">სახლის დამტენი, რა სჭირდება და რაზეა დამოკიდებული ფასი</a>.</p>
+
+<h2>რას არ აკეთებს</h2>
+<ul>
+<li>პროვაიდერების აპლიკაციებიდან ავტომატურად არაფერს იღებს. თანხას თქვენ წერთ.</li>
+<li>დენის ტარიფს თავად არ ავსებს, რადგან ის სახლის ანგარიშზეა დამოკიდებული.</li>
+<li>მომავალ დატენვას არ ითვლის. სანამ დატენავთ, ღირებულების წინასწარ დათვლა <a href="/kalkulatori/">კალკულატორში</a> ხდება.</li>
+</ul>
+
+<h2>როგორ დავიწყოთ</h2>
+<p>გახსენით პროფილი, შედით განყოფილებაში ხარჯები და შეავსეთ პარამეტრები: ბატარეის ტევადობა, დენის ტარიფი და დანაკარგი. ამის შემდეგ ყოველ დატენვაზე მხოლოდ ერთი ჩანაწერის დამატება დაგრჩებათ.</p>
+<p>თუ ჯერ არ იცით, კონკრეტულ სადგურზე რა ტარიფია, ქსელების ფასები ერთ ცხრილშია: <a href="/tarifebi/">დატენვის ტარიფები</a>. კონკრეტული სადგურის ფასი კი <a href="/damtenebi/">დამტენების სიაშია</a>. ზოგადად რამდენი ჯდება დატენვა საქართველოში, ცალკე სტატიაშია: <a href="/blog/datenvis-fasi/">რამდენი ღირს ელექტრომობილის დატენვა საქართველოში</a>.</p>
+
+<h2>ხშირად დასმული კითხვები</h2>
+<div class="faq">
+<details><summary>სად არის ხარჯების აღრიცხვა GeoCharge-ის აპლიკაციაში?</summary><p>პროფილის მენიუში, განყოფილებაში ხარჯები. იქვეა პლიუსის ღილაკი ახალი ჩანაწერისთვის და პარამეტრები, სადაც ბატარეის ტევადობას, დენის ტარიფსა და დატენვის დანაკარგს უთითებთ.</p></details>
+<details><summary>ფასიანია ხარჯების აღრიცხვა?</summary><p>არა, ფუნქცია უფასოა და ანგარიშის გარეშეც მუშაობს. ჩანაწერები ტელეფონზე ინახება. ანგარიშში შესვლის შემდეგ ისინი სხვა ტელეფონზეც გადმოგყვებათ.</p></details>
+<details><summary>როგორ ითვლება სახლში დატენვის ღირებულება?</summary><p>ბატარეის ტევადობა მრავლდება პროცენტების სხვაობაზე და დენის ტარიფზე, შედეგი კი იყოფა დატენვის მარგი ქმედების კოეფიციენტზე, რადგან ენერგიის ნაწილი ბატარეამდე ვერ აღწევს. 10 პროცენტიანი დანაკარგი ნიშნავს გაყოფას 0.9-ზე. 60 კილოვატსაათიანი ბატარეა 30 პროცენტიდან 80 პროცენტამდე 33.3 კილოვატსაათს მოიხმარს და 0.25 ლარიან ტარიფზე 8.33 ლარი ჯდება.</p></details>
+<details><summary>დაიკარგება ჩანაწერები, თუ ტელეფონს შევცვლი?</summary><p>თუ ანგარიშში შესული ხართ, არა. ჩანაწერები ანგარიშს მიჰყვება და ახალ ტელეფონზე იმავე ანგარიშით შესვლისთანავე ჩამოიტვირთება. ანგარიშის გარეშე ჟურნალი მხოლოდ იმ ტელეფონზეა, სადაც შეიქმნა.</p></details>
+<details><summary>რატომ არ ითვლის აპლიკაცია ხარჯს ავტომატურად?</summary><p>იმიტომ, რომ დატენვის გადახდები პროვაიდერების საკუთარ ანგარიშებში ხდება და GeoCharge მათთან მიერთებული არ არის. ამიტომ ფასიან დატენვაზე თანხას თქვენ უთითებთ, სახლის დატენვას კი აპლიკაცია თქვენივე პარამეტრებით ითვლის.</p></details>
+</div>
+
+</div>
+
+<h2>სხვა სტატიები</h2>
+<div class="cards">
+<a class="acard" href="/blog/tesla-model-3-y/" data-cat="buying"
+data-date="2026-08-30" data-pop="4"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.2 15.4v-3.6l1.9-4.4a1 1 0 0 1 .9-.6h11.8a1 1 0 0 1 .9.6l1.9 4.4v3.6"/><path d="M3.2 11.8h17.6"/><circle cx="7.2" cy="15.6" r="1.9"/><circle cx="16.8" cy="15.6" r="1.9"/></svg></span><b>ტესლა Model 3 და Model Y: რას უნდა მიაქციოთ ყურადღება ყიდვამდე</b>
+<span>რომელი წლის ტესლა იტენება საქართველოში ადაპტერით, რა შეიცვალა წლების მიხედვით, რომელ წელს რა ნაკლი ჰქონდა და RWD თუ AWD.</span><span class="am"><time datetime="2026-08-30">აგვისტო 2026</time>
+<span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/blog/tbilisi-stambuli/" data-cat="travel"
+data-date="2026-08-19" data-pop="15"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M12 5.2h6.6l2 2.4-2 2.4H12z"/><path d="M12 13.4H5.4l-2 2.4 2 2.4H12z"/></svg></span><b>თბილისიდან სტამბოლამდე ელექტრო მანქანით: მარშრუტი და დამტენები</b>
+<span>დაახლოებით 1 620 კილომეტრი შავი ზღვის სანაპიროთი. სად არის სწრაფი დამტენები, სად თხელდება დაფარვა და რა ჯდება დატენვა ლირაში.</span><span class="am"><time datetime="2026-08-19">აგვისტო 2026</time>
+<span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/blog/turketshi-mgzavroba/" data-cat="travel"
+data-date="2026-08-19" data-pop="16"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/><path d="M12 3.4a14 14 0 0 1 0 17.2 14 14 0 0 1 0-17.2Z"/></svg></span><b>ელექტრო მანქანით საქართველოდან თურქეთში: რა უნდა იცოდეთ წასვლამდე</b>
+<span>თურქეთში 13 471 საჯარო დამტენია. რომელი საზღვრით წავიდეთ, რომელი კონექტორი გვჭირდება, რა ღირს დატენვა და რა განსხვავებაა საქართველოსთან.</span><span class="am"><time datetime="2026-08-19">აგვისტო 2026</time>
+<span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/blog/meoradi-shemowmeba/" data-cat="buying"
+data-date="2026-08-19" data-pop="14"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m20.4 20.4-4.6-4.6"/><path d="m7.8 10.8 2.2 2.2 4-4.2"/></svg></span><b>როგორ შევამოწმოთ მეორადი ელექტრომობილი ყიდვამდე</b>
+<span>ბატარეის ჯანმრთელობა, სწრაფი დატენვის ტესტი, კონექტორი და იმპორტის ისტორია. პრაქტიკული სია, რომელიც ერთ დათვალიერებაში ეტევა.</span><span class="am"><time datetime="2026-08-19">აგვისტო 2026</time>
+<span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/blog/batareis-cveta/" data-cat="battery"
+data-date="2026-08-11" data-pop="13"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="m5.4 14.2 3-3 2.6 2 3.6-4"/></svg></span><b>ბატარეის ცვეთა გარბენის მიხედვით: ტესლა, ნისან ლიფი და ჩინური მოდელები</b>
+<span>გაზომილი ციფრები და არა ვარაუდი: რამდენი რჩება ბატარეას 50 000, 100 000 და 200 000 კილომეტრზე ტესლაზე, ნისან ლიფზე, ჩინურ მოდელებზე და ჰიბრიდზე. რომელია მაღალი რისკის ჯგუფი.</span><span class="am"><time datetime="2026-08-11">აგვისტო 2026</time>
+<span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/blog/datenvis-fasi/" data-cat="charging"
+data-date="2026-07-30" data-pop="1"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.6v8.8M9.4 10.2h5.2M9.4 13.8h5.2"/></svg></span><b>რამდენი ღირს ელექტრომობილის დატენვა საქართველოში</b>
+<span>სწრაფი დატენვა 0.50-იდან 1.00 ლარამდე ერთ კილოვატსაათზე, ნელი 0.35-იდან. როგორ გამოვთვალოთ ერთი დატენვის ღირებულება.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
+<span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/blog/konektorebi/" data-cat="charging"
+data-date="2026-07-30" data-pop="2"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v4.6M15 3v4.6"/><path d="M6.2 7.6h11.6v3.1a5.8 5.8 0 0 1-11.6 0V7.6Z"/><path d="M12 16.5V21"/></svg></span><b>CCS2, GB/T, Type 2: რომელი კონექტორი გჭირდებათ საქართველოში</b>
+<span>საქართველოში ყველაზე გავრცელებული კონექტორებია CCS2 და GB/T. რომელი შეესაბამება თქვენს მანქანას და რამდენი ასეთი დამტენია ქვეყანაში.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
+<span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/blog/ac-da-dc/" data-cat="charging"
+data-date="2026-07-30" data-pop="11"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.2 2.6 4.6 14.2h6.6L10 21.4l8.6-11.6H12l1.2-7.2Z"/></svg></span><b>AC თუ DC: რით განსხვავდება ნელი და სწრაფი დატენვა</b>
+<span>საქართველოს 600-ზე მეტი დამტენიდან დაახლოებით 390 სწრაფი DC-ა, 220 კი ნელი AC. რომელი როდის გამოვიყენოთ.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
+<span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/blog/shori-mgzavroba/" data-cat="travel"
+data-date="2026-07-30" data-pop="7"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.4v3M12 10.5v3M12 17.6v3"/><path d="M5.2 20.6 8 3.4M18.8 20.6 16 3.4"/></svg></span><b>შორ გზაზე ელექტრო მანქანით საქართველოში: პრაქტიკული გზამკვლევი</b>
+<span>ბათუმში წასვლა ელექტრო მანქანით ერთი გაჩერებით შეიძლება. სად არის დამტენები მთავარ მარშრუტებზე და როგორ დავგეგმოთ შორი გზა.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
+<span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/blog/amerikuli-importi/" data-cat="buying"
+data-date="2026-07-30" data-pop="10"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.4c1.4 1 2.8 1 4.2 0s2.8-1 4.2 0 2.8 1 4.2 0 2.8-1 4.2 0"/><path d="M5.4 13.8V9.2h13.2l-1.8 4.6"/><path d="M9.2 9.2V5h5.6v4.2"/></svg></span><b>ამერიკიდან ჩამოყვანილი ელექტრომობილი: სად დატენავთ საქართველოში</b>
+<span>ამერიკული სპეციფიკაციის მანქანას CCS1, NACS ან Type 1 აქვს. საქართველოში ასეთი დამტენი სულ 31-ია. რა ვქნათ ადაპტერით და რა შევამოწმოთ ყიდვამდე.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
+<span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/blog/chinuri-importi/" data-cat="buying"
+data-date="2026-07-30" data-pop="9"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 8.2 12 4.1l8.6 4.1v7.6L12 19.9l-8.6-4.1V8.2Z"/><path d="m3.4 8.2 8.6 4.1 8.6-4.1M12 12.3v7.6"/></svg></span><b>ჩინური ელექტრომობილი საქართველოში: GB/T კონექტორი და დატენვა</b>
+<span>GB/T კონექტორი საქართველოში 361 სადგურზეა, თითქმის იმდენზე, რამდენზეც ევროპული CCS2. რატომ არის ეს კარგი ამბავი ჩინური მანქანის მფლობელისთვის.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
+<span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/blog/zamtari/" data-cat="travel"
+data-date="2026-07-30" data-pop="12"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.6v18.8M4.2 6.6l15.6 10.8M19.8 6.6 4.2 17.4"/><path d="m9.2 4.6 2.8 2.8 2.8-2.8M9.2 19.4l2.8-2.8 2.8 2.8"/></svg></span><b>ელექტრომობილი ზამთარში საქართველოში: გარბენი, დატენვა და მთა</b>
+<span>ცივ ამინდში გარბენი მესამედამდე ეცემა. ბაკურიანში 6 დამტენია და არცერთი სწრაფი, სტეფანწმინდაში 2. როგორ დავგეგმოთ ზამთარი.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
+<span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/blog/sakhlis-damteni/" data-cat="charging"
+data-date="2026-07-30" data-pop="6"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m3.4 10.2 8.6-6.7 8.6 6.7v9.3a1 1 0 0 1-1 1H4.4a1 1 0 0 1-1-1v-9.3Z"/><path d="M12.6 9.6 10.4 13.6h3.2L11.4 17.6"/></svg></span><b>სახლის დამტენი: რა სჭირდება და რაზეა დამოკიდებული ფასი</b>
+<span>ჩვეულებრივი როზეტი, შვიდკილოვატიანი კედლის დამტენი თუ სამფაზიანი. რა სჭირდება ბინას და კერძო სახლს, რა მოსთხოვოთ ელექტრიკს და როდის არ ღირს დამტენის ყიდვა.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
+<span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/blog/100-km-fasi/" data-cat="charging"
+data-date="2026-07-30" data-pop="3"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18.5a8 8 0 1 1 16 0"/><path d="m12 14.5 4-4.2"/><circle cx="12" cy="18.5" r="1.3"/></svg></span><b>ელექტრომობილი თუ ბენზინი: 100 კილომეტრის რეალური ღირებულება</b>
+<span>100 კილომეტრი სწრაფ დამტენზე 14.04 ლარია, ბენზინის მანქანით კი 29.12. სად ჩერდება ეს სხვაობა და რა არ შედის ამ ანგარიშში.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
+<span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/blog/batarea/" data-cat="battery"
+data-date="2026-07-30" data-pop="8"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="M6.4 10.6v2.8M10.2 10.6v2.8"/></svg></span><b>ბატარეის დეგრადაცია: რა ხდება რეალურად და რას ნიშნავს ეს საქართველოში</b>
+<span>ბატარეა წელიწადში დაახლოებით 1-2 პროცენტს კარგავს. რატომ არის საქართველოს სიცხე და ბინაში ცხოვრება ორი მთავარი რისკი და რა შეამოწმოთ მეორადი მანქანის ყიდვისას.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
+<span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+</div>
+
+<h2>იხილეთ ასევე</h2>
+<div class="links">
+<a href="/damtenebi/">დამტენების სია</a><a href="/tarifebi/">ტარიფების შედარება</a><a href="/kalkulatori/">დატენვის კალკულატორი</a><a href="/marshruti/">მარშრუტები</a><a href="/qselebi/">ქსელები</a>
+</div>
+<section class="cta">
+  <h2>რუკა და ცოცხალი სტატუსი აპლიკაციაშია</h2>
+  <p>ამ გვერდზე ხედავთ, რომელი დამტენები არსებობს და სად. რუკა, ზუსტი მდებარეობა, ცოცხალი სტატუსი (თავისუფალია თუ დაკავებული) და მარშრუტის დაგეგმვა უფასო აპლიკაციაშია.</p>
+  <div class="row">
+    <a href="https://play.google.com/store/apps/details?id=ge.geocharge.app" target="_blank" rel="noopener">ჩამოტვირთვა Google Play-დან</a>
+    <a href="https://apps.apple.com/ge/app/geocharge/id6785467389" target="_blank" rel="noopener">ჩამოტვირთვა App Store-დან</a>
+  </div>
+</section>
+</main>
+<footer>
+  <nav class="fnav" aria-label="საიტის რუკა">
+    <a href="/damtenebi/">დამტენები</a>
+    <a href="/tarifebi/">ტარიფები</a>
+    <a href="/kalkulatori/">კალკულატორი</a>
+    <a href="/qselebi/">ქსელები</a>
+    <a href="/marshruti/">მარშრუტები</a>
+    <a href="/ganbajeba/">განბაჟება</a>
+    <a href="/blog/">სტატიები</a>
+    <a class="hi" href="/turketi/">დამტენები თურქეთში</a>
+  </nav>
+  <div class="f-in">
+    <p style="margin:0">© 2026 GeoCharge</p>
+    <a href="/">← geocharge.ge</a>
+  </div>
+</footer>
+</body>
+</html>

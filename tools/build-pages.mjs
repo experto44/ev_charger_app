@@ -283,7 +283,7 @@ const L = {
     byCity: 'Chargers by city', byNetwork: 'Chargers by network',
     connectorMix: 'Connector types', allStations: 'All stations',
     updated: 'Data refreshes automatically from the providers. Last update:',
-    ctaTitle: 'Map and live status — in the app',
+    ctaTitle: 'Map and live status are in the app',
     ctaBody: 'This page shows which chargers exist and where. The map, exact locations, real-time availability and route planning live in the free app.',
     ctaPlay: 'Get it on Google Play', ctaStore: 'Download on the App Store',
     otherCities: 'Other cities', otherNetworks: 'Other networks', backToAll: 'All chargers in Georgia',
@@ -2228,7 +2228,7 @@ ${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></de
 const ARTICLE_SLUGS = ['datenvis-fasi', 'konektorebi', 'ac-da-dc', 'shori-mgzavroba',
   'amerikuli-importi', 'chinuri-importi', 'zamtari', 'sakhlis-damteni', '100-km-fasi', 'batarea',
   'batareis-cveta', 'tbilisi-stambuli', 'turketshi-mgzavroba', 'meoradi-shemowmeba',
-  'tesla-model-3-y'];
+  'tesla-model-3-y', 'datenvis-kharjebi'];
 
 // Every indexable URL on geocharge.ge that this script does not itself render:
 // the two hand-written home pages and everything under /blog/.

@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EV charging costs: tracking them in the app | GeoCharge</title>
+<meta name="description" content="How to keep a record of what charging costs you: the amount you paid at a public charger, a home charge worked out from percentages, and the monthly total in the GeoCharge expense log.">
+<meta name="theme-color" content="#11161A">
+<link rel="canonical" href="https://geocharge.ge/en/blog/datenvis-kharjebi/">
+<link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/datenvis-kharjebi/">
+<link rel="alternate" hreflang="en" href="https://geocharge.ge/en/blog/datenvis-kharjebi/">
+<link rel="alternate" hreflang="x-default" href="https://geocharge.ge/blog/datenvis-kharjebi/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GeoCharge">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://geocharge.ge/en/blog/datenvis-kharjebi/">
+<meta property="og:title" content="EV charging costs: tracking them in the app | GeoCharge">
+<meta property="og:description" content="How to keep a record of what charging costs you: the amount you paid at a public charger, a home charge worked out from percentages, and the monthly total in the GeoCharge expense log.">
+<meta property="og:image" content="https://geocharge.ge/assets/og/datenvis-kharjebi-en.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="EV charging costs: tracking them in the app | GeoCharge">
+<meta name="twitter:description" content="How to keep a record of what charging costs you: the amount you paid at a public charger, a home charge worked out from percentages, and the monthly total in the GeoCharge expense log.">
+<meta name="twitter:image" content="https://geocharge.ge/assets/og/datenvis-kharjebi-en.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
+<link rel="apple-touch-icon" href="/assets/icon-1024.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&amp;family=Noto+Sans+Georgian:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "BreadcrumbList",
+   "itemListElement": [
+    {
+     "@type": "ListItem",
+     "position": 1,
+     "name": "Home",
+     "item": "https://geocharge.ge/en/"
+    },
+    {
+     "@type": "ListItem",
+     "position": 2,
+     "name": "Guides",
+     "item": "https://geocharge.ge/en/blog/"
+    },
+    {
+     "@type": "ListItem",
+     "position": 3,
+     "name": "What charging your EV costs, and how to track it"
+    }
+   ]
+  },
+  {
+   "@type": "Article",
+   "@id": "https://geocharge.ge/en/blog/datenvis-kharjebi/#article",
+   "headline": "What charging your EV costs, and how to track it",
+   "description": "How to keep a record of what charging costs you: the amount you paid at a public charger, a home charge worked out from percentages, and the monthly total in the GeoCharge expense log.",
+   "url": "https://geocharge.ge/en/blog/datenvis-kharjebi/",
+   "inLanguage": "en",
+   "datePublished": "2026-08-31",
+   "dateModified": "2026-08-31",
+   "author": {
+    "@type": "Organization",
+    "@id": "https://geocharge.ge/#org",
+    "name": "GeoCharge"
+   },
+   "publisher": {
+    "@id": "https://geocharge.ge/#org"
+   },
+   "image": "https://geocharge.ge/assets/og/datenvis-kharjebi-en.png",
+   "isPartOf": {
+    "@type": "WebSite",
+    "@id": "https://geocharge.ge/#website"
+   }
+  },
+  {
+   "@type": "FAQPage",
+   "inLanguage": "en",
+   "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "Where is expense tracking in the GeoCharge app?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Under the profile menu, in the Expenses section. The plus button for a new record is there, along with the settings where you enter battery capacity, electricity tariff and charging loss."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Does expense tracking cost anything?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "No, the feature is free and works without an account. Records are kept on the phone. Sign in and they follow you to another phone."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "How is the cost of a home charge calculated?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Battery capacity is multiplied by the difference in percent and by your electricity tariff, and the result is divided by the charging efficiency, because part of the energy never reaches the battery. A 10 percent loss means dividing by 0.9. A 60 kWh battery taken from 30 percent to 80 percent draws 33.3 kWh, which costs 8.33 GEL at a tariff of 0.25 GEL."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Will I lose the records if I change phone?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Not if you are signed in. The records follow the account and download as soon as you sign in on the new phone. Without an account the log stays on the phone where it was created."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Why does the app not track the cost automatically?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Because charging payments happen inside the providers' own accounts and GeoCharge is not connected to them. So you enter the amount for a paid charge, and the app works out a home charge from your own settings."
+     }
+    }
+   ]
+  }
+ ]
+}
+</script>
+<style>
+:root{--ink:#11161A;--ink-2:#5A6671;--dark:#11161A;--dark-2:#0D1115;
+--accent:#2BD594;--accent-d:#17995F;--on-accent:#0D1A13;--mint:#ECFAF3;--mint-b:#C8EFDD;
+--soft:#F6FAF8;--line:#E3EEE8;--on-dark:#A7B4BD;--on-dark-2:#B9C4CB}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font-family:'Poppins','Noto Sans Georgian',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+::selection{background:var(--accent);color:var(--ink)}
+a{color:inherit}
+.hdr{position:sticky;top:0;z-index:60;background:rgba(17,22,26,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.07)}
+.hdr-in{max-width:1100px;margin:0 auto;padding:0 clamp(16px,4vw,40px);height:64px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.lang{display:flex;border:1px solid #39434C;border-radius:999px;overflow:hidden}
+.lang a{padding:7px 13px;font-weight:600;font-size:12.5px;text-decoration:none;color:#B9C4CB}
+.lang a[aria-current="true"]{background:var(--accent);color:var(--on-accent)}
+.hnav{display:flex;align-items:center;gap:clamp(12px,1.6vw,24px);flex-shrink:0}
+.hnav a{color:var(--on-dark-2);text-decoration:none;font-size:clamp(13px,1.05vw,14px);font-weight:500;white-space:nowrap}
+.hnav a:hover{color:#fff}
+@media (max-width:899px){.hnav{display:none}}
+main{max-width:1100px;margin:0 auto;padding:clamp(28px,5vw,48px) clamp(20px,5vw,40px) clamp(56px,8vw,90px)}
+.crumbs{font-size:13.5px;color:#8B98A1;margin:0 0 18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.crumbs a{color:var(--accent-d);text-decoration:none}
+.crumbs a:hover{text-decoration:underline}
+h1{font-size:clamp(28px,4.4vw,42px);font-weight:700;letter-spacing:-.02em;margin:0 0 14px;text-wrap:balance}
+h2{font-size:clamp(21px,2.6vw,26px);font-weight:700;letter-spacing:-.02em;margin:44px 0 16px}
+.intro{color:var(--ink-2);font-size:17px;line-height:1.7;margin:0;max-width:760px;text-wrap:pretty}
+.upd{color:#8B98A1;font-size:13px;margin:16px 0 0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:28px 0 0}
+.stat{background:var(--mint);border:1px solid var(--mint-b);border-radius:16px;padding:20px 18px;text-align:center}
+.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em}
+.stat span{display:block;font-size:13.5px;font-weight:500;color:#3D4A52;margin-top:6px;line-height:1.35}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14.5px}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--soft);font-weight:600;font-size:13px;color:#3D4A52;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td a{color:var(--accent-d);text-decoration:none;font-weight:500}
+td a:hover{text-decoration:underline}
+.tag{display:inline-block;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+.dc{background:var(--mint);color:var(--mint-ink,#137A4C);border:1px solid var(--mint-b)}
+.ac{background:#F1F4F6;color:#5A6671;border:1px solid #E1E7EB}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:0}
+.chip{background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:8px 15px;font-size:14px;font-weight:500}
+.chip b{color:var(--accent-d);font-weight:700}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin:0}
+.links a{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:9px 14px;
+font-size:14px;font-weight:500;text-decoration:none;color:var(--ink)}
+.links a:hover{border-color:var(--accent);color:var(--accent-d)}
+.cta{background-color:var(--dark);background-image:radial-gradient(600px 400px at 50% 0%,rgba(43,213,148,.16),transparent 65%);
+border-radius:20px;padding:clamp(28px,5vw,44px);margin:48px 0 0;text-align:center;color:#fff}
+.cta h2{color:#fff;margin:0 0 12px}
+.cta p{color:var(--on-dark);font-size:16px;line-height:1.65;margin:0 auto 24px;max-width:560px;text-wrap:pretty}
+.cta .row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.cta a{background:var(--accent);color:var(--on-accent);text-decoration:none;border-radius:11px;
+padding:13px 22px;font-size:15px;font-weight:600}
+.cta a:hover{background:#25C486}
+.faq details{border:1px solid var(--line);border-radius:14px;padding:0 20px;margin-bottom:10px;background:#fff}
+.faq summary{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:16px 0;
+cursor:pointer;font-size:15.5px;font-weight:600;list-style:none}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";color:var(--accent-d);font-size:20px;flex-shrink:0}
+.faq details[open] summary::after{content:"–"}
+.faq details p{color:var(--ink-2);font-size:15px;line-height:1.68;margin:0;padding:0 0 16px;text-wrap:pretty}
+footer{background:var(--dark-2);color:#8B98A1}
+.f-in{max-width:1100px;margin:0 auto;padding:26px clamp(20px,5vw,40px);display:flex;flex-wrap:wrap;
+gap:12px 26px;justify-content:space-between;align-items:center;font-size:13px}
+.f-in a{color:#B9C4CB;text-decoration:none;font-weight:500}
+.f-in a:hover{color:var(--accent)}
+/* The footer carries the full map of the site, including the sections that are
+   deliberately not in the header nav (Turkey). One link from every page is what
+   makes a section reachable at all, for a reader and for a crawler. */
+.fnav{max-width:1100px;margin:0 auto;padding:30px clamp(20px,5vw,40px) 4px;
+display:flex;flex-wrap:wrap;gap:10px 22px;border-bottom:1px solid rgba(255,255,255,.07)}
+.fnav a{color:#B9C4CB;text-decoration:none;font-size:13.5px;font-weight:500}
+.fnav a:hover{color:var(--accent)}
+.fnav a.hi{color:#fff}
+.fnav a.hi::before{content:"🇹🇷";margin-right:6px;font-size:12px}
+.note{color:#8B98A1;font-size:13px;margin:12px 0 0}
+.calc{display:grid;grid-template-columns:minmax(260px,1fr) minmax(240px,320px);gap:24px;
+background:var(--soft);border:1px solid var(--line);border-radius:20px;padding:clamp(20px,3vw,30px);margin:28px 0 0}
+.calc-in{display:grid;gap:14px;align-content:start}
+.calc-in label{display:grid;gap:6px;font-size:14px;font-weight:600;color:var(--ink)}
+.calc-in input,.calc-in select{width:100%;padding:11px 14px;border:1px solid #D7E0DB;border-radius:11px;
+font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#fff;outline:none}
+.calc-in input:focus,.calc-in select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(43,213,148,.18)}
+.calc-out{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;align-self:start}
+.calc-big b{display:block;font-size:clamp(30px,4.5vw,40px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em;line-height:1.1}
+.calc-big span{display:block;font-size:13.5px;color:#5A6671;margin-top:4px}
+.calc-small{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.calc-small b{display:block;font-size:19px;font-weight:700;color:var(--ink)}
+.calc-small span{display:block;font-size:12.5px;color:#77848C;margin-top:3px;line-height:1.35}
+.calc-time{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:#77848C}
+.calc-time b{display:block;color:var(--ink);font-weight:600;margin-top:4px;line-height:1.6}
+@media (max-width:700px){.calc{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="hdr-in">
+    <a href="/en/" aria-label="GeoCharge"><img src="/assets/logo-dark.svg" alt="GeoCharge" height="28" style="height:28px;display:block"></a>
+    <nav class="hnav" aria-label="Navigation">
+      <a href="/en/chargers/">Chargers</a>
+      <a href="/en/tariffs/">Tariffs</a>
+      <a href="/en/calculator/">Calculator</a>
+      <a href="/en/customs/">Import duty</a>
+      <a href="/en/routes/">Routes</a>
+      <a href="/en/blog/">Guides</a>
+    </nav>
+    <div class="lang" role="group" aria-label="Language">
+      <a href="/blog/datenvis-kharjebi/" hreflang="ka">ქარ</a>
+      <a href="/en/blog/datenvis-kharjebi/" aria-current="true" hreflang="en">ENG</a>
+    </div>
+  </div>
+</header>
+<main>
+<style>.prose{max-width:760px}
+.prose p{color:var(--ink-2);font-size:17px;line-height:1.75;margin:0 0 18px;text-wrap:pretty}
+.prose h2{font-size:clamp(21px,2.6vw,27px);margin:40px 0 14px}
+.prose h3{font-size:19px;font-weight:600;margin:28px 0 10px}
+.prose ul{margin:0 0 18px;padding:0;list-style:none;display:grid;gap:12px}
+/* NOT display:flex — that turns a leading <strong> into its own flex column and
+   strands the rest of the sentence in a second one. Keep the li a block so the
+   bold lead-in stays inline, and float the bullet out with absolute positioning. */
+.prose li{position:relative;padding-left:20px;color:var(--ink-2);font-size:16.5px;line-height:1.7;text-wrap:pretty}
+.prose li::before{content:"";position:absolute;left:0;top:.6em;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.prose strong{color:var(--ink);font-weight:600}
+.prose a{color:var(--accent-d);font-weight:500;text-decoration:none}
+.prose a:hover{text-decoration:underline}
+.key{background:var(--mint);border:1px solid var(--mint-b);border-radius:16px;padding:22px 24px;margin:0 0 28px}
+.key p{margin:0;color:#1B5E42;font-size:16.5px;line-height:1.7}
+.key p+p{margin-top:10px}
+.meta{color:#8B98A1;font-size:13.5px;margin:0 0 28px}
+/* Figures are hand-authored inline SVG: no external asset, no layout shift, and
+   they inherit the palette below, so a token change repaints them for free. */
+.fig{margin:0 0 26px;border:1px solid var(--line);border-radius:18px;
+padding:20px clamp(12px,2.4vw,22px) 14px;background:var(--soft)}
+/* Below ~600px the figure scrolls sideways instead of shrinking its labels into
+   illegibility, the same trade the .tw tables already make. */
+.fig .fs{overflow-x:auto}
+.fig svg{display:block;width:100%;min-width:560px;height:auto}
+.fig figcaption{color:var(--ink-2);font-size:14px;line-height:1.6;margin-top:14px;text-wrap:pretty}
+/* A phone screenshot rather than a drawn figure: capped narrow so a portrait shot
+   does not push the prose apart, and centred inside the same card. */
+.fig.shot{display:flex;flex-direction:column;align-items:center;text-align:center}
+.fig.shot img{width:min(258px,70%);height:auto;border-radius:20px;display:block}
+.fig.shot figcaption{max-width:520px}
+.fig .fx{font:500 14.5px 'Poppins','Noto Sans Georgian',sans-serif;fill:var(--ink-2)}
+.fig .fk{font:600 15px 'Poppins','Noto Sans Georgian',sans-serif;fill:var(--ink)}
+/* An ol, so .prose ul rules do not reach it; the inherited .prose li dot would
+   double up with the number, hence the reset. */
+.src{margin:0 0 18px;padding-left:24px;display:grid;gap:11px}
+.src li{padding-left:0;color:var(--ink-2);font-size:15px;line-height:1.65}
+.src li::before{content:none}
+.src a{color:var(--accent-d);font-weight:500;text-decoration:none}
+.src a:hover{text-decoration:underline}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:18px;margin:0}
+/* A card is a link, so the whole thing has to read as pressable: the icon tile
+   and the arrow give it the two affordances plain text never had. */
+.acard{position:relative;display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);
+border-radius:20px;padding:22px 22px 20px;text-decoration:none;overflow:hidden;
+transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+.acard::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:var(--accent);
+transform:scaleX(0);transform-origin:left;transition:transform .22s ease}
+.acard:hover{border-color:var(--accent);box-shadow:0 16px 36px -20px rgba(23,153,95,.45);transform:translateY(-2px)}
+.acard:hover::before{transform:scaleX(1)}
+.acard:focus-visible{outline:2px solid var(--accent-d);outline-offset:3px}
+.acard .ai{width:44px;height:44px;border-radius:13px;background:var(--mint);border:1px solid var(--mint-b);
+display:flex;align-items:center;justify-content:center;margin-bottom:16px;flex-shrink:0}
+.acard .ai svg{display:block}
+.acard b{display:block;font-size:17.5px;font-weight:600;color:var(--ink);line-height:1.4;margin-bottom:8px}
+.acard span{display:block;color:var(--ink-2);font-size:14.5px;line-height:1.6}
+.acard b+span{margin-bottom:16px}
+.acard .am{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:14px;
+border-top:1px solid var(--line);color:#8B98A1;font-size:12.5px;font-weight:500}
+.acard .am .rd{margin-left:auto;color:var(--accent-d);font-weight:600;display:flex;align-items:center;gap:5px}
+.acard:hover .am .rd svg{transform:translateX(3px)}
+.acard .am .rd svg{transition:transform .18s ease}
+/* Filter and sort bar on the guides index. Rendered hidden and revealed by the
+   script, so a reader without JS is never shown controls that do nothing. */
+.ctrl{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:0 0 26px}
+.ctrl[hidden]{display:none}
+.chips-f{display:flex;flex-wrap:wrap;gap:8px}
+.chips-f button{font:600 13.5px 'Poppins','Noto Sans Georgian',sans-serif;color:var(--ink-2);
+background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 15px;cursor:pointer;
+transition:all .16s ease}
+.chips-f button:hover{border-color:var(--accent);color:var(--accent-d)}
+.chips-f button[aria-pressed="true"]{background:var(--mint);border-color:var(--mint-b);color:#1B5E42}
+.sortw{margin-left:auto;display:flex;align-items:center;gap:8px;color:#8B98A1;font-size:13px}
+.sortw select{font:600 13.5px 'Poppins','Noto Sans Georgian',sans-serif;color:var(--ink);
+background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px;cursor:pointer}
+.sortw select:hover{border-color:var(--accent)}
+.nores{color:var(--ink-2);font-size:15.5px;margin:0}
+@media (max-width:560px){.sortw{margin-left:0;width:100%}}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin:0}</style>
+<nav class="crumbs" aria-label="breadcrumb"><a href="/en/">Home</a><span aria-hidden="true">›</span><a href="/en/blog/">Guides</a><span aria-hidden="true">›</span><span>What charging your EV costs, and how to track it</span></nav>
+<div class="prose">
+<h1>What charging your EV costs, and how to track it</h1>
+<p class="meta">Updated August 2026</p>
+<div class="key"><p>The GeoCharge expense log records two things: the amount you paid at a public charger, which you type in, and the cost of a home charge, which the app works out from the percentages.</p><p>The feature is free and works without an account. Sign in and the records follow you to another phone.</p></div>
+<h2>Why charging costs stay invisible</h2>
+<p>Money spent on petrol shows up by itself: one payment, one receipt. Charging costs split in two, and both halves hide. At a public charger the payment stays inside the provider's own app, and every network has an app of its own. Charging at home disappears into the household electricity bill, where the car cannot be told apart from the heater and the fridge.</p>
+<p>So most drivers only estimate what the car costs them per month. That is not enough when you want to compare with petrol, or when you are deciding whether a home charger is worth installing.</p>
+
+<h2>What the expense log does</h2>
+<p>In the GeoCharge app, under the profile menu, there is a section called Expenses. It gathers every charging cost into one list, paid and home alike. One record is one charge.</p>
+<p>Records are entered by hand, after the charge, with the plus button. That is deliberate: the app is not connected to your accounts with the providers and cannot see your payments. What it can do is hold exactly the figures you know to be right.</p>
+
+<h2>Two kinds of record</h2>
+<h3>A paid charge</h3>
+<p>At a public charger you already have the exact amount, because the provider's app shows it. The record asks only for the amount and the date. No kilowatt hours are needed here, since the amount you paid is the final figure.</p>
+<h3>A home charge</h3>
+<p>At home there is no ready figure anywhere, and the electricity bill arrives at the end of the month with everything lumped together. So this record works differently: you enter the battery percentage you started and finished at, and the app works out the rest.</p>
+<p>The calculation: battery capacity is multiplied by the difference in percent, the result is divided by the charging efficiency and multiplied by your electricity tariff.</p>
+<p>An example. A 60 kWh battery taken from 30 percent to 80 percent. The battery gains 30 kWh, while the meter, because of a 10 percent loss, records 33.3 kWh. At a tariff of 0.25 GEL that is 8.33 GEL.</p>
+
+<h2>Where those numbers come from</h2>
+<p>A home calculation needs three settings, filled in once on the expenses screen.</p>
+<ul>
+<li><strong>Battery capacity.</strong> The usable capacity in kilowatt hours, meaning the energy the car actually uses. It is normally a little below the figure in the brochure.</li>
+<li><strong>Electricity tariff.</strong> What one kilowatt hour costs you at home, taking your day rate, night rate and consumption band into account. A car charged on the night rate costs noticeably less.</li>
+<li><strong>Charging loss.</strong> Part of the energy drawn from the meter never reaches the battery: it goes to heat in the charger, the cable and the cells. The default is 10 percent and you can change it.</li>
+</ul>
+<p>That loss is why a plain multiplication of capacity by tariff comes out too low. The meter always counts more than the battery receives.</p>
+
+<h2>What the screen shows</h2>
+<figure class="fig shot">
+<img src="/assets/shot-expenses.jpg" alt="The GeoCharge expenses screen: 120.47 GEL this month, 29 percent home charging, 71 percent paid charging and the list of records" width="569" height="1173" loading="lazy">
+<figcaption>The expenses screen: the monthly total, the home and paid split, the chart of recent months and the list of records.</figcaption>
+</figure>
+<p>The screen reads in four parts:</p>
+<ul>
+<li><strong>This month and all time.</strong> The current month's total alongside the total of the whole history.</li>
+<li><strong>The home and paid split.</strong> One bar and two figures showing how much of the spending goes to charging at home and how much to public chargers.</li>
+<li><strong>The last six months.</strong> A bar chart where each month is stacked from its home and paid parts, so a rising or falling trend is visible.</li>
+<li><strong>The records.</strong> A list grouped by month, each month with its own total. A home record also carries the percentage range and the kilowatt hours. Editing and deleting happen from the three dot menu.</li>
+</ul>
+
+<h2>A record does not rewrite history</h2>
+<p>Every home record carries the settings it was created with: capacity, tariff and loss. If the tariff goes up or you change the car, older records stay exactly as they were.</p>
+<p>This matters, because otherwise changing one setting would recalculate the whole history and last year's charge would suddenly show a different price.</p>
+
+<h2>How much you need it</h2>
+<p>If you charge only at public chargers, twice a month, the log will not tell you much. In three cases it is the only way to see the real figure:</p>
+<ul>
+<li><strong>If you charge at home.</strong> That cost disappears into the electricity bill and cannot be counted any other way.</li>
+<li><strong>If you are comparing with petrol.</strong> The comparison is worth making only when one side is real records rather than a guess. The comparison itself has its own guide: <a href="/en/blog/100-km-fasi/">Electric or petrol, what 100 km actually costs</a>.</li>
+<li><strong>If you drive for a living.</strong> Taxi, delivery or company mileage: here the monthly total comes straight off your income.</li>
+</ul>
+<p>One more case is buying a home charger. Before you spend, it helps to have a few months of real records, so you can see what you would save. What an installation needs is covered here: <a href="/en/blog/sakhlis-damteni/">Home charger installation, what it needs and what drives the price</a>.</p>
+
+<h2>What it does not do</h2>
+<ul>
+<li>It pulls nothing automatically from the providers' apps. You type the amount.</li>
+<li>It does not fill in your electricity tariff, since that depends on your own bill.</li>
+<li>It does not price a future charge. For that, before you plug in, there is the <a href="/en/calculator/">calculator</a>.</li>
+</ul>
+
+<h2>Getting started</h2>
+<p>Open the profile, go to Expenses and fill in the settings: battery capacity, electricity tariff and loss. After that, each charge leaves you one record to add.</p>
+<p>If you do not yet know the tariff at a given station, network prices are in one table: <a href="/en/tariffs/">charging tariffs</a>. The price of a specific station is in the <a href="/en/chargers/">charger list</a>. What charging costs in Georgia in general has its own guide: <a href="/en/blog/datenvis-fasi/">How much does it cost to charge an EV in Georgia</a>.</p>
+
+<h2>Frequently asked questions</h2>
+<div class="faq">
+<details><summary>Where is expense tracking in the GeoCharge app?</summary><p>Under the profile menu, in the Expenses section. The plus button for a new record is there, along with the settings where you enter battery capacity, electricity tariff and charging loss.</p></details>
+<details><summary>Does expense tracking cost anything?</summary><p>No, the feature is free and works without an account. Records are kept on the phone. Sign in and they follow you to another phone.</p></details>
+<details><summary>How is the cost of a home charge calculated?</summary><p>Battery capacity is multiplied by the difference in percent and by your electricity tariff, and the result is divided by the charging efficiency, because part of the energy never reaches the battery. A 10 percent loss means dividing by 0.9. A 60 kWh battery taken from 30 percent to 80 percent draws 33.3 kWh, which costs 8.33 GEL at a tariff of 0.25 GEL.</p></details>
+<details><summary>Will I lose the records if I change phone?</summary><p>Not if you are signed in. The records follow the account and download as soon as you sign in on the new phone. Without an account the log stays on the phone where it was created.</p></details>
+<details><summary>Why does the app not track the cost automatically?</summary><p>Because charging payments happen inside the providers' own accounts and GeoCharge is not connected to them. So you enter the amount for a paid charge, and the app works out a home charge from your own settings.</p></details>
+</div>
+
+</div>
+
+<h2>More guides</h2>
+<div class="cards">
+<a class="acard" href="/en/blog/tesla-model-3-y/" data-cat="buying"
+data-date="2026-08-30" data-pop="4"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.2 15.4v-3.6l1.9-4.4a1 1 0 0 1 .9-.6h11.8a1 1 0 0 1 .9.6l1.9 4.4v3.6"/><path d="M3.2 11.8h17.6"/><circle cx="7.2" cy="15.6" r="1.9"/><circle cx="16.8" cy="15.6" r="1.9"/></svg></span><b>Tesla Model 3 and Model Y: what to check before you buy</b>
+<span>Which years can fast charge in Georgia with an adapter, what changed year by year, what went wrong on which car, and RWD or AWD.</span><span class="am"><time datetime="2026-08-30">August 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/tbilisi-stambuli/" data-cat="travel"
+data-date="2026-08-19" data-pop="15"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M12 5.2h6.6l2 2.4-2 2.4H12z"/><path d="M12 13.4H5.4l-2 2.4 2 2.4H12z"/></svg></span><b>Tbilisi to Istanbul by electric car: the route and the chargers</b>
+<span>About 1,620 km along the Black Sea coast. Where the fast chargers are, where the coverage thins out, and what charging costs in lira.</span><span class="am"><time datetime="2026-08-19">August 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/turketshi-mgzavroba/" data-cat="travel"
+data-date="2026-08-19" data-pop="16"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/><path d="M12 3.4a14 14 0 0 1 0 17.2 14 14 0 0 1 0-17.2Z"/></svg></span><b>Driving from Georgia into Turkey by electric car: what to know first</b>
+<span>Turkey has 13,471 public chargers. Which border to use, which connector you need, what charging costs, and how it differs from Georgia.</span><span class="am"><time datetime="2026-08-19">August 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/meoradi-shemowmeba/" data-cat="buying"
+data-date="2026-08-19" data-pop="14"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m20.4 20.4-4.6-4.6"/><path d="m7.8 10.8 2.2 2.2 4-4.2"/></svg></span><b>How to check a used electric car before you buy it</b>
+<span>Battery health, a fast charging test, the connector and the import history. A practical list that fits into a single viewing.</span><span class="am"><time datetime="2026-08-19">August 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/batareis-cveta/" data-cat="battery"
+data-date="2026-08-11" data-pop="13"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="m5.4 14.2 3-3 2.6 2 3.6-4"/></svg></span><b>Battery wear by mileage: Tesla, Nissan Leaf and Chinese models</b>
+<span>Measured figures rather than guesswork: what is left of the pack at 50,000, 100,000 and 200,000 km on a Tesla, a Nissan Leaf, a Chinese model and a hybrid. And which cars are the high risk group.</span><span class="am"><time datetime="2026-08-11">August 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/datenvis-fasi/" data-cat="charging"
+data-date="2026-07-30" data-pop="1"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.6v8.8M9.4 10.2h5.2M9.4 13.8h5.2"/></svg></span><b>How much does it cost to charge an EV in Georgia</b>
+<span>Fast charging runs 0.50 to 1.00 GEL per kWh, slow charging from 0.35. How to work out what one charge will cost you.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/konektorebi/" data-cat="charging"
+data-date="2026-07-30" data-pop="2"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v4.6M15 3v4.6"/><path d="M6.2 7.6h11.6v3.1a5.8 5.8 0 0 1-11.6 0V7.6Z"/><path d="M12 16.5V21"/></svg></span><b>CCS2, GB/T, Type 2: which connector do you need in Georgia</b>
+<span>CCS2 and GB/T dominate Georgian charging. Which one matches your car, and how many stations of each exist in the country.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/ac-da-dc/" data-cat="charging"
+data-date="2026-07-30" data-pop="11"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.2 2.6 4.6 14.2h6.6L10 21.4l8.6-11.6H12l1.2-7.2Z"/></svg></span><b>AC or DC: what actually separates slow and fast charging</b>
+<span>Of Georgia’s 600 plus chargers, roughly 390 are fast DC and 220 are slow AC. When to use which, and how long each takes.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/shori-mgzavroba/" data-cat="travel"
+data-date="2026-07-30" data-pop="7"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.4v3M12 10.5v3M12 17.6v3"/><path d="M5.2 20.6 8 3.4M18.8 20.6 16 3.4"/></svg></span><b>Driving long distance in Georgia by EV: a practical guide</b>
+<span>Tbilisi to Batumi needs one stop. Where the chargers are on the main routes, and how to plan the drive.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/amerikuli-importi/" data-cat="buying"
+data-date="2026-07-30" data-pop="10"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.4c1.4 1 2.8 1 4.2 0s2.8-1 4.2 0 2.8 1 4.2 0 2.8-1 4.2 0"/><path d="M5.4 13.8V9.2h13.2l-1.8 4.6"/><path d="M9.2 9.2V5h5.6v4.2"/></svg></span><b>Importing an EV from the US: where you will charge it in Georgia</b>
+<span>A US-spec car has CCS1, NACS or Type 1. Georgia has 31 such stations in total. What adapters do and what to check before you buy.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/chinuri-importi/" data-cat="buying"
+data-date="2026-07-30" data-pop="9"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 8.2 12 4.1l8.6 4.1v7.6L12 19.9l-8.6-4.1V8.2Z"/><path d="m3.4 8.2 8.6 4.1 8.6-4.1M12 12.3v7.6"/></svg></span><b>Chinese EVs in Georgia: the GB/T connector and where to charge</b>
+<span>GB/T is on 361 stations in Georgia, almost as many as European CCS2. Why that is good news if you drive a Chinese import.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/zamtari/" data-cat="travel"
+data-date="2026-07-30" data-pop="12"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.6v18.8M4.2 6.6l15.6 10.8M19.8 6.6 4.2 17.4"/><path d="m9.2 4.6 2.8 2.8 2.8-2.8M9.2 19.4l2.8-2.8 2.8 2.8"/></svg></span><b>Driving an EV through a Georgian winter: range, charging and the mountains</b>
+<span>Cold weather costs up to a third of your range. Bakuriani has 6 chargers and none of them fast, Stepantsminda 2. How to plan for it.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/sakhlis-damteni/" data-cat="charging"
+data-date="2026-07-30" data-pop="6"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m3.4 10.2 8.6-6.7 8.6 6.7v9.3a1 1 0 0 1-1 1H4.4a1 1 0 0 1-1-1v-9.3Z"/><path d="M12.6 9.6 10.4 13.6h3.2L11.4 17.6"/></svg></span><b>Home charger installation: what it needs and what drives the price</b>
+<span>A normal socket, a 7 kW wallbox or three phase. What a flat and a house each need, what to insist on from the electrician, and when a wallbox is not worth buying.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/100-km-fasi/" data-cat="charging"
+data-date="2026-07-30" data-pop="3"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18.5a8 8 0 1 1 16 0"/><path d="m12 14.5 4-4.2"/><circle cx="12" cy="18.5" r="1.3"/></svg></span><b>Electric or petrol: what 100 km actually costs in Georgia</b>
+<span>100 km on a fast charger is 14.04 GEL against 29.12 on petrol. Where that gap comes from and what the calculation leaves out.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+<a class="acard" href="/en/blog/batarea/" data-cat="battery"
+data-date="2026-07-30" data-pop="8"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
+fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="M6.4 10.6v2.8M10.2 10.6v2.8"/></svg></span><b>Battery degradation: what actually happens, and what it means in Georgia</b>
+<span>A battery loses roughly 1 to 2 percent a year. Why Georgian summers and living in a flat are the two real risks here, and what to check when buying used.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
+</div>
+
+<h2>See also</h2>
+<div class="links">
+<a href="/en/chargers/">Charger list</a><a href="/en/tariffs/">Tariff comparison</a><a href="/en/calculator/">Charging cost calculator</a><a href="/en/routes/">Routes</a><a href="/en/networks/">Networks</a>
+</div>
+<section class="cta">
+  <h2>Map and live status are in the app</h2>
+  <p>This page shows which chargers exist and where. The map, exact locations, real-time availability and route planning live in the free app.</p>
+  <div class="row">
+    <a href="https://play.google.com/store/apps/details?id=ge.geocharge.app" target="_blank" rel="noopener">Get it on Google Play</a>
+    <a href="https://apps.apple.com/ge/app/geocharge/id6785467389" target="_blank" rel="noopener">Download on the App Store</a>
+  </div>
+</section>
+</main>
+<footer>
+  <nav class="fnav" aria-label="Site map">
+    <a href="/en/chargers/">Chargers</a>
+    <a href="/en/tariffs/">Tariffs</a>
+    <a href="/en/calculator/">Calculator</a>
+    <a href="/en/networks/">Networks</a>
+    <a href="/en/routes/">Routes</a>
+    <a href="/en/customs/">Import duty</a>
+    <a href="/en/blog/">Guides</a>
+    <a class="hi" href="/en/turkey/">Chargers in Turkey</a>
+  </nav>
+  <div class="f-in">
+    <p style="margin:0">© 2026 GeoCharge</p>
+    <a href="/en/">← geocharge.ge</a>
+  </div>
+</footer>
+</body>
+</html>

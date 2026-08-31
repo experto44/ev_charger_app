@@ -143,6 +143,11 @@ padding:20px clamp(12px,2.4vw,22px) 14px;background:var(--soft)}
 .fig .fs{overflow-x:auto}
 .fig svg{display:block;width:100%;min-width:560px;height:auto}
 .fig figcaption{color:var(--ink-2);font-size:14px;line-height:1.6;margin-top:14px;text-wrap:pretty}
+/* A phone screenshot rather than a drawn figure: capped narrow so a portrait shot
+   does not push the prose apart, and centred inside the same card. */
+.fig.shot{display:flex;flex-direction:column;align-items:center;text-align:center}
+.fig.shot img{width:min(258px,70%);height:auto;border-radius:20px;display:block}
+.fig.shot figcaption{max-width:520px}
 .fig .fx{font:500 14.5px 'Poppins','Noto Sans Georgian',sans-serif;fill:var(--ink-2)}
 .fig .fk{font:600 15px 'Poppins','Noto Sans Georgian',sans-serif;fill:var(--ink)}
 /* An ol, so .prose ul rules do not reach it; the inherited .prose li dot would
@@ -3135,6 +3140,178 @@ ${figYears(MY_ROWS.en, 'The axis is the same as the Model 3 chart above, so the 
       ],
     },
   },
+  {
+    slug: 'datenvis-kharjebi',
+    date: '2026-08-31',
+    ka: {
+      title: 'ელექტრომობილის დატენვის ხარჯები',
+      metaTitle: 'ელექტრომობილის დატენვის ხარჯები: აღრიცხვა აპლიკაციაში',
+      desc: 'როგორ აღრიცხოთ, რა დაგიჯდათ დატენვა: ფასიან დამტენზე გადახდილი თანხა, სახლში დატენვის გამოთვლა პროცენტებიდან და თვის ჯამი GeoCharge-ის ხარჯების ჟურნალში.',
+      key: [
+        'GeoCharge-ის ხარჯების ჟურნალი ორ რამეს იწერს: ფასიან დამტენზე გადახდილ თანხას, რომელსაც თავად უთითებთ, და სახლში დატენვის ღირებულებას, რომელსაც აპლიკაცია პროცენტებიდან ითვლის.',
+        'ფუნქცია უფასოა და ანგარიშის გარეშეც მუშაობს. ანგარიშში შესვლის შემდეგ ჩანაწერები სხვა ტელეფონზეც გადმოგყვებათ.',
+      ],
+      body: `
+<h2>რატომ არ ჩანს დატენვის ხარჯი</h2>
+<p>ბენზინზე დახარჯული თანხა თავისით ჩანს: ერთი გადახდა, ერთი ჩეკი. დატენვის ხარჯი კი ორად იყოფა და ორივე ნაწილი იმალება. საჯარო დამტენზე ფული პროვაიდერის აპლიკაციაში რჩება, თითოეულ ქსელს კი თავისი აპლიკაცია აქვს. სახლში დატენვა დენის საერთო ანგარიშში ერევა, სადაც მანქანას გამათბობლისა და მაცივრისგან ვეღარ გამოაცალკევებთ.</p>
+<p>ამიტომ მძღოლების უმეტესობა თვის ხარჯს დაახლოებით ვარაუდობს. ეს საკმარისი არ არის, როცა ბენზინთან შედარება გინდათ ან როცა უნდა გადაწყვიტოთ, ღირს თუ არა სახლის დამტენის დაყენება.</p>
+
+<h2>რას აკეთებს ხარჯების ჟურნალი</h2>
+<p>GeoCharge-ის აპლიკაციაში, პროფილის მენიუში, არის განყოფილება ხარჯები. ის ერთ სიაში კრებს დატენვის ყველა ხარჯს, ფასიანსაც და სახლისასაც. ერთი ჩანაწერი ერთი დატენვაა.</p>
+<p>ჩაწერა ხელით ხდება, დატენვის შემდეგ, პლიუსის ღილაკით. ეს განზრახ არის ასე: აპლიკაცია პროვაიდერების ანგარიშებთან მიერთებული არ არის და თქვენს გადახდებს ვერსად ხედავს. სამაგიეროდ სიაში ზუსტად ის ციფრები დგას, რომლებიც თქვენ იცით.</p>
+
+<h2>ორი სახის ჩანაწერი</h2>
+<h3>ფასიანი დატენვა</h3>
+<p>საჯარო დამტენზე ზუსტი თანხა უკვე გაქვთ, რადგან პროვაიდერის აპლიკაციაში წერია. ჩანაწერში მხოლოდ თანხასა და თარიღს უთითებთ. კილოვატსაათების დათვლა აქ საჭირო არ არის, გადახდილი თანხა თავად არის საბოლოო ციფრი.</p>
+<h3>სახლში დატენვა</h3>
+<p>სახლში დატენვისას მზა თანხა არსად წერია, დენის ანგარიში კი თვის ბოლოს მოდის და ყველაფერს ერთად აჩვენებს. ამიტომ აქ სხვა გზაა: უთითებთ, ბატარეის რამდენი პროცენტიდან რამდენ პროცენტამდე დატენეთ, დანარჩენს აპლიკაცია ითვლის.</p>
+<p>გამოთვლა ასეთია: ბატარეის ტევადობა მრავლდება პროცენტების სხვაობაზე, შედეგი იყოფა დატენვის მარგი ქმედების კოეფიციენტზე და მრავლდება დენის ტარიფზე.</p>
+<p>მაგალითი. 60 კილოვატსაათიანი ბატარეა 30 პროცენტიდან 80 პროცენტამდე. ბატარეაში შედის 30 კილოვატსაათი, მრიცხველი კი 10 პროცენტიანი დანაკარგის გამო 33.3 კილოვატსაათს დაითვლის. 0.25 ლარიან ტარიფზე ეს 8.33 ლარია.</p>
+
+<h2>საიდან მოდის ეს ციფრები</h2>
+<p>სახლის გამოთვლას სამი პარამეტრი სჭირდება. ისინი ერთხელ უნდა შეავსოთ ხარჯების ეკრანის პარამეტრებში.</p>
+<ul>
+<li><strong>ბატარეის ტევადობა.</strong> სასარგებლო ტევადობა კილოვატსაათებში, ანუ ის ენერგია, რომელსაც მანქანა რეალურად იყენებს. ჩვეულებრივ მწარმოებლის მითითებულ ციფრზე ოდნავ ნაკლებია.</li>
+<li><strong>დენის ტარიფი.</strong> რა გიჯდებათ ერთი კილოვატსაათი სახლში, დღის, ღამისა და საფეხურის გათვალისწინებით. ღამის ტარიფზე დატენილი მანქანა შესამჩნევად იაფი ჯდება.</li>
+<li><strong>დატენვის დანაკარგი.</strong> მრიცხველიდან აღებული ენერგიის ნაწილი ბატარეამდე ვერ აღწევს: სითბოდ იკარგება დამტენში, კაბელსა და თავად ბატარეაში. ნაგულისხმევია 10 პროცენტი, მისი შეცვლა შეგიძლიათ.</li>
+</ul>
+<p>სწორედ ამ დანაკარგის გამო არ არის სწორი მარტივი ნამრავლი ტევადობასა და ტარიფს შორის. მრიცხველი ყოველთვის იმაზე მეტს ითვლის, ვიდრე ბატარეაში შედის.</p>
+
+<h2>რას ხედავთ ეკრანზე</h2>
+<figure class="fig shot">
+<img src="/assets/shot-expenses.jpg" alt="GeoCharge-ის ხარჯების ეკრანი: ამ თვეში 120.47 ლარი, სახლში დატენვა 29 პროცენტი, ფასიანი დატენვა 71 პროცენტი და ჩანაწერების სია" width="569" height="1173" loading="lazy">
+<figcaption>ხარჯების ეკრანი: თვის ჯამი, სახლისა და ფასიანი დატენვის წილი, თვეების დიაგრამა და ჩანაწერების სია.</figcaption>
+</figure>
+<p>ეკრანი ოთხ ნაწილად იკითხება:</p>
+<ul>
+<li><strong>ამ თვეში და სულ.</strong> მიმდინარე თვის ჯამი და მთელი ისტორიის ჯამი ერთად.</li>
+<li><strong>სახლისა და ფასიანის წილი.</strong> ერთი ზოლი და ორი ციფრი, რომელიც აჩვენებს, ხარჯის რამდენი პროცენტი მოდის სახლში დატენვაზე და რამდენი საჯარო დამტენებზე.</li>
+<li><strong>ბოლო ექვსი თვე.</strong> სვეტოვანი დიაგრამა, სადაც თითო თვე სახლისა და ფასიანი ნაწილისგან შედგება. აქ ჩანს, ხარჯი იზრდება თუ მცირდება.</li>
+<li><strong>ჩანაწერები.</strong> თვეების მიხედვით დაჯგუფებული სია, თითოეული თვის ჯამით. სახლის ჩანაწერს პროცენტების დიაპაზონი და კილოვატსაათებიც აწერია. ჩანაწერის რედაქტირება და წაშლა სამწერტილიანი მენიუდან ხდება.</li>
+</ul>
+
+<h2>ჩანაწერი ისტორიას არ გადაწერს</h2>
+<p>სახლის თითოეულ ჩანაწერს ის პარამეტრები აქვს ჩაბეჭდილი, რომლითაც შეიქმნა: ტევადობა, ტარიფი და დანაკარგი. თუ ტარიფი გაიზრდება ან მანქანას შეცვლით, ძველი ჩანაწერები უცვლელი დარჩება.</p>
+<p>ეს მნიშვნელოვანია, რადგან სხვაგვარად ერთი პარამეტრის შეცვლა მთელ ისტორიას გადათვლიდა და შარშანდელი დატენვა უცებ სხვა ფასს აჩვენებდა.</p>
+
+<h2>რამდენად საჭიროა</h2>
+<p>თუ მხოლოდ საჯარო დამტენებით ტენით და თვეში ორჯერ, ჟურნალი დიდ სიახლეს არ გეტყვით. სამ შემთხვევაში კი ის ერთადერთი ხერხია, რომ რეალური ციფრი დაინახოთ:</p>
+<ul>
+<li><strong>თუ სახლში ტენით.</strong> ეს ხარჯი დენის ანგარიშში იკარგება და სხვაგვარად ვერსად დაითვლით.</li>
+<li><strong>თუ ბენზინს ადარებთ.</strong> შედარებას აზრი მაშინ აქვს, როცა ერთ მხარეს რეალური ჩანაწერები დგას და არა ვარაუდი. თავად შედარება ცალკე სტატიაშია: <a href="/blog/100-km-fasi/">ელექტრომობილი თუ ბენზინი, 100 კილომეტრის რეალური ღირებულება</a>.</li>
+<li><strong>თუ მანქანით მუშაობთ.</strong> ტაქსი, მიწოდება ან სამსახურებრივი გარბენი: აქ თვიური ჯამი პირდაპირ შემოსავალზე აისახება.</li>
+</ul>
+<p>კიდევ ერთი შემთხვევა სახლის დამტენის ყიდვაა. სანამ დახარჯავთ, ჯობია რამდენიმე თვის რეალური ჩანაწერი გქონდეთ, რომ დაინახოთ, რამდენს დაზოგავთ. რა სჭირდება დაყენებას, აქ წერია: <a href="/blog/sakhlis-damteni/">სახლის დამტენი, რა სჭირდება და რაზეა დამოკიდებული ფასი</a>.</p>
+
+<h2>რას არ აკეთებს</h2>
+<ul>
+<li>პროვაიდერების აპლიკაციებიდან ავტომატურად არაფერს იღებს. თანხას თქვენ წერთ.</li>
+<li>დენის ტარიფს თავად არ ავსებს, რადგან ის სახლის ანგარიშზეა დამოკიდებული.</li>
+<li>მომავალ დატენვას არ ითვლის. სანამ დატენავთ, ღირებულების წინასწარ დათვლა <a href="/kalkulatori/">კალკულატორში</a> ხდება.</li>
+</ul>
+
+<h2>როგორ დავიწყოთ</h2>
+<p>გახსენით პროფილი, შედით განყოფილებაში ხარჯები და შეავსეთ პარამეტრები: ბატარეის ტევადობა, დენის ტარიფი და დანაკარგი. ამის შემდეგ ყოველ დატენვაზე მხოლოდ ერთი ჩანაწერის დამატება დაგრჩებათ.</p>
+<p>თუ ჯერ არ იცით, კონკრეტულ სადგურზე რა ტარიფია, ქსელების ფასები ერთ ცხრილშია: <a href="/tarifebi/">დატენვის ტარიფები</a>. კონკრეტული სადგურის ფასი კი <a href="/damtenebi/">დამტენების სიაშია</a>. ზოგადად რამდენი ჯდება დატენვა საქართველოში, ცალკე სტატიაშია: <a href="/blog/datenvis-fasi/">რამდენი ღირს ელექტრომობილის დატენვა საქართველოში</a>.</p>
+`,
+      faq: [
+        ['სად არის ხარჯების აღრიცხვა GeoCharge-ის აპლიკაციაში?',
+         'პროფილის მენიუში, განყოფილებაში ხარჯები. იქვეა პლიუსის ღილაკი ახალი ჩანაწერისთვის და პარამეტრები, სადაც ბატარეის ტევადობას, დენის ტარიფსა და დატენვის დანაკარგს უთითებთ.'],
+        ['ფასიანია ხარჯების აღრიცხვა?',
+         'არა, ფუნქცია უფასოა და ანგარიშის გარეშეც მუშაობს. ჩანაწერები ტელეფონზე ინახება. ანგარიშში შესვლის შემდეგ ისინი სხვა ტელეფონზეც გადმოგყვებათ.'],
+        ['როგორ ითვლება სახლში დატენვის ღირებულება?',
+         'ბატარეის ტევადობა მრავლდება პროცენტების სხვაობაზე და დენის ტარიფზე, შედეგი კი იყოფა დატენვის მარგი ქმედების კოეფიციენტზე, რადგან ენერგიის ნაწილი ბატარეამდე ვერ აღწევს. 10 პროცენტიანი დანაკარგი ნიშნავს გაყოფას 0.9-ზე. 60 კილოვატსაათიანი ბატარეა 30 პროცენტიდან 80 პროცენტამდე 33.3 კილოვატსაათს მოიხმარს და 0.25 ლარიან ტარიფზე 8.33 ლარი ჯდება.'],
+        ['დაიკარგება ჩანაწერები, თუ ტელეფონს შევცვლი?',
+         'თუ ანგარიშში შესული ხართ, არა. ჩანაწერები ანგარიშს მიჰყვება და ახალ ტელეფონზე იმავე ანგარიშით შესვლისთანავე ჩამოიტვირთება. ანგარიშის გარეშე ჟურნალი მხოლოდ იმ ტელეფონზეა, სადაც შეიქმნა.'],
+        ['რატომ არ ითვლის აპლიკაცია ხარჯს ავტომატურად?',
+         'იმიტომ, რომ დატენვის გადახდები პროვაიდერების საკუთარ ანგარიშებში ხდება და GeoCharge მათთან მიერთებული არ არის. ამიტომ ფასიან დატენვაზე თანხას თქვენ უთითებთ, სახლის დატენვას კი აპლიკაცია თქვენივე პარამეტრებით ითვლის.'],
+      ],
+    },
+    en: {
+      title: "What charging your EV costs, and how to track it",
+      metaTitle: "EV charging costs: tracking them in the app",
+      desc: "How to keep a record of what charging costs you: the amount you paid at a public charger, a home charge worked out from percentages, and the monthly total in the GeoCharge expense log.",
+      key: [
+        "The GeoCharge expense log records two things: the amount you paid at a public charger, which you type in, and the cost of a home charge, which the app works out from the percentages.",
+        "The feature is free and works without an account. Sign in and the records follow you to another phone.",
+      ],
+      body: `
+<h2>Why charging costs stay invisible</h2>
+<p>Money spent on petrol shows up by itself: one payment, one receipt. Charging costs split in two, and both halves hide. At a public charger the payment stays inside the provider's own app, and every network has an app of its own. Charging at home disappears into the household electricity bill, where the car cannot be told apart from the heater and the fridge.</p>
+<p>So most drivers only estimate what the car costs them per month. That is not enough when you want to compare with petrol, or when you are deciding whether a home charger is worth installing.</p>
+
+<h2>What the expense log does</h2>
+<p>In the GeoCharge app, under the profile menu, there is a section called Expenses. It gathers every charging cost into one list, paid and home alike. One record is one charge.</p>
+<p>Records are entered by hand, after the charge, with the plus button. That is deliberate: the app is not connected to your accounts with the providers and cannot see your payments. What it can do is hold exactly the figures you know to be right.</p>
+
+<h2>Two kinds of record</h2>
+<h3>A paid charge</h3>
+<p>At a public charger you already have the exact amount, because the provider's app shows it. The record asks only for the amount and the date. No kilowatt hours are needed here, since the amount you paid is the final figure.</p>
+<h3>A home charge</h3>
+<p>At home there is no ready figure anywhere, and the electricity bill arrives at the end of the month with everything lumped together. So this record works differently: you enter the battery percentage you started and finished at, and the app works out the rest.</p>
+<p>The calculation: battery capacity is multiplied by the difference in percent, the result is divided by the charging efficiency and multiplied by your electricity tariff.</p>
+<p>An example. A 60 kWh battery taken from 30 percent to 80 percent. The battery gains 30 kWh, while the meter, because of a 10 percent loss, records 33.3 kWh. At a tariff of 0.25 GEL that is 8.33 GEL.</p>
+
+<h2>Where those numbers come from</h2>
+<p>A home calculation needs three settings, filled in once on the expenses screen.</p>
+<ul>
+<li><strong>Battery capacity.</strong> The usable capacity in kilowatt hours, meaning the energy the car actually uses. It is normally a little below the figure in the brochure.</li>
+<li><strong>Electricity tariff.</strong> What one kilowatt hour costs you at home, taking your day rate, night rate and consumption band into account. A car charged on the night rate costs noticeably less.</li>
+<li><strong>Charging loss.</strong> Part of the energy drawn from the meter never reaches the battery: it goes to heat in the charger, the cable and the cells. The default is 10 percent and you can change it.</li>
+</ul>
+<p>That loss is why a plain multiplication of capacity by tariff comes out too low. The meter always counts more than the battery receives.</p>
+
+<h2>What the screen shows</h2>
+<figure class="fig shot">
+<img src="/assets/shot-expenses.jpg" alt="The GeoCharge expenses screen: 120.47 GEL this month, 29 percent home charging, 71 percent paid charging and the list of records" width="569" height="1173" loading="lazy">
+<figcaption>The expenses screen: the monthly total, the home and paid split, the chart of recent months and the list of records.</figcaption>
+</figure>
+<p>The screen reads in four parts:</p>
+<ul>
+<li><strong>This month and all time.</strong> The current month's total alongside the total of the whole history.</li>
+<li><strong>The home and paid split.</strong> One bar and two figures showing how much of the spending goes to charging at home and how much to public chargers.</li>
+<li><strong>The last six months.</strong> A bar chart where each month is stacked from its home and paid parts, so a rising or falling trend is visible.</li>
+<li><strong>The records.</strong> A list grouped by month, each month with its own total. A home record also carries the percentage range and the kilowatt hours. Editing and deleting happen from the three dot menu.</li>
+</ul>
+
+<h2>A record does not rewrite history</h2>
+<p>Every home record carries the settings it was created with: capacity, tariff and loss. If the tariff goes up or you change the car, older records stay exactly as they were.</p>
+<p>This matters, because otherwise changing one setting would recalculate the whole history and last year's charge would suddenly show a different price.</p>
+
+<h2>How much you need it</h2>
+<p>If you charge only at public chargers, twice a month, the log will not tell you much. In three cases it is the only way to see the real figure:</p>
+<ul>
+<li><strong>If you charge at home.</strong> That cost disappears into the electricity bill and cannot be counted any other way.</li>
+<li><strong>If you are comparing with petrol.</strong> The comparison is worth making only when one side is real records rather than a guess. The comparison itself has its own guide: <a href="/en/blog/100-km-fasi/">Electric or petrol, what 100 km actually costs</a>.</li>
+<li><strong>If you drive for a living.</strong> Taxi, delivery or company mileage: here the monthly total comes straight off your income.</li>
+</ul>
+<p>One more case is buying a home charger. Before you spend, it helps to have a few months of real records, so you can see what you would save. What an installation needs is covered here: <a href="/en/blog/sakhlis-damteni/">Home charger installation, what it needs and what drives the price</a>.</p>
+
+<h2>What it does not do</h2>
+<ul>
+<li>It pulls nothing automatically from the providers' apps. You type the amount.</li>
+<li>It does not fill in your electricity tariff, since that depends on your own bill.</li>
+<li>It does not price a future charge. For that, before you plug in, there is the <a href="/en/calculator/">calculator</a>.</li>
+</ul>
+
+<h2>Getting started</h2>
+<p>Open the profile, go to Expenses and fill in the settings: battery capacity, electricity tariff and loss. After that, each charge leaves you one record to add.</p>
+<p>If you do not yet know the tariff at a given station, network prices are in one table: <a href="/en/tariffs/">charging tariffs</a>. The price of a specific station is in the <a href="/en/chargers/">charger list</a>. What charging costs in Georgia in general has its own guide: <a href="/en/blog/datenvis-fasi/">How much does it cost to charge an EV in Georgia</a>.</p>
+`,
+      faq: [
+        ["Where is expense tracking in the GeoCharge app?",
+         "Under the profile menu, in the Expenses section. The plus button for a new record is there, along with the settings where you enter battery capacity, electricity tariff and charging loss."],
+        ["Does expense tracking cost anything?",
+         "No, the feature is free and works without an account. Records are kept on the phone. Sign in and they follow you to another phone."],
+        ["How is the cost of a home charge calculated?",
+         "Battery capacity is multiplied by the difference in percent and by your electricity tariff, and the result is divided by the charging efficiency, because part of the energy never reaches the battery. A 10 percent loss means dividing by 0.9. A 60 kWh battery taken from 30 percent to 80 percent draws 33.3 kWh, which costs 8.33 GEL at a tariff of 0.25 GEL."],
+        ["Will I lose the records if I change phone?",
+         "Not if you are signed in. The records follow the account and download as soon as you sign in on the new phone. Without an account the log stays on the phone where it was created."],
+        ["Why does the app not track the cost automatically?",
+         "Because charging payments happen inside the providers' own accounts and GeoCharge is not connected to them. So you enter the amount for a paid charge, and the app works out a home charge from your own settings."],
+      ],
+    },
+  },
 ];
 
 const L = {
@@ -3212,17 +3389,18 @@ const ART_META = {
   'datenvis-fasi':      { cat: 'charging', pop: 1, icon: '<circle cx="12" cy="12" r="8.4"/><path d="M12 7.6v8.8M9.4 10.2h5.2M9.4 13.8h5.2"/>' },
   konektorebi:          { cat: 'charging', pop: 2, icon: '<path d="M9 3v4.6M15 3v4.6"/><path d="M6.2 7.6h11.6v3.1a5.8 5.8 0 0 1-11.6 0V7.6Z"/><path d="M12 16.5V21"/>' },
   '100-km-fasi':        { cat: 'charging', pop: 3, icon: '<path d="M4 18.5a8 8 0 1 1 16 0"/><path d="m12 14.5 4-4.2"/><circle cx="12" cy="18.5" r="1.3"/>' },
-  'sakhlis-damteni':    { cat: 'charging', pop: 5, icon: '<path d="m3.4 10.2 8.6-6.7 8.6 6.7v9.3a1 1 0 0 1-1 1H4.4a1 1 0 0 1-1-1v-9.3Z"/><path d="M12.6 9.6 10.4 13.6h3.2L11.4 17.6"/>' },
-  'shori-mgzavroba':    { cat: 'travel',   pop: 6, icon: '<path d="M12 3.4v3M12 10.5v3M12 17.6v3"/><path d="M5.2 20.6 8 3.4M18.8 20.6 16 3.4"/>' },
-  batarea:              { cat: 'battery',  pop: 7, icon: '<rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="M6.4 10.6v2.8M10.2 10.6v2.8"/>' },
-  'chinuri-importi':    { cat: 'buying',   pop: 8, icon: '<path d="M3.4 8.2 12 4.1l8.6 4.1v7.6L12 19.9l-8.6-4.1V8.2Z"/><path d="m3.4 8.2 8.6 4.1 8.6-4.1M12 12.3v7.6"/>' },
-  'amerikuli-importi':  { cat: 'buying',   pop: 9, icon: '<path d="M3 17.4c1.4 1 2.8 1 4.2 0s2.8-1 4.2 0 2.8 1 4.2 0 2.8-1 4.2 0"/><path d="M5.4 13.8V9.2h13.2l-1.8 4.6"/><path d="M9.2 9.2V5h5.6v4.2"/>' },
-  'ac-da-dc':           { cat: 'charging', pop: 10, icon: '<path d="M13.2 2.6 4.6 14.2h6.6L10 21.4l8.6-11.6H12l1.2-7.2Z"/>' },
-  zamtari:              { cat: 'travel',   pop: 11, icon: '<path d="M12 2.6v18.8M4.2 6.6l15.6 10.8M19.8 6.6 4.2 17.4"/><path d="m9.2 4.6 2.8 2.8 2.8-2.8M9.2 19.4l2.8-2.8 2.8 2.8"/>' },
-  'batareis-cveta':     { cat: 'battery',  pop: 12, icon: '<rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="m5.4 14.2 3-3 2.6 2 3.6-4"/>' },
-  'meoradi-shemowmeba': { cat: 'buying',   pop: 13, icon: '<circle cx="10.8" cy="10.8" r="6.8"/><path d="m20.4 20.4-4.6-4.6"/><path d="m7.8 10.8 2.2 2.2 4-4.2"/>' },
-  'tbilisi-stambuli':   { cat: 'travel',   pop: 14, icon: '<path d="M12 3v18"/><path d="M12 5.2h6.6l2 2.4-2 2.4H12z"/><path d="M12 13.4H5.4l-2 2.4 2 2.4H12z"/>' },
-  'turketshi-mgzavroba':{ cat: 'travel',   pop: 15, icon: '<circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/><path d="M12 3.4a14 14 0 0 1 0 17.2 14 14 0 0 1 0-17.2Z"/>' },
+  'datenvis-kharjebi':  { cat: 'charging', pop: 5, icon: '<rect x="2.8" y="6.6" width="18.4" height="12.6" rx="2.6"/><path d="M16.4 11.6h4.8v4.4h-4.8a2.2 2.2 0 0 1 0-4.4Z"/><circle cx="17.9" cy="13.8" r="0.9"/>' },
+  'sakhlis-damteni':    { cat: 'charging', pop: 6, icon: '<path d="m3.4 10.2 8.6-6.7 8.6 6.7v9.3a1 1 0 0 1-1 1H4.4a1 1 0 0 1-1-1v-9.3Z"/><path d="M12.6 9.6 10.4 13.6h3.2L11.4 17.6"/>' },
+  'shori-mgzavroba':    { cat: 'travel',   pop: 7, icon: '<path d="M12 3.4v3M12 10.5v3M12 17.6v3"/><path d="M5.2 20.6 8 3.4M18.8 20.6 16 3.4"/>' },
+  batarea:              { cat: 'battery',  pop: 8, icon: '<rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="M6.4 10.6v2.8M10.2 10.6v2.8"/>' },
+  'chinuri-importi':    { cat: 'buying',   pop: 9, icon: '<path d="M3.4 8.2 12 4.1l8.6 4.1v7.6L12 19.9l-8.6-4.1V8.2Z"/><path d="m3.4 8.2 8.6 4.1 8.6-4.1M12 12.3v7.6"/>' },
+  'amerikuli-importi':  { cat: 'buying',   pop: 10, icon: '<path d="M3 17.4c1.4 1 2.8 1 4.2 0s2.8-1 4.2 0 2.8 1 4.2 0 2.8-1 4.2 0"/><path d="M5.4 13.8V9.2h13.2l-1.8 4.6"/><path d="M9.2 9.2V5h5.6v4.2"/>' },
+  'ac-da-dc':           { cat: 'charging', pop: 11, icon: '<path d="M13.2 2.6 4.6 14.2h6.6L10 21.4l8.6-11.6H12l1.2-7.2Z"/>' },
+  zamtari:              { cat: 'travel',   pop: 12, icon: '<path d="M12 2.6v18.8M4.2 6.6l15.6 10.8M19.8 6.6 4.2 17.4"/><path d="m9.2 4.6 2.8 2.8 2.8-2.8M9.2 19.4l2.8-2.8 2.8 2.8"/>' },
+  'batareis-cveta':     { cat: 'battery',  pop: 13, icon: '<rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="m5.4 14.2 3-3 2.6 2 3.6-4"/>' },
+  'meoradi-shemowmeba': { cat: 'buying',   pop: 14, icon: '<circle cx="10.8" cy="10.8" r="6.8"/><path d="m20.4 20.4-4.6-4.6"/><path d="m7.8 10.8 2.2 2.2 4-4.2"/>' },
+  'tbilisi-stambuli':   { cat: 'travel',   pop: 15, icon: '<path d="M12 3v18"/><path d="M12 5.2h6.6l2 2.4-2 2.4H12z"/><path d="M12 13.4H5.4l-2 2.4 2 2.4H12z"/>' },
+  'turketshi-mgzavroba':{ cat: 'travel',   pop: 16, icon: '<circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/><path d="M12 3.4a14 14 0 0 1 0 17.2 14 14 0 0 1 0-17.2Z"/>' },
   'tesla-model-3-y':    { cat: 'buying',   pop: 4, icon: '<path d="M3.2 15.4v-3.6l1.9-4.4a1 1 0 0 1 .9-.6h11.8a1 1 0 0 1 .9.6l1.9 4.4v3.6"/><path d="M3.2 11.8h17.6"/><circle cx="7.2" cy="15.6" r="1.9"/><circle cx="16.8" cy="15.6" r="1.9"/>' },
 };
 
