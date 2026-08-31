@@ -40,6 +40,14 @@ const SLOTS = [
 // second pass through the same 14 articles should not repeat itself word for
 // word. Order inside each pair is the order they get used.
 const HOOKS = {
+  'datenvis-kharjebi': [
+    'იცით, თვეში რამდენი გიჯდებათ დატენვა? ფასიან დამტენზე გადახდილი თანხა პროვაიდერის აპლიკაციაში რჩება, სახლში დატენვა კი დენის საერთო ანგარიშში ერევა.\n\nGeoCharge-ის ხარჯების ჟურნალი ორივეს ერთად კრებს: სახლის დატენვის ღირებულებას პროცენტებიდან თავად ითვლის.',
+    '60 კილოვატსაათიანი ბატარეა 30 პროცენტიდან 80 პროცენტამდე 33.3 კილოვატსაათს მოიხმარს და სახლის 0.25 ლარიან ტარიფზე 8.33 ლარი ჯდება. ამას აპლიკაცია თავად ითვლის და თვის ჯამსაც გაჩვენებთ.\n\nროგორ მუშაობს ხარჯების აღრიცხვა.',
+  ],
+  'tesla-model-3-y': [
+    'ამერიკიდან ჩამოსული ტესლა საქართველოში სწრაფ დამტენზე მხოლოდ მაშინ დაიტენება, თუ მანქანის ეკრანზე CCS ადაპტერის მხარდაჭერა ჩართულია. 2022 წლიდან გაშვებულ თითქმის ყველა მანქანას ეს აქვს.\n\nრა უნდა შეამოწმოთ ტესლის ყიდვამდე.',
+    '2020 წლის ოქტომბრიდან Model 3-ს თბოტუმბო აქვს და ზამთარში ბევრად ნაკლებ ენერგიას ხარჯავს გათბობაზე. Model Y-ს ის პირველივე დღიდან ჰქონდა.\n\nრომელი წლის ტესლა რას გთავაზობთ, ერთ სტატიაში.',
+  ],
   'datenvis-fasi': [
     'რამდენი გიჯდებათ ერთი დატენვა? სწრაფ დამტენზე კილოვატსაათი ყველაზე ხშირად 0.78 ლარია, ნელზე 0.65. 60 კილოვატსაათიანი ბატარეის სავსემდე დატენვა 30-დან 47 ლარამდე გამოდის.\n\nსტატიაში ნახავთ, როგორ დათვალოთ თქვენი მანქანის დატენვის ზუსტი ფასი.',
     'საქართველოს 600-ზე მეტი საჯარო დამტენიდან დაახლოებით 130 ტარიფს საერთოდ არ აქვეყნებს. ესენი ძირითადად სასტუმროებისა და სავაჭრო ცენტრების დამტენებია, სადაც დატენვა კლიენტისთვის უფასოა.\n\nდანარჩენების ფასები და გამოთვლის წესი აქ არის.',
@@ -112,6 +120,8 @@ const SEASON = {
 // everything has gone out once, "least recently posted" takes over and this
 // order only breaks ties.
 const ORDER = [
+  'datenvis-kharjebi',
+  'tesla-model-3-y',
   'datenvis-fasi',
   'konektorebi',
   'tbilisi-stambuli',
@@ -181,11 +191,14 @@ const HORIZON_DAYS = 29;
 // second run inside the same window would double book the slots the first run
 // filled, because the state file tracks which articles went out, not when the
 // page is already busy.
-function slots(from, count, taken = new Set()) {
+// `beyond` drops the horizon: those times cannot be scheduled today, they are
+// only there so the calendar can show the whole run instead of the first third
+// of it. Nothing outside the horizon is ever handed to the publisher.
+function slots(from, count, taken = new Set(), beyond = false) {
   const out = [];
   const day = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate()));
   const now = Math.floor(Date.now() / 1000);
-  const limit = now + HORIZON_DAYS * 86400;
+  const limit = beyond ? Infinity : now + HORIZON_DAYS * 86400;
   while (out.length < count && tbilisiUnix(day, 0, 0) <= limit) {
     for (const s of SLOTS) {
       if (day.getUTCDay() !== s.dow) continue;
@@ -350,31 +363,48 @@ async function main() {
     : Number(arg('count', 8));
   if (!count) return console.log('ყველა სტატია უკვე დაგეგმილია.');
   const taken = new Set(hist.posted.map((p) => p.at));
-  const queue = plan(list, hist, slots(start, count, taken), all);
+  // One plan over both windows, so the running order is the same whether an
+  // article lands on Facebook today or on the run that picks up the rest.
+  const inWindow = slots(start, count, taken);
+  const later = slots(start, count, taken, true).slice(inWindow.length);
+  const full = plan(list, hist, [...inWindow, ...later], all);
+  const queue = full.slice(0, inWindow.length);
+  const waiting = full.slice(inWindow.length);
 
+  const post = (q) => [
+    `## ${stamp(q.at)}`,
+    '',
+    '```',
+    q.message,
+    '```',
+    `სურათი: ${q.image}`,
+    '',
+  ];
   const md = [
     '# Facebook queue',
     '',
-    `მომზადდა ${new Date().toISOString().slice(0, 10)}. ${queue.length} პოსტი, დრო თბილისის.`,
+    `მომზადდა ${new Date().toISOString().slice(0, 10)}. ${queue.length} პოსტი დასაგეგმად`
+      + `${waiting.length ? `, კიდევ ${waiting.length} მოცდის რიგში` : ''}. დრო თბილისის.`,
     '',
-    ...queue.flatMap((q) => [
-      `## ${stamp(q.at)}`,
+    ...queue.flatMap(post),
+    ...(waiting.length ? [
+      `# მოცდის რიგში (${waiting.length})`,
       '',
-      '```',
-      q.message,
-      '```',
-      `სურათი: ${q.image}`,
+      `ფეისბუქი ${HORIZON_DAYS} დღეზე შორს დაგეგმვას არ იღებს, ამიტომ ეს პოსტები ჯერ არ არის`
+        + ' გაგზავნილი. ტექსტი მზადაა, დარჩენილია მხოლოდ ხელახლა გაშვება, როცა ფანჯარა წაიწევს.',
       '',
-    ]),
+      ...waiting.flatMap(post),
+    ] : []),
   ].join('\n');
   await mkdir(path.dirname(PREVIEW), { recursive: true });
   await writeFile(PREVIEW, md, 'utf8');
 
   for (const q of queue) console.log(`${stamp(q.at)}  ${q.slug}`);
+  for (const q of waiting) console.log(`${stamp(q.at)}  ${q.slug}  (მოცდის რიგში)`);
   console.log(`\n→ ${path.relative(ROOT, PREVIEW)}`);
-  if (queue.length < count) {
-    const left = count - queue.length;
-    console.log(`\n${left} სტატია ${HORIZON_DAYS} დღის ფანჯარაში ვერ ჩაეტია. გაუშვით ხელახლა, როცა რიგი დაიცლება.`);
+  if (waiting.length) {
+    console.log(`\n${waiting.length} სტატია ${HORIZON_DAYS} დღის ფანჯარაში ვერ ჩაეტია და კალენდარშია`
+      + ' გატანილი. გაუშვით ხელახლა, როცა ფანჯარა წაიწევს.');
   }
 
   if (!flag('publish')) {

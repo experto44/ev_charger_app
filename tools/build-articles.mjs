@@ -3148,8 +3148,8 @@ ${figYears(MY_ROWS.en, 'The axis is the same as the Model 3 chart above, so the 
       metaTitle: 'ელექტრომობილის დატენვის ხარჯები: აღრიცხვა აპლიკაციაში',
       desc: 'როგორ აღრიცხოთ, რა დაგიჯდათ დატენვა: ფასიან დამტენზე გადახდილი თანხა, სახლში დატენვის გამოთვლა პროცენტებიდან და თვის ჯამი GeoCharge-ის ხარჯების ჟურნალში.',
       key: [
-        'GeoCharge-ის ხარჯების ჟურნალი ორ რამეს იწერს: ფასიან დამტენზე გადახდილ თანხას, რომელსაც თავად უთითებთ, და სახლში დატენვის ღირებულებას, რომელსაც აპლიკაცია პროცენტებიდან ითვლის.',
-        'ფუნქცია უფასოა, პრემიუმი არ სჭირდება. ხარჯები პროფილშია, ამიტომ ანგარიშში შესვლა საჭიროა, სამაგიეროდ ჩანაწერები ანგარიშს მიჰყვება და ახალ ტელეფონზეც გადმოგყვებათ.',
+        'ხარჯების ჟურნალი ორ რამეს იწერს: ფასიან დამტენზე გადახდილ თანხას და სახლში დატენვის ღირებულებას, რომელსაც აპლიკაცია პროცენტებიდან ითვლის.',
+        'ფუნქცია უფასოა და პრემიუმს არ საჭიროებს. ხარჯები პროფილშია, ამიტომ ანგარიშში შესვლა სჭირდება, სამაგიეროდ ჩანაწერები ახალ ტელეფონზეც გადმოგყვებათ.',
       ],
       body: `
 <h2>რატომ არ ჩანს დატენვის ხარჯი</h2>
@@ -3232,8 +3232,8 @@ ${figYears(MY_ROWS.en, 'The axis is the same as the Model 3 chart above, so the 
       metaTitle: "EV charging costs: tracking them in the app",
       desc: "How to keep a record of what charging costs you: the amount you paid at a public charger, a home charge worked out from percentages, and the monthly total in the GeoCharge expense log.",
       key: [
-        "The GeoCharge expense log records two things: the amount you paid at a public charger, which you type in, and the cost of a home charge, which the app works out from the percentages.",
-        "The feature is free, with no premium. Expenses lives in the profile, so you need to be signed in, and that is what carries the records to another phone.",
+        "The expense log records two things: what you paid at a public charger, and what a home charge cost, which the app works out from the percentages.",
+        "The feature is free with no premium. Expenses sits in the profile, so it needs a sign in, and the account carries the records to another phone.",
       ],
       body: `
 <h2>Why charging costs stay invisible</h2>
