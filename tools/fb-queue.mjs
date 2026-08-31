@@ -310,10 +310,16 @@ async function exportContent() {
     posters++;
     return `${ORIGIN}/assets/social/article-${a.slug}.png`;
   };
+  // functions/facebook-articles.js tops the Facebook queue up week by week as
+  // the scheduling horizon moves, and it cannot read tools/fb-state.json. What
+  // this script has queued therefore travels with the export, or the function
+  // would rank the rotation from an empty history and repeat what just went out.
+  const hist = await state();
   const out = {
     generated: new Date().toISOString().slice(0, 10),
     order: ORDER,
     season: SEASON,
+    facebookHistory: hist.posted.map(({ slug, at }) => ({ slug, at })),
     articles: list.map((a) => ({
       slug: a.slug,
       title: a.title,
@@ -363,6 +369,17 @@ async function main() {
     : Number(arg('count', 8));
   if (!count) return console.log('ყველა სტატია უკვე დაგეგმილია.');
   const taken = new Set(hist.posted.map((p) => p.at));
+  // The state file only knows what this laptop queued. Since
+  // functions/facebook-articles.js queues from the cloud as well, the page's own
+  // scheduled posts are the authority on which slots are busy. Best effort: a
+  // dry run without credentials still has to work.
+  try {
+    const { id } = await creds();
+    const r = await graph(`${id}/scheduled_posts`, { fields: 'scheduled_publish_time', limit: '100' });
+    for (const p of r.data || []) taken.add(Number(p.scheduled_publish_time));
+  } catch (e) {
+    console.log(`(ფეისბუქის რიგი ვერ წაიკითხა, ვგეგმავ მხოლოდ ლოკალური ისტორიით: ${e.message})`);
+  }
   // One plan over both windows, so the running order is the same whether an
   // article lands on Facebook today or on the run that picks up the rest.
   const inWindow = slots(start, count, taken);

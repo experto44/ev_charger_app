@@ -190,6 +190,11 @@ Object.assign(exports, require("./instagram-posters"));
 // up week by week as the scheduling horizon moves. See facebook-posters.js.
 Object.assign(exports, require("./facebook-posters"));
 
+// The blog rotation needs the same treatment, for the same horizon. Which guide
+// goes into a free slot is decided there, not in a fixed plan. See
+// facebook-articles.js.
+Object.assign(exports, require("./facebook-articles"));
+
 // Signing in to the Tesla web app by pairing it with the phone (6-digit code →
 // custom token). See tesla-pairing.js.
 Object.assign(exports, require("./tesla-pairing"));
