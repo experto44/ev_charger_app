@@ -3149,7 +3149,7 @@ ${figYears(MY_ROWS.en, 'The axis is the same as the Model 3 chart above, so the 
       desc: 'როგორ აღრიცხოთ, რა დაგიჯდათ დატენვა: ფასიან დამტენზე გადახდილი თანხა, სახლში დატენვის გამოთვლა პროცენტებიდან და თვის ჯამი GeoCharge-ის ხარჯების ჟურნალში.',
       key: [
         'GeoCharge-ის ხარჯების ჟურნალი ორ რამეს იწერს: ფასიან დამტენზე გადახდილ თანხას, რომელსაც თავად უთითებთ, და სახლში დატენვის ღირებულებას, რომელსაც აპლიკაცია პროცენტებიდან ითვლის.',
-        'ფუნქცია უფასოა და ანგარიშის გარეშეც მუშაობს. ანგარიშში შესვლის შემდეგ ჩანაწერები სხვა ტელეფონზეც გადმოგყვებათ.',
+        'ფუნქცია უფასოა, პრემიუმი არ სჭირდება. ხარჯები პროფილშია, ამიტომ ანგარიშში შესვლა საჭიროა, სამაგიეროდ ჩანაწერები ანგარიშს მიჰყვება და ახალ ტელეფონზეც გადმოგყვებათ.',
       ],
       body: `
 <h2>რატომ არ ჩანს დატენვის ხარჯი</h2>
@@ -3157,7 +3157,7 @@ ${figYears(MY_ROWS.en, 'The axis is the same as the Model 3 chart above, so the 
 <p>ამიტომ მძღოლების უმეტესობა თვის ხარჯს დაახლოებით ვარაუდობს. ეს საკმარისი არ არის, როცა ბენზინთან შედარება გინდათ ან როცა უნდა გადაწყვიტოთ, ღირს თუ არა სახლის დამტენის დაყენება.</p>
 
 <h2>რას აკეთებს ხარჯების ჟურნალი</h2>
-<p>GeoCharge-ის აპლიკაციაში, პროფილის მენიუში, არის განყოფილება ხარჯები. ის ერთ სიაში კრებს დატენვის ყველა ხარჯს, ფასიანსაც და სახლისასაც. ერთი ჩანაწერი ერთი დატენვაა.</p>
+<p>GeoCharge-ის აპლიკაციაში, პროფილის მენიუში (ანუ ანგარიშში შესვლის შემდეგ), არის განყოფილება ხარჯები. ის ერთ სიაში კრებს დატენვის ყველა ხარჯს, ფასიანსაც და სახლისასაც. ერთი ჩანაწერი ერთი დატენვაა.</p>
 <p>ჩაწერა ხელით ხდება, დატენვის შემდეგ, პლიუსის ღილაკით. ეს განზრახ არის ასე: აპლიკაცია პროვაიდერების ანგარიშებთან მიერთებული არ არის და თქვენს გადახდებს ვერსად ხედავს. სამაგიეროდ სიაში ზუსტად ის ციფრები დგას, რომლებიც თქვენ იცით.</p>
 
 <h2>ორი სახის ჩანაწერი</h2>
@@ -3211,18 +3211,18 @@ ${figYears(MY_ROWS.en, 'The axis is the same as the Model 3 chart above, so the 
 </ul>
 
 <h2>როგორ დავიწყოთ</h2>
-<p>გახსენით პროფილი, შედით განყოფილებაში ხარჯები და შეავსეთ პარამეტრები: ბატარეის ტევადობა, დენის ტარიფი და დანაკარგი. ამის შემდეგ ყოველ დატენვაზე მხოლოდ ერთი ჩანაწერის დამატება დაგრჩებათ.</p>
+<p>შედით ანგარიშში, გახსენით პროფილი, შედით განყოფილებაში ხარჯები და შეავსეთ პარამეტრები: ბატარეის ტევადობა, დენის ტარიფი და დანაკარგი. ამის შემდეგ ყოველ დატენვაზე მხოლოდ ერთი ჩანაწერის დამატება დაგრჩებათ.</p>
 <p>თუ ჯერ არ იცით, კონკრეტულ სადგურზე რა ტარიფია, ქსელების ფასები ერთ ცხრილშია: <a href="/tarifebi/">დატენვის ტარიფები</a>. კონკრეტული სადგურის ფასი კი <a href="/damtenebi/">დამტენების სიაშია</a>. ზოგადად რამდენი ჯდება დატენვა საქართველოში, ცალკე სტატიაშია: <a href="/blog/datenvis-fasi/">რამდენი ღირს ელექტრომობილის დატენვა საქართველოში</a>.</p>
 `,
       faq: [
         ['სად არის ხარჯების აღრიცხვა GeoCharge-ის აპლიკაციაში?',
          'პროფილის მენიუში, განყოფილებაში ხარჯები. იქვეა პლიუსის ღილაკი ახალი ჩანაწერისთვის და პარამეტრები, სადაც ბატარეის ტევადობას, დენის ტარიფსა და დატენვის დანაკარგს უთითებთ.'],
         ['ფასიანია ხარჯების აღრიცხვა?',
-         'არა, ფუნქცია უფასოა და ანგარიშის გარეშეც მუშაობს. ჩანაწერები ტელეფონზე ინახება. ანგარიშში შესვლის შემდეგ ისინი სხვა ტელეფონზეც გადმოგყვებათ.'],
+         'არა, ფუნქცია უფასოა და პრემიუმს არ საჭიროებს. ერთადერთი პირობა ანგარიშში შესვლაა, რადგან ხარჯები პროფილის მენიუშია. ჩანაწერები ტელეფონზე ინახება და ანგარიშსაც მიჰყვება.'],
         ['როგორ ითვლება სახლში დატენვის ღირებულება?',
          'ბატარეის ტევადობა მრავლდება პროცენტების სხვაობაზე და დენის ტარიფზე, შედეგი კი იყოფა დატენვის მარგი ქმედების კოეფიციენტზე, რადგან ენერგიის ნაწილი ბატარეამდე ვერ აღწევს. 10 პროცენტიანი დანაკარგი ნიშნავს გაყოფას 0.9-ზე. 60 კილოვატსაათიანი ბატარეა 30 პროცენტიდან 80 პროცენტამდე 33.3 კილოვატსაათს მოიხმარს და 0.25 ლარიან ტარიფზე 8.33 ლარი ჯდება.'],
         ['დაიკარგება ჩანაწერები, თუ ტელეფონს შევცვლი?',
-         'თუ ანგარიშში შესული ხართ, არა. ჩანაწერები ანგარიშს მიჰყვება და ახალ ტელეფონზე იმავე ანგარიშით შესვლისთანავე ჩამოიტვირთება. ანგარიშის გარეშე ჟურნალი მხოლოდ იმ ტელეფონზეა, სადაც შეიქმნა.'],
+         'არა. ჩანაწერები ანგარიშს მიჰყვება და ახალ ტელეფონზე იმავე ანგარიშით შესვლისთანავე ჩამოიტვირთება.'],
         ['რატომ არ ითვლის აპლიკაცია ხარჯს ავტომატურად?',
          'იმიტომ, რომ დატენვის გადახდები პროვაიდერების საკუთარ ანგარიშებში ხდება და GeoCharge მათთან მიერთებული არ არის. ამიტომ ფასიან დატენვაზე თანხას თქვენ უთითებთ, სახლის დატენვას კი აპლიკაცია თქვენივე პარამეტრებით ითვლის.'],
       ],
@@ -3233,7 +3233,7 @@ ${figYears(MY_ROWS.en, 'The axis is the same as the Model 3 chart above, so the 
       desc: "How to keep a record of what charging costs you: the amount you paid at a public charger, a home charge worked out from percentages, and the monthly total in the GeoCharge expense log.",
       key: [
         "The GeoCharge expense log records two things: the amount you paid at a public charger, which you type in, and the cost of a home charge, which the app works out from the percentages.",
-        "The feature is free and works without an account. Sign in and the records follow you to another phone.",
+        "The feature is free, with no premium. Expenses lives in the profile, so you need to be signed in, and that is what carries the records to another phone.",
       ],
       body: `
 <h2>Why charging costs stay invisible</h2>
@@ -3241,7 +3241,7 @@ ${figYears(MY_ROWS.en, 'The axis is the same as the Model 3 chart above, so the 
 <p>So most drivers only estimate what the car costs them per month. That is not enough when you want to compare with petrol, or when you are deciding whether a home charger is worth installing.</p>
 
 <h2>What the expense log does</h2>
-<p>In the GeoCharge app, under the profile menu, there is a section called Expenses. It gathers every charging cost into one list, paid and home alike. One record is one charge.</p>
+<p>In the GeoCharge app, under the profile menu, which means once you are signed in, there is a section called Expenses. It gathers every charging cost into one list, paid and home alike. One record is one charge.</p>
 <p>Records are entered by hand, after the charge, with the plus button. That is deliberate: the app is not connected to your accounts with the providers and cannot see your payments. What it can do is hold exactly the figures you know to be right.</p>
 
 <h2>Two kinds of record</h2>
@@ -3295,18 +3295,18 @@ ${figYears(MY_ROWS.en, 'The axis is the same as the Model 3 chart above, so the 
 </ul>
 
 <h2>Getting started</h2>
-<p>Open the profile, go to Expenses and fill in the settings: battery capacity, electricity tariff and loss. After that, each charge leaves you one record to add.</p>
+<p>Sign in, open the profile, go to Expenses and fill in the settings: battery capacity, electricity tariff and loss. After that, each charge leaves you one record to add.</p>
 <p>If you do not yet know the tariff at a given station, network prices are in one table: <a href="/en/tariffs/">charging tariffs</a>. The price of a specific station is in the <a href="/en/chargers/">charger list</a>. What charging costs in Georgia in general has its own guide: <a href="/en/blog/datenvis-fasi/">How much does it cost to charge an EV in Georgia</a>.</p>
 `,
       faq: [
         ["Where is expense tracking in the GeoCharge app?",
          "Under the profile menu, in the Expenses section. The plus button for a new record is there, along with the settings where you enter battery capacity, electricity tariff and charging loss."],
         ["Does expense tracking cost anything?",
-         "No, the feature is free and works without an account. Records are kept on the phone. Sign in and they follow you to another phone."],
+         "No, it is free and needs no premium. The only requirement is being signed in, since Expenses sits in the profile menu. Records are kept on the phone and tied to your account."],
         ["How is the cost of a home charge calculated?",
          "Battery capacity is multiplied by the difference in percent and by your electricity tariff, and the result is divided by the charging efficiency, because part of the energy never reaches the battery. A 10 percent loss means dividing by 0.9. A 60 kWh battery taken from 30 percent to 80 percent draws 33.3 kWh, which costs 8.33 GEL at a tariff of 0.25 GEL."],
         ["Will I lose the records if I change phone?",
-         "Not if you are signed in. The records follow the account and download as soon as you sign in on the new phone. Without an account the log stays on the phone where it was created."],
+         "No. The records follow the account and download as soon as you sign in on the new phone."],
         ["Why does the app not track the cost automatically?",
          "Because charging payments happen inside the providers' own accounts and GeoCharge is not connected to them. So you enter the amount for a paid charge, and the app works out a home charge from your own settings."],
       ],
