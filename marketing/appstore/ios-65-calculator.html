@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+<meta charset="utf-8">
+<title>GeoCharge · App Store 6.5" · კალკულატორი</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&amp;family=Noto+Sans+Georgian:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+/* App Store screenshot, iPhone 6.5" Display, exactly 1242x2688.
+   The phone screen is a faithful rebuild of CalculatorScreen: the palette,
+   the strings and the layout come from lib/screens/calculator_screen.dart and
+   lib/l10n/app_strings.dart, and the numbers are what estimateCharge() really
+   returns for 60 kWh on a 60 kW charger from 20 to 80 percent at 0.78 GEL.
+   Screen is drawn at the iPhone 11 Pro Max logical size (414x896) and scaled,
+   so every size below is the same number the Dart code uses. */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { background: #080a0b; }
+
+.shot {
+  position: relative; width: 1242px; height: 2688px; overflow: hidden;
+  font-family: "Poppins", "Noto Sans Georgian", "Segoe UI", Sylfaen, system-ui, sans-serif;
+  color: #F3F6F5;
+}
+.bg { position: absolute; inset: 0;
+  background: radial-gradient(70% 46% at 50% 20%, #13251d 0%, #0a100e 58%, #070a09 100%); }
+.scan { position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(to bottom, #2bd5940a 0 2px, transparent 2px 9px);
+  -webkit-mask-image: radial-gradient(76% 52% at 50% 30%, #000 38%, transparent 100%);
+          mask-image: radial-gradient(76% 52% at 50% 30%, #000 38%, transparent 100%);
+  opacity: .8; }
+
+.inner { position: absolute; inset: 0; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; padding: 104px 80px 0; }
+
+.eyebrow { display: inline-flex; align-items: center; gap: 13px;
+  padding: 12px 28px; border-radius: 999px;
+  border: 1px solid #2bd59440; background: #2bd59412;
+  color: #9fe9cd; font-size: 25px; font-weight: 600; }
+.eyebrow .dot { width: 11px; height: 11px; border-radius: 50%; background: #2BD594;
+  box-shadow: 0 0 0 6px #2bd59426; }
+
+h1 { margin-top: 40px; text-align: center; font-weight: 800;
+  font-size: 78px; line-height: 1.16; letter-spacing: -.015em; }
+h1 .hi { color: #2BD594; }
+.sub { margin-top: 26px; text-align: center; max-width: 900px;
+  font-size: 32px; line-height: 1.5; font-weight: 500; color: #A9B7B1; }
+
+/* ── Device ────────────────────────────────────────────────────────────────
+   872px of screen at 414 logical points is a 2.1063 scale. The frame is drawn
+   around it, so the numbers inside stay the app's own. */
+.device { position: relative; margin-top: 62px; width: 900px; height: 1915px;
+  border-radius: 76px; background: #1c1f21; padding: 14px;
+  box-shadow: 0 0 0 2px #33393c, 0 60px 120px -40px #000,
+              0 0 190px -30px #2bd59433; }
+.screen { position: relative; width: 872px; height: 1887px;
+  border-radius: 62px; overflow: hidden; background: #1A1A1A; }
+.notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 340px; height: 62px; background: #1c1f21;
+  border-bottom-left-radius: 34px; border-bottom-right-radius: 34px; z-index: 5; }
+
+/* Everything below is in iPhone logical points, then scaled as one block. */
+.ui { position: absolute; top: 0; left: 0; width: 414px; height: 896px;
+  transform: scale(2.10628); transform-origin: top left;
+  background: #1A1A1A; font-family: "Noto Sans Georgian", "Segoe UI", Sylfaen, sans-serif; }
+
+.status { height: 44px; display: flex; align-items: flex-end; justify-content: space-between;
+  padding: 0 28px 4px; color: #fff; font-size: 15px; font-weight: 600;
+  font-family: "Poppins", sans-serif; }
+.status .right { display: flex; align-items: center; gap: 5px; }
+.bars { display: flex; align-items: flex-end; gap: 2px; height: 11px; }
+.bars i { width: 3px; background: #fff; border-radius: 1px; display: block; }
+.batt { width: 25px; height: 12px; border: 1.4px solid #ffffffaa; border-radius: 3.5px;
+  padding: 1.4px; position: relative; }
+.batt::after { content: ""; position: absolute; right: -3.4px; top: 3.4px;
+  width: 2px; height: 4px; background: #ffffffaa; border-radius: 0 1px 1px 0; }
+.batt span { display: block; height: 100%; width: 78%; background: #fff; border-radius: 1.6px; }
+
+.appbar { height: 56px; background: #252525; display: flex; align-items: center;
+  padding: 0 10px; }
+.appbar .back { width: 44px; display: flex; justify-content: center; }
+.appbar .ttl { flex: 1; text-align: center; color: #fff; font-size: 17px; font-weight: 600; }
+.appbar .pad { width: 44px; }
+
+.port { position: absolute; top: 100px; left: 0; width: 414px; height: 796px; overflow: hidden; }
+.body { padding: 20px 20px 0; margin-top: -171px; }
+.intro { color: #9E9E9E; font-size: 14px; line-height: 1.5; }
+
+.card { background: #252525; border: 1px solid #2E2E2E; border-radius: 16px; }
+.card.pad { padding: 18px; margin-top: 20px; }
+
+.lbl { color: #9E9E9E; font-size: 12px; font-weight: 600; letter-spacing: .6px; }
+.field { margin-top: 8px; background: #2E2E2E; border-radius: 12px; height: 45px;
+  display: flex; align-items: center; padding: 0 12px; gap: 8px; }
+.field .val { flex: 1; color: #fff; font-size: 15px; }
+.field .suf { color: #9E9E9E; font-size: 12.5px; }
+.ico { width: 18px; height: 18px; display: block; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.chip { padding: 8px 13px; border-radius: 10px; background: #2E2E2E;
+  border: 1px solid transparent; color: #9E9E9E; font-size: 13px; font-weight: 600; }
+.chip.on { background: rgba(0,200,150,.16); border-color: #00C896; color: #00C896; }
+
+.two { display: flex; gap: 12px; margin-top: 16px; }
+.two > div { flex: 1; }
+.hint { color: #9E9E9E; font-size: 12px; line-height: 1.45; margin-top: 8px; }
+
+.res { padding: 18px 18px 16px; margin-top: 20px; }
+.res + .res { margin-top: 14px; }
+.res .rl { color: #9E9E9E; font-size: 12px; font-weight: 600; letter-spacing: .6px; }
+.res .big { font-size: 32px; font-weight: 700; margin-top: 6px; line-height: 1.05; }
+.res .big.t { color: #00C896; }
+.res .big.c { color: #4C9AFF; }
+.res .sub2 { color: #9E9E9E; font-size: 13px; margin-top: 4px; }
+.rule { height: 1px; background: #2E2E2E; margin: 14px 0 12px; }
+.row { display: flex; justify-content: space-between; align-items: center; }
+.row + .row { margin-top: 9px; }
+.row .k { color: #9E9E9E; font-size: 13px; }
+.row .v { color: #fff; font-size: 14px; font-weight: 600; }
+.note { color: #9E9E9E; font-size: 12.5px; line-height: 1.55; margin-top: 20px; }
+
+/* The banner the free tier really carries at the bottom of this screen. */
+.adbar { position: absolute; left: 0; bottom: 0; width: 414px; height: 50px;
+  background: #202020; border-top: 1px solid #2a2a2a;
+  display: flex; align-items: center; justify-content: center; gap: 8px; }
+.adbar .tag { font-size: 9px; font-weight: 700; letter-spacing: .5px; color: #6d6d6d;
+  border: 1px solid #3a3a3a; border-radius: 3px; padding: 1px 4px;
+  font-family: "Poppins", sans-serif; }
+.adbar .txt { color: #5c5c5c; font-size: 12px; font-family: "Poppins", sans-serif; }
+</style>
+</head>
+<body>
+<div class="shot">
+  <div class="bg"></div>
+  <div class="scan"></div>
+
+  <div class="inner">
+    <div class="eyebrow"><span class="dot"></span>ახალი აპლიკაციაში</div>
+
+    <h1>რამდენ ხანს გასტანს<br><span class="hi">და რა დაჯდება</span></h1>
+
+    <p class="sub">ბატარეა, დამტენის სიმძლავრე და მუხტის დონე.
+      ორივე პასუხი ერთი ეკრანიდან.</p>
+
+    <div class="device">
+      <div class="screen">
+        <div class="notch"></div>
+        <div class="ui">
+
+          <div class="status">
+            <span>9:41</span>
+            <span class="right">
+              <span class="bars"><i style="height:4px"></i><i style="height:6px"></i><i style="height:8px"></i><i style="height:11px"></i></span>
+              <svg width="16" height="12" viewBox="0 0 16 12" fill="#fff"><path d="M8 9.6a1.4 1.4 0 1 1 0 2.4 1.4 1.4 0 0 1 0-2.4Zm0-3.4c1.2 0 2.3.45 3.1 1.2l-1.1 1.2A2.9 2.9 0 0 0 8 7.8c-.8 0-1.5.3-2 .8L4.9 7.4A4.6 4.6 0 0 1 8 6.2Zm0-3.3c2.1 0 4 .8 5.4 2.2l-1.1 1.2A6 6 0 0 0 8 4.5a6 6 0 0 0-4.3 1.8L2.6 5.1A7.6 7.6 0 0 1 8 2.9Z"/></svg>
+              <span class="batt"><span></span></span>
+            </span>
+          </div>
+
+          <div class="appbar">
+            <span class="back">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 8 12l7 7"/></svg>
+            </span>
+            <span class="ttl">კალკულატორი</span>
+            <span class="pad"></span>
+          </div>
+
+          <div class="port">
+          <div class="body">
+            <p class="intro">მიუთითე ბატარეის ტევადობა, დამტენის სიმძლავრე და მუხტის დონე.</p>
+
+            <div class="card pad">
+              <div class="lbl">ბატარეის ტევადობა</div>
+              <div class="field">
+                <svg class="ico" viewBox="0 0 24 24" fill="#9E9E9E"><path d="M15.7 4H14V2h-4v2H8.3C7.6 4 7 4.6 7 5.3v15.4c0 .7.6 1.3 1.3 1.3h7.4c.7 0 1.3-.6 1.3-1.3V5.3c0-.7-.6-1.3-1.3-1.3ZM11 20v-4H9l4-6v4h2l-4 6Z"/></svg>
+                <span class="val">60</span><span class="suf">kWh</span>
+              </div>
+
+              <div style="margin-top:16px" class="lbl">დამტენის სიმძლავრე</div>
+              <div class="field">
+                <svg class="ico" viewBox="0 0 24 24" fill="#9E9E9E"><path d="M11 21h-1l1-7H7.5c-.6 0-.6-.3-.4-.7.2-.4.1-.2.1-.2C8.5 10.6 10.4 7.2 13 3h1l-1 7h3.5c.5 0 .6.3.5.6l-.1.2C12.7 18.1 11 21 11 21Z"/></svg>
+                <span class="val">60</span><span class="suf">kW</span>
+              </div>
+              <div class="chips">
+                <span class="chip">7 kW</span>
+                <span class="chip">22 kW</span>
+                <span class="chip on">60 kW</span>
+                <span class="chip">120 kW</span>
+                <span class="chip">160 kW</span>
+              </div>
+
+              <div class="two">
+                <div>
+                  <div class="lbl">მიმდინარე მუხტი</div>
+                  <div class="field">
+                    <svg class="ico" viewBox="0 0 24 24" fill="#9E9E9E"><path d="M15.7 4H14V2h-4v2H8.3C7.6 4 7 4.6 7 5.3v15.4c0 .7.6 1.3 1.3 1.3h7.4c.7 0 1.3-.6 1.3-1.3V5.3c0-.7-.6-1.3-1.3-1.3Zm-.7 16H9v-4h6v4Z"/></svg>
+                    <span class="val">20</span><span class="suf">%</span>
+                  </div>
+                </div>
+                <div>
+                  <div class="lbl">სასურველი მუხტი</div>
+                  <div class="field">
+                    <svg class="ico" viewBox="0 0 24 24" fill="#9E9E9E"><path d="M15.7 4H14V2h-4v2H8.3C7.6 4 7 4.6 7 5.3v15.4c0 .7.6 1.3 1.3 1.3h7.4c.7 0 1.3-.6 1.3-1.3V5.3c0-.7-.6-1.3-1.3-1.3Zm-.7 16H9V6h6v14Z"/></svg>
+                    <span class="val">80</span><span class="suf">%</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-top:16px" class="lbl">ტარიფი</div>
+              <div class="field">
+                <svg class="ico" viewBox="0 0 24 24" fill="#9E9E9E"><path d="M20 6H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2Zm-8 9a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z"/></svg>
+                <span class="val">0.78</span><span class="suf">₾ / kWh</span>
+              </div>
+              <p class="hint">ნაგულისხმევად საქართველოს სწრაფი დამტენების მედიანაა.</p>
+            </div>
+
+            <div class="card res">
+              <div class="rl">რამდენ ხანს გასტანს</div>
+              <div class="big t">39 წთ</div>
+              <div class="sub2">საშუალო სიმძლავრე 60 kW</div>
+              <div class="rule"></div>
+              <div class="row"><span class="k">20 პროცენტიდან 80-მდე</span><span class="v">39 წთ</span></div>
+              <div class="row"><span class="k">ბოლო 20 პროცენტი</span><span class="v">+ 28 წთ</span></div>
+            </div>
+
+            <div class="card res">
+              <div class="rl">რა დაჯდება</div>
+              <div class="big c">28.08 ₾</div>
+              <div class="sub2">ბატარეაში შედის 36.0 kWh</div>
+            </div>
+
+            <p class="note">დრო დატენვის რეალური მრუდით ითვლება, ამიტომ 80 პროცენტის
+              შემდეგ ბატარეა შესამჩნევად ნელა ივსება. შედეგი შეფასებაა: ზუსტი დრო
+              მანქანის მოდელზე, ბატარეის ტემპერატურასა და დამტენის დატვირთვაზეა
+              დამოკიდებული.</p>
+          </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
