@@ -1474,9 +1474,20 @@ body.is-driving .map-controls { bottom: 112px; }
   box-shadow: var(--shadow-lg);
   pointer-events: auto;
 }
-.drive-foot__stats { display: flex; gap: 20px; flex: 1; align-items: baseline; }
-#drive-remain { font-size: 24px; font-weight: 700; }
-#drive-eta { font-size: 17px; color: var(--text-dim); }
+/* Distance on the left, then the two time lines. Everything here is nowrap:
+   on the car's screen "6.8 კმ" broke after the number and left the unit on a
+   line of its own, and the arrival clock did the same under its label. */
+.drive-foot__stats {
+  display: flex;
+  gap: 18px;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+}
+#drive-remain { font-size: 24px; font-weight: 700; white-space: nowrap; }
+.drive-foot__eta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#drive-duration { font-size: 17px; font-weight: 600; white-space: nowrap; }
+#drive-eta { font-size: 15px; color: var(--text-dim); white-space: nowrap; }
 .drive-foot__btn {
   position: relative;
   width: 52px;

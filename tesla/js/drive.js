@@ -18,8 +18,11 @@
 import {
   getMap,
   isVectorMap,
+  locateMe,
+  navFollow,
+  navJump,
+  navStop,
   onMap,
-  setMapHeading,
   setMarkersDimmed,
   setUserLocation,
   setUserStyle,
@@ -381,6 +384,8 @@ const state = {
   lastPos: null,
   dragListener: null,
   prevPos: null,
+  prevAt: 0,
+  speed: 0,
   heading: null,
   announced: new Set(),  // "<stepIdx>:far" / ":near" voice guards
   offCount: 0,
@@ -442,13 +447,12 @@ export async function startDrive({ destination, waypoints = [], route: routeRef 
   showToast(t('driveLocating'), 60000);
   let origin;
   try {
-    origin = await new Promise((resolve, reject) =>
-      navigator.geolocation.getCurrentPosition(
-        (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
-        reject,
-        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 },
-      ),
-    );
+    // Through locateMe, which accepts a fix the app already has and asks both
+    // ways at once — a car's browser can take a long time over a brand new
+    // one, and navigation that refuses to start is worse than starting from
+    // fifteen seconds ago. `center: false` because drawRoute() frames the
+    // route itself a moment later.
+    origin = await locateMe({ center: false, maxAgeMs: 15000 });
   } catch (_) {
     showToast(t('driveNoLocation'));
     return;
@@ -470,6 +474,8 @@ export async function startDrive({ destination, waypoints = [], route: routeRef 
   state.firstFix = true;
   state.lastPos = origin;
   state.prevPos = null;
+  state.prevAt = 0;
+  state.speed = 0;
   state.heading = null;
   state.announced = new Set();
   state.offCount = 0;
@@ -512,6 +518,7 @@ export async function startDrive({ destination, waypoints = [], route: routeRef 
       onPosition(
         { lat: p.coords.latitude, lng: p.coords.longitude },
         Number.isFinite(p.coords.heading) ? p.coords.heading : null,
+        Number.isFinite(p.coords.speed) && p.coords.speed >= 0 ? p.coords.speed : null,
       ),
     () => {/* transient GPS error — keep last banner */},
     { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 },
@@ -551,7 +558,7 @@ export function endDrive() {
   state.active = false;
   state.route = null;
   state.routeRef = null;
-  setMapHeading(0);
+  navStop();
   setVectorMode(false); // back to the browsing map, in our own palette
   state.rotatable = false;
   setMarkersDimmed(false);
@@ -604,7 +611,7 @@ function drawRoute() {
 }
 
 // ── Per-fix update ───────────────────────────────────────────────────────────
-function onPosition(pos, geoHeading) {
+function onPosition(pos, geoHeading, geoSpeed) {
   if (!state.active) return;
 
   const { offM, alongM, snapped, bearing } = project(pos);
@@ -617,6 +624,17 @@ function onPosition(pos, geoHeading) {
   // Heading, best source first: the road we are on, then the GPS bearing, then
   // the line between the last two fixes. Worked out BEFORE the marker moves,
   // because the car silhouette is drawn pointing along it.
+  // Speed, for the camera to carry the car forward on between fixes. The GPS
+  // value where the car publishes one, otherwise the distance since the last
+  // fix over the time it took.
+  const now = Date.now();
+  if (geoSpeed != null) {
+    state.speed = geoSpeed;
+  } else if (state.prevPos && state.prevAt) {
+    const dt = (now - state.prevAt) / 1000;
+    if (dt > 0.2 && dt < 10) state.speed = haversineM(state.prevPos, pos) / dt;
+  }
+
   let moving = false;
   if (state.prevPos) moving = haversineM(state.prevPos, pos) > 3;
   if (onRoute && moving && bearing != null) {
@@ -630,15 +648,27 @@ function onPosition(pos, geoHeading) {
     );
   }
   state.prevPos = pos;
+  state.prevAt = now;
 
-  setUserLocation(shown, state.heading);
-  // Turn the world so the car keeps pointing up the screen. Only while actually
-  // moving: a stationary GPS heading spins, and a map that spins at a red light
-  // is worse than no rotation at all.
-  if (state.headingUp && state.rotatable && moving && state.heading != null) {
-    setMapHeading(state.heading);
+  // One handover per fix: where we are, which way we point, whether the camera
+  // is still ours, and whether the map should turn with us. Everything between
+  // two fixes is eased inside map.js.
+  //
+  // The heading is only handed over while the car is actually moving: a
+  // stationary GPS heading wanders, and a map that spins at a red light is
+  // worse than one that does not turn at all.
+  navFollow({
+    pos: shown,
+    heading: moving ? state.heading : null,
+    speed: moving ? state.speed : 0,
+    camera: state.following,
+    rotate: state.headingUp && state.rotatable,
+  });
+  if (state.firstFix) {
+    getMap().setZoom(DRIVE_ZOOM);
+    navJump();
+    state.firstFix = false;
   }
-  followCamera(shown, moving);
 
   // Off-route → reroute (debounced, needs a few consecutive off-fixes).
   if (offM > 60) state.offCount++;
@@ -653,29 +683,20 @@ function onPosition(pos, geoHeading) {
   updateBanner(alongM);
 }
 
-function followCamera(pos, moving) {
-  if (!state.following) return; // driver is looking somewhere else on the map
-  const map = getMap();
-  if (state.firstFix) {
-    map.setZoom(DRIVE_ZOOM);
-    state.firstFix = false;
-  }
-  // Bias the camera ahead of the car so the road reads (nav convention).
-  let center = pos;
-  if (state.heading != null && moving) {
-    center = google.maps.geometry.spherical.computeOffset(
-      new google.maps.LatLng(pos.lat, pos.lng),
-      120,
-      state.heading,
-    );
-  }
-  map.panTo(center);
-}
-
-/** Point the map north again, or back along the car, after a toggle. */
+/**
+ * Re-aim the camera after something other than a fix changed: the heading-up
+ * switch, or the map being rebuilt. Without this a parked car would sit facing
+ * the old way until it moved again.
+ */
 function applyHeadingMode() {
-  if (!state.rotatable) return;
-  setMapHeading(state.headingUp && state.heading != null ? state.heading : 0);
+  if (!state.active || !state.lastPos) return;
+  navFollow({
+    pos: state.lastPos,
+    heading: state.heading,
+    speed: 0, // a deliberate re-aim, not a fix: do not carry the car forward
+    camera: state.following,
+    rotate: state.headingUp && state.rotatable,
+  });
 }
 
 /**
@@ -688,7 +709,8 @@ function setFollowing(on) {
   $('drive-recenter').classList.toggle('is-hidden', on);
   if (!on || !state.lastPos) return;
   getMap().setZoom(DRIVE_ZOOM);
-  followCamera(state.lastPos, state.heading != null);
+  applyHeadingMode();
+  navJump(); // the driver asked to be brought back, not eased back
 }
 
 function updateBanner(alongM) {
@@ -734,8 +756,11 @@ function updateBanner(alongM) {
   const remainS = totalM > 0 ? totalDurS * (remainM / totalM) : 0;
   const eta = new Date(Date.now() + remainS * 1000);
   $('drive-remain').textContent = fmtDist(remainM);
-  $('drive-eta').textContent =
-    `${fmtDuration(remainS)} · ${t('driveArrivalAt')} ${fmtClock(eta)}`;
+  // Two lines, written as two: "5 სთ 14 წთ" over "ჩასვლის დრო: 04:48". As one
+  // string with a middot they wrapped wherever the car's screen ran out, which
+  // put the clock on a line of its own under a dangling label.
+  $('drive-duration').textContent = fmtDuration(remainS);
+  $('drive-eta').textContent = `${t('driveArrivalAt')} ${fmtClock(eta)}`;
 }
 
 function onArrived() {
@@ -745,6 +770,7 @@ function onArrived() {
   $('drive-dist').textContent = '';
   $('drive-road').textContent = t('driveArrived');
   $('drive-remain').textContent = '';
+  $('drive-duration').textContent = '';
   $('drive-eta').textContent = '';
   $('drive-banner').classList.add('is-arrived');
   speak(['arrive'], t('driveArrived'));
@@ -798,6 +824,7 @@ function enterUi() {
   $('drive-dist').textContent = '';
   $('drive-road').textContent = '';
   $('drive-remain').textContent = '';
+  $('drive-duration').textContent = '';
   $('drive-eta').textContent = '';
   syncVoiceBtn();
   syncHeadingBtn();

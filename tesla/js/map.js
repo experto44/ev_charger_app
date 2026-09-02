@@ -202,9 +202,7 @@ export function setVectorMode(on) {
     ...mapOptions(document.documentElement.dataset.theme, want),
   });
   vector = want;
-  clearInterval(headingTimer);
-  headingTimer = 0;
-  headingNow = headingTarget = 0;
+  headingNow = 0; // a rebuilt map starts north-up; the nav loop turns it back
 
   for (const e of mapListeners) e.ref = map.addListener(e.event, e.handler);
 
@@ -222,64 +220,201 @@ export function isVectorMap() {
   return vector;
 }
 
-// ── Rotation ─────────────────────────────────────────────────────────────────
-// Heading is eased rather than snapped: a GPS fix a second, dropped straight
-// onto the camera, makes the whole world jerk at every bend.
+// ── The navigation camera ────────────────────────────────────────────────────
+// A GPS fix arrives once a second. Everything that moves has to be moved from
+// it: the car, the camera under the car, and the heading the whole map is
+// turned to. Doing that as three separate animations is what made the map
+// stutter — panTo ran Google's own easing, setHeading snapped, and the marker
+// jumped fifteen metres on the second. So there is one loop here, it eases one
+// set of values, and it writes them to the map in a single call per step.
 //
-// The easing runs on a timer, not requestAnimationFrame. rAF is the obvious
-// tool and the wrong one here: it is tied to the browser actually painting, and
-// a browser that reports itself visible while painting nothing (the in-app
-// preview does exactly this, and an in-car browser may too) would then never
-// turn the map at all. A timer is always delivered, and 20 steps a second is
-// smooth enough for a map — and cheaper on a car's GPU than 60.
-const HEADING_STEP_MS = 50;
-const HEADING_EASE = 0.25;   // fraction of what is left, per step
-let headingNow = 0;
-let headingTarget = 0;
-let headingTimer = 0;
+// The loop runs on requestAnimationFrame, with a timer behind it as a watchdog.
+// rAF is the right clock here and only here: the map draws its base on the
+// compositor's own frame, and a camera moved on a timer between frames left the
+// route line sliding against the map underneath it — the wiggle that reads as
+// two separate layers. Moved on the frame, the two move together.
+//
+// The watchdog is there because rAF stops in a tab that is not being painted
+// (and, in the in-app preview, in one that claims to be visible). Nothing
+// visual is lost while nothing is drawn; the point is that the eased position
+// must not be stale when painting resumes.
+const NAV_WATCHDOG_MS = 500;
+// How long the camera takes to close most of the gap to the newest fix. Fixes
+// arrive about once a second, so this has to be of that order: close it in a
+// fifth of a second and the camera lurches and then waits, which is the jerk we
+// started with, only faster.
+//
+// The easing is worked out from ELAPSED TIME, not from how many times the timer
+// happened to fire. A background tab is throttled to one tick a second, a busy
+// car screen may drop frames, and a fixed fraction per tick would then crawl
+// behind and catch up in lurches — which is exactly what the measurements
+// showed. With time in the exponent the path is the same however often we are
+// called; a slow browser just draws fewer points along it.
+const NAV_TAU_MS = 300;
+// A fix is a second old by the time the next one lands, so between them the car
+// is carried forward along its heading at the speed it was last seen doing.
+// Without it the camera can only chase a target that stands still for a second
+// and then teleports, which is the pulse a driver reads as juddering. Capped,
+// because if the fixes stop we must not sail off down the road alone.
+const NAV_PREDICT_MAX_MS = 2500;
+// Past this the car has not driven, it has teleported — a tunnel, a reroute, a
+// fix that finally landed. Easing across a kilometre would fly the camera over
+// the map; jump instead.
+const NAV_SNAP_M = 80;
+const NAV_BIAS_M = 120;     // how far ahead of the car the camera sits
+let navRaf = 0;
+let navTimer = 0;
+let navTarget = null;       // where the last fix says we are
+let navShown = null;        // where we are currently drawn
+let navLastStep = 0;        // when the easing last ran, for time-based easing
+let headingNow = 0;         // what the map is turned to right now
 
 const shortWay = (from, to) => ((((to - from) % 360) + 540) % 360) - 180;
 
-function stepHeading() {
-  if (!map || !vector) {
-    clearInterval(headingTimer);
-    headingTimer = 0;
+/** Where the top of the screen points right now. */
+export function getMapHeading() {
+  return vector ? headingNow : 0;
+}
+
+function writeCamera() {
+  if (!map || !navShown) return;
+  // The car is drawn where we have eased it to, not where the fix was.
+  userHeading = navShown.heading;
+  if (userMarker) {
+    userMarker.setPosition(navShown.pos);
+    if (!userMarker.getMap()) userMarker.setMap(map);
+  }
+  applyUserIcon();
+
+  if (!navTarget || !navTarget.camera) return;
+  // Bias the camera ahead of the car so the road reads (nav convention). The
+  // offset follows the heading whether or not the map itself turns.
+  const center = google.maps.geometry.spherical.computeOffset(
+    new google.maps.LatLng(navShown.pos.lat, navShown.pos.lng),
+    NAV_BIAS_M,
+    navShown.heading,
+  );
+  if (vector && map.moveCamera) {
+    // One call for both, so the pan and the turn cannot fight each other.
+    map.moveCamera({ center, heading: headingNow });
+  } else {
+    map.setCenter(center);
+  }
+}
+
+function stepNav() {
+  if (!map || !navTarget || !navShown) {
+    stopNavLoop();
     return;
   }
-  const delta = shortWay(headingNow, headingTarget);
-  if (Math.abs(delta) < 0.4) {
-    headingNow = headingTarget;
-    clearInterval(headingTimer);
-    headingTimer = 0;
-  } else {
-    headingNow = (headingNow + delta * HEADING_EASE + 360) % 360;
+  const now = Date.now();
+  const dt = Math.min(1000, now - (navLastStep || now - 16));
+  navLastStep = now;
+  const ease = 1 - Math.exp(-dt / NAV_TAU_MS);
+  const t = navTarget;
+  const aim = predicted();
+  // Metres apart, near enough: a degree of latitude is ~111 km, and longitude
+  // shrinks with the cosine, which at Georgian latitudes is about 0.74.
+  const gapM = Math.hypot(
+    (aim.lat - navShown.pos.lat) * 111320,
+    (aim.lng - navShown.pos.lng) * 111320 * 0.74,
+  );
+  if (gapM > NAV_SNAP_M) {
+    navJump();
+    return;
   }
-  map.setHeading(headingNow);
-  applyUserIcon();
+  navShown.pos = {
+    lat: navShown.pos.lat + (aim.lat - navShown.pos.lat) * ease,
+    lng: navShown.pos.lng + (aim.lng - navShown.pos.lng) * ease,
+  };
+  navShown.heading =
+    (navShown.heading + shortWay(navShown.heading, t.heading) * ease + 360) % 360;
+  const mapTarget = vector && t.rotate ? navShown.heading : 0;
+  headingNow = (headingNow + shortWay(headingNow, mapTarget) * ease + 360) % 360;
+  writeCamera();
+}
+
+/** Where the car should be by now, carrying the last fix forward at its speed. */
+function predicted() {
+  const t = navTarget;
+  if (!t) return null;
+  const ms = Math.min(NAV_PREDICT_MAX_MS, Date.now() - t.at);
+  const ahead = (t.speed || 0) * (ms / 1000);
+  if (ahead < 1) return t.pos;
+  const p = google.maps.geometry.spherical.computeOffset(
+    new google.maps.LatLng(t.pos.lat, t.pos.lng),
+    ahead,
+    t.heading,
+  );
+  return { lat: p.lat(), lng: p.lng() };
 }
 
 /**
- * Point the map so `deg` (a compass bearing) is up the screen. 0 is north-up,
- * which is also all a raster map can do — there the call does nothing.
+ * Feed the camera a fix. Call it once per GPS update; everything between them
+ * — the prediction and the easing — is this module's job.
+ *
+ * @param {{pos:{lat,lng}, heading:number|null, speed:number|null,
+ *          camera:boolean, rotate:boolean}} t
+ *        `speed` in m/s; `camera` false leaves the map where the driver dragged
+ *        it and only moves the car; `rotate` false keeps north up.
  */
-export function setMapHeading(deg) {
-  if (!map || !vector) return;
-  headingTarget = ((deg % 360) + 360) % 360;
-  if (Math.abs(shortWay(headingNow, headingTarget)) < 0.4) return;
-  // One step immediately, so the map turns even if timers are being throttled.
-  stepHeading();
-  if (!headingTimer) headingTimer = setInterval(stepHeading, HEADING_STEP_MS);
+export function navFollow(t) {
+  const heading = Number.isFinite(t.heading) ? t.heading : navShown?.heading ?? 0;
+  navTarget = {
+    pos: t.pos,
+    heading,
+    speed: Number.isFinite(t.speed) && t.speed > 0.5 ? t.speed : 0,
+    at: Date.now(),
+    camera: !!t.camera,
+    rotate: !!t.rotate,
+  };
+  if (!navShown) {
+    navShown = { pos: { ...t.pos }, heading };
+    headingNow = vector && navTarget.rotate ? heading : 0;
+    writeCamera();
+  }
+  startNavLoop();
 }
 
-/**
- * Where the top of the screen currently points RIGHT NOW — read back from the
- * map rather than from our own target, because the two differ while a turn is
- * still easing, and the car has to be drawn against what is actually on screen.
- */
-export function getMapHeading() {
-  if (!vector || !map) return 0;
-  const h = map.getHeading();
-  return Number.isFinite(h) ? h : headingNow;
+function pump() {
+  navRaf = 0;
+  stepNav();
+  if (navTarget) navRaf = requestAnimationFrame(pump);
+}
+
+function startNavLoop() {
+  if (!navRaf) navRaf = requestAnimationFrame(pump);
+  if (!navTimer) {
+    navTimer = setInterval(() => {
+      // Only when the frames have stopped coming; otherwise pump() has it.
+      if (Date.now() - navLastStep > NAV_WATCHDOG_MS - 100) stepNav();
+    }, NAV_WATCHDOG_MS);
+  }
+}
+
+function stopNavLoop() {
+  if (navRaf) cancelAnimationFrame(navRaf);
+  navRaf = 0;
+  clearInterval(navTimer);
+  navTimer = 0;
+  navLastStep = 0;
+}
+
+/** Snap to the latest fix instead of easing to it (first fix, recenter). */
+export function navJump() {
+  if (!navTarget) return;
+  navLastStep = 0;
+  navShown = { pos: { ...(predicted() || navTarget.pos) }, heading: navTarget.heading };
+  headingNow = vector && navTarget.rotate ? navTarget.heading : 0;
+  writeCamera();
+}
+
+/** Navigation is over: stop moving anything. */
+export function navStop() {
+  navTarget = null;
+  stopNavLoop();
+  navShown = null;
+  headingNow = 0;
 }
 
 export function getMap() {
@@ -492,6 +627,11 @@ export function panTo(pos, zoom) {
 // pointing wherever the car is pointing (see js/car.js).
 let userStyle = 'dot'; // 'dot' | 'car'
 let userHeading = 0;
+// The last position anyone has seen, and when. follow.js and drive.js both feed
+// this without knowing they do, which is what lets "my location" answer
+// instantly instead of asking a car's GPS to find itself all over again.
+let lastFix = null;
+let lastFixAt = 0;
 
 const DOT_ICON = () => ({
   path: google.maps.SymbolPath.CIRCLE,
@@ -539,6 +679,13 @@ export function setUserStyle(style) {
  * stationary fix does not spin the car back to north.
  */
 export function setUserLocation(pos, heading) {
+  // Drive mode moves the marker through the nav camera above, on its own
+  // schedule; a second writer here would fight it once a second.
+  if (navTarget) {
+    lastFix = pos;
+    lastFixAt = Date.now();
+    return;
+  }
   if (!userMarker) {
     userMarker = new google.maps.Marker({ map, zIndex: 3000 });
     applyUserIcon();
@@ -549,6 +696,54 @@ export function setUserLocation(pos, heading) {
   }
   if (!userMarker.getMap()) userMarker.setMap(map);
   userMarker.setPosition(pos);
+  lastFix = pos;
+  lastFixAt = Date.now();
+}
+
+/** The most recent fix, if it is still worth trusting. */
+export function lastKnownPosition(maxAgeMs = 120000) {
+  if (!lastFix || Date.now() - lastFixAt > maxAgeMs) return null;
+  return lastFix;
+}
+
+/**
+ * One position, by whichever route answers first.
+ *
+ * getCurrentPosition alone is what the trip planner used to call, and on a real
+ * Tesla it returned nothing: the car's browser can take far longer than ten
+ * seconds to produce a FRESH high-accuracy fix, and `maximumAge: 0` refused
+ * every fix it already had. So both doors are opened at once — the one-shot
+ * call and a watch — and the first fix through either wins. Embedded browsers
+ * that answer a watch but not a one-shot are common enough to be worth the
+ * eight extra lines.
+ */
+function firstFix({ timeout = 25000, maximumAge = 30000 } = {}) {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) return reject(new Error('no geolocation'));
+    let done = false;
+    let watchId = null;
+    let timer = 0;
+
+    const finish = (pos, err) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      if (watchId != null) {
+        try { navigator.geolocation.clearWatch(watchId); } catch (_) {/* gone already */}
+      }
+      if (pos) resolve(pos);
+      else reject(err || new Error('no fix'));
+    };
+    const ok = (p) => finish({ lat: p.coords.latitude, lng: p.coords.longitude });
+    // A denied permission is the one error worth reporting straight away;
+    // everything else just means "not yet", and the other door may still open.
+    const bad = (e) => { if (e && e.code === 1) finish(null, e); };
+
+    timer = setTimeout(() => finish(null, new Error('timeout')), timeout);
+    const opts = { enableHighAccuracy: true, timeout, maximumAge };
+    try { navigator.geolocation.getCurrentPosition(ok, bad, opts); } catch (_) {/* ignore */}
+    try { watchId = navigator.geolocation.watchPosition(ok, bad, opts); } catch (_) {/* ignore */}
+  });
 }
 
 /**
@@ -559,20 +754,18 @@ export function setUserLocation(pos, heading) {
  * watch this app has (outside drive mode), so granting the permission here is
  * also what lets the camera start following the car by itself.
  */
-export function locateMe({ center = true } = {}) {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) return reject(new Error('no geolocation'));
-    navigator.geolocation.getCurrentPosition(
-      (p) => {
-        const pos = { lat: p.coords.latitude, lng: p.coords.longitude };
-        setUserLocation(pos);
-        if (center) panTo(pos, LOCATE_ZOOM);
-        resolve(pos);
-      },
-      (err) => reject(err),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
-    );
-  });
+export function locateMe({ center = true, maxAgeMs = 120000 } = {}) {
+  const settle = (pos) => {
+    setUserLocation(pos);
+    if (center) panTo(pos, LOCATE_ZOOM);
+    return pos;
+  };
+  // If the app has been shown where the car is in the last couple of minutes,
+  // that IS the answer. The car has not moved far, and asking again is how a
+  // button ends up doing nothing for twenty seconds.
+  const cached = lastKnownPosition(maxAgeMs);
+  if (cached) return Promise.resolve(settle(cached));
+  return firstFix().then(settle);
 }
 
 // ── Search destination pin (red) ─────────────────────────────────────────────

@@ -10,7 +10,7 @@ import { startDrive } from './drive.js';
 import { saveRoute } from './routes.js';
 import { track } from './analytics.js';
 import { icon } from './icons.js';
-import { MIN_POWER_STEPS, sortConnectors, toggleFilterDrawer } from './ui.js';
+import { MIN_POWER_STEPS, hideToast, showToast, sortConnectors, toggleFilterDrawer } from './ui.js';
 import { providerLogo } from './format.js';
 import { t } from './i18n.js';
 
@@ -135,13 +135,20 @@ function renderStops() {
         '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 8a4 4 0 100 8 4 4 0 000-8zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19a7 7 0 110-14 7 7 0 010 14z"/></svg>',
         t('tripMyLocation'),
         async () => {
+          // Say what is happening and say when it fails. This used to swallow
+          // every error, so on a Tesla — where the first fix can take many
+          // seconds — pressing it looked like pressing nothing at all.
+          showToast(t('driveLocating'), 30000);
           try {
             const pos = await locateMe({ center: false });
+            hideToast();
             stop.coords = pos;
             stop.label = t('tripMyLocation');
             input.value = stop.label;
             scheduleCompute();
-          } catch (_) {/* ignore; user can type instead */}
+          } catch (_) {
+            showToast(t('driveNoLocation'));
+          }
         },
       );
     }
