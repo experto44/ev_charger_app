@@ -251,6 +251,13 @@ const NAV_WATCHDOG_MS = 500;
 // showed. With time in the exponent the path is the same however often we are
 // called; a slow browser just draws fewer points along it.
 const NAV_TAU_MS = 300;
+// Turning is deliberately slower than moving, and capped. The camera used to
+// swing the whole world round a corner in about a second, which is disorienting
+// at the wheel — the map should follow the car through the bend, not whip round
+// ahead of it. The car silhouette still turns at the position rate, so it leans
+// into the corner a moment before the map does, the way it does in Google Maps.
+const NAV_TURN_TAU_MS = 1100;
+const NAV_TURN_MAX_DPS = 45;   // degrees per second, whatever the easing asks for
 // A fix is a second old by the time the next one lands, so between them the car
 // is carried forward along its heading at the speed it was last seen doing.
 // Without it the camera can only chase a target that stands still for a second
@@ -261,7 +268,10 @@ const NAV_PREDICT_MAX_MS = 2500;
 // fix that finally landed. Easing across a kilometre would fly the camera over
 // the map; jump instead.
 const NAV_SNAP_M = 80;
-const NAV_BIAS_M = 120;     // how far ahead of the car the camera sits
+// How far ahead of the car the camera sits. Tuned with the zoom: at drive
+// zoom a screen is roughly 300 m tall, so this puts the car about two thirds of
+// the way down and leaves the road ahead filling the rest.
+const NAV_BIAS_M = 75;
 let navRaf = 0;
 let navTimer = 0;
 let navTarget = null;       // where the last fix says we are
@@ -330,7 +340,11 @@ function stepNav() {
   navShown.heading =
     (navShown.heading + shortWay(navShown.heading, t.heading) * ease + 360) % 360;
   const mapTarget = vector && t.rotate ? navShown.heading : 0;
-  headingNow = (headingNow + shortWay(headingNow, mapTarget) * ease + 360) % 360;
+  const turnEase = 1 - Math.exp(-dt / NAV_TURN_TAU_MS);
+  const turnMax = (NAV_TURN_MAX_DPS * dt) / 1000;
+  let turn = shortWay(headingNow, mapTarget) * turnEase;
+  turn = Math.max(-turnMax, Math.min(turnMax, turn));
+  headingNow = (headingNow + turn + 360) % 360;
   writeCamera();
 }
 

@@ -291,15 +291,36 @@ function project(pos) {
       segB = path[i + 1];
     }
   }
-  let bearing = null;
-  if (segA && segB) {
-    bearing =
-      (google.maps.geometry.spherical.computeHeading(
-        new google.maps.LatLng(segA.lat, segA.lng),
-        new google.maps.LatLng(segB.lat, segB.lng),
-      ) + 360) % 360;
-  }
+  // The bearing is taken to a point well AHEAD on the route, not along the
+  // segment we happen to be standing on. A road's geometry turns a few degrees
+  // at every vertex — about every twenty metres in an ORS path — and the camera
+  // sits seventy-five metres in front of the car, so each of those little kinks
+  // swung the view sideways by several metres while the route line stayed put.
+  // That sideways sway is what reads as the line wobbling against the map.
+  // Looking further down the road averages the kinks out and, as a bonus, leans
+  // the map into a bend slightly before the car reaches it.
+  const bearing = bearingAhead(snapped, alongM);
   return { offM, alongM, snapped, bearing };
+}
+
+// How far down the route to look when working out which way we are pointing.
+const LOOKAHEAD_M = 60;
+
+function bearingAhead(from, alongM) {
+  const { path, cum } = state.route;
+  const want = alongM + LOOKAHEAD_M;
+  let i = 1;
+  while (i < cum.length && cum[i] < want) i++;
+  const to = path[Math.min(i, path.length - 1)];
+  if (!to) return null;
+  // Too close to tell a direction from (the end of the route).
+  if (haversineM(from, to) < 5) return null;
+  return (
+    (google.maps.geometry.spherical.computeHeading(
+      new google.maps.LatLng(from.lat, from.lng),
+      new google.maps.LatLng(to.lat, to.lng),
+    ) + 360) % 360
+  );
 }
 
 // How far off the line we still call "on the road". Beyond this the car is
@@ -366,7 +387,10 @@ const VOICE_KEY = 'gc_drive_voice';
 // that is what a driver expects of a nav screen; the button in the drive footer
 // turns it off for anyone who would rather keep north at the top.
 const HEADING_KEY = 'gc_drive_heading_up';
-const DRIVE_ZOOM = 17; // street level — also what the recenter button restores
+// Street level, one step closer than it was: at 17 the car sat in a view wide
+// enough to plan with and too wide to drive by. Also what the recenter button
+// restores.
+const DRIVE_ZOOM = 18;
 const state = {
   active: false,
   route: null,
