@@ -73,6 +73,7 @@ class AppStrings {
   static String get email => isGeorgian ? 'ელ-ფოსტა' : 'Email';
   static String get verified => isGeorgian ? 'დადასტურებული' : 'Verified';
   static String get unverified => isGeorgian ? 'დაუდასტურებელი' : 'Unverified';
+  static String get contact => isGeorgian ? 'კონტაქტი' : 'Contact';
   static String get phoneNumber =>
       isGeorgian ? 'ტელეფონის ნომერი' : 'Phone Number';
   static String get save => isGeorgian ? 'შენახვა' : 'Save';
@@ -94,14 +95,13 @@ class AppStrings {
       : 'For security, please sign in again, then retry deleting your account';
   static String get deleteFailed =>
       isGeorgian ? 'წაშლა ვერ მოხერხდა' : 'Could not delete account';
-  static String get carModel => isGeorgian ? 'მანქანის მოდელი' : 'Car Model';
+  static String get countriesTitle =>
+      isGeorgian ? 'ქვეყნების არჩევა' : 'COUNTRIES';
   static String get myConnector => isGeorgian ? 'ჩემი კონექტორი' : 'My Connector';
   static String get maxRange => isGeorgian ? 'მაქს. გარბენი' : 'Max Range';
-  static String get vehicleDriverInfo =>
-      isGeorgian ? 'მანქანის ინფო' : 'Vehicle & Driver Info';
   static String get connectorHint => isGeorgian
-      ? 'აირჩიეთ ერთი ან რამდენიმე — გამოიყენება როგორც ნაგულისხმევი ფილტრი რუკაზე'
-      : 'Select one or more — used as your default filter on the map';
+      ? 'აირჩიეთ ერთი ან რამდენიმე. გამოიყენება როგორც ნაგულისხმევი ფილტრი რუკაზე'
+      : 'Select one or more. Used as your default filter on the map';
   static String get maxRangeFull =>
       isGeorgian ? 'მაქს. გარბენი 100%-ზე' : 'Max Range at 100% Battery';
   static String get minPowerTitle =>
@@ -210,20 +210,25 @@ class AppStrings {
   static String get getPremium =>
       isGeorgian ? 'გახდი Premium' : 'Get Premium';
   static String get premiumActive => 'Premium ✓';
+  /// Sits under the gold badge once premium is active. Deliberately says
+  /// nothing about price or renewal date; the store owns both.
+  static String get premiumActiveSubtitle => isGeorgian
+      ? 'რეკლამები გამორთულია. მადლობა მხარდაჭერისთვის.'
+      : 'Ads are off. Thank you for the support.';
   static String get premiumSubtitle => isGeorgian
-      ? 'რეკლამების გარეშე — 7 დღე უფასოდ'
-      : 'Remove ads — 7-day free trial';
+      ? 'რეკლამების გარეშე, 7 დღე უფასოდ'
+      : 'Remove ads, 7-day free trial';
 
   // ── Support / daily premium popup ────────────────────────────────────────
   static String get supportTitle => isGeorgian
       ? '⚡ დაუდექი პროექტს გვერდში!'
       : '⚡ Support the Project!';
   static String get supportBody => isGeorgian
-      ? 'გინდა გამოიყენო აპლიკაცია სრულიად უფასოდ? პრობლემა არ არის! უბრალოდ, ხანდახან რეკლამებით შეგახსენებთ თავს. :)\n\nმაგრამ, თუ გსურს დამტენები სუპერ-სუფთა ეკრანზე, ყოველგვარი რეკლამების გარეშე ნახო, გახდი პრემიუმი თვეში სულ რაღაც 1 ლარად და დაგვეხმარე პროექტის განვითარებაში.'
-      : "Want to use the app completely free? No problem at all! We'll just pop up a few ads here and there to keep the lights on. :)\n\nBut if you prefer looking at chargers on a super-clean screen with zero ads, go Premium for just 1 GEL/month and help us grow!";
+      ? 'გინდა გამოიყენო აპლიკაცია სრულიად უფასოდ? პრობლემა არ არის! უბრალოდ, ხანდახან რეკლამებით შეგახსენებთ თავს. :)\n\nმაგრამ, თუ გსურს დამტენები სუპერ-სუფთა ეკრანზე, ყოველგვარი რეკლამების გარეშე ნახო, გახდი პრემიუმი და დაგვეხმარე პროექტის განვითარებაში.'
+      : "Want to use the app completely free? No problem at all! We'll just pop up a few ads here and there to keep the lights on. :)\n\nBut if you prefer looking at chargers on a super-clean screen with zero ads, go Premium and help us grow!";
   static String get supportGoAdFree => isGeorgian
-      ? '🚀 რეკლამების გათიშვა (1 ₾)'
-      : '🚀 Go Ad-Free (1 GEL)';
+      ? '🚀 რეკლამების გათიშვა'
+      : '🚀 Go Ad-Free';
   static String get supportWatchAds => isGeorgian
       ? '☕ არაუშავს, ვუყურებ რეკლამებს'
       : "☕ It's fine, I'll watch ads";
@@ -377,8 +382,8 @@ class AppStrings {
       ? 'დამტენები, რომელთა გათავისუფლებასაც ელოდები'
       : 'Chargers you are waiting to free up';
   static String get noActiveAlerts => isGeorgian
-      ? 'აქტიური შეტყობინება არ გაქვს — დაკავებულ დამტენზე დააჭირე „შემატყობინე!"'
-      : 'No active alerts — tap "Notify me!" on a busy charger';
+      ? 'აქტიური შეტყობინება არ გაქვს. დაკავებულ დამტენზე დააჭირე „შემატყობინე!"'
+      : 'No active alerts. Tap "Notify me!" on a busy charger';
   static String get cancelAlert =>
       isGeorgian ? 'გაუქმება' : 'Cancel';
 
@@ -411,8 +416,8 @@ class AppStrings {
   static String get restorePurchases =>
       isGeorgian ? 'შესყიდვების აღდგენა' : 'Restore purchases';
   static String get storeUnavailable => isGeorgian
-      ? 'მაღაზია მიუწვდომელია — სცადეთ მოგვიანებით'
-      : 'Store unavailable — please try again later';
+      ? 'მაღაზია მიუწვდომელია, სცადეთ მოგვიანებით'
+      : 'Store unavailable, please try again later';
   static String get purchaseFailed =>
       isGeorgian ? 'შესყიდვა ვერ მოხერხდა' : 'Purchase failed';
   /// Shown on the paywall when the store returned no products, so the prices on
@@ -542,6 +547,8 @@ class AppStrings {
   // The driver's own charging-cost log: a paid charge is the amount they paid
   // in the provider's app, a home charge is worked out from their tariff.
   static String get expensesTitle => isGeorgian ? 'ხარჯები' : 'Expenses';
+  static String get expensesAndCalc =>
+      isGeorgian ? 'ხარჯები და კალკულატორი' : 'Expenses and calculator';
   static String get expensesTileHint => isGeorgian
       ? 'დატენის ხარჯების აღრიცხვა'
       : 'Track what charging costs you';
@@ -623,6 +630,52 @@ class AppStrings {
 
   /// "20% → 80%", the subtitle under a home record.
   static String expensesRange(int from, int to) => '$from% → $to%';
+
+  // ── Calculator ─────────────────────────────────────────────────────────────
+  // Two answers from one set of numbers: how long the stop takes and what it
+  // costs. Mirrors the block on geocharge.ge's home page.
+  static String get calcTitle => isGeorgian ? 'კალკულატორი' : 'Calculator';
+  static String get calcTileHint => isGeorgian
+      ? 'რამდენ ხანს გასტანს დატენვა და რა დაჯდება'
+      : 'How long a charge takes and what it costs';
+  static String get calcIntro => isGeorgian
+      ? 'მიუთითე ბატარეის ტევადობა, დამტენის სიმძლავრე და მუხტის დონე.'
+      : 'Enter your battery capacity, the charger power and the charge levels.';
+  static String get calcBattery =>
+      isGeorgian ? 'ბატარეის ტევადობა' : 'Battery capacity';
+  static String get calcPower =>
+      isGeorgian ? 'დამტენის სიმძლავრე' : 'Charger power';
+  static String get calcFrom => isGeorgian ? 'მიმდინარე მუხტი' : 'Current charge';
+  static String get calcTo => isGeorgian ? 'სასურველი მუხტი' : 'Target charge';
+  static String get calcTariff => isGeorgian ? 'ტარიფი' : 'Tariff';
+  static String get calcTariffHint => isGeorgian
+      ? 'ნაგულისხმევად საქართველოს სწრაფი დამტენების მედიანაა. შეცვალე იმ ქსელის ტარიფით, სადაც ტენავ.'
+      : "Defaults to the median for Georgia's fast chargers. Change it to the tariff of the network you use.";
+  static String get calcTimeResult =>
+      isGeorgian ? 'რამდენ ხანს გასტანს' : 'How long it takes';
+  static String get calcCostResult => isGeorgian ? 'რა დაჯდება' : 'What it costs';
+  static String get calcEnergy =>
+      isGeorgian ? 'ბატარეაში შედის' : 'Energy added';
+  static String get calcAvgPower =>
+      isGeorgian ? 'საშუალო სიმძლავრე' : 'Average power';
+  static String get calcBand80 =>
+      isGeorgian ? '20 პროცენტიდან 80-მდე' : '20 to 80 percent';
+  static String get calcBand100 =>
+      isGeorgian ? 'ბოლო 20 პროცენტი' : 'The last 20 percent';
+  static String get calcNote => isGeorgian
+      ? 'დრო დატენვის რეალური მრუდით ითვლება, ამიტომ 80 პროცენტის შემდეგ ბატარეა შესამჩნევად ნელა ივსება. შედეგი შეფასებაა: ზუსტი დრო მანქანის მოდელზე, ბატარეის ტემპერატურასა და დამტენის დატვირთვაზეა დამოკიდებული.'
+      : 'The time follows the real charging curve, so the battery fills noticeably more slowly above 80 percent. The result is an estimate: the exact time depends on the car, the battery temperature and how busy the charger is.';
+  static String get calcFillIn => isGeorgian
+      ? 'შეავსე ველები, რომ შედეგი გამოჩნდეს.'
+      : 'Fill in the fields to see the result.';
+
+  /// "1 სთ 12 წთ" / "1 h 12 min", or "48 წთ" under an hour.
+  static String duration(int minutes) {
+    final h = minutes ~/ 60, m = minutes % 60;
+    final hu = isGeorgian ? 'სთ' : 'h', mu = isGeorgian ? 'წთ' : 'min';
+    if (minutes < 60) { return '$minutes $mu'; }
+    return m == 0 ? '$h $hu' : '$h $hu $m $mu';
+  }
 
   /// Short month name for the chart and the record list headings.
   static String monthShort(int m) {

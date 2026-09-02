@@ -18,6 +18,9 @@ const _bgSurface = Color(0xFF2E2E2E);
 const _teal      = Color(0xFF1DE9B6);
 const _textPri   = Color(0xFFFFFFFF);
 const _textSec   = Color(0xFF9E9E9E);
+/// Reserved for the "premium is active" state, and nothing else. Kept warm
+/// rather than yellow so it reads as metal against the dark card.
+const _gold      = Color(0xFFE0B44C);
 
 /// Hardcoded fallback prices, used whenever the live store price is unavailable
 /// (product not loaded, offline, or the store returns 0 / an invalid amount).
@@ -445,17 +448,40 @@ class PremiumEntryTile extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: _bgCard,
+              // Paid-for premium gets gold and a soft glow: it is the one tile
+              // on the screen that should feel like something was bought. The
+              // upsell state keeps the app's own teal so it reads as a link
+              // rather than as a badge already earned.
+              gradient: premium
+                  ? const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF2E2718), Color(0xFF1F1B12)],
+                    )
+                  : null,
+              color: premium ? null : _bgCard,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                  color: _teal.withValues(alpha: premium ? 0.9 : 0.5)),
+                color: premium ? _gold : _teal.withValues(alpha: 0.5),
+                width: premium ? 1.4 : 1,
+              ),
+              boxShadow: premium
+                  ? [
+                      BoxShadow(
+                        color: _gold.withValues(alpha: 0.18),
+                        blurRadius: 14,
+                        spreadRadius: -2,
+                      ),
+                    ]
+                  : null,
             ),
             child: Row(children: [
               Icon(
                 premium
                     ? Icons.workspace_premium_rounded
                     : Icons.workspace_premium_outlined,
-                color: _teal, size: 22,
+                color: premium ? _gold : _teal,
+                size: premium ? 26 : 22,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -466,19 +492,23 @@ class PremiumEntryTile extends StatelessWidget {
                       premium
                           ? AppStrings.premiumActive
                           : AppStrings.getPremium,
-                      style: AppStrings.font(const TextStyle(
-                          color: _textPri,
-                          fontSize: 15,
+                      style: AppStrings.font(TextStyle(
+                          color: premium ? _gold : _textPri,
+                          fontSize: premium ? 16 : 15,
+                          letterSpacing: premium ? 0.3 : 0,
                           fontWeight: FontWeight.w700)),
                     ),
-                    if (!premium) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        AppStrings.premiumSubtitle,
-                        style: AppStrings.font(const TextStyle(
-                            color: _textSec, fontSize: 12)),
-                      ),
-                    ],
+                    const SizedBox(height: 2),
+                    Text(
+                      premium
+                          ? AppStrings.premiumActiveSubtitle
+                          : AppStrings.premiumSubtitle,
+                      style: AppStrings.font(TextStyle(
+                          color: premium
+                              ? _gold.withValues(alpha: 0.75)
+                              : _textSec,
+                          fontSize: 12)),
+                    ),
                   ],
                 ),
               ),

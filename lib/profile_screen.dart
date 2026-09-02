@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'app_constants.dart';
 import 'countries_screen.dart';
 import 'l10n/app_strings.dart';
+import 'screens/calculator_screen.dart';
 import 'screens/expenses_screen.dart';
 import 'screens/paywall_screen.dart';
 import 'screens/tesla_link_screen.dart';
@@ -25,7 +26,6 @@ const _textSec   = Color(0xFF9E9E9E);
 const _errorRed  = Color(0xFFCF6679);
 
 // ── Prefs keys ────────────────────────────────────────────────────────────────
-const kCarModel = 'car_model';
 const kMaxRange = 'max_range_km';
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -38,7 +38,6 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   // ── Vehicle prefs ─────────────────────────────────────────────────────────
-  final _carCtrl   = TextEditingController();
   final _rangeCtrl = TextEditingController();
   final Set<String> _connectors = {};
   bool _minPowerOn = false;
@@ -79,7 +78,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   void dispose() {
-    _carCtrl.dispose();
     _rangeCtrl.dispose();
     _phoneCtrl.dispose();
     super.dispose();
@@ -101,7 +99,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     }
     setState(() {
-      _carCtrl.text   = p.getString(kCarModel) ?? '';
       _rangeCtrl.text = p.getString(kMaxRange) ?? '';
       _connectors
         ..clear()
@@ -113,7 +110,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _saveVehiclePrefs() async {
     final p = await SharedPreferences.getInstance();
-    await p.setString(kCarModel, _carCtrl.text.trim());
     await p.setString(kMaxRange, _rangeCtrl.text.trim());
     if (_connectors.isEmpty) {
       await p.remove(kDefaultConnector);
@@ -301,6 +297,163 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // ── Premium upsell / status ───────────────────────────────────────
             const PremiumEntryTile(),
             const SizedBox(height: 24),
+            // ══ VEHICLE PREFS ════════════════════════════════════════════════
+            // Sits directly under the premium tile because these three decide
+            // what the map shows, so they are reached far more often than the
+            // account settings below. No section heading: each field is already
+            // labelled, and "Vehicle info" over three labelled fields was a
+            // heading that told the reader nothing.
+            // Connector selector
+            _Label(AppStrings.myConnector),
+            const SizedBox(height: 4),
+            Text(
+              AppStrings.connectorHint,
+              style: const TextStyle(color: _textSec, fontSize: 12),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: kConnectorOrder.map((c) {
+                final on = _connectors.contains(c);
+                return GestureDetector(
+                  onTap: () => setState(
+                      () => on ? _connectors.remove(c) : _connectors.add(c)),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: on ? _emerald : _bgCard,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                          color: on ? _emerald : _bgSurface),
+                    ),
+                    child: Text(
+                      c,
+                      style: TextStyle(
+                        color: on ? Colors.black : _textSec,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+
+            // Minimum charger power — toggle + preset chips, filters the map
+            Row(
+              children: [
+                Expanded(child: _Label(AppStrings.minPowerTitle)),
+                Switch(
+                  value: _minPowerOn,
+                  activeThumbColor: _emerald,
+                  activeTrackColor: _emerald.withValues(alpha: 0.35),
+                  inactiveThumbColor: _textSec,
+                  inactiveTrackColor: _bgSurface,
+                  onChanged: (v) => setState(() => _minPowerOn = v),
+                ),
+              ],
+            ),
+            if (_minPowerOn) ...[
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: kMinPowerSteps.map((kw) {
+                  final on = _minPowerKw == kw;
+                  return GestureDetector(
+                    onTap: () => setState(() => _minPowerKw = kw),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 9),
+                      decoration: BoxDecoration(
+                        color: on ? _emerald : _bgCard,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                            color: on ? _emerald : _bgSurface),
+                      ),
+                      child: Text(
+                        '$kw kW',
+                        style: TextStyle(
+                          color: on ? Colors.black : _textSec,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 8),
+            ] else
+              const SizedBox(height: 4),
+            Text(
+              AppStrings.minPowerHint,
+              style: const TextStyle(color: _textSec, fontSize: 12, height: 1.35),
+            ),
+            const SizedBox(height: 20),
+
+            // Max range
+            _Label(AppStrings.maxRangeFull),
+            const SizedBox(height: 8),
+            _Field(
+              controller: _rangeCtrl,
+              hint: 'e.g. 450',
+              suffix: 'km',
+              icon: Icons.battery_full_rounded,
+              type: TextInputType.number,
+              formatters: [FilteringTextInputFormatter.digitsOnly],
+            ),
+            const SizedBox(height: 36),
+
+            // Save vehicle prefs
+            GestureDetector(
+              onTap: _saveVehiclePrefs,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                height: 52,
+                decoration: BoxDecoration(
+                  color: _saved ? _bgCard : _emerald,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: _emerald),
+                  boxShadow: _saved
+                      ? []
+                      : const [
+                          BoxShadow(
+                              color: Colors.black38,
+                              blurRadius: 10,
+                              offset: Offset(0, 4))
+                        ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      _saved
+                          ? Icons.check_circle_rounded
+                          : Icons.save_rounded,
+                      color: _saved ? _emerald : Colors.black,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _saved ? AppStrings.savedExclaim : AppStrings.save,
+                      style: TextStyle(
+                        color: _saved ? _emerald : Colors.black,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 28),
+
 
             // ── Countries ─────────────────────────────────────────────────────
             // Used to hang off a gear icon beside the map's search bar. It is a
@@ -311,7 +464,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // stations to show has nothing to do with being signed in, and
             // burying it inside that block would hide it from signed-out users
             // who can still use the map.
-            const _Label('COUNTRIES'),
+            _Label(AppStrings.countriesTitle),
             const SizedBox(height: 8),
             GestureDetector(
               onTap: () async {
@@ -349,11 +502,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 24),
 
-            // ── Expenses ──────────────────────────────────────────────────────
-            // The charging-cost log. Deliberately ABOVE the auth section: it
-            // works signed out too (records live on the phone until an account
-            // adopts them), so hiding it behind a login would be a lie.
-            _Label(AppStrings.expensesTitle),
+            // ── Expenses and calculator ───────────────────────────────────────
+            // One heading over both tiles: the log records what a charge cost,
+            // the calculator works out what the next one will cost and how long
+            // it will take, so they are the same errand.
+            //
+            // Deliberately ABOVE the auth section: both work signed out (the
+            // records live on the phone until an account adopts them), so
+            // hiding them behind a login would be a lie.
+            _Label(AppStrings.expensesAndCalc),
             const SizedBox(height: 8),
             GestureDetector(
               onTap: () => Navigator.push<void>(
@@ -385,6 +542,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ]),
               ),
             ),
+            const SizedBox(height: 10),
+
+            GestureDetector(
+              onTap: () => Navigator.push<void>(
+                context,
+                MaterialPageRoute(builder: (_) => const CalculatorScreen()),
+              ),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                decoration: BoxDecoration(
+                  color: _bgCard,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _bgSurface),
+                ),
+                child: Row(children: [
+                  const Icon(Icons.calculate_rounded,
+                      color: _textSec, size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      AppStrings.calcTileHint,
+                      maxLines: 2,
+                      style: AppStrings.font(const TextStyle(
+                          color: _textPri, fontSize: 15)),
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded,
+                      color: _textSec, size: 22),
+                ]),
+              ),
+            ),
             const SizedBox(height: 24),
 
             // ══ AUTH SECTION (only when signed in) ═══════════════════════════
@@ -394,8 +583,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // verified, so the block was a second copy of the same fact
               // taking a third of the screen.
 
-              // Email tile
-              _Label(AppStrings.email),
+              // Contact: the address and the number under one heading. They
+              // were two labelled blocks, which read as two unrelated settings
+              // when they are simply the two ways we can reach this person.
+              _Label(AppStrings.contact),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -424,11 +615,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ]),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
 
-              // Phone number field
-              _Label(AppStrings.phoneNumber),
-              const SizedBox(height: 8),
+              // Phone number, straight under the address with no label of its
+              // own: the +995 prefix and the placeholder already say what it is.
               Container(
                 decoration: BoxDecoration(
                   color: _bgCard,
@@ -598,197 +788,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 20),
             ],
 
-            // ══ VEHICLE SECTION ═══════════════════════════════════════════════
-            // Avatar icon (shown when NOT signed in, replaced by user photo above)
-            if (_user == null) ...[
-              Center(
-                child: Container(
-                  width: 80, height: 80,
-                  decoration: BoxDecoration(
-                    color: _bgCard,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: _emerald, width: 2),
-                    boxShadow: const [
-                      BoxShadow(color: Colors.black38, blurRadius: 12)
-                    ],
-                  ),
-                  child: const Icon(Icons.directions_car_rounded,
-                      color: _emerald, size: 38),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Center(
-                child: Text(
-                  AppStrings.vehicleDriverInfo,
-                  style: const TextStyle(color: _textSec, fontSize: 13),
-                ),
-              ),
-              const SizedBox(height: 32),
-            ] else ...[
-              _Label(AppStrings.vehicleDriverInfo),
-              const SizedBox(height: 16),
-            ],
-
-            // Car model
-            _Label(AppStrings.carModel),
-            const SizedBox(height: 8),
-            _Field(
-              controller: _carCtrl,
-              hint: 'e.g. Tesla Model 3',
-              icon: Icons.directions_car_outlined,
-              type: TextInputType.text,
-            ),
-            const SizedBox(height: 20),
-
-            // Connector selector
-            _Label(AppStrings.myConnector),
-            const SizedBox(height: 4),
-            Text(
-              AppStrings.connectorHint,
-              style: const TextStyle(color: _textSec, fontSize: 12),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: kConnectorOrder.map((c) {
-                final on = _connectors.contains(c);
-                return GestureDetector(
-                  onTap: () => setState(
-                      () => on ? _connectors.remove(c) : _connectors.add(c)),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 9),
-                    decoration: BoxDecoration(
-                      color: on ? _emerald : _bgCard,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: on ? _emerald : _bgSurface),
-                    ),
-                    child: Text(
-                      c,
-                      style: TextStyle(
-                        color: on ? Colors.black : _textSec,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 20),
-
-            // Minimum charger power — toggle + preset chips, filters the map
-            Row(
-              children: [
-                Expanded(child: _Label(AppStrings.minPowerTitle)),
-                Switch(
-                  value: _minPowerOn,
-                  activeThumbColor: _emerald,
-                  activeTrackColor: _emerald.withValues(alpha: 0.35),
-                  inactiveThumbColor: _textSec,
-                  inactiveTrackColor: _bgSurface,
-                  onChanged: (v) => setState(() => _minPowerOn = v),
-                ),
-              ],
-            ),
-            if (_minPowerOn) ...[
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: kMinPowerSteps.map((kw) {
-                  final on = _minPowerKw == kw;
-                  return GestureDetector(
-                    onTap: () => setState(() => _minPowerKw = kw),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 9),
-                      decoration: BoxDecoration(
-                        color: on ? _emerald : _bgCard,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                            color: on ? _emerald : _bgSurface),
-                      ),
-                      child: Text(
-                        '$kw kW',
-                        style: TextStyle(
-                          color: on ? Colors.black : _textSec,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 8),
-            ] else
-              const SizedBox(height: 4),
-            Text(
-              AppStrings.minPowerHint,
-              style: const TextStyle(color: _textSec, fontSize: 12, height: 1.35),
-            ),
-            const SizedBox(height: 20),
-
-            // Max range
-            _Label(AppStrings.maxRangeFull),
-            const SizedBox(height: 8),
-            _Field(
-              controller: _rangeCtrl,
-              hint: 'e.g. 450',
-              suffix: 'km',
-              icon: Icons.battery_full_rounded,
-              type: TextInputType.number,
-              formatters: [FilteringTextInputFormatter.digitsOnly],
-            ),
-            const SizedBox(height: 36),
-
-            // Save vehicle prefs
-            GestureDetector(
-              onTap: _saveVehiclePrefs,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                height: 52,
-                decoration: BoxDecoration(
-                  color: _saved ? _bgCard : _emerald,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: _emerald),
-                  boxShadow: _saved
-                      ? []
-                      : const [
-                          BoxShadow(
-                              color: Colors.black38,
-                              blurRadius: 10,
-                              offset: Offset(0, 4))
-                        ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      _saved
-                          ? Icons.check_circle_rounded
-                          : Icons.save_rounded,
-                      color: _saved ? _emerald : Colors.black,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _saved ? AppStrings.savedExclaim : AppStrings.save,
-                      style: TextStyle(
-                        color: _saved ? _emerald : Colors.black,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
 
             // ── New-charger broadcasts ───────────────────────────────────────
             // Device-scoped like the alerts below, but through an FCM topic

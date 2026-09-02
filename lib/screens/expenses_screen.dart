@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../l10n/app_strings.dart';
+import '../services/ad_service.dart';
 import '../services/expenses_service.dart';
+import '../services/purchase_service.dart';
 
 // ── Palette (mirrors the profile screen) ──────────────────────────────────────
 const _bgDark    = Color(0xFF1A1A1A);
@@ -49,6 +51,17 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bgDark,
+      // Free-tier banner. Rebuilds when the ads SDK finishes initialising (on
+      // iOS that is after the ATT prompt) and when premium changes, so it turns
+      // up as soon as it can and vanishes the moment it should not be there.
+      bottomNavigationBar: ValueListenableBuilder<bool>(
+        valueListenable: AdService.I.ready,
+        builder: (_, __, ___) => ValueListenableBuilder<bool>(
+          valueListenable: PurchaseService.I.isPremium,
+          builder: (_, __, ___) =>
+              AdService.I.bottomBanner() ?? const SizedBox.shrink(),
+        ),
+      ),
       appBar: AppBar(
         backgroundColor: _bgCard,
         elevation: 0,
