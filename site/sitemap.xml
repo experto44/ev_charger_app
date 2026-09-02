@@ -416,6 +416,24 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://geocharge.ge/datenvis-dro/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/datenvis-dro/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/charging-time/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/datenvis-dro/"/>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/charging-time/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/datenvis-dro/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/charging-time/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/datenvis-dro/"/>
+    <lastmod>2026-09-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://geocharge.ge/ganbajeba/</loc>
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/ganbajeba/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/customs/"/>

@@ -251,6 +251,7 @@ const L = {
     noPrice: '—', faq: 'ხშირად დასმული კითხვები',
     priceNote: 'ტარიფები ინფორმაციული ხასიათისაა და პროვაიდერის მიერაა გამოქვეყნებული.',
     tariffsDir: 'tarifebi', routesDir: 'marshruti', calcDir: 'kalkulatori', calc: 'კალკულატორი',
+    timeDir: 'datenvis-dro', timeCalc: 'დატენვის დრო',
     tariffs: 'ტარიფები', routes: 'მარშრუტები',
     customsDir: 'ganbajeba', customs: 'განბაჟება',
     turkeyDir: 'turketi', turkey: 'თურქეთი', thDcTr: 'DC ₺/kWh',
@@ -290,6 +291,7 @@ const L = {
     noPrice: '—', faq: 'Frequently asked questions',
     priceNote: 'Tariffs are indicative and published by the provider.',
     tariffsDir: 'tariffs', routesDir: 'routes', calcDir: 'calculator', calc: 'Calculator',
+    timeDir: 'charging-time', timeCalc: 'Charging time',
     tariffs: 'Tariffs', routes: 'Routes',
     customsDir: 'customs', customs: 'Import duty',
     turkeyDir: 'turkey', turkey: 'Turkey', thDcTr: 'DC TRY/kWh',
@@ -405,6 +407,18 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 .calc-small span{display:block;font-size:12.5px;color:#77848C;margin-top:3px;line-height:1.35}
 .calc-time{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:#77848C}
 .calc-time b{display:block;color:var(--ink);font-weight:600;margin-top:4px;line-height:1.6}
+/* Power presets for the time calculator. The ratings are the ones that really
+   exist in Georgia, so the chips are a shortcut rather than a guess, and the
+   number field stays editable for everything else. */
+.pw{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px}
+.pw button{font:inherit;font-size:13px;font-weight:600;color:#5A6671;background:#fff;
+border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white-space:nowrap}
+.pw button:hover{border-color:var(--accent)}
+.pw button[aria-pressed="true"]{background:var(--mint);border-color:var(--mint-b);color:#137A4C}
+.calc-band{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);display:grid;gap:9px}
+.calc-band div{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;color:#5A6671}
+.calc-band b{color:var(--ink);font-weight:700;white-space:nowrap}
+.calc-hint{font-size:12.5px;color:#8B98A1;font-weight:500;margin:2px 0 0}
 @media (max-width:700px){.calc{grid-template-columns:1fr}}
 `.trim();
 
@@ -489,6 +503,7 @@ ${body}
     <a href="${t.base}/${t.chargersDir}/">${esc(t.catalog)}</a>
     <a href="${t.base}/${t.tariffsDir}/">${esc(t.tariffs)}</a>
     <a href="${t.base}/${t.calcDir}/">${esc(t.calc)}</a>
+    <a href="${t.base}/${t.timeDir}/">${esc(t.timeCalc)}</a>
     <a href="${t.base}/${t.networksDir}/">${esc(t.networks)}</a>
     <a href="${t.base}/${t.routesDir}/">${esc(t.routes)}</a>
     <a href="${t.base}/${t.customsDir}/">${esc(t.customs)}</a>
@@ -635,6 +650,7 @@ ${statBlock(sum, lang)}
 <div class="links" style="margin-top:22px">
   <a href="${t.base}/${t.tariffsDir}/">${esc(t.tariffs)}</a>
   <a href="${t.base}/${t.calcDir}/">${esc(t.calc)}</a>
+  <a href="${t.base}/${t.timeDir}/">${esc(t.timeCalc)}</a>
   <a href="${t.base}/${t.routesDir}/">${esc(t.routes)}</a>
   <a href="${t.base}/${t.networksDir}/">${esc(t.networks)}</a>
   <a href="${t.base}/${t.turkeyDir}/">${lang === 'ka' ? 'დამტენები თურქეთში' : 'Chargers in Turkey'}</a>
@@ -1138,7 +1154,7 @@ ${SIZES.map(exampleRow).join('\n')}
 <p class="intro">${lang === 'ka'
     ? 'ფორმულა ერთი ნაბიჯია. ბატარეის ტევადობა გაამრავლეთ იმ პროცენტზე, რასაც ავსებთ, და მიღებული კილოვატსაათები ტარიფზე. ერთადერთი, რაც ამას ართულებს, არის ის, რომ სწრაფი დამტენი 80 პროცენტის შემდეგ მკვეთრად ანელებს, ამიტომ დროის შეფასება ამ ზღვარს ზემოთ ოპტიმისტურია.'
     : 'The formula is one step: battery capacity times the share you are adding, then the kilowatt hours times the tariff. The only complication is that fast chargers slow down sharply above 80 percent, so the time estimate is optimistic beyond that point.'}</p>
-<p class="intro">${esc(S.more)}: <a href="${t.base}/blog/datenvis-fasi/" style="color:var(--accent-d);font-weight:500;text-decoration:none">${lang === 'ka' ? 'რამდენი ღირს დატენვა' : 'how much charging costs'}</a>. ${lang === 'ka' ? 'ქსელების ტარიფები' : 'Tariffs by network'}: <a href="${t.base}/${t.tariffsDir}/" style="color:var(--accent-d);font-weight:500;text-decoration:none">${esc(t.tariffs)}</a>.</p>
+<p class="intro">${esc(S.more)}: <a href="${t.base}/blog/datenvis-fasi/" style="color:var(--accent-d);font-weight:500;text-decoration:none">${lang === 'ka' ? 'რამდენი ღირს დატენვა' : 'how much charging costs'}</a>. ${lang === 'ka' ? 'ქსელების ტარიფები' : 'Tariffs by network'}: <a href="${t.base}/${t.tariffsDir}/" style="color:var(--accent-d);font-weight:500;text-decoration:none">${esc(t.tariffs)}</a>. ${lang === 'ka' ? 'რამდენ ხანში დაიტენება' : 'How long the charge takes'}: <a href="${t.base}/${t.timeDir}/" style="color:var(--accent-d);font-weight:500;text-decoration:none">${esc(t.timeCalc)}</a>.</p>
 
 <h2>${esc(t.faq)}</h2>
 <div class="faq">
@@ -1146,6 +1162,7 @@ ${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></de
 </div>
 
 <script>
+${chargeProfile.toString()}
 (function(){
   var $=function(i){return document.getElementById(i);};
   var batt=$('c-batt'),from=$('c-from'),to=$('c-to'),price=$('c-price'),cons=$('c-cons'),preset=$('c-preset');
@@ -1158,8 +1175,10 @@ ${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></de
     $('c-kwh').textContent=kwh?kwh.toFixed(1)+' kWh':'—';
     $('c-cost').textContent=kwh?cost.toFixed(2)+' ₾':'—';
     $('c-100').textContent=(c&&p)?(c*p).toFixed(2)+' ₾':'—';
+    // Same model as the charging time page, so the two never disagree.
     $('c-time').textContent=kwh?POWERS.map(function(w){
-      var h=kwh/w, m=Math.round(h*60);
+      var r=chargeProfile(b,w,f,tt);
+      var m=r?Math.round(r.minutes):0;
       var H='${lang === 'ka' ? 'სთ' : 'h'}',M='${lang === 'ka' ? 'წთ' : 'm'}';
       if(m<60) return w+' kW: '+m+M;
       var hh=Math.floor(m/60),mm=m%60;
@@ -1174,6 +1193,260 @@ ${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></de
 
   return {
     file: path.join(SITE, t.base.replace('/', ''), t.calcDir, 'index.html'),
+    url,
+    html: shell({
+      lang, title, desc, canonical: url, altHref: alt, body,
+      jsonld: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          breadcrumbLd(bc),
+          { '@type': 'WebApplication', '@id': url + '#app', name: title, url,
+            applicationCategory: 'UtilitiesApplication', operatingSystem: 'Any',
+            browserRequirements: 'Requires JavaScript', inLanguage: t.code, description: desc,
+            offers: { '@type': 'Offer', price: '0', priceCurrency: 'GEL' },
+            isPartOf: { '@type': 'WebSite', '@id': `${ORIGIN}/#website` } },
+          { '@type': 'FAQPage', inLanguage: t.code,
+            mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+        ],
+      },
+    }),
+  };
+}
+
+/* ── charging time calculator ────────────────────────────────────────────────
+   The cost calculator answers what a charge costs. This one answers how long
+   it takes, which is the question that gets asked before a long drive.
+   A flat "kWh divided by kW" is wrong by a wide margin near a full battery, so
+   the model integrates over the pack's acceptance curve instead. */
+
+// Share of its peak DC rate a pack accepts, per 10 percent band of charge.
+// Flat while the pack is empty, then the taper that every fast charge ends in.
+// Deliberately ES5 and free of outer references: this same function is
+// serialised into the page, so the widget and the published tables cannot
+// drift apart.
+function chargeProfile(batteryKwh, chargerKw, fromPct, toPct, peakKw) {
+  var ACCEPT = [0.85, 1, 1, 0.95, 0.85, 0.72, 0.6, 0.48, 0.32, 0.18];
+  var peak = peakKw > 0 ? peakKw : batteryKwh * 2;
+  var eff = chargerKw > 22 ? 0.94 : 0.89;   // DC loses less than an onboard charger
+  var lo = Math.max(0, Math.min(100, fromPct));
+  var hi = Math.max(0, Math.min(100, toPct));
+  if (!(batteryKwh > 0) || !(chargerKw > 0) || !(hi > lo)) return null;
+  var minutes = 0, kwh = 0;
+  for (var i = 0; i < 10; i++) {
+    var a = Math.max(lo, i * 10), b = Math.min(hi, i * 10 + 10);
+    if (b <= a) continue;
+    var e = batteryKwh * (b - a) / 100;
+    kwh += e;
+    minutes += (e / eff) / Math.min(chargerKw, peak * ACCEPT[i]) * 60;
+  }
+  return { minutes: minutes, kwh: kwh, avgKw: (kwh / eff) / (minutes / 60) };
+}
+
+// The power ratings a driver in Georgia actually meets, most common first, plus
+// 7 kW because charging at home is the other half of the question.
+function powerPresets(ge) {
+  const n = new Map();
+  for (const s of ge) { const k = kw(s); if (k) n.set(k, (n.get(k) || 0) + 1); }
+  const top = [...n.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([k]) => k);
+  return [...new Set([7, ...top])].sort((a, b) => a - b);
+}
+
+function fmtMinutes(m, lang) {
+  if (m == null) return '—';
+  const t = Math.round(m), h = Math.floor(t / 60), mm = t % 60;
+  const H = lang === 'ka' ? 'სთ' : 'h', M = lang === 'ka' ? 'წთ' : 'min';
+  return t < 60 ? `${t} ${M}` : `${h} ${H}${mm ? ` ${mm} ${M}` : ''}`;
+}
+
+function timeCalculatorPage(lang, ge, updated) {
+  const t = L[lang];
+  const o = L[lang === 'ka' ? 'en' : 'ka'];
+  const url = `${ORIGIN}${t.base}/${t.timeDir}/`;
+  const alt = `${ORIGIN}${o.base}/${o.timeDir}/`;
+  const ka = lang === 'ka';
+
+  const presets = powerPresets(ge);
+  const dcPresets = presets.filter((p) => p >= 22);
+  const SIZES = [40, 60, 75, 100];
+  const mn = (m) => fmtMinutes(m, lang);
+  const at = (b, w, from, to) => chargeProfile(b, w, from, to)?.minutes ?? null;
+
+  // The headline example the description and the FAQ both quote.
+  const ex = Math.round(at(60, 60, 20, 80));
+  const exFast = Math.round(at(60, 120, 20, 80));
+  const exTail = Math.round(at(60, 120, 80, 100));
+
+  const title = ka
+    ? 'დატენვის დროის კალკულატორი | GeoCharge'
+    : 'EV charging time calculator for Georgia | GeoCharge';
+  const desc = ka
+    ? `გამოთვალეთ, რამდენ ხანში დაიტენება თქვენი ელექტრომობილი. მიუთითეთ ბატარეა, დამტენის სიმძლავრე და მუხტის დონე. 60 kWh ბატარეა 60 kW დამტენზე 20 პროცენტიდან 80 პროცენტამდე დაახლოებით ${ex} წუთში ივსება.`
+    : `Work out how long your EV takes to charge. Enter the battery, the charger's power and the charge levels. A 60 kWh battery on a 60 kW charger goes from 20 to 80 percent in about ${ex} minutes.`;
+
+  const bc = [{ name: t.home, href: `${t.base}/` },
+    { name: t.catalog, href: `${t.base}/${t.chargersDir}/` }, { name: t.timeCalc }];
+
+  const faq = ka ? [
+    ['რამდენ ხანში იტენება ელექტრომობილი?',
+      `დამოკიდებულია ბატარეაზე და დამტენის სიმძლავრეზე. 60 kWh ბატარეა 20 პროცენტიდან 80 პროცენტამდე 60 kW დამტენზე დაახლოებით ${ex} წუთს ითხოვს, 120 kW დამტენზე კი ${exFast} წუთს. სახლის 7 kW დამტენზე იგივე მუხტი ${mn(at(60, 7, 20, 80))} სჭირდება.`],
+    ['რატომ ნელდება დატენვა 80 პროცენტის შემდეგ?',
+      `ბატარეა რაც უფრო ივსება, მით ნაკლებ დენს იღებს, რადგან მართვის სისტემა უჯრედებს იცავს. სწორედ ამიტომ 60 kWh ბატარეას 120 kW დამტენზე 20 პროცენტიდან 80 პროცენტამდე ${exFast} წუთი სჭირდება, ბოლო 20 პროცენტს კი დამატებით ${exTail} წუთი. გრძელ გზაზე ორი მოკლე გაჩერება 80 პროცენტამდე უფრო სწრაფია, ვიდრე ერთი გრძელი 100 პროცენტამდე.`],
+    ['რატომ არ ვიღებ დამტენზე მითითებულ სიმძლავრეს?',
+      'რიცხვი დამტენზე მისი ზღვარია, არა თქვენი მანქანის. რეალური სიმძლავრე არის ამ ორიდან უმცირესი და მასზე მოქმედებს მუხტის დონეც, ბატარეის ტემპერატურაც და ის, დგას თუ არა მეორე მანქანა იმავე კაბინეტზე. ცივ ბატარეას გახურება სჭირდება, ამიტომ ზამთარში პირველი წუთები ყოველთვის ნელია.'],
+    ['რა განსხვავებაა AC და DC დატენვას შორის?',
+      'AC დამტენი დენს მანქანის ბორტულ გარდამქმნელში ატარებს, რომელსაც ჩვეულებრივ 7-დან 22 kW-მდე ზღვარი აქვს, სამაგიეროდ სიმძლავრე თითქმის 100 პროცენტამდე უცვლელი რჩება. DC დამტენი ბორტულ გარდამქმნელს გვერდს უვლის და პირდაპირ ბატარეას კვებავს, ამიტომ ბევრად სწრაფია, მაგრამ სწორედ მას აქვს გამოხატული შენელება მაღალ მუხტზე.'],
+  ] : [
+    ['How long does it take to charge an EV?',
+      `It depends on the battery and the charger. A 60 kWh battery from 20 to 80 percent takes about ${ex} minutes on a 60 kW charger and ${exFast} minutes on a 120 kW one. On a 7 kW home charger the same top up takes ${mn(at(60, 7, 20, 80))}.`],
+    ['Why does charging slow down after 80 percent?',
+      `The fuller the pack, the less current it accepts, because the battery management system protects the cells. That is why a 60 kWh battery on a 120 kW charger needs ${exFast} minutes from 20 to 80 percent and another ${exTail} minutes for the last 20. On a long drive two short stops to 80 percent beat one long stop to 100.`],
+    ['Why am I not getting the power written on the charger?',
+      "That number is the charger's limit, not your car's. The real rate is the lower of the two, and it also depends on the state of charge, the battery temperature and whether another car is sharing the same cabinet. A cold pack has to warm up first, so the opening minutes in winter are always slow."],
+    ['What is the difference between AC and DC charging?',
+      'An AC charger feeds the car through its onboard converter, usually capped between 7 and 22 kW, but it holds that power almost all the way to 100 percent. A DC charger bypasses the onboard converter and feeds the pack directly, which is far quicker, and it is the one with the pronounced taper at high states of charge.'],
+  ];
+
+  const S = ka ? {
+    h1: 'ელექტრომობილის დატენვის დროის კალკულატორი',
+    intro: `მიუთითეთ ბატარეის ტევადობა, დამტენის სიმძლავრე და მუხტის დონე. კალკულატორი ითვლის დატენვის რეალური მრუდით, ამიტომ ბოლო პროცენტები იმაზე ნელა ივსება, ვიდრე უბრალო გაყოფა აჩვენებდა. სიმძლავრის ღილაკები საქართველოში არსებული დამტენების ნამდვილი მაჩვენებლებია.`,
+    battery: 'ბატარეის ტევადობა (kWh)', power: 'დამტენის სიმძლავრე (kW)',
+    peak: 'მანქანის მაქსიმალური სიმძლავრე (kW)',
+    peakHint: 'ავტომატურად ივსება ბატარეის ტევადობის მიხედვით. თუ იცით თქვენი მანქანის ზღვარი, შეცვალეთ.',
+    from: 'მიმდინარე მუხტი (%)', to: 'სასურველი მუხტი (%)',
+    result: 'დატენვის დრო', added: 'ბატარეაში შედის', avg: 'საშუალო სიმძლავრე',
+    bandH: 'იმავე დამტენზე', band8: '20 პროცენტიდან 80-მდე', band10: 'ბოლო 20 პროცენტი',
+    note: 'შედეგი შეფასებაა. ზუსტი დრო მანქანის მოდელზე, ბატარეის ტემპერატურაზე და დამტენის დატვირთვაზეა დამოკიდებული. ზამთარში ცივი ბატარეა პირველ წუთებში უფრო ნელა იტენება.',
+    tableH: 'რამდენ ხანში ივსება 20 პროცენტიდან 80-მდე',
+    tableP: 'სვეტებში საქართველოში ყველაზე გავრცელებული სიმძლავრეებია, სტრიქონებში ტიპური ბატარეები.',
+    thBattery: 'ბატარეა',
+    tailH: 'რას ცვლის ბოლო 20 პროცენტი',
+    tailP: '60 kWh ბატარეა. ბოლო მეხუთედი დამტენის სიმძლავრეს თითქმის აღარ უყურებს. 47 kW-იან და 160 kW-იან დამტენზე მას ერთი და იგივე დრო სჭირდება, რადგან ამ ეტაპზე ზღვარს ბატარეა აწესებს, არა დამტენი. სწრაფ დამტენზე ბოლო 20 პროცენტი მთელ 20-დან 80 პროცენტამდე მონაკვეთზე მეტ დროს ითხოვს.',
+    thPower: 'დამტენი', thFull: '20 პროცენტიდან 100-მდე',
+    howH: 'როგორ ითვლება',
+    how: 'დროს ორი რამ განსაზღვრავს. პირველი, რამდენი კილოვატსაათი შედის ბატარეაში, ეს ტევადობა გამრავლებული შესავსებ პროცენტზე. მეორე, რა სიმძლავრით შედის, და აი ეს მუდმივი არაა. კალკულატორი მუხტის დიაპაზონს ათ მონაკვეთად ყოფს და თითოეულში ირჩევს უმცირესს ორ რიცხვს შორის: დამტენის სიმძლავრესა და იმას, რისი მიღებაც მანქანას ამ მუხტზე შეუძლია. ენერგიის დაახლოებით 6 პროცენტი სითბოდ იკარგება DC დატენვისას და 11 პროცენტი AC დატენვისას, ესეც გათვლილია.',
+    more: 'რა დაჯდება ეს დატენვა',
+  } : {
+    h1: 'EV charging time calculator',
+    intro: `Enter your battery size, the charger's power and the charge levels. The calculator follows the real charging curve, so the last percentages fill more slowly than plain division would suggest. The power buttons are the ratings that actually exist on chargers in Georgia.`,
+    battery: 'Battery capacity (kWh)', power: 'Charger power (kW)',
+    peak: "Car's maximum power (kW)",
+    peakHint: 'Filled automatically from the battery size. Change it if you know your car’s limit.',
+    from: 'Current charge (%)', to: 'Target charge (%)',
+    result: 'Charging time', added: 'Energy added', avg: 'Average power',
+    bandH: 'On the same charger', band8: '20 to 80 percent', band10: 'The last 20 percent',
+    note: 'The result is an estimate. The exact time depends on the car, the battery temperature and how busy the charger is. A cold pack in winter charges slowly for the first few minutes.',
+    tableH: 'How long 20 to 80 percent takes',
+    tableP: 'The columns are the most common power ratings in Georgia, the rows are typical battery sizes.',
+    thBattery: 'Battery',
+    tailH: 'What the last 20 percent costs you',
+    tailP: 'A 60 kWh battery. The last fifth barely notices how strong the charger is. It takes the same time on a 47 kW unit as on a 160 kW one, because at that point the pack sets the limit, not the charger. On a fast charger the last 20 percent takes longer than the whole 20 to 80 percent stretch.',
+    thPower: 'Charger', thFull: '20 to 100 percent',
+    howH: 'How it is calculated',
+    how: 'Two things set the time. First, how many kilowatt hours go into the pack, which is capacity times the share you are adding. Second, how fast they go in, and that part is not constant. The calculator splits the range into ten bands and in each one takes the lower of the charger’s power and what the car will accept at that state of charge. About 6 percent of the energy is lost as heat on DC and 11 percent on AC, and that is accounted for too.',
+    more: 'What this charge will cost',
+  };
+
+  const chips = presets.map((p) => `<button type="button" data-kw="${p}">${p} kW</button>`).join('');
+
+  const body = `${crumbs(bc)}
+<h1>${esc(S.h1)}</h1>
+<p class="intro">${esc(S.intro)}</p>
+
+<div class="calc">
+  <div class="calc-in">
+    <label>${esc(S.battery)}<input type="number" id="t-batt" value="60" min="5" max="250" step="1"></label>
+    <label>${esc(S.power)}<input type="number" id="t-pw" value="60" min="1" max="400" step="1"></label>
+    <div class="pw" id="t-chips">${chips}</div>
+    <label>${esc(S.from)}<input type="number" id="t-from" value="20" min="0" max="100" step="1"></label>
+    <label>${esc(S.to)}<input type="number" id="t-to" value="80" min="0" max="100" step="1"></label>
+    <label>${esc(S.peak)}<input type="number" id="t-peak" value="120" min="3" max="400" step="1"></label>
+    <p class="calc-hint">${esc(S.peakHint)}</p>
+  </div>
+  <div class="calc-out">
+    <div class="calc-big"><b id="t-time">—</b><span>${esc(S.result)}</span></div>
+    <div class="calc-small">
+      <div><b id="t-kwh">—</b><span>${esc(S.added)}</span></div>
+      <div><b id="t-avg">—</b><span>${esc(S.avg)}</span></div>
+    </div>
+    <div class="calc-band">
+      <div><span>${esc(S.band8)}</span><b id="t-b8">—</b></div>
+      <div><span>${esc(S.band10)}</span><b id="t-b10">—</b></div>
+    </div>
+  </div>
+</div>
+<p class="note">${esc(S.note)}</p>
+
+<h2>${esc(S.tableH)}</h2>
+<p class="intro" style="margin-bottom:16px">${esc(S.tableP)}</p>
+<div class="tw"><table>
+<thead><tr><th>${esc(S.thBattery)}</th>${dcPresets.map((p) => `<th>${p} kW</th>`).join('')}</tr></thead>
+<tbody>
+${SIZES.map((b) => `<tr><td>${b} kWh</td>${dcPresets.map((p) => `<td>${mn(at(b, p, 20, 80))}</td>`).join('')}</tr>`).join('\n')}
+</tbody></table></div>
+
+<h2>${esc(S.tailH)}</h2>
+<p class="intro" style="margin-bottom:16px">${esc(S.tailP)}</p>
+<div class="tw"><table>
+<thead><tr><th>${esc(S.thPower)}</th><th>${esc(S.band8)}</th><th>${esc(S.band10)}</th><th>${esc(S.thFull)}</th></tr></thead>
+<tbody>
+${dcPresets.map((p) => `<tr><td>${p} kW</td><td>${mn(at(60, p, 20, 80))}</td><td>${mn(at(60, p, 80, 100))}</td><td>${mn(at(60, p, 20, 100))}</td></tr>`).join('\n')}
+</tbody></table></div>
+<p class="upd">${esc(t.updated)} ${esc(updated)}</p>
+
+<div class="links" style="margin-top:22px">
+  <a href="${t.base}/${t.calcDir}/" style="background:var(--mint);border-color:var(--mint-b);color:var(--mint-ink,#137A4C);font-weight:600">${esc(S.more)}</a>
+  <a href="${t.base}/${t.tariffsDir}/">${esc(t.tariffs)}</a>
+  <a href="${t.base}/${t.chargersDir}/">${esc(t.backToAll)}</a>
+  <a href="${t.base}/${t.routesDir}/">${esc(t.routes)}</a>
+</div>
+
+<h2>${esc(S.howH)}</h2>
+<p class="intro">${esc(S.how)}</p>
+
+<h2>${esc(t.faq)}</h2>
+<div class="faq">
+${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('\n')}
+</div>
+
+<script>
+${chargeProfile.toString()}
+(function(){
+  var $=function(i){return document.getElementById(i);};
+  var batt=$('t-batt'),pw=$('t-pw'),peak=$('t-peak'),from=$('t-from'),to=$('t-to');
+  var H='${ka ? 'სთ' : 'h'}',M='${ka ? 'წთ' : 'min'}',touched=false;
+  function fmt(m){
+    if(m==null) return '—';
+    var t=Math.round(m),h=Math.floor(t/60),mm=t%60;
+    return t<60 ? t+' '+M : h+' '+H+(mm?' '+mm+' '+M:'');
+  }
+  function calc(){
+    var b=parseFloat(batt.value)||0,w=parseFloat(pw.value)||0;
+    if(!touched){ peak.value=Math.round(b*2)||''; }
+    var pk=parseFloat(peak.value)||0;
+    var r=chargeProfile(b,w,parseFloat(from.value)||0,parseFloat(to.value)||0,pk);
+    $('t-time').textContent=r?fmt(r.minutes):'—';
+    $('t-kwh').textContent=r?r.kwh.toFixed(1)+' kWh':'—';
+    $('t-avg').textContent=r?Math.round(r.avgKw)+' kW':'—';
+    var a=chargeProfile(b,w,20,80,pk),c=chargeProfile(b,w,80,100,pk);
+    $('t-b8').textContent=a?fmt(a.minutes):'—';
+    $('t-b10').textContent=c?'+ '+fmt(c.minutes):'—';
+    var kws=$('t-chips').getElementsByTagName('button');
+    for(var i=0;i<kws.length;i++){ kws[i].setAttribute('aria-pressed', parseFloat(kws[i].getAttribute('data-kw'))===w?'true':'false'); }
+  }
+  $('t-chips').addEventListener('click',function(e){
+    var el=e.target.closest('button[data-kw]');
+    if(!el) return;
+    pw.value=el.getAttribute('data-kw');
+    calc();
+  });
+  peak.addEventListener('input',function(){ touched=true; });
+  [batt,pw,peak,from,to].forEach(function(el){ el.addEventListener('input',calc); });
+  calc();
+})();
+</script>`;
+
+  return {
+    file: path.join(SITE, t.base.replace('/', ''), t.timeDir, 'index.html'),
     url,
     html: shell({
       lang, title, desc, canonical: url, altHref: alt, body,
@@ -2342,6 +2615,7 @@ async function main() {
     pages.push(tariffPage(lang, ge, byProvider, updated));
     pages.push(networksIndexPage(lang, byProvider, updated));
     pages.push(calculatorPage(lang, ge, byProvider, updated));
+    pages.push(timeCalculatorPage(lang, ge, updated));
     pages.push(customsPage(lang, clearance));
     pages.push(routesIndexPage(lang, byCity, byCityAll, raw, updated));
     for (const [c, list] of cityList) pages.push(cityPage(lang, list[0]._city, list, cityList, updated));
@@ -2452,8 +2726,8 @@ async function main() {
   console.log('· dash check passed: no dashes as punctuation in Georgian copy');
 
   const pairs = [];
-  const kaPrefixes = ['/damtenebi', '/qselebi', '/tarifebi', '/marshruti', '/kalkulatori', '/ganbajeba',
-    '/turketi'];
+  const kaPrefixes = ['/damtenebi', '/qselebi', '/tarifebi', '/marshruti', '/kalkulatori', '/datenvis-dro',
+    '/ganbajeba', '/turketi'];
   const kaPages = pages.filter((p) => kaPrefixes.some((k) => p.url.startsWith(ORIGIN + k)));
   for (const p of kaPages) {
     const en = p.url
@@ -2462,10 +2736,11 @@ async function main() {
       .replace('/tarifebi/', '/en/tariffs/')
       .replace('/marshruti/', '/en/routes/')
       .replace('/kalkulatori/', '/en/calculator/')
+      .replace('/datenvis-dro/', '/en/charging-time/')
       .replace('/ganbajeba/', '/en/customs/')
       .replace('/turketi/', '/en/turkey/');
-    const top = ['/damtenebi/', '/tarifebi/', '/qselebi/', '/marshruti/', '/kalkulatori/', '/ganbajeba/',
-      '/turketi/'].some((k) => p.url === ORIGIN + k);
+    const top = ['/damtenebi/', '/tarifebi/', '/qselebi/', '/marshruti/', '/kalkulatori/', '/datenvis-dro/',
+      '/ganbajeba/', '/turketi/'].some((k) => p.url === ORIGIN + k);
     pairs.push({ ka: p.url, en, priority: top ? '0.9' : '0.7' });
   }
   const xml = sitemap(pairs, today);
@@ -2488,7 +2763,7 @@ async function main() {
   }
 
   console.log(`\n  per language: 1 catalogue + 1 tariffs + 1 networks index + 1 routes index`
-    + ` + 1 customs + 1 Turkey hub + ${cityList.length} cities + ${provList.length} networks`
+    + ` + 2 calculators + 1 customs + 1 Turkey hub + ${cityList.length} cities + ${provList.length} networks`
     + ` + ${ROUTES.length} routes + ${trProvPages.length} Turkish provinces`
     + ` = ${pages.length / 2}, × 2 langs = ${pages.length} pages`);
 }

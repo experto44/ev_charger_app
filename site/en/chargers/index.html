@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>EV charging stations in Georgia — 623 stations | GeoCharge</title>
-<meta name="description" content="All 623 public EV chargers in Georgia in one list: 403 fast DC, 11 networks, broken down by city and connector type.">
+<title>EV charging stations in Georgia — 624 stations | GeoCharge</title>
+<meta name="description" content="All 624 public EV chargers in Georgia in one list: 403 fast DC, 11 networks, broken down by city and connector type.">
 <meta name="theme-color" content="#11161A">
 <link rel="canonical" href="https://geocharge.ge/en/chargers/">
 <link rel="alternate" hreflang="ka" href="https://geocharge.ge/damtenebi/">
@@ -14,14 +14,14 @@
 <meta property="og:site_name" content="GeoCharge">
 <meta property="og:locale" content="en_US">
 <meta property="og:url" content="https://geocharge.ge/en/chargers/">
-<meta property="og:title" content="EV charging stations in Georgia — 623 stations | GeoCharge">
-<meta property="og:description" content="All 623 public EV chargers in Georgia in one list: 403 fast DC, 11 networks, broken down by city and connector type.">
+<meta property="og:title" content="EV charging stations in Georgia — 624 stations | GeoCharge">
+<meta property="og:description" content="All 624 public EV chargers in Georgia in one list: 403 fast DC, 11 networks, broken down by city and connector type.">
 <meta property="og:image" content="https://geocharge.ge/assets/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="EV charging stations in Georgia — 623 stations | GeoCharge">
-<meta name="twitter:description" content="All 623 public EV chargers in Georgia in one list: 403 fast DC, 11 networks, broken down by city and connector type.">
+<meta name="twitter:title" content="EV charging stations in Georgia — 624 stations | GeoCharge">
+<meta name="twitter:description" content="All 624 public EV chargers in Georgia in one list: 403 fast DC, 11 networks, broken down by city and connector type.">
 <meta name="twitter:image" content="https://geocharge.ge/assets/og-image.png">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
@@ -52,10 +52,10 @@
   {
    "@type": "CollectionPage",
    "@id": "https://geocharge.ge/en/chargers/#page",
-   "name": "EV charging stations in Georgia — 623 stations | GeoCharge",
+   "name": "EV charging stations in Georgia — 624 stations | GeoCharge",
    "url": "https://geocharge.ge/en/chargers/",
    "inLanguage": "en",
-   "description": "All 623 public EV chargers in Georgia in one list: 403 fast DC, 11 networks, broken down by city and connector type.",
+   "description": "All 624 public EV chargers in Georgia in one list: 403 fast DC, 11 networks, broken down by city and connector type.",
    "isPartOf": {
     "@type": "WebSite",
     "@id": "https://geocharge.ge/#website"
@@ -70,7 +70,7 @@
      "name": "How many EV chargers are there in Georgia?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "623 public charging stations right now, across 11 different networks. 403 of them are fast DC chargers."
+      "text": "624 public charging stations right now, across 11 different networks. 403 of them are fast DC chargers."
      }
     },
     {
@@ -78,7 +78,7 @@
      "name": "Which city has the most chargers?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "Tbilisi with 377 stations, followed by Mtskheta (37)."
+      "text": "Tbilisi with 378 stations, followed by Mtskheta (37)."
      }
     },
     {
@@ -86,7 +86,7 @@
      "name": "Which connectors are used in Georgia?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "The most common are CCS2 (384), GB/T (360), Type 2 (242). The full breakdown is on this page."
+      "text": "The most common are CCS2 (384), GB/T (360), Type 2 (243). The full breakdown is on this page."
      }
     },
     {
@@ -193,6 +193,18 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 .calc-small span{display:block;font-size:12.5px;color:#77848C;margin-top:3px;line-height:1.35}
 .calc-time{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:#77848C}
 .calc-time b{display:block;color:var(--ink);font-weight:600;margin-top:4px;line-height:1.6}
+/* Power presets for the time calculator. The ratings are the ones that really
+   exist in Georgia, so the chips are a shortcut rather than a guess, and the
+   number field stays editable for everything else. */
+.pw{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px}
+.pw button{font:inherit;font-size:13px;font-weight:600;color:#5A6671;background:#fff;
+border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white-space:nowrap}
+.pw button:hover{border-color:var(--accent)}
+.pw button[aria-pressed="true"]{background:var(--mint);border-color:var(--mint-b);color:#137A4C}
+.calc-band{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);display:grid;gap:9px}
+.calc-band div{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;color:#5A6671}
+.calc-band b{color:var(--ink);font-weight:700;white-space:nowrap}
+.calc-hint{font-size:12.5px;color:#8B98A1;font-weight:500;margin:2px 0 0}
 @media (max-width:700px){.calc{grid-template-columns:1fr}}
 </style>
 </head>
@@ -217,19 +229,20 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <main>
 <nav class="crumbs" aria-label="breadcrumb"><a href="/en/">Home</a><span aria-hidden="true">›</span><span>Chargers</span></nav>
 <h1>EV charging stations in Georgia</h1>
-<p class="intro">Georgia currently has <strong>623 public EV charging stations</strong> across 11 networks. 403 of them are fast DC chargers and 220 are standard AC. The most powerful station delivers 360 kW. This list updates automatically, straight from the providers.</p>
+<p class="intro">Georgia currently has <strong>624 public EV charging stations</strong> across 11 networks. 403 of them are fast DC chargers and 221 are standard AC. The most powerful station delivers 360 kW. This list updates automatically, straight from the providers.</p>
 <div class="stats">
-  <div class="stat"><b>623</b><span>stations</span></div>
+  <div class="stat"><b>624</b><span>stations</span></div>
   <div class="stat"><b>403</b><span>Fast (DC)</span></div>
-  <div class="stat"><b>220</b><span>Standard (AC)</span></div>
+  <div class="stat"><b>221</b><span>Standard (AC)</span></div>
   <div class="stat"><b>11</b><span>networks</span></div>
   <div class="stat"><b>360 kW</b><span>Max power</span></div>
 </div>
-<p class="upd">Data refreshes automatically from the providers. Last update: 2026-09-02 08:22</p>
+<p class="upd">Data refreshes automatically from the providers. Last update: 2026-09-02 10:47</p>
 
 <div class="links" style="margin-top:22px">
   <a href="/en/tariffs/">Tariffs</a>
   <a href="/en/calculator/">Calculator</a>
+  <a href="/en/charging-time/">Charging time</a>
   <a href="/en/routes/">Routes</a>
   <a href="/en/networks/">Networks</a>
   <a href="/en/turkey/">Chargers in Turkey</a>
@@ -239,7 +252,7 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <div class="tw"><table>
 <thead><tr><th>City</th><th>chargers</th><th>Fast (DC)</th><th>Network</th></tr></thead>
 <tbody>
-<tr><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td>377</td><td>247</td><td>11</td></tr>
+<tr><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td>378</td><td>247</td><td>11</td></tr>
 <tr><td><a href="/en/chargers/mtskheta/">Mtskheta</a></td><td>37</td><td>25</td><td>9</td></tr>
 <tr><td><a href="/en/chargers/batumi/">Batumi</a></td><td>25</td><td>17</td><td>9</td></tr>
 <tr><td><a href="/en/chargers/terjola/">Terjola</a></td><td>18</td><td>17</td><td>5</td></tr>
@@ -264,7 +277,7 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <div class="tw"><table>
 <thead><tr><th>Network</th><th>chargers</th><th>Fast (DC)</th><th>Standard (AC)</th><th>Max power</th></tr></thead>
 <tbody>
-<tr><td><a href="/en/networks/mart-ev/">mart EV</a></td><td>187</td><td>123</td><td>64</td><td>120 kW</td></tr>
+<tr><td><a href="/en/networks/mart-ev/">mart EV</a></td><td>188</td><td>123</td><td>65</td><td>120 kW</td></tr>
 <tr><td><a href="/en/networks/e-space/">E-Space</a></td><td>148</td><td>59</td><td>89</td><td>360 kW</td></tr>
 <tr><td><a href="/en/networks/ev-power-ge/">EV Power GE</a></td><td>59</td><td>59</td><td>0</td><td>200 kW</td></tr>
 <tr><td><a href="/en/networks/charger-plus/">Charger Plus</a></td><td>57</td><td>42</td><td>15</td><td>120 kW</td></tr>
@@ -278,13 +291,13 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 </tbody></table></div>
 
 <h2>Connector types</h2>
-<div class="chips"><span class="chip"><b>384</b> CCS2</span><span class="chip"><b>360</b> GB/T</span><span class="chip"><b>242</b> Type 2</span><span class="chip"><b>20</b> Type 1</span><span class="chip"><b>18</b> CHAdeMO</span><span class="chip"><b>11</b> NACS</span><span class="chip"><b>2</b> CCS1</span></div>
+<div class="chips"><span class="chip"><b>384</b> CCS2</span><span class="chip"><b>360</b> GB/T</span><span class="chip"><b>243</b> Type 2</span><span class="chip"><b>20</b> Type 1</span><span class="chip"><b>18</b> CHAdeMO</span><span class="chip"><b>11</b> NACS</span><span class="chip"><b>2</b> CCS1</span></div>
 
 <h2>Frequently asked questions</h2>
 <div class="faq">
-<details><summary>How many EV chargers are there in Georgia?</summary><p>623 public charging stations right now, across 11 different networks. 403 of them are fast DC chargers.</p></details>
-<details><summary>Which city has the most chargers?</summary><p>Tbilisi with 377 stations, followed by Mtskheta (37).</p></details>
-<details><summary>Which connectors are used in Georgia?</summary><p>The most common are CCS2 (384), GB/T (360), Type 2 (242). The full breakdown is on this page.</p></details>
+<details><summary>How many EV chargers are there in Georgia?</summary><p>624 public charging stations right now, across 11 different networks. 403 of them are fast DC chargers.</p></details>
+<details><summary>Which city has the most chargers?</summary><p>Tbilisi with 378 stations, followed by Mtskheta (37).</p></details>
+<details><summary>Which connectors are used in Georgia?</summary><p>The most common are CCS2 (384), GB/T (360), Type 2 (243). The full breakdown is on this page.</p></details>
 <details><summary>Where can I see whether a charger is free?</summary><p>Live availability and the map are in the free GeoCharge app — this page is the station catalogue only.</p></details>
 </div>
 <section class="cta">
@@ -301,6 +314,7 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
     <a href="/en/chargers/">Chargers</a>
     <a href="/en/tariffs/">Tariffs</a>
     <a href="/en/calculator/">Calculator</a>
+    <a href="/en/charging-time/">Charging time</a>
     <a href="/en/networks/">Networks</a>
     <a href="/en/routes/">Routes</a>
     <a href="/en/customs/">Import duty</a>

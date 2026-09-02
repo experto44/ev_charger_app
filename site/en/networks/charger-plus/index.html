@@ -88,7 +88,7 @@
      "name": "Which cities have Charger Plus chargers?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "Tbilisi (20), Kobuleti (4), Gori (3), Kutaisi (3), Batumi (3), Chakvi (3), Terjola (3), Poti (2) and more."
+      "text": "Tbilisi (20), Kobuleti (4), Chakvi (3), Gori (3), Kutaisi (3), Batumi (3), Terjola (3), Poti (2) and more."
      }
     },
     {
@@ -195,6 +195,18 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 .calc-small span{display:block;font-size:12.5px;color:#77848C;margin-top:3px;line-height:1.35}
 .calc-time{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:#77848C}
 .calc-time b{display:block;color:var(--ink);font-weight:600;margin-top:4px;line-height:1.6}
+/* Power presets for the time calculator. The ratings are the ones that really
+   exist in Georgia, so the chips are a shortcut rather than a guess, and the
+   number field stays editable for everything else. */
+.pw{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px}
+.pw button{font:inherit;font-size:13px;font-weight:600;color:#5A6671;background:#fff;
+border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white-space:nowrap}
+.pw button:hover{border-color:var(--accent)}
+.pw button[aria-pressed="true"]{background:var(--mint);border-color:var(--mint-b);color:#137A4C}
+.calc-band{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);display:grid;gap:9px}
+.calc-band div{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;color:#5A6671}
+.calc-band b{color:var(--ink);font-weight:700;white-space:nowrap}
+.calc-hint{font-size:12.5px;color:#8B98A1;font-weight:500;margin:2px 0 0}
 @media (max-width:700px){.calc{grid-template-columns:1fr}}
 </style>
 </head>
@@ -228,7 +240,7 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
   <div class="stat"><b>1</b><span>networks</span></div>
   <div class="stat"><b>120 kW</b><span>Max power</span></div>
 </div>
-<p class="upd">Data refreshes automatically from the providers. Last update: 2026-09-02 08:22</p>
+<p class="upd">Data refreshes automatically from the providers. Last update: 2026-09-02 10:47</p>
 
 <h2>Chargers by city</h2>
 <div class="tw"><table>
@@ -236,20 +248,20 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <tbody>
 <tr><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td>20</td></tr>
 <tr><td><a href="/en/chargers/kobuleti/">Kobuleti</a></td><td>4</td></tr>
+<tr><td><a href="/en/chargers/chakvi/">Chakvi</a></td><td>3</td></tr>
 <tr><td><a href="/en/chargers/gori/">Gori</a></td><td>3</td></tr>
 <tr><td><a href="/en/chargers/kutaisi/">Kutaisi</a></td><td>3</td></tr>
 <tr><td><a href="/en/chargers/batumi/">Batumi</a></td><td>3</td></tr>
-<tr><td><a href="/en/chargers/chakvi/">Chakvi</a></td><td>3</td></tr>
 <tr><td><a href="/en/chargers/terjola/">Terjola</a></td><td>3</td></tr>
 <tr><td><a href="/en/chargers/poti/">Poti</a></td><td>2</td></tr>
 <tr><td><a href="/en/chargers/kvareli/">Kvareli</a></td><td>2</td></tr>
 <tr><td><a href="/en/chargers/zugdidi/">Zugdidi</a></td><td>2</td></tr>
 <tr><td><a href="/en/chargers/samtredia/">Samtredia</a></td><td>2</td></tr>
-<tr><td><a href="/en/chargers/gudauri/">Gudauri</a></td><td>1</td></tr>
-<tr><td>Sagarejo</td><td>1</td></tr>
 <tr><td>Lagodekhi</td><td>1</td></tr>
-<tr><td><a href="/en/chargers/borjomi/">Borjomi</a></td><td>1</td></tr>
 <tr><td><a href="/en/chargers/mtskheta/">Mtskheta</a></td><td>1</td></tr>
+<tr><td><a href="/en/chargers/borjomi/">Borjomi</a></td><td>1</td></tr>
+<tr><td>Sagarejo</td><td>1</td></tr>
+<tr><td><a href="/en/chargers/gudauri/">Gudauri</a></td><td>1</td></tr>
 </tbody></table></div>
 
 <h2>All stations</h2>
@@ -257,62 +269,62 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <thead><tr><th>Station</th><th>City</th><th>Type</th><th>Power</th><th>Connectors</th><th>Tariff</th></tr></thead>
 <tbody>
 <tr><td>Charger Plus #106</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Charger Plus #107</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
 <tr><td>Charger Plus #109</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
 <tr><td>Charger Plus #112</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Charger Plus #113</td><td><a href="/en/chargers/gudauri/">Gudauri</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Autobahn, Gori</td><td><a href="/en/chargers/gori/">Gori</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
 <tr><td>Rikoti</td><td>—</td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Charger Plus #118</td><td><a href="/en/chargers/kutaisi/">Kutaisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Charger Plus #119</td><td><a href="/en/chargers/kutaisi/">Kutaisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
 <tr><td>Charger Plus #122</td><td><a href="/en/chargers/poti/">Poti</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Green Way, Kobuleti</td><td><a href="/en/chargers/kobuleti/">Kobuleti</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Charger Plus #125</td><td><a href="/en/chargers/batumi/">Batumi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Charger Plus #127</td><td>Sagarejo</td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Kakheti Hwy 147</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
 <tr><td>Zugdidi</td><td><a href="/en/chargers/zugdidi/">Zugdidi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Charger Plus #150</td><td><a href="/en/chargers/borjomi/">Borjomi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
 <tr><td>Rikoti</td><td>—</td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
 <tr><td>Rikoti</td><td>—</td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Autobahn, Gori</td><td><a href="/en/chargers/gori/">Gori</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
 <tr><td>Autobahn, Gori</td><td><a href="/en/chargers/gori/">Gori</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
 <tr><td>Charger Plus #155</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Argveta, Zestaponi</td><td><a href="/en/chargers/terjola/">Terjola</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Argveta, Zestaponi</td><td><a href="/en/chargers/terjola/">Terjola</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
 <tr><td>Charger Plus #159</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
 <tr><td>Charger Plus #160</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Charger Plus #117</td><td><a href="/en/chargers/kutaisi/">Kutaisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Charger Plus #149</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Charger Plus #110</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Charger Plus #111</td><td><a href="/en/chargers/mtskheta/">Mtskheta</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Kakheti Hwy 147</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Charger Plus #103</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Charger Plus #126</td><td><a href="/en/chargers/batumi/">Batumi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Charger Plus #143</td><td>—</td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
 <tr><td>Charger Plus #108</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Charger Plus #161</td><td><a href="/en/chargers/poti/">Poti</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Charger Plus #124</td><td><a href="/en/chargers/batumi/">Batumi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Charger Plus #110</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Charger Plus #103</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
 <tr><td>Charger Plus #102</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
 <tr><td>Samtredia</td><td><a href="/en/chargers/samtredia/">Samtredia</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Charger Plus #117</td><td><a href="/en/chargers/kutaisi/">Kutaisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Charger Plus #149</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
 <tr><td>Samtredia</td><td><a href="/en/chargers/samtredia/">Samtredia</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
-<tr><td>Zugdidi</td><td><a href="/en/chargers/zugdidi/">Zugdidi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Charger Plus #124</td><td><a href="/en/chargers/batumi/">Batumi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Autobahn, Gori</td><td><a href="/en/chargers/gori/">Gori</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Charger Plus #111</td><td><a href="/en/chargers/mtskheta/">Mtskheta</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Charger Plus #118</td><td><a href="/en/chargers/kutaisi/">Kutaisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Charger Plus #125</td><td><a href="/en/chargers/batumi/">Batumi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Charger Plus #161</td><td><a href="/en/chargers/poti/">Poti</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
 <tr><td>Green Way, Kobuleti</td><td><a href="/en/chargers/kobuleti/">Kobuleti</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Zugdidi</td><td><a href="/en/chargers/zugdidi/">Zugdidi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Kakheti Hwy 147</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Charger Plus #126</td><td><a href="/en/chargers/batumi/">Batumi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Charger Plus #150</td><td><a href="/en/chargers/borjomi/">Borjomi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Charger Plus #107</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Green Way, Kobuleti</td><td><a href="/en/chargers/kobuleti/">Kobuleti</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Charger Plus #143</td><td>—</td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Charger Plus #119</td><td><a href="/en/chargers/kutaisi/">Kutaisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Argveta, Zestaponi</td><td><a href="/en/chargers/terjola/">Terjola</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Kakheti Hwy 147</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Argveta, Zestaponi</td><td><a href="/en/chargers/terjola/">Terjola</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Charger Plus #127</td><td>Sagarejo</td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Charger Plus #113</td><td><a href="/en/chargers/gudauri/">Gudauri</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
+<tr><td>Autobahn, Gori</td><td><a href="/en/chargers/gori/">Gori</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
 <tr><td>Argveta, Zestaponi</td><td><a href="/en/chargers/terjola/">Terjola</a></td><td><span class="tag dc">DC</span></td><td>120 kW</td><td>CCS2, GB/T</td><td>—</td></tr>
 <tr><td>Charger Plus #104</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>—</td></tr>
 <tr><td>Charger Plus #129</td><td>Lagodekhi</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>—</td></tr>
 <tr><td>Charger Plus #130</td><td><a href="/en/chargers/kvareli/">Kvareli</a></td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>—</td></tr>
 <tr><td>Charger Plus #131</td><td><a href="/en/chargers/kvareli/">Kvareli</a></td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>—</td></tr>
 <tr><td>Charger Plus #132</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>—</td></tr>
-<tr><td>Charger Plus #134</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>—</td></tr>
 <tr><td>Charger Plus #135</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>—</td></tr>
 <tr><td>Charger Plus #136</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>—</td></tr>
 <tr><td>Charger Plus #137</td><td>—</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>—</td></tr>
 <tr><td>Charger Plus #138</td><td><a href="/en/chargers/kobuleti/">Kobuleti</a></td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>—</td></tr>
 <tr><td>Charger Plus #139</td><td><a href="/en/chargers/kobuleti/">Kobuleti</a></td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>—</td></tr>
+<tr><td>Charger Plus #134</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>—</td></tr>
 <tr><td>Charger Plus #133</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag ac">AC</span></td><td>7 kW</td><td>Type 2</td><td>—</td></tr>
-<tr><td>Charger Plus #140</td><td><a href="/en/chargers/chakvi/">Chakvi</a></td><td><span class="tag ac">AC</span></td><td>7 kW</td><td>Type 2</td><td>—</td></tr>
 <tr><td>Charger Plus #141</td><td><a href="/en/chargers/chakvi/">Chakvi</a></td><td><span class="tag ac">AC</span></td><td>7 kW</td><td>Type 2</td><td>—</td></tr>
 <tr><td>Charger Plus #142</td><td><a href="/en/chargers/chakvi/">Chakvi</a></td><td><span class="tag ac">AC</span></td><td>7 kW</td><td>Type 2</td><td>—</td></tr>
+<tr><td>Charger Plus #140</td><td><a href="/en/chargers/chakvi/">Chakvi</a></td><td><span class="tag ac">AC</span></td><td>7 kW</td><td>Type 2</td><td>—</td></tr>
 </tbody></table></div>
 <p class="note">Tariffs are indicative and published by the provider.</p>
 
@@ -322,14 +334,14 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <h2>Frequently asked questions</h2>
 <div class="faq">
 <details><summary>How many Charger Plus chargers are there in Georgia?</summary><p>57 public charging stations, 42 of them fast DC.</p></details>
-<details><summary>Which cities have Charger Plus chargers?</summary><p>Tbilisi (20), Kobuleti (4), Gori (3), Kutaisi (3), Batumi (3), Chakvi (3), Terjola (3), Poti (2) and more.</p></details>
+<details><summary>Which cities have Charger Plus chargers?</summary><p>Tbilisi (20), Kobuleti (4), Chakvi (3), Gori (3), Kutaisi (3), Batumi (3), Terjola (3), Poti (2) and more.</p></details>
 <details><summary>Which connectors does Charger Plus use?</summary><p>CCS2 (42), GB/T (42), Type 2 (15).</p></details>
 </div>
 
 <h2>Other networks</h2>
 <div class="links">
 <a href="/en/chargers/">All chargers in Georgia</a>
-<a href="/en/networks/mart-ev/">mart EV (187)</a>
+<a href="/en/networks/mart-ev/">mart EV (188)</a>
 <a href="/en/networks/e-space/">E-Space (148)</a>
 <a href="/en/networks/ev-power-ge/">EV Power GE (59)</a>
 <a href="/en/networks/da-tene/">Da-Tene (43)</a>
@@ -354,6 +366,7 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
     <a href="/en/chargers/">Chargers</a>
     <a href="/en/tariffs/">Tariffs</a>
     <a href="/en/calculator/">Calculator</a>
+    <a href="/en/charging-time/">Charging time</a>
     <a href="/en/networks/">Networks</a>
     <a href="/en/routes/">Routes</a>
     <a href="/en/customs/">Import duty</a>

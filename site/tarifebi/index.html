@@ -84,7 +84,7 @@
      "name": "რატომ არ აქვს ზოგიერთ დამტენს მითითებული ფასი?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "საქართველოს 623 სადგურიდან 136 ტარიფს არ აქვეყნებს საჯარო API-ში. ეს ჩვეულებრივ სასტუმროების, სავაჭრო ცენტრებისა და რესტორნების დამტენებია, სადაც დატენვა კლიენტისთვის უფასოა, ან ფასი ადგილზე ჩანს."
+      "text": "საქართველოს 624 სადგურიდან 136 ტარიფს არ აქვეყნებს საჯარო API-ში. ეს ჩვეულებრივ სასტუმროების, სავაჭრო ცენტრებისა და რესტორნების დამტენებია, სადაც დატენვა კლიენტისთვის უფასოა, ან ფასი ადგილზე ჩანს."
      }
     },
     {
@@ -199,6 +199,18 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 .calc-small span{display:block;font-size:12.5px;color:#77848C;margin-top:3px;line-height:1.35}
 .calc-time{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:#77848C}
 .calc-time b{display:block;color:var(--ink);font-weight:600;margin-top:4px;line-height:1.6}
+/* Power presets for the time calculator. The ratings are the ones that really
+   exist in Georgia, so the chips are a shortcut rather than a guess, and the
+   number field stays editable for everything else. */
+.pw{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px}
+.pw button{font:inherit;font-size:13px;font-weight:600;color:#5A6671;background:#fff;
+border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white-space:nowrap}
+.pw button:hover{border-color:var(--accent)}
+.pw button[aria-pressed="true"]{background:var(--mint);border-color:var(--mint-b);color:#137A4C}
+.calc-band{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);display:grid;gap:9px}
+.calc-band div{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;color:#5A6671}
+.calc-band b{color:var(--ink);font-weight:700;white-space:nowrap}
+.calc-hint{font-size:12.5px;color:#8B98A1;font-weight:500;margin:2px 0 0}
 @media (max-width:700px){.calc{grid-template-columns:1fr}}
 </style>
 </head>
@@ -223,14 +235,14 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <main>
 <nav class="crumbs" aria-label="breadcrumb"><a href="/">მთავარი</a><span aria-hidden="true">›</span><a href="/damtenebi/">დამტენები</a><span aria-hidden="true">›</span><span>ტარიფები</span></nav>
 <h1>ელექტრომობილის დატენვის ტარიფები საქართველოში</h1>
-<p class="intro">ქვემოთ მოცემულია, რა ტარიფს იღებს საქართველოს თითოეული დამტენი ქსელი. ციფრები უშუალოდ პროვაიდერების საჯარო მონაცემებიდან მოდის და ყოველდღიურად ახლდება. ამჟამად ტარიფი გამოქვეყნებული აქვს 487 სადგურს 623-დან.</p>
+<p class="intro">ქვემოთ მოცემულია, რა ტარიფს იღებს საქართველოს თითოეული დამტენი ქსელი. ციფრები უშუალოდ პროვაიდერების საჯარო მონაცემებიდან მოდის და ყოველდღიურად ახლდება. ამჟამად ტარიფი გამოქვეყნებული აქვს 488 სადგურს 624-დან.</p>
 <div class="stats">
   <div class="stat"><b>0.78 ₾</b><span>DC მედიანა</span></div>
   <div class="stat"><b>0.65 ₾</b><span>AC მედიანა</span></div>
   <div class="stat"><b>Electrify Georgia (ელექტრიფაი)</b><span>ყველაზე იაფი DC</span></div>
   <div class="stat"><b>Tegeta (თეგეტა)</b><span>ყველაზე ძვირი DC</span></div>
 </div>
-<p class="upd">მონაცემები ავტომატურად ახლდება პროვაიდერებისგან. ბოლო განახლება: 2026-09-02 08:22</p>
+<p class="upd">მონაცემები ავტომატურად ახლდება პროვაიდერებისგან. ბოლო განახლება: 2026-09-02 10:47</p>
 <div class="links" style="margin-top:22px">
   <a href="/kalkulatori/" style="background:var(--mint);border-color:var(--mint-b);color:var(--mint-ink,#137A4C);font-weight:600">გამოთვალეთ თქვენი დატენვის ღირებულება</a>
   <a href="/damtenebi/">ყველა დამტენი საქართველოში</a>
@@ -241,7 +253,7 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <div class="tw"><table>
 <thead><tr><th>ქსელი</th><th>დამტენი</th><th>DC ₾/kWh</th><th>AC ₾/kWh</th><th>ფასის გარეშე</th></tr></thead>
 <tbody>
-<tr><td><a href="/qselebi/mart-ev/">mart EV</a></td><td>187</td><td>0.55 .. 0.80 <span style="color:#8A97A0">(მედიანა 0.80)</span></td><td>0.50 .. 0.65 <span style="color:#8A97A0">(მედიანა 0.65)</span></td><td>—</td></tr>
+<tr><td><a href="/qselebi/mart-ev/">mart EV</a></td><td>188</td><td>0.55 .. 0.80 <span style="color:#8A97A0">(მედიანა 0.80)</span></td><td>0.50 .. 0.65 <span style="color:#8A97A0">(მედიანა 0.65)</span></td><td>—</td></tr>
 <tr><td><a href="/qselebi/e-space/">E-Space (ი-სფეის)</a></td><td>148</td><td>0.55 .. 0.90 <span style="color:#8A97A0">(მედიანა 0.75)</span></td><td>0.35 .. 1.25 <span style="color:#8A97A0">(მედიანა 0.60)</span></td><td>70</td></tr>
 <tr><td><a href="/qselebi/ev-power-ge/">EV Power (ივი პაუერ)</a></td><td>59</td><td>0.76 .. 0.95 <span style="color:#8A97A0">(მედიანა 0.76)</span></td><td>—</td><td>—</td></tr>
 <tr><td><a href="/qselebi/charger-plus/">Charger Plus (ჩარჯერ პლუს)</a></td><td>57</td><td>—</td><td>—</td><td>57</td></tr>
@@ -262,7 +274,7 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <h2>ხშირად დასმული კითხვები</h2>
 <div class="faq">
 <details><summary>რომელი ქსელია ყველაზე იაფი საქართველოში?</summary><p>სწრაფ DC დატენვაზე Electrify Georgia (ელექტრიფაი), მედიანური ტარიფით 0.55 ლარი. ნელ AC დატენვაზე Electrify Georgia (ელექტრიფაი), 0.45 ლარი.</p></details>
-<details><summary>რატომ არ აქვს ზოგიერთ დამტენს მითითებული ფასი?</summary><p>საქართველოს 623 სადგურიდან 136 ტარიფს არ აქვეყნებს საჯარო API-ში. ეს ჩვეულებრივ სასტუმროების, სავაჭრო ცენტრებისა და რესტორნების დამტენებია, სადაც დატენვა კლიენტისთვის უფასოა, ან ფასი ადგილზე ჩანს.</p></details>
+<details><summary>რატომ არ აქვს ზოგიერთ დამტენს მითითებული ფასი?</summary><p>საქართველოს 624 სადგურიდან 136 ტარიფს არ აქვეყნებს საჯარო API-ში. ეს ჩვეულებრივ სასტუმროების, სავაჭრო ცენტრებისა და რესტორნების დამტენებია, სადაც დატენვა კლიენტისთვის უფასოა, ან ფასი ადგილზე ჩანს.</p></details>
 <details><summary>რამდენად ხშირად იცვლება ეს ციფრები?</summary><p>ცხრილი უშუალოდ პროვაიდერების მონაცემებიდან ახლდება, ყოველდღიურად. ტარიფებს ოპერატორები რამდენიმე თვეში ერთხელ ცვლიან.</p></details>
 <details><summary>DC თუ AC, რომელი ჯობია ფასის მიხედვით?</summary><p>AC საშუალოდ იაფია: მედიანა 0.65 ლარი, DC-ზე კი 0.78. სამაგიეროდ AC-ზე დატენვას საათები სჭირდება.</p></details>
 </div>
@@ -280,6 +292,7 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
     <a href="/damtenebi/">დამტენები</a>
     <a href="/tarifebi/">ტარიფები</a>
     <a href="/kalkulatori/">კალკულატორი</a>
+    <a href="/datenvis-dro/">დატენვის დრო</a>
     <a href="/qselebi/">ქსელები</a>
     <a href="/marshruti/">მარშრუტები</a>
     <a href="/ganbajeba/">განბაჟება</a>

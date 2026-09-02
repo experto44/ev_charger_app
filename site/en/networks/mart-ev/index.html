@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>mart EV chargers in Georgia — 187 stations | GeoCharge</title>
-<meta name="description" content="mart EV: 187 charging stations in Georgia, 123 fast DC. Locations, power, connectors and tariffs.">
+<title>mart EV chargers in Georgia — 188 stations | GeoCharge</title>
+<meta name="description" content="mart EV: 188 charging stations in Georgia, 123 fast DC. Locations, power, connectors and tariffs.">
 <meta name="theme-color" content="#11161A">
 <link rel="canonical" href="https://geocharge.ge/en/networks/mart-ev/">
 <link rel="alternate" hreflang="ka" href="https://geocharge.ge/qselebi/mart-ev/">
@@ -14,14 +14,14 @@
 <meta property="og:site_name" content="GeoCharge">
 <meta property="og:locale" content="en_US">
 <meta property="og:url" content="https://geocharge.ge/en/networks/mart-ev/">
-<meta property="og:title" content="mart EV chargers in Georgia — 187 stations | GeoCharge">
-<meta property="og:description" content="mart EV: 187 charging stations in Georgia, 123 fast DC. Locations, power, connectors and tariffs.">
+<meta property="og:title" content="mart EV chargers in Georgia — 188 stations | GeoCharge">
+<meta property="og:description" content="mart EV: 188 charging stations in Georgia, 123 fast DC. Locations, power, connectors and tariffs.">
 <meta property="og:image" content="https://geocharge.ge/assets/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="mart EV chargers in Georgia — 187 stations | GeoCharge">
-<meta name="twitter:description" content="mart EV: 187 charging stations in Georgia, 123 fast DC. Locations, power, connectors and tariffs.">
+<meta name="twitter:title" content="mart EV chargers in Georgia — 188 stations | GeoCharge">
+<meta name="twitter:description" content="mart EV: 188 charging stations in Georgia, 123 fast DC. Locations, power, connectors and tariffs.">
 <meta name="twitter:image" content="https://geocharge.ge/assets/og-image.png">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
@@ -58,10 +58,10 @@
   {
    "@type": "CollectionPage",
    "@id": "https://geocharge.ge/en/networks/mart-ev/#page",
-   "name": "mart EV chargers in Georgia — 187 stations | GeoCharge",
+   "name": "mart EV chargers in Georgia — 188 stations | GeoCharge",
    "url": "https://geocharge.ge/en/networks/mart-ev/",
    "inLanguage": "en",
-   "description": "mart EV: 187 charging stations in Georgia, 123 fast DC. Locations, power, connectors and tariffs.",
+   "description": "mart EV: 188 charging stations in Georgia, 123 fast DC. Locations, power, connectors and tariffs.",
    "about": {
     "@type": "Organization",
     "name": "mart EV"
@@ -80,7 +80,7 @@
      "name": "How many mart EV chargers are there in Georgia?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "187 public charging stations, 123 of them fast DC."
+      "text": "188 public charging stations, 123 of them fast DC."
      }
     },
     {
@@ -88,7 +88,7 @@
      "name": "Which cities have mart EV chargers?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "Tbilisi (172), Mtskheta (7), Gori (2), Batumi (2), Zestaponi (1), Khashuri (1), Kaspi (1), Poti (1)."
+      "text": "Tbilisi (173), Mtskheta (7), Gori (2), Batumi (2), Zestaponi (1), Khashuri (1), Kaspi (1), Poti (1)."
      }
     },
     {
@@ -96,7 +96,7 @@
      "name": "Which connectors does mart EV use?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "CCS2 (122), GB/T (122), Type 2 (64), CHAdeMO (1)."
+      "text": "CCS2 (122), GB/T (122), Type 2 (65), CHAdeMO (1)."
      }
     }
    ]
@@ -195,6 +195,18 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 .calc-small span{display:block;font-size:12.5px;color:#77848C;margin-top:3px;line-height:1.35}
 .calc-time{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:#77848C}
 .calc-time b{display:block;color:var(--ink);font-weight:600;margin-top:4px;line-height:1.6}
+/* Power presets for the time calculator. The ratings are the ones that really
+   exist in Georgia, so the chips are a shortcut rather than a guess, and the
+   number field stays editable for everything else. */
+.pw{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px}
+.pw button{font:inherit;font-size:13px;font-weight:600;color:#5A6671;background:#fff;
+border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white-space:nowrap}
+.pw button:hover{border-color:var(--accent)}
+.pw button[aria-pressed="true"]{background:var(--mint);border-color:var(--mint-b);color:#137A4C}
+.calc-band{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);display:grid;gap:9px}
+.calc-band div{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;color:#5A6671}
+.calc-band b{color:var(--ink);font-weight:700;white-space:nowrap}
+.calc-hint{font-size:12.5px;color:#8B98A1;font-weight:500;margin:2px 0 0}
 @media (max-width:700px){.calc{grid-template-columns:1fr}}
 </style>
 </head>
@@ -220,21 +232,21 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <nav class="crumbs" aria-label="breadcrumb"><a href="/en/">Home</a><span aria-hidden="true">›</span><a href="/en/chargers/">Chargers</a><span aria-hidden="true">›</span><span>mart EV</span></nav>
 <img src="/assets/providers/martev.svg" alt="mart EV" style="max-height:44px;margin:0 0 14px;display:block">
 <h1>mart EV chargers in Georgia</h1>
-<p class="intro">mart EV operates 187 public charging stations in Georgia — 123 fast DC and 64 AC. Its most powerful charger delivers 120 kW. The stations are spread across 8 cities.</p>
+<p class="intro">mart EV operates 188 public charging stations in Georgia — 123 fast DC and 65 AC. Its most powerful charger delivers 120 kW. The stations are spread across 8 cities.</p>
 <div class="stats">
-  <div class="stat"><b>187</b><span>stations</span></div>
+  <div class="stat"><b>188</b><span>stations</span></div>
   <div class="stat"><b>123</b><span>Fast (DC)</span></div>
-  <div class="stat"><b>64</b><span>Standard (AC)</span></div>
+  <div class="stat"><b>65</b><span>Standard (AC)</span></div>
   <div class="stat"><b>1</b><span>networks</span></div>
   <div class="stat"><b>120 kW</b><span>Max power</span></div>
 </div>
-<p class="upd">Data refreshes automatically from the providers. Last update: 2026-09-02 08:22</p>
+<p class="upd">Data refreshes automatically from the providers. Last update: 2026-09-02 10:47</p>
 
 <h2>Chargers by city</h2>
 <div class="tw"><table>
 <thead><tr><th>City</th><th>chargers</th></tr></thead>
 <tbody>
-<tr><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td>172</td></tr>
+<tr><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td>173</td></tr>
 <tr><td><a href="/en/chargers/mtskheta/">Mtskheta</a></td><td>7</td></tr>
 <tr><td><a href="/en/chargers/gori/">Gori</a></td><td>2</td></tr>
 <tr><td><a href="/en/chargers/batumi/">Batumi</a></td><td>2</td></tr>
@@ -429,6 +441,7 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <tr><td>თენგიზ ჩანტლაძის ქუჩა</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>0.5 ₾/kWh</td></tr>
 <tr><td>წინანდლის ქუჩა #9-ის მიმდებარედ</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>0.5 ₾/kWh</td></tr>
 <tr><td>კოსტავას ქუჩა, #47/57-ის მიმდებარედ</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>0.65 ₾/kWh</td></tr>
+<tr><td>გლდანი, II მ/რ კორპ. #24-ის მიმდებარედ.</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>0.65 ₾/kWh</td></tr>
 <tr><td>ტოვსტონოგოვის 10</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>0.65 ₾/kWh</td></tr>
 <tr><td>სარაჯიშვილის 5</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>0.65 ₾/kWh</td></tr>
 <tr><td>ი.აბაშიძის ქუჩა #11-19-ის მიმდებარედ</td><td><a href="/en/chargers/tbilisi/">Tbilisi</a></td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>0.65 ₾/kWh</td></tr>
@@ -439,13 +452,13 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
 <p class="note">Tariffs are indicative and published by the provider.</p>
 
 <h2>Connector types</h2>
-<div class="chips"><span class="chip"><b>122</b> CCS2</span><span class="chip"><b>122</b> GB/T</span><span class="chip"><b>64</b> Type 2</span><span class="chip"><b>1</b> CHAdeMO</span></div>
+<div class="chips"><span class="chip"><b>122</b> CCS2</span><span class="chip"><b>122</b> GB/T</span><span class="chip"><b>65</b> Type 2</span><span class="chip"><b>1</b> CHAdeMO</span></div>
 
 <h2>Frequently asked questions</h2>
 <div class="faq">
-<details><summary>How many mart EV chargers are there in Georgia?</summary><p>187 public charging stations, 123 of them fast DC.</p></details>
-<details><summary>Which cities have mart EV chargers?</summary><p>Tbilisi (172), Mtskheta (7), Gori (2), Batumi (2), Zestaponi (1), Khashuri (1), Kaspi (1), Poti (1).</p></details>
-<details><summary>Which connectors does mart EV use?</summary><p>CCS2 (122), GB/T (122), Type 2 (64), CHAdeMO (1).</p></details>
+<details><summary>How many mart EV chargers are there in Georgia?</summary><p>188 public charging stations, 123 of them fast DC.</p></details>
+<details><summary>Which cities have mart EV chargers?</summary><p>Tbilisi (173), Mtskheta (7), Gori (2), Batumi (2), Zestaponi (1), Khashuri (1), Kaspi (1), Poti (1).</p></details>
+<details><summary>Which connectors does mart EV use?</summary><p>CCS2 (122), GB/T (122), Type 2 (65), CHAdeMO (1).</p></details>
 </div>
 
 <h2>Other networks</h2>
@@ -476,6 +489,7 @@ font-size:16px;font-family:inherit;font-weight:500;color:var(--ink);background:#
     <a href="/en/chargers/">Chargers</a>
     <a href="/en/tariffs/">Tariffs</a>
     <a href="/en/calculator/">Calculator</a>
+    <a href="/en/charging-time/">Charging time</a>
     <a href="/en/networks/">Networks</a>
     <a href="/en/routes/">Routes</a>
     <a href="/en/customs/">Import duty</a>
