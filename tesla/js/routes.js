@@ -20,6 +20,7 @@ import { emptyNote, heading } from './menus.js';
 import { askName, MAX_NAME } from './name-dialog.js';
 import { hideMapCard, showMapCard, showToast } from './ui.js';
 import { track } from './analytics.js';
+import { icon } from './icons.js';
 
 const MAX_ROUTES = 10;
 
@@ -247,7 +248,7 @@ function routeRow(r, closeMenu) {
   go.className = 'fav-item__go';
   go.type = 'button';
   go.innerHTML =
-    '<span class="fav-item__ico">🛣️</span>' +
+    `<span class="fav-item__ico">${icon('road', 24)}</span>` +
     '<span class="fav-item__txt"><span class="fav-item__name"></span>' +
     '<span class="fav-item__sub"></span></span>';
   go.querySelector('.fav-item__name').textContent = r.name;
@@ -268,7 +269,7 @@ function routeRow(r, closeMenu) {
   rename.type = 'button';
   rename.title = t('favRename');
   rename.setAttribute('aria-label', t('favRename'));
-  rename.textContent = '✏️';
+  rename.innerHTML = icon('pencil', 24);
   rename.addEventListener('click', () => {
     closeMenu();
     renameRoute(r);
@@ -279,7 +280,7 @@ function routeRow(r, closeMenu) {
   del.type = 'button';
   del.title = t('favDelete');
   del.setAttribute('aria-label', t('favDelete'));
-  del.textContent = '🗑';
+  del.innerHTML = icon('trash', 24);
   del.addEventListener('click', () => {
     persist(state.items.filter((x) => x.id !== r.id));
     if (inProgress) clearActive();

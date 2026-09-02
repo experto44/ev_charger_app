@@ -19,6 +19,7 @@ import {
   loadMapsApi,
   initMap,
   getMap,
+  onMap,
   renderMarkers,
   locateMe,
   panTo,
@@ -37,6 +38,7 @@ import { initTheme } from './theme.js';
 import { initPairing } from './pair.js';
 import { PAIRING_ENABLED } from './config.js';
 import { initCarPicker, relabelCar } from './car.js';
+import { icon } from './icons.js';
 import { initDrive, startDrive } from './drive.js';
 import { initFollow, resumeFollow, startFollowWatch } from './follow.js';
 import { initUsage } from './usage.js';
@@ -45,12 +47,12 @@ import {
   buildFilterDrawer,
   hideMapCard,
   hideStation,
-  setCount,
   setStationRefreshedHandler,
   showMapCard,
   showStation,
   showToast,
   toggleFilterDrawer,
+  watchTopbarWidth,
 } from './ui.js';
 import { initTrip, isTripOpen, relabelTrip, setTripDestination, setTripPoints, toggleTripDrawer } from './trip.js';
 
@@ -103,7 +105,6 @@ function repaint() {
   const local = allStations.filter((s) => isSelected(stationCountry(s)));
   const visible = applyFilters([...local, ...turkeyPinsForViewport()]);
   renderMarkers(visible, showStation);
-  setCount(visible.length);
 }
 
 // Pull the Turkish file in the first time it is needed, then repaint so its
@@ -135,7 +136,7 @@ function renderCountryMenu() {
     btn.className = `country-item${on ? ' is-on' : ''}`;
     btn.type = 'button';
     btn.innerHTML =
-      `<span class="country-item__box">${on ? '☑' : '☐'}</span>` +
+      `<span class="country-item__box">${icon(on ? 'boxChecked' : 'box', 22)}</span>` +
       `<span class="country-item__flag">${flagSvg(c.code)}</span>` +
       `<span class="country-item__name">${t(c.key)}</span>` +
       `<span class="country-item__count">${counts.get(c.code) || ''}</span>`;
@@ -229,7 +230,7 @@ function openDestination(pos, name) {
 function wireMapControls() {
   // Turkish pins are viewport-scoped, so they are re-evaluated whenever the map
   // settles. `idle` fires once after a pan/zoom finishes, not per frame.
-  getMap().addListener('idle', () => {
+  onMap('idle', () => {
     if (isSelected('TR') && getTurkeyStations().length) repaint();
   });
 
@@ -376,6 +377,10 @@ function wireChrome() {
   // can be started.
   initHistory();
   paintCountryButton();
+  // Keeps the top row inside the window at every width the car hands us — the
+  // left menu growing in park is what pushed it off the edge. Wired here, with
+  // the rest of the chrome, so the login screen's row fits too.
+  watchTopbarWidth();
 
   // The logo doubles as "start over": reload, which also drops the map back to
   // MAP_CENTER / MAP_ZOOM. Cache-busted so a driver who taps it after an update

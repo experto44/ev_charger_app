@@ -5,6 +5,7 @@
 
 import { getMap } from './map.js';
 import { t } from './i18n.js';
+import { icon, favIcon } from './icons.js';
 
 let acService = null;
 let placesService = null;
@@ -106,7 +107,7 @@ export function initSearch({ getStations, onStation, onPlace, onFavorite }) {
     // A row is a container, not a button: it holds the result itself plus the
     // star that saves it. A <button> inside a <button> is invalid HTML and the
     // inner one does not reliably receive taps.
-    const addRow = (icon, main, sub, onClick, onStar) => {
+    const addRow = (iconHtml, main, sub, onClick, onStar) => {
       const row = document.createElement('div');
       row.className = 'search-row';
 
@@ -114,7 +115,7 @@ export function initSearch({ getStations, onStation, onPlace, onFavorite }) {
       go.className = 'search-row__go';
       go.type = 'button';
       go.innerHTML =
-        `<span class="search-row__ico">${icon}</span>` +
+        `<span class="search-row__ico">${iconHtml}</span>` +
         `<span class="search-row__txt"><span class="search-row__main">${main}</span>` +
         (sub ? `<span class="search-row__sub">${sub}</span>` : '') +
         `</span>`;
@@ -130,7 +131,7 @@ export function initSearch({ getStations, onStation, onPlace, onFavorite }) {
         const star = document.createElement('button');
         star.className = 'search-row__star';
         star.type = 'button';
-        star.textContent = '☆';
+        star.innerHTML = icon('star', 26);
         star.title = t('favAdd');
         star.setAttribute('aria-label', t('favAdd'));
         star.addEventListener('click', () => {
@@ -147,7 +148,7 @@ export function initSearch({ getStations, onStation, onPlace, onFavorite }) {
       addHeader(t('searchStations'));
       for (const s of stations) {
         addRow(
-          '⚡',
+          icon('bolt', 22),
           s.name,
           `${s.provider}${s.city ? ' · ' + s.city : ''}`,
           () => onStation(s),
@@ -163,7 +164,7 @@ export function initSearch({ getStations, onStation, onPlace, onFavorite }) {
         const sf = p.structured_formatting || {};
         const label = sf.main_text || p.description;
         addRow(
-          '📍',
+          favIcon('📍', 22),
           label,
           sf.secondary_text || '',
           async () => {

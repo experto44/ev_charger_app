@@ -109,9 +109,15 @@ button {
 .topbar__mark  { height: 34px; }
 .topbar__title { font-size: 22px; font-weight: 700; white-space: nowrap; }
 
-.topbar__count { color: var(--text-dim); font-size: 16px; margin-left: auto; }
+/* The station counter used to live here and carried `margin-left: auto`. It is
+   gone — a number nobody acts on, sitting in the one place where width is
+   scarce — so the actions block does the pushing now. */
+.topbar__actions { display: flex; align-items: center; gap: 14px; margin-left: auto; }
 
-.topbar__actions { display: flex; align-items: center; gap: 14px; }
+/* A word plus its icon. The word is what shows; the icon takes over when the
+   bar runs out of room (see fitTopbar in ui.js). */
+.btn--labelled { display: inline-flex; align-items: center; gap: 10px; }
+.btn__ico { display: none; }
 
 .btn {
   min-height: var(--touch);
@@ -173,7 +179,7 @@ button {
 .car-item__art { flex: 0 0 auto; width: 34px; height: 34px; }
 .car-item__art svg { display: block; width: 100%; height: 100%; }
 .car-item__name { flex: 1 1 auto; }
-.car-item__tick { flex: 0 0 auto; width: 18px; color: var(--accent-ink); font-weight: 700; }
+.car-item__tick { flex: 0 0 auto; width: 20px; color: var(--accent-ink); }
 .car-colors { display: flex; gap: 10px; padding: 2px 4px 4px; }
 .car-swatch {
   width: 44px;
@@ -256,7 +262,6 @@ button {
 .country-item__box {
   flex: 0 0 auto;
   width: 22px;
-  font-size: 18px;
   color: var(--text-dim);
 }
 .country-item.is-on .country-item__box { color: var(--accent-ink); }
@@ -264,6 +269,30 @@ button {
 .country-item__flag .flag { width: 24px; height: 16px; }
 .country-item__name { flex: 1 1 auto; }
 .country-item__count { flex: 0 0 auto; color: var(--text-dim); font-size: 14px; }
+
+/* The in-car window is not one width: park the car and Tesla widens its own
+   left menu, which narrows the browser under a page that is already open. The
+   top row then ran off the right edge and took the language switch with it
+   (reported from the car, 2026-09-02). Breakpoints alone cannot catch that, so
+   ui.js measures the row and adds these two classes in order until it fits:
+   first everything tightens, then the two worded buttons become their icons. */
+.topbar.is-tight { gap: 10px; padding: 8px 10px; }
+.topbar.is-tight .topbar__actions { gap: 8px; }
+.topbar.is-tight .btn { padding: 0 12px; font-size: 16px; }
+.topbar.is-tight .badge { padding: 6px 10px; font-size: 13px; }
+.topbar.is-tight .lang-switch__btn { min-width: 44px; }
+.topbar.is-tight .btn--flags { padding: 0 8px; }
+.topbar.is-tight .car-badge { width: 32px; height: 32px; }
+
+.topbar.is-icons .btn--labelled {
+  width: var(--touch);
+  padding: 0;
+  justify-content: center;
+}
+.topbar.is-icons .btn--labelled .btn__ico { display: block; }
+.topbar.is-icons .btn--labelled .btn__txt { display: none; }
+.topbar.is-icons .flag { width: 22px; height: 15px; }
+.topbar.is-icons .topbar__mark { height: 28px; }
 
 /* Narrow in-car screens (Model 3/Y sit around 1000–1100 CSS px). The row is
    fixed-height and must not wrap or scroll, so it tightens instead: the word
@@ -277,9 +306,58 @@ button {
   .car-badge { width: 34px; height: 34px; }
 }
 
+/* ── Icons ────────────────────────────────────────── */
+/* Every symbol the app used to draw with a character is an SVG now; js/icons.js
+   says why. These rules are what makes one sit where a character sat. */
+.ico { display: block; flex-shrink: 0; }
+/* The icon rules below set `display` on elements that are sometimes hidden with
+   the `hidden` attribute (the search field's ✕). An author `display` beats the
+   browser's own [hidden] rule, so say it here once and loudly. */
+[hidden] { display: none !important; }
+/* Icons that belong INSIDE a line of prose ride the text instead of blocking it. */
+.seg__sub .ico,
+.seg__badge .ico,
+.opt-divider .ico { display: inline-block; vertical-align: -0.18em; }
+
+.search-bar__clear,
+.panel__close,
+.search-row__star,
+.search-row__ico,
+.fav-item__act,
+.fav-item__ico,
+.fav-chip__ico,
+.fav-icon,
+.country-item__box,
+.car-item__tick,
+.trip-stop__ar,
+.seg__chev,
+.opt-uturn,
+.trip-add__ico,
+.seg__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ── Map stage ───────────────────────────────────────────────────── */
 .stage { position: relative; flex: 1; overflow: hidden; }
 #map   { position: absolute; inset: 0; }
+
+/* Google draws its own furniture inside the map — the logo strip, "Map data
+   ©2026", the scale bar, "keyboard shortcuts" — and writes it in Georgian,
+   because the API is loaded with language=ka. It also hard-codes
+   `font-family: Roboto, Arial` on those elements inline, and the car's browser
+   has no Georgian glyph in either face, so on a real Tesla the whole
+   bottom-right corner arrived as a row of empty boxes. The family has to beat
+   an inline style, hence !important, and the type goes up a size: Google's
+   10px is unreadable at arm's length in a moving car. */
+.gm-style,
+.gm-style * {
+  font-family: 'Noto Sans Georgian', 'Poppins', system-ui, sans-serif !important;
+}
+.gm-style .gm-style-cc span,
+.gm-style .gm-style-cc a,
+.gm-style a[href*='maps.google.com'] { font-size: 12px !important; }
 
 .map-error {
   height: 100%;
@@ -322,12 +400,11 @@ button {
   color: var(--text);
 }
 .search-bar__clear {
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   color: var(--text-dim);
   background: var(--surface-2);
-  font-size: 15px;
 }
 #search-results {
   margin-top: 8px;
@@ -365,7 +442,7 @@ button {
   text-align: left;
 }
 .search-row__go:active { background: var(--surface-2); }
-.search-row__ico { font-size: 18px; }
+.search-row__ico { color: var(--text-dim); }
 .search-row__txt { display: flex; flex-direction: column; min-width: 0; }
 /* One line each. The star takes 48px off the row, so a long place name that
    used to just fit now wraps to two or three lines and the list starts jumping
@@ -385,8 +462,6 @@ button {
   width: var(--touch);
   align-self: stretch;
   min-height: var(--touch);
-  font-size: 24px;
-  line-height: 1;
   color: var(--text-dim);
   background: none;
 }
@@ -511,7 +586,7 @@ button {
   font-weight: 500;
 }
 .fav-chip:active { background: var(--border); }
-.fav-chip__ico { font-size: 20px; line-height: 1; }
+.fav-chip__ico { color: var(--accent-ink); }
 .fav-chip__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* The full list: navigate, rename, remove. */
@@ -537,7 +612,7 @@ button {
   border-radius: calc(var(--radius) - 4px);
 }
 .fav-item__go:active { background: var(--border); }
-.fav-item__ico { flex: 0 0 auto; font-size: 19px; }
+.fav-item__ico { flex: 0 0 auto; color: var(--text-dim); }
 .fav-item__txt { display: flex; flex-direction: column; min-width: 0; }
 .fav-item__name,
 .fav-item__sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -550,7 +625,7 @@ button {
   width: 44px;
   height: var(--touch);
   border-radius: calc(var(--radius) - 4px);
-  font-size: 18px;
+  color: var(--text-dim);
   background: none;
 }
 .fav-item__act:active { background: var(--border); }
@@ -568,10 +643,9 @@ button {
   border-radius: 14px;
   background: var(--surface-2);
   border: 1px solid var(--border);
-  font-size: 26px;
-  line-height: 1;
+  color: var(--text);
 }
-.fav-icon.is-on { background: var(--accent); border-color: var(--accent); }
+.fav-icon.is-on { background: var(--accent); border-color: var(--accent); color: #0d1216; }
 .fav-dialog__actions { display: flex; justify-content: flex-end; gap: 12px; }
 
 /* An unfinished trip, offered once when the app opens. It borrows the
@@ -875,7 +949,7 @@ button {
   color: var(--accent-ink);
 }
 .trip-stop__btn:active { background: var(--border); }
-.trip-stop__ar { font-size: 16px; color: var(--text-dim); font-weight: 700; }
+.trip-stop__ar { color: var(--text-dim); }
 
 .trip-add {
   margin: 4px 0 18px;
@@ -952,7 +1026,7 @@ input[type='range'] { accent-color: var(--accent); height: var(--touch); }
   padding: 2px 6px;
   border-radius: 6px;
 }
-.opt-uturn { color: var(--busy-ink); font-size: 16px; }
+.opt-uturn { color: var(--busy-ink); }
 .opt-prov { display: flex; gap: 8px; font-size: 13px; margin-top: 3px; }
 .opt-prov b { color: var(--accent-ink); }
 .opt-meta { color: var(--text-dim); font-size: 12px; margin-top: 5px; }
@@ -993,7 +1067,6 @@ input[type='range'] { accent-color: var(--accent); height: var(--touch); }
 .seg__chev {
   flex-shrink: 0;
   color: var(--text-dim);
-  font-size: 14px;
   transition: transform 0.18s ease;
 }
 .seg.is-open .seg__chev { transform: rotate(90deg); }
@@ -1009,6 +1082,7 @@ input[type='range'] { accent-color: var(--accent); height: var(--touch); }
 .seg.has-selected .seg__sub { color: var(--accent-ink); font-weight: 600; }
 .seg__badge {
   flex-shrink: 0;
+  gap: 4px;
   background: var(--accent);
   color: #0d1216;
   font-size: 12px;
@@ -1404,6 +1478,7 @@ body.is-driving .map-controls { bottom: 112px; }
 #drive-remain { font-size: 24px; font-weight: 700; }
 #drive-eta { font-size: 17px; color: var(--text-dim); }
 .drive-foot__btn {
+  position: relative;
   width: 52px;
   height: 52px;
   display: flex;
@@ -1413,6 +1488,18 @@ body.is-driving .map-controls { bottom: 112px; }
   background: var(--surface-2);
   border: 1px solid var(--border);
   color: var(--text);
+}
+/* Which recorded voice is speaking, as one letter in the corner of the speaker
+   button: ქ / კ, F / M. A letter rather than a symbol, because the car's fonts
+   drop symbols (see js/icons.js) but never letters. */
+.drive-foot__tag {
+  position: absolute;
+  right: 5px;
+  bottom: 3px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent-ink);
 }
 .drive-foot__btn.is-off { color: var(--out); }
 .drive-foot__btn:active { background: var(--border); }

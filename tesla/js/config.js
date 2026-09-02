@@ -5,6 +5,19 @@
 // works if a localhost referrer is added to this key in the Google Cloud console.
 export const MAPS_API_KEY = 'AIzaSyDYHSs4P--TUa-VVlS5DReotBtbjZK58No';
 
+// Vector map ID (Google Cloud project ev-charger-app-497408, "GeoCharge Tesla
+// Night", JavaScript + Vector). A map ID is what unlocks vector rendering, and
+// vector rendering is what lets the map ROTATE — the raster map cannot turn at
+// all, so "the car always points up" is impossible without this.
+//
+// It carries no cloud style yet: Google's own style editor has been failing to
+// load since 2026-09-02 (it asks Maps JS v=weekly for internal `styleEditor` /
+// `webgl` libraries that release no longer has), so our night/day palette could
+// not be uploaded. Until it can, drive mode runs on Google's stock vector map
+// in the matching colour scheme. Attaching the style to THIS id later needs no
+// code change and no release: the map picks it up server-side.
+export const MAP_ID = 'f2a137d83114c77b78b54138';
+
 // Same live feed the mobile app uses (catalog + live status in one JSON), and
 // the config file next to it that can switch off the direct-to-operator reads
 // without a redeploy (see js/live.js).

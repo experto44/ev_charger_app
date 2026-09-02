@@ -15,7 +15,28 @@
 // step; ORS gives a maneuver code and a road name, and turn-phrases.js turns
 // those into our own Georgian.
 
-import { getMap, setUserLocation, setMarkersDimmed, setUserStyle } from './map.js';
+import {
+  getMap,
+  isVectorMap,
+  onMap,
+  setMapHeading,
+  setMarkersDimmed,
+  setUserLocation,
+  setUserStyle,
+  setVectorMode,
+} from './map.js';
+import { icon } from './icons.js';
+import {
+  distanceClip,
+  hasVoice,
+  maneuverClip,
+  preload as preloadVoice,
+  say,
+  setVoiceSex,
+  stop as stopVoice,
+  unlock as unlockVoice,
+  voiceSex,
+} from './voice.js';
 import { showToast, hideToast } from './ui.js';
 import { t, getLang } from './i18n.js';
 import { track } from './analytics.js';
@@ -71,6 +92,10 @@ const ARROW = {
   flag: SVG('<path d="M10 28 V5"/><path d="M10 6 H24 L20.5 10.5 L24 15 H10"/>'),
 };
 
+// Google's path knows only which way the arrow points, so that is what its
+// spoken clip is picked by.
+const ARROW_KIND = { left: 'left', right: 'right', uturn: 'uturn', up: 'straight' };
+
 /** Map a Google maneuver string to one of our arrow names. */
 function googleArrowKey(maneuver) {
   const m = (maneuver || '').toLowerCase();
@@ -106,7 +131,10 @@ function fmtDuration(seconds) {
   return `${h} ${ka ? 'სთ' : 'h'} ${m} ${ka ? 'წთ' : 'min'}`;
 }
 
-// ── Voice (best-effort; stays silent if no matching TTS voice) ───────────────
+// ── Voice ───────────────────────────────────────────────────────────────────
+// Recorded clips first (js/voice.js), the browser's own synthesiser only as a
+// fallback. On a Tesla that fallback produces nothing at all — no installed
+// voices — which is exactly why the recordings exist.
 function pickVoice() {
   if (!('speechSynthesis' in window)) return null;
   const vs = speechSynthesis.getVoices();
@@ -119,13 +147,14 @@ function pickVoice() {
   );
 }
 
-function speak(text) {
-  if (!state.voiceOn || !text || !('speechSynthesis' in window)) return;
+/** The browser's synthesiser. Returns false when it cannot say this sentence. */
+function synthesize(text) {
+  if (!text || !('speechSynthesis' in window)) return false;
   const v = pickVoice();
-  // Instructions are Georgian (Maps loaded language=ka). An English voice
-  // reading Georgian is worse than silence, so skip unless a ka voice exists.
+  // Instructions are Georgian. An English voice reading Georgian is worse than
+  // silence, so skip unless a Georgian voice exists.
   const isGeo = /[Ⴀ-ჿ]/.test(text);
-  if (isGeo && !(v && v.lang?.toLowerCase().startsWith('ka'))) return;
+  if (isGeo && !(v && v.lang?.toLowerCase().startsWith('ka'))) return false;
   try {
     const u = new SpeechSynthesisUtterance(text);
     if (v) u.voice = v;
@@ -133,7 +162,24 @@ function speak(text) {
     u.rate = 1;
     speechSynthesis.cancel();
     speechSynthesis.speak(u);
-  } catch (_) {/* TTS unavailable — text banner still guides */}
+    return true;
+  } catch (_) {
+    return false; // text banner still guides
+  }
+}
+
+/**
+ * Say one instruction: the recorded clips if we have them, the synthesiser
+ * otherwise.
+ *
+ * @param {string[]} clips  clip ids, in the order they should be heard
+ * @param {string} text     the same thing as a sentence, for the fallback
+ */
+function speak(clips, text) {
+  if (!state.voiceOn) return;
+  say(clips).then((played) => {
+    if (!played) synthesize(text);
+  });
 }
 
 // ── Route building ───────────────────────────────────────────────────────────
@@ -163,8 +209,8 @@ async function orsRoute(points) {
     const mapped = [];
     for (const st of steps) {
       if (!Number.isInteger(st.endIdx) || st.endIdx < 0 || st.endIdx >= pts.length) return null;
-      const { text, arrow } = turnPhrase(st, lang);
-      mapped.push({ arrowKey: arrow, text, endIdx: st.endIdx });
+      const { text, arrow, kind } = turnPhrase(st, lang);
+      mapped.push({ arrowKey: arrow, text, kind, endIdx: st.endIdx });
     }
     return finish(pts, mapped, road.totalDurS || 0);
   } catch (e) {
@@ -193,9 +239,13 @@ async function googleRoute(origin, destination, waypoints) {
         if (path.length && i === 0) return; // drop the vertex shared with prev step
         path.push(pt);
       });
+      const arrowKey = googleArrowKey(step.maneuver);
       steps.push({
-        arrowKey: googleArrowKey(step.maneuver),
+        arrowKey,
         text: stripHtml(step.instructions),
+        // Google gives a sentence, not a maneuver we recognise; the arrow is
+        // the most the recorded clips can be chosen by on this path.
+        kind: ARROW_KIND[arrowKey],
         endIdx: path.length - 1,
       });
     }
@@ -209,19 +259,51 @@ async function computeRoute(origin, destination, waypoints) {
   return (await orsRoute(points)) || googleRoute(origin, destination, waypoints);
 }
 
-/** Nearest-point projection of a coordinate → {offM, alongM}. */
+/**
+ * Nearest-point projection of a coordinate onto the route.
+ *
+ * `snapped` is the point ON the line, and it is what the car is drawn at while
+ * we are plausibly on the road. Two errors stack up otherwise, and on a real
+ * Tesla they showed as a car driving alongside its own route: the GPS fix is a
+ * few metres out, and the road itself comes from OpenStreetMap (through ORS)
+ * while the tiles under it are Google's, whose geometry for the same street can
+ * sit several metres away. Neither is wrong enough to fix; both are visible.
+ *
+ * `bearing` is the direction of the segment we are on — a steadier heading than
+ * the GPS one, which wanders at low speed and lags in a bend.
+ */
 function project(pos) {
   const { path, cum } = state.route;
-  let offM = Infinity, alongM = 0;
+  let offM = Infinity, alongM = 0, snapped = pos, segA = null, segB = null;
   for (let i = 0; i < path.length - 1; i++) {
     const [d, tt] = projSeg(pos, path[i], path[i + 1]);
     if (d < offM) {
       offM = d;
       alongM = cum[i] + tt * (cum[i + 1] - cum[i]);
+      snapped = {
+        lat: path[i].lat + (path[i + 1].lat - path[i].lat) * tt,
+        lng: path[i].lng + (path[i + 1].lng - path[i].lng) * tt,
+      };
+      segA = path[i];
+      segB = path[i + 1];
     }
   }
-  return { offM, alongM };
+  let bearing = null;
+  if (segA && segB) {
+    bearing =
+      (google.maps.geometry.spherical.computeHeading(
+        new google.maps.LatLng(segA.lat, segA.lng),
+        new google.maps.LatLng(segB.lat, segB.lng),
+      ) + 360) % 360;
+  }
+  return { offM, alongM, snapped, bearing };
 }
+
+// How far off the line we still call "on the road". Beyond this the car is
+// drawn at the raw fix, because pulling it onto a road it has left would hide
+// exactly the thing the driver needs to see — and past 60 m, three fixes in a
+// row, we reroute anyway.
+const SNAP_MAX_M = 45;
 
 // ── Progress reporting ───────────────────────────────────────────────────────
 /**
@@ -277,6 +359,10 @@ function report(pos, remainM, force = false) {
 
 // ── State ────────────────────────────────────────────────────────────────────
 const VOICE_KEY = 'gc_drive_voice';
+// "The car always points up", the way Google Maps drives. On by default because
+// that is what a driver expects of a nav screen; the button in the drive footer
+// turns it off for anyone who would rather keep north at the top.
+const HEADING_KEY = 'gc_drive_heading_up';
 const DRIVE_ZOOM = 17; // street level — also what the recenter button restores
 const state = {
   active: false,
@@ -301,6 +387,8 @@ const state = {
   lastReroute: 0,
   arrived: false,
   voiceOn: localStorage.getItem(VOICE_KEY) !== '0',
+  headingUp: localStorage.getItem(HEADING_KEY) !== '0',
+  rotatable: false,      // the vector map is up and can actually turn
   // Which saved route this is, and how far through it we are. Reported out as
   // `gc:drive-progress` events; routes.js is what writes them to the account,
   // so drive mode itself knows nothing about Firestore.
@@ -394,6 +482,16 @@ export async function startDrive({ destination, waypoints = [], route: routeRef 
   state.lastReportPos = null;
 
   enterUi();
+  // Audio may only start from something the driver did, and starting navigation
+  // is exactly that — the tap is still what got us here. Warm the clips up too,
+  // so the first instruction does not wait on a download.
+  unlockVoice();
+  preloadVoice();
+  // Swap the browsing map for the vector one, which is the only kind Google
+  // lets us rotate. Returns false on a browser with no WebGL, and then drive
+  // mode simply runs north-up on the map we already had.
+  state.rotatable = setVectorMode(true);
+  syncHeadingBtn();
   setUserStyle('car'); // the driver is a Tesla now, not a blue dot
   setUserLocation(origin);
   drawRoute();
@@ -401,7 +499,8 @@ export async function startDrive({ destination, waypoints = [], route: routeRef 
 
   // `dragstart` fires for the driver's finger only — our own panTo/setZoom do
   // not raise it — so it is exactly the signal that they took the map over.
-  state.dragListener = getMap().addListener('dragstart', () => setFollowing(false));
+  // Registered through map.js so it survives the map being rebuilt.
+  state.dragListener = onMap('dragstart', () => setFollowing(false));
 
   // First report goes out straight away: a trip that is interrupted two minutes
   // in should still be resumable.
@@ -439,23 +538,37 @@ export function endDrive() {
   state.following = true;
   state.lastPos = null;
   $('drive-recenter').classList.add('is-hidden');
+  stopVoice();
   if ('speechSynthesis' in window) speechSynthesis.cancel();
   setUserStyle('dot');
+  // Take the route off the map and mark the drive over BEFORE the map is
+  // swapped back: the swap announces itself, and a drive that still looked
+  // active would answer by drawing the line again on the new map.
   state.line?.setMap(null);
   state.casing?.setMap(null);
   state.destMarker?.setMap(null);
   state.line = state.casing = state.destMarker = null;
-  setMarkersDimmed(false);
-  document.body.classList.remove('is-driving');
-  $('drive').classList.add('is-hidden');
   state.active = false;
   state.route = null;
   state.routeRef = null;
+  setMapHeading(0);
+  setVectorMode(false); // back to the browsing map, in our own palette
+  state.rotatable = false;
+  setMarkersDimmed(false);
+  document.body.classList.remove('is-driving');
+  $('drive').classList.add('is-hidden');
   document.dispatchEvent(new CustomEvent('gc:drive-end'));
 }
 
 // ── Map drawing ──────────────────────────────────────────────────────────────
 function drawRoute() {
+  // Idempotent on purpose: the route is drawn again whenever the map object
+  // underneath is rebuilt (entering drive mode, switching theme mid-drive) and
+  // after every reroute, and a second line drawn over the first is both a leak
+  // and a visible smear.
+  state.line?.setMap(null);
+  state.casing?.setMap(null);
+  state.destMarker?.setMap(null);
   const path = state.route.path;
   setMarkersDimmed(true);
   state.casing = new google.maps.Polyline({
@@ -493,28 +606,39 @@ function drawRoute() {
 // ── Per-fix update ───────────────────────────────────────────────────────────
 function onPosition(pos, geoHeading) {
   if (!state.active) return;
-  state.lastPos = pos; // where the recenter button goes back to
 
-  // Heading: prefer the GPS value, else derive from movement. Worked out BEFORE
-  // the marker is moved, because the car silhouette is drawn pointing along it.
+  const { offM, alongM, snapped, bearing } = project(pos);
+  // On the road as far as we can tell: draw the car on the line rather than
+  // beside it. Off it, the raw fix is the honest answer.
+  const onRoute = offM <= SNAP_MAX_M;
+  const shown = onRoute ? snapped : pos;
+  state.lastPos = shown; // where the recenter button goes back to
+
+  // Heading, best source first: the road we are on, then the GPS bearing, then
+  // the line between the last two fixes. Worked out BEFORE the marker moves,
+  // because the car silhouette is drawn pointing along it.
   let moving = false;
-  if (state.prevPos) {
-    const moved = haversineM(state.prevPos, pos);
-    moving = moved > 3;
-    if (geoHeading == null && moving) {
-      state.heading = google.maps.geometry.spherical.computeHeading(
-        new google.maps.LatLng(state.prevPos.lat, state.prevPos.lng),
-        new google.maps.LatLng(pos.lat, pos.lng),
-      );
-    }
+  if (state.prevPos) moving = haversineM(state.prevPos, pos) > 3;
+  if (onRoute && moving && bearing != null) {
+    state.heading = bearing;
+  } else if (geoHeading != null) {
+    state.heading = geoHeading;
+  } else if (moving && state.prevPos) {
+    state.heading = google.maps.geometry.spherical.computeHeading(
+      new google.maps.LatLng(state.prevPos.lat, state.prevPos.lng),
+      new google.maps.LatLng(pos.lat, pos.lng),
+    );
   }
-  if (geoHeading != null) state.heading = geoHeading;
   state.prevPos = pos;
 
-  setUserLocation(pos, state.heading);
-  followCamera(pos, moving);
-
-  const { offM, alongM } = project(pos);
+  setUserLocation(shown, state.heading);
+  // Turn the world so the car keeps pointing up the screen. Only while actually
+  // moving: a stationary GPS heading spins, and a map that spins at a red light
+  // is worse than no rotation at all.
+  if (state.headingUp && state.rotatable && moving && state.heading != null) {
+    setMapHeading(state.heading);
+  }
+  followCamera(shown, moving);
 
   // Off-route → reroute (debounced, needs a few consecutive off-fixes).
   if (offM > 60) state.offCount++;
@@ -546,6 +670,12 @@ function followCamera(pos, moving) {
     );
   }
   map.panTo(center);
+}
+
+/** Point the map north again, or back along the car, after a toggle. */
+function applyHeadingMode() {
+  if (!state.rotatable) return;
+  setMapHeading(state.headingUp && state.heading != null ? state.heading : 0);
 }
 
 /**
@@ -585,15 +715,19 @@ function updateBanner(alongM) {
   $('drive-dist').textContent = fmtDist(distToTurn);
   $('drive-road').textContent = road;
 
-  // Voice: announce once entering the far zone, once at the near zone.
+  // Voice: once on the way in, once at the turn itself. The far call carries
+  // the distance ("ორას მეტრში, მოუხვიე მარჯვნივ"), the near one is the
+  // maneuver alone — by then the distance is the windscreen's job.
+  const kind = next ? next.kind || 'straight' : 'arrive';
+  const move = maneuverClip(kind);
   const far = `${stepIdx}:far`;
   const near = `${stepIdx}:near`;
   if (distToTurn <= 300 && distToTurn > 70 && !state.announced.has(far)) {
     state.announced.add(far);
-    speak(`${fmtDist(distToTurn)} — ${road}`);
+    speak([distanceClip(distToTurn), move], `${fmtDist(distToTurn)} — ${road}`);
   } else if (distToTurn <= 70 && !state.announced.has(near)) {
     state.announced.add(near);
-    speak(road);
+    speak([move], road);
   }
 
   // Remaining distance + ETA.
@@ -613,7 +747,7 @@ function onArrived() {
   $('drive-remain').textContent = '';
   $('drive-eta').textContent = '';
   $('drive-banner').classList.add('is-arrived');
-  speak(t('driveArrived'));
+  speak(['arrive'], t('driveArrived'));
   track('drive_arrived', {});
 }
 
@@ -643,10 +777,8 @@ async function reroute(pos, currentAlong) {
     state.announced = new Set();
     state.arrived = false;
     $('drive-banner').classList.remove('is-arrived');
-    state.line?.setMap(null);
-    state.casing?.setMap(null);
     drawRoute();
-    speak(t('driveRerouted'));
+    speak(['reroute'], t('driveRerouted'));
   } catch (_) {
     showToast(t('tripNoRoute'));
   } finally {
@@ -668,15 +800,50 @@ function enterUi() {
   $('drive-remain').textContent = '';
   $('drive-eta').textContent = '';
   syncVoiceBtn();
+  syncHeadingBtn();
 }
+
+/**
+ * The north-up / heading-up switch. Hidden outright where the map cannot turn
+ * (no WebGL in the car's browser), because a button that does nothing is worse
+ * than no button.
+ */
+function syncHeadingBtn() {
+  const btn = $('drive-heading');
+  if (!btn) return;
+  btn.classList.toggle('is-hidden', !state.rotatable);
+  btn.classList.toggle('is-off', !state.headingUp);
+  btn.innerHTML = icon(state.headingUp ? 'headingUp' : 'compass', 24);
+  const key = state.headingUp ? 'driveNorthUp' : 'driveHeadingUp';
+  btn.title = t(key);
+  btn.setAttribute('aria-label', t(key));
+}
+
+// The speaker button carries three states, not two: the woman's voice, the
+// man's voice, and off. Both languages are recorded twice (js/voice.js), and a
+// car has nowhere else to put a preference — a settings screen a driver has to
+// go looking for would be worse than one button they can find by pressing it.
+const SPEAKER_ON =
+  '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 00-2.5-4v8a4.5 4.5 0 002.5-4zm-2.5-9v2.06a7 7 0 010 13.88V21a9 9 0 000-18z"/></svg>';
+const SPEAKER_OFF =
+  '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm16.6 3l2.1-2.1-1.4-1.4-2.1 2.1-2.1-2.1-1.4 1.4L16.8 12l-2.1 2.1 1.4 1.4 2.1-2.1 2.1 2.1 1.4-1.4L19.6 12z"/></svg>';
 
 function syncVoiceBtn() {
   const btn = $('drive-voice');
   if (!btn) return;
+  const male = voiceSex() === 'm';
   btn.classList.toggle('is-off', !state.voiceOn);
-  btn.innerHTML = state.voiceOn
-    ? '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 00-2.5-4v8a4.5 4.5 0 002.5-4zm-2.5-9v2.06a7 7 0 010 13.88V21a9 9 0 000-18z"/></svg>'
-    : '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm16.6 3l2.1-2.1-1.4-1.4-2.1 2.1-2.1-2.1-1.4 1.4L16.8 12l-2.1 2.1 1.4 1.4 2.1-2.1 2.1 2.1 1.4-1.4L19.6 12z"/></svg>';
+  // The letter is what says WHICH voice without a word of explanation: ქ/კ in
+  // Georgian, F/M in English. Both are letters, so no font can drop them the
+  // way it dropped ✕ — see js/icons.js.
+  btn.innerHTML =
+    (state.voiceOn ? SPEAKER_ON : SPEAKER_OFF) +
+    (state.voiceOn
+      ? `<span class="drive-foot__tag">${t(male ? 'voiceTagMale' : 'voiceTagFemale')}</span>`
+      : '');
+  const label = !state.voiceOn ? 'voiceOff' : male ? 'voiceMale' : 'voiceFemale';
+  btn.title = t(label);
+  btn.setAttribute('aria-label', t(label));
 }
 
 export function initDrive() {
@@ -688,10 +855,50 @@ export function initDrive() {
     track('drive_recenter', {});
     setFollowing(true);
   });
+  $('drive-heading').addEventListener('click', () => {
+    state.headingUp = !state.headingUp;
+    localStorage.setItem(HEADING_KEY, state.headingUp ? '1' : '0');
+    applyHeadingMode();
+    syncHeadingBtn();
+    track('drive_heading_up', { on: state.headingUp ? 1 : 0 });
+  });
+  // Drive mode rebuilds the map when it starts (raster → vector), and the theme
+  // switch rebuilds it again mid-drive. Both leave the route line on a map that
+  // no longer exists, so it is drawn afresh.
+  document.addEventListener('gc:map-recreated', () => {
+    if (!state.active || !state.route) return;
+    state.rotatable = isVectorMap();
+    drawRoute();
+    applyHeadingMode();
+    syncHeadingBtn();
+  });
+  // Woman → man → off → woman. Muting is never more than two presses away, and
+  // every press says out loud in a toast which state it landed in.
   $('drive-voice').addEventListener('click', () => {
-    state.voiceOn = !state.voiceOn;
+    if (state.voiceOn && voiceSex() === 'f') {
+      setVoiceSex('m');
+    } else if (state.voiceOn) {
+      state.voiceOn = false;
+    } else {
+      state.voiceOn = true;
+      setVoiceSex('f');
+    }
     localStorage.setItem(VOICE_KEY, state.voiceOn ? '1' : '0');
-    if (!state.voiceOn && 'speechSynthesis' in window) speechSynthesis.cancel();
+    if (!state.voiceOn) {
+      stopVoice();
+      if ('speechSynthesis' in window) speechSynthesis.cancel();
+      showToast(t('voiceOff'), 2500);
+    } else {
+      unlockVoice();
+      preloadVoice();
+      showToast(t(voiceSex() === 'm' ? 'voiceMale' : 'voiceFemale'), 2500);
+      // And say so rather than leaving the driver waiting for a voice that
+      // cannot come: no recordings and no usable synthesiser is a silent
+      // switch, and silence is indistinguishable from a bug.
+      hasVoice().then((ok) => {
+        if (!ok && !pickVoice()) showToast(t('driveNoVoice'));
+      });
+    }
     syncVoiceBtn();
   });
   // Warm the voice list (Chromium populates asynchronously).

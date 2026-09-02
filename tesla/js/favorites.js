@@ -18,6 +18,7 @@ import { askName, MAX_NAME } from './name-dialog.js';
 import { renderRouteRows } from './routes.js';
 import { showToast } from './ui.js';
 import { track } from './analytics.js';
+import { icon, favIcon } from './icons.js';
 
 const MAX_FAVS = 4;
 
@@ -134,7 +135,7 @@ function renderRail() {
     b.type = 'button';
     b.title = f.name;
     b.innerHTML =
-      `<span class="fav-chip__ico">${f.icon}</span>` +
+      `<span class="fav-chip__ico">${favIcon(f.icon, 22)}</span>` +
       `<span class="fav-chip__name"></span>`;
     b.querySelector('.fav-chip__name').textContent = f.name;
     b.addEventListener('click', () => navigateTo(f));
@@ -168,7 +169,8 @@ function renderPlaces(menu) {
     const go = document.createElement('button');
     go.className = 'fav-item__go';
     go.type = 'button';
-    go.innerHTML = `<span class="fav-item__ico">${f.icon}</span><span class="fav-item__name"></span>`;
+    go.innerHTML =
+      `<span class="fav-item__ico">${favIcon(f.icon, 24)}</span><span class="fav-item__name"></span>`;
     go.querySelector('.fav-item__name').textContent = f.name;
     go.addEventListener('click', () => {
       closeMenu();
@@ -180,7 +182,7 @@ function renderPlaces(menu) {
     rename.type = 'button';
     rename.title = t('favRename');
     rename.setAttribute('aria-label', t('favRename'));
-    rename.textContent = '✏️';
+    rename.innerHTML = icon('pencil', 24);
     rename.addEventListener('click', () => {
       closeMenu();
       renameFavorite(f);
@@ -191,7 +193,7 @@ function renderPlaces(menu) {
     del.type = 'button';
     del.title = t('favDelete');
     del.setAttribute('aria-label', t('favDelete'));
-    del.textContent = '🗑';
+    del.innerHTML = icon('trash', 24);
     del.addEventListener('click', () => {
       persist(state.items.filter((x) => x.id !== f.id));
       track('fav_remove', {});

@@ -9,6 +9,7 @@
 
 import { t } from './i18n.js';
 import { closeTopbarMenus } from './menus.js';
+import { icon as svgIcon } from './icons.js';
 
 const MODEL_KEY = 'gc_car_model';
 const COLOR_KEY = 'gc_car_color';
@@ -152,7 +153,7 @@ function renderMenu() {
         `<button type="button" class="car-item${m.id === model.id ? ' is-on' : ''}" data-model="${m.id}">` +
         `<span class="car-item__art">${carSvg(0, m)}</span>` +
         `<span class="car-item__name">${m.name}</span>` +
-        `<span class="car-item__tick">${m.id === model.id ? '✓' : ''}</span>` +
+        `<span class="car-item__tick">${m.id === model.id ? svgIcon('check', 20) : ''}</span>` +
         `</button>`,
     ).join('') +
     `<h3 class="car-menu__label">${t('carColor')}</h3>` +

@@ -19,7 +19,7 @@
 // Drive mode has its own watch and its own camera (drive.js), so this one steps
 // aside for the whole of a navigation session.
 
-import { getMap, setUserLocation, setUserStyle } from './map.js';
+import { getMap, onMap, setUserLocation, setUserStyle } from './map.js';
 
 // Street level, one step wider than drive mode's 17: there is no turn banner
 // here, so a little more road ahead is worth having.
@@ -138,9 +138,9 @@ export function startFollowWatch() {
   // `dragstart` is the driver's finger only — moving the camera in code never
   // raises it, which is what makes it a clean signal.
   if (!state.dragListener) {
-    state.dragListener = getMap()?.addListener('dragstart', () => {
+    state.dragListener = onMap('dragstart', () => {
       state.handedOver = true;
-    }) ?? null;
+    });
   }
 }
 

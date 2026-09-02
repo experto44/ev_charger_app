@@ -19,6 +19,7 @@ import { getLang, t } from './i18n.js';
 import { addSavedRoute } from './routes.js';
 import { showToast } from './ui.js';
 import { track } from './analytics.js';
+import { icon } from './icons.js';
 
 const MAX_HISTORY = 20;
 
@@ -162,7 +163,7 @@ function renderList() {
     go.className = 'fav-item__go';
     go.type = 'button';
     go.innerHTML =
-      '<span class="fav-item__ico">🕘</span>' +
+      `<span class="fav-item__ico">${icon('clock', 24)}</span>` +
       '<span class="fav-item__txt"><span class="fav-item__name"></span>' +
       '<span class="fav-item__sub"></span></span>';
     go.querySelector('.fav-item__name').textContent =
@@ -188,7 +189,7 @@ function renderList() {
     star.type = 'button';
     star.title = t('favSave');
     star.setAttribute('aria-label', t('favSave'));
-    star.textContent = '☆';
+    star.innerHTML = icon('star', 26);
     star.addEventListener('click', () => {
       close();
       addSavedRoute({ name: h.name, destination: h.destination, waypoints: h.waypoints });

@@ -49,7 +49,7 @@ const STRINGS = {
       'იგივე ინფორმაციას იძლევა თეგეტას საკუთარი აპლიკაციაც.\n\n' +
       'ასეთი დამტენი ხშირად ობიექტის სტუმრებისთვისაა განკუთვნილი.\n' +
       'სანამ გზას გაუყვებით, ჯობია წინასწარ დარეკოთ ან ადგილზე იკითხოთ.\n' +
-      'მადლობა რომ სარგებლობთ GeoCharge აპლიკაციით ❤',
+      'მადლობა რომ სარგებლობთ GeoCharge აპლიკაციით.',
     unknownInfoGeneric:
       'ამ დამტენზე ოპერატორი ცოცხალ მონაცემს არ გვიზიარებს. ვიცით, რომ ' +
       'დამტენი იქ დგას, მაგრამ ვერ გეტყვით, ახლა დაკავებულია თუ ' +
@@ -86,7 +86,7 @@ const STRINGS = {
       'ახალ მომხმარებელს 24 საათი უფასოდ.\n' +
       'უფასო 24 საათიანი რეჟიმის გასააქტიურებლად, ტელეფონზე გადმოწერე GeoCharge აპლიკაცია.',
     pairStep1: 'გახსენი GeoCharge-ის აპლიკაცია ტელეფონზე',
-    pairStep2: 'პროფილი → Tesla → ავტომობილის დაკავშირება',
+    pairStep2: 'პროფილი, შემდეგ Tesla, შემდეგ ავტომობილის დაკავშირება',
     pairStep3: 'შეიყვანე ეს კოდი და მანქანა თვითონ შემოვა',
     pairValid: 'კოდი მოქმედებს',
     pairExpired: 'კოდს ვადა გაუვიდა',
@@ -123,7 +123,7 @@ const STRINGS = {
     tripPortsUnit: 'პორტი',
     tripFreeUnit: 'თავისუფალი',
     tripKmUnit: 'კმ',
-    tripSegmentsHint: 'გახსენი მონაკვეთი დამტენების სანახავად — ✓ ნიშნავს რომ იქ რეკომენდებული გაჩერებაა',
+    tripSegmentsHint: 'გახსენი მონაკვეთი დამტენების სანახავად. მონიშნული ნიშნავს რომ იქ რეკომენდებული გაჩერებაა',
     chargersOnRoute: 'დამტენები მარშრუტზე',
     recommended: 'რეკომენდ.',
     uTurnInfo: 'დამტენი გზის მოპირდაპირე მხარესაა — მოგიწევს მობრუნება',
@@ -134,10 +134,18 @@ const STRINGS = {
     tripClearRoute: 'მარშრუტის გასუფთავება',
     tripUnreachable: 'ყურადღება: მარშრუტის ნაწილზე მისაწვდომი დამტენი ვერ მოიძებნა — ბოლო მონაკვეთი დაუგეგმავია',
     onboardTitle: 'რჩევა Tesla-ს ეკრანისთვის',
-    onboardFullscreen: 'ბრაუზერში ჩართე სრულეკრანიანი რეჟიმი (⛶ ღილაკი მისამართის ველთან)',
+    onboardFullscreen: 'ბრაუზერში ჩართე სრულეკრანიანი რეჟიმი (სრული ეკრანის ღილაკი მისამართის ველთან)',
     onboardBookmark: 'შეინახე ეს გვერდი bookmark-ად, რომ ერთი შეხებით გახსნა',
     onboardOk: 'გასაგებია',
     driveEnd: 'დასრულება',
+    driveNoVoice: 'ხმოვანი მითითებები ამ ბრაუზერში მიუწვდომელია',
+    voiceFemale: 'ქალის ხმა',
+    voiceMale: 'კაცის ხმა',
+    voiceOff: 'ხმა გამორთულია',
+    voiceTagFemale: 'ქ',
+    voiceTagMale: 'კ',
+    driveHeadingUp: 'მანქანა ყოველთვის მაღლა',
+    driveNorthUp: 'ჩრდილოეთი მაღლა',
     driveRerouting: 'მარშრუტის გადათვლა…',
     driveRerouted: 'მარშრუტი გადათვლილია',
     driveArrived: 'დანიშნულების ადგილას ხართ',
@@ -242,7 +250,7 @@ const STRINGS = {
       "Tegeta's own app says the same.\n\n" +
       "Chargers like this are often meant for the venue's guests.\n" +
       'Call ahead or ask on site before you set off.\n' +
-      'Thank you for using GeoCharge ❤',
+      'Thank you for using GeoCharge.',
     unknownInfoGeneric:
       'The operator does not share live data for this plug. We know the ' +
       'charger is there, but we cannot tell you whether it is free or in use ' +
@@ -278,7 +286,7 @@ const STRINGS = {
       'New users get 24 hours free.\n' +
       'To start the free 24 hours, download the GeoCharge app on your phone.',
     pairStep1: 'Open the GeoCharge app on your phone',
-    pairStep2: 'Profile → Tesla → Connect a car',
+    pairStep2: 'Profile, then Tesla, then Connect a car',
     pairStep3: 'Enter this code and the car signs itself in',
     pairValid: 'Code valid for',
     pairExpired: 'This code has expired',
@@ -315,7 +323,7 @@ const STRINGS = {
     tripPortsUnit: 'ports',
     tripFreeUnit: 'free',
     tripKmUnit: 'km',
-    tripSegmentsHint: 'Open a segment to see its chargers — ✓ means a recommended stop is inside',
+    tripSegmentsHint: 'Open a segment to see its chargers. A tick means a recommended stop is inside',
     chargersOnRoute: 'Chargers on route',
     recommended: 'Recommended',
     uTurnInfo: 'The charger is on the opposite side of the road — you will need to turn around',
@@ -326,10 +334,18 @@ const STRINGS = {
     tripClearRoute: 'Clear route',
     tripUnreachable: 'Warning: no reachable charger on part of the route — the last segment is unplanned',
     onboardTitle: 'Tips for the Tesla screen',
-    onboardFullscreen: 'Switch the browser to fullscreen (⛶ button next to the address bar)',
+    onboardFullscreen: 'Switch the browser to fullscreen (the button next to the address bar)',
     onboardBookmark: 'Bookmark this page so it opens with one tap',
     onboardOk: 'Got it',
     driveEnd: 'End',
+    driveNoVoice: 'Spoken guidance is not available in this browser',
+    voiceFemale: "Woman's voice",
+    voiceMale: "Man's voice",
+    voiceOff: 'Voice off',
+    voiceTagFemale: 'F',
+    voiceTagMale: 'M',
+    driveHeadingUp: 'Keep the car pointing up',
+    driveNorthUp: 'North up',
     driveRerouting: 'Rerouting…',
     driveRerouted: 'Route updated',
     driveArrived: 'You have arrived',

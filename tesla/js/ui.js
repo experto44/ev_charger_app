@@ -371,10 +371,69 @@ export function toggleFilterDrawer(open) {
   document.getElementById('filter-drawer').classList.toggle('is-open', open);
 }
 
-// ── Small helpers ────────────────────────────────────────────────────────────
-export function setCount(n) {
-  document.getElementById('station-count').textContent = `${n} ${t('stationsShown')}`;
+// ── The top row, at whatever width the car gives us ──────────────────────────
+// Tesla does not keep the browser one size: put the car in park and the left
+// menu grows, the page narrows under it, and the row that fitted a second ago
+// runs off the right edge — on the real screen the language switch and the
+// sign-out button went over the side. A media query cannot see that (the CSS
+// pixel width is the same on a 15" screen whatever Tesla puts beside it), so
+// the row is measured and tightened in two steps, and only as far as needed:
+//   is-tight  — smaller gaps, padding, badge and flags
+//   is-icons  — "მარშრუტი" / "ფილტრები" become their icons
+// The station counter that used to sit here is gone entirely; it was ~110px of
+// a number nobody taps.
+let fitPending = false;
+
+export function fitTopbar() {
+  const bar = document.querySelector('.topbar');
+  const actions = bar && bar.querySelector('.topbar__actions');
+  if (!bar || !actions) return;
+
+  const fits = () =>
+    bar.scrollWidth <= bar.clientWidth + 1 &&
+    actions.getBoundingClientRect().right <= bar.getBoundingClientRect().right + 1;
+
+  fitPending = true; // our own class changes must not re-trigger the observer
+  bar.classList.remove('is-tight', 'is-icons');
+  if (!fits()) {
+    bar.classList.add('is-tight');
+    if (!fits()) bar.classList.add('is-icons');
+  }
+  // A timer, not requestAnimationFrame: rAF only fires when the browser
+  // actually paints, and this has to run in a browser that may not be.
+  setTimeout(() => { fitPending = false; }, 0);
 }
+
+/**
+ * Re-fit whenever the row or its contents change size: the window itself, a
+ * language switch (the words are a different length), the trial badge
+ * appearing, the sign-out button arriving after login.
+ */
+export function watchTopbarWidth() {
+  const bar = document.querySelector('.topbar');
+  if (!bar) return;
+  let queued = false;
+  const schedule = () => {
+    if (queued || fitPending) return;
+    queued = true;
+    setTimeout(() => { queued = false; fitTopbar(); }, 16);
+  };
+  addEventListener('resize', schedule);
+  addEventListener('orientationchange', schedule);
+  if (window.ResizeObserver) new ResizeObserver(schedule).observe(bar);
+  if (window.MutationObserver) {
+    new MutationObserver(schedule).observe(bar, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ['class', 'hidden'],
+    });
+  }
+  fitTopbar();
+}
+
+// ── Small helpers ────────────────────────────────────────────────────────────
 
 // ── Bottom-of-map cards ──────────────────────────────────────────────────────
 // Three different cards want the same slot: a searched destination, an

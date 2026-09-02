@@ -3,12 +3,13 @@
 // blocks with live battery-on-arrival, and "start navigation" to Google Maps.
 
 import { planRoute } from './routing.js';
-import { getMap, panTo, setMarkersDimmed, locateMe } from './map.js';
+import { onMap, getMap, panTo, setMarkersDimmed, locateMe } from './map.js';
 import { getStations, getTurkeyStations, loadTurkey } from './data.js';
 import { TURKEY_BOUNDS } from './config.js';
 import { startDrive } from './drive.js';
 import { saveRoute } from './routes.js';
 import { track } from './analytics.js';
+import { icon } from './icons.js';
 import { MIN_POWER_STEPS, sortConnectors, toggleFilterDrawer } from './ui.js';
 import { providerLogo } from './format.js';
 import { t } from './i18n.js';
@@ -151,13 +152,13 @@ function renderStops() {
       () => armMapPick(i),
     );
     if (i > 0) {
-      iconBtn('<span class="trip-stop__ar">↑</span>', 'up', () => moveStop(i, -1));
+      iconBtn(`<span class="trip-stop__ar">${icon('arrowUp', 22)}</span>`, 'up', () => moveStop(i, -1));
     }
     if (i < state.stops.length - 1) {
-      iconBtn('<span class="trip-stop__ar">↓</span>', 'down', () => moveStop(i, 1));
+      iconBtn(`<span class="trip-stop__ar">${icon('arrowDown', 22)}</span>`, 'down', () => moveStop(i, 1));
     }
     if (state.stops.length > 2) {
-      iconBtn('<span class="trip-stop__ar">✕</span>', 'remove', () => removeStop(i));
+      iconBtn(`<span class="trip-stop__ar">${icon('close', 22)}</span>`, 'remove', () => removeStop(i));
     }
 
     wrap.appendChild(row);
@@ -474,7 +475,7 @@ function optionBlockEl(o) {
 
   const badges =
     (o.recommended ? `<span class="opt-badge">${t('recommended')}</span>` : '') +
-    (o.requiresUTurn ? `<span class="opt-uturn" title="${t('uTurnInfo')}">⤴</span>` : '');
+    (o.requiresUTurn ? `<span class="opt-uturn" title="${t('uTurnInfo')}">${icon('uTurn', 22)}</span>` : '');
 
   // connectors · [N stations ·] N ports · X/Y free · arrival%
   const metaParts = [];
@@ -488,7 +489,7 @@ function optionBlockEl(o) {
     ` · <span class="${arrival < 15 ? 'txt-danger' : 'txt-accent'}">${arrival}%</span>`;
 
   el.innerHTML =
-    `<div class="opt-tick">${sel ? '✓' : ''}</div>` +
+    `<div class="opt-tick">${sel ? icon('check', 22) : ''}</div>` +
     `<div class="opt-body">` +
     `<div class="opt-title">${o.title}${badges}</div>` +
     providerLines +
@@ -542,16 +543,16 @@ function renderOptions() {
       'seg' + (hasSelected ? ' has-selected' : '') + (open ? ' is-open' : '');
 
     const sub = hasSelected
-      ? `<div class="seg__sub">✓ ${selectedItems.map((o) => o.title).join(', ')}</div>`
+      ? `<div class="seg__sub">${icon('check', 18)} ${selectedItems.map((o) => o.title).join(', ')}</div>`
       : `<div class="seg__sub txt-dim">${items.length} ${t('tripChargers')}</div>`;
     const badge = hasSelected
-      ? `<span class="seg__badge">✓ ${selectedItems.length}</span>`
+      ? `<span class="seg__badge">${icon('check', 18)} ${selectedItems.length}</span>`
       : `<span class="seg__count txt-dim">${items.length} ${t('tripChargers')}</span>`;
 
     const head = document.createElement('div');
     head.className = 'seg__head';
     head.innerHTML =
-      `<span class="seg__chev">▸</span>` +
+      `<span class="seg__chev">${icon('chevronRight', 20)}</span>` +
       `<div class="seg__title">` +
       `<div class="seg__range">${startKm}–${endKm} ${t('tripKmUnit')}</div>` +
       sub +
@@ -572,7 +573,7 @@ function renderOptions() {
           const gap = document.createElement('div');
           gap.className = 'opt-divider';
           gap.innerHTML =
-            `<span>↓ ${Math.round(o.alongKm - items[i - 1].alongKm)} ${t('tripKmUnit')}</span>`;
+            `<span>${icon('arrowDown', 16)} ${Math.round(o.alongKm - items[i - 1].alongKm)} ${t('tripKmUnit')}</span>`;
           body.appendChild(gap);
         }
         body.appendChild(optionBlockEl(o));
@@ -669,7 +670,10 @@ export function initTrip() {
   inited = true;
   renderStops();
   renderFilters();
-  getMap().addListener('click', handleMapClick);
+  onMap('click', handleMapClick);
+  // The map object itself is replaced when drive mode swaps to the rotating
+  // one; a planned route drawn on the old one would simply vanish.
+  document.addEventListener('gc:map-recreated', () => { if (state.result) drawRoute(); });
 
   const battery = $('trip-battery');
   battery.addEventListener('input', () => {

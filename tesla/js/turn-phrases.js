@@ -151,12 +151,15 @@ function cleanRoad(name) {
  *        `type` is the ORS maneuver code; `key` overrides it when the caller
  *        already knows the maneuver by name (the Google path does).
  * @param {string} lang 'ka' or anything else for English
- * @returns {{text: string, arrow: string}}
+ * @returns {{text: string, arrow: string, kind: string}} `kind` is the maneuver
+ *          by name ('left', 'keepRight', 'roundabout'…) — what the spoken clip
+ *          is chosen by, since the recordings know maneuvers, not sentences.
  */
 export function turnPhrase(step, lang) {
   const ka = lang === 'ka';
   const key = step?.key || ORS_TYPE[step?.type];
   const arrow = TURN_ARROW[key] || 'up';
+  const kind = key || 'straight';
 
   // A roundabout is only worth announcing by its exit number; without one,
   // fall through to the plain "there is a roundabout here".
@@ -173,6 +176,6 @@ export function turnPhrase(step, lang) {
   // no road name belongs on either.
   const bare = NO_ROAD_NAME.has(key) || (key === 'roundabout' && !exitPhrase);
   const road = bare ? '' : cleanRoad(step?.name);
-  if (!road) return { text: base, arrow };
-  return { text: `${base}, ${ka ? toLocative(road) : road}`, arrow };
+  if (!road) return { text: base, arrow, kind };
+  return { text: `${base}, ${ka ? toLocative(road) : road}`, arrow, kind };
 }

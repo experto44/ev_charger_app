@@ -1,6 +1,6 @@
 // Google Map wrapper: day/night style, status-coloured markers, clustering.
 
-import { MAPS_API_KEY, MAP_CENTER, MAP_ZOOM } from './config.js';
+import { MAPS_API_KEY, MAP_ID, MAP_CENTER, MAP_ZOOM } from './config.js';
 import { carIcon, onCarChange } from './car.js';
 
 // Dark style tuned to the app palette (surface #151c22 family).
@@ -67,6 +67,12 @@ function stationOut(s) {
 }
 
 let map = null;
+let mapContainer = null;
+// Which of the two maps is on screen. The browsing map is RASTER, because that
+// is the only one our own day/night styles work on; drive mode swaps to a
+// VECTOR one, because a raster map physically cannot rotate and "the car
+// always points up" is a rotation. See setVectorMode().
+let vector = false;
 let markers = new Map(); // station.id -> google.maps.Marker
 let clusterer = null;
 let userMarker = null;   // blue "my location" dot
@@ -93,31 +99,209 @@ export function loadMapsApi() {
   });
 }
 
+// Options both maps share. Everything that differs between raster and vector
+// is added by mapOptions() below, so the two can never drift apart.
+const BASE_OPTIONS = {
+  disableDefaultUI: true,
+  // No Maps API zoom control: it drew itself in the bottom-right corner, under
+  // our own buttons, and at a size you cannot hit in a moving car. The column
+  // in index.html carries a full-size pair instead.
+  zoomControl: false,
+  gestureHandling: 'greedy', // one-finger everything — it's a car screen
+  clickableIcons: false,
+};
+
+function mapOptions(theme, wantVector) {
+  if (wantVector) {
+    return {
+      ...BASE_OPTIONS,
+      mapId: MAP_ID,
+      renderingType: google.maps.RenderingType.VECTOR,
+      // Our own styles are ignored on a vector map (Google logs exactly that),
+      // so the closest we can get to the palette until the cloud style is
+      // attached to MAP_ID is Google's own light/dark scheme.
+      colorScheme: theme === 'light' ? 'LIGHT' : 'DARK',
+    };
+  }
+  // The theme is already on <html> before the first paint, so the map is born
+  // in the right one instead of flashing dark and then repainting.
+  return { ...BASE_OPTIONS, styles: stylesFor(theme) };
+}
+
+/** Is a rotating map possible here at all? A Tesla browser without WebGL is not. */
+export function canRotate() {
+  if (!MAP_ID) return false;
+  try {
+    const c = document.createElement('canvas');
+    return !!(c.getContext('webgl2') || c.getContext('webgl'));
+  } catch (_) {
+    return false;
+  }
+}
+
 export function initMap(container) {
+  mapContainer = container;
   map = new google.maps.Map(container, {
     center: MAP_CENTER,
     zoom: MAP_ZOOM,
-    // The theme is already on <html> before the first paint, so the map is born
-    // in the right one instead of flashing dark and then repainting.
-    styles: stylesFor(document.documentElement.dataset.theme),
-    disableDefaultUI: true,
-    // No Maps API zoom control: it drew itself in the bottom-right corner, under
-    // our own buttons, and at a size you cannot hit in a moving car. The column
-    // in index.html carries a full-size pair instead.
-    zoomControl: false,
-    gestureHandling: 'greedy', // one-finger everything — it's a car screen
-    clickableIcons: false,
+    ...mapOptions(document.documentElement.dataset.theme, false),
   });
+  // Keep the car square with the roads under it: the map eases into a new
+  // heading over several frames, and the silhouette has to turn with it rather
+  // than with the value we asked for.
+  onMap('heading_changed', () => applyUserIcon());
   return map;
+}
+
+// ── Listeners that must survive a rebuilt map ────────────────────────────────
+// A map ID cannot be changed on a live map, so switching between the raster and
+// the vector one means building a new google.maps.Map — and every listener
+// attached to the old one dies with it. Anything registered here is re-attached
+// to the new map automatically; use it instead of getMap().addListener().
+const mapListeners = [];
+
+export function onMap(event, handler) {
+  const entry = { event, handler, ref: map ? map.addListener(event, handler) : null };
+  mapListeners.push(entry);
+  return {
+    remove() {
+      entry.ref?.remove();
+      const i = mapListeners.indexOf(entry);
+      if (i >= 0) mapListeners.splice(i, 1);
+    },
+  };
+}
+
+/**
+ * Swap between the browsing map (raster, our palette) and the driving map
+ * (vector, rotatable). Everything map.js owns moves across by itself; anything
+ * drawn by another module — the drive line, the trip route — is redrawn by that
+ * module when it hears `gc:map-recreated`.
+ *
+ * @returns {boolean} whether the map now on screen can rotate
+ */
+export function setVectorMode(on) {
+  const want = !!on && canRotate();
+  if (!map || want === vector) return vector;
+
+  const center = map.getCenter();
+  const zoom = map.getZoom();
+  const traffic = !!trafficLayer?.getMap();
+
+  // Overlays map.js owns: unhook them, then re-hook to the new map. Markers go
+  // through the clusterer, which is rebuilt from the same marker objects.
+  clusterer?.clearMarkers();
+  userMarker?.setMap(null);
+  searchMarker?.setMap(null);
+  trafficLayer?.setMap(null);
+  clusterer = null;
+
+  map = new google.maps.Map(mapContainer, {
+    center,
+    zoom,
+    ...mapOptions(document.documentElement.dataset.theme, want),
+  });
+  vector = want;
+  clearInterval(headingTimer);
+  headingTimer = 0;
+  headingNow = headingTarget = 0;
+
+  for (const e of mapListeners) e.ref = map.addListener(e.event, e.handler);
+
+  if (userMarker) userMarker.setMap(map);
+  if (searchMarker) searchMarker.setMap(map);
+  if (traffic) setTraffic(true);
+  rebuildClusterer();
+
+  document.dispatchEvent(new CustomEvent('gc:map-recreated', { detail: { vector } }));
+  return vector;
+}
+
+/** True while the rotatable (vector) map is the one on screen. */
+export function isVectorMap() {
+  return vector;
+}
+
+// ── Rotation ─────────────────────────────────────────────────────────────────
+// Heading is eased rather than snapped: a GPS fix a second, dropped straight
+// onto the camera, makes the whole world jerk at every bend.
+//
+// The easing runs on a timer, not requestAnimationFrame. rAF is the obvious
+// tool and the wrong one here: it is tied to the browser actually painting, and
+// a browser that reports itself visible while painting nothing (the in-app
+// preview does exactly this, and an in-car browser may too) would then never
+// turn the map at all. A timer is always delivered, and 20 steps a second is
+// smooth enough for a map — and cheaper on a car's GPU than 60.
+const HEADING_STEP_MS = 50;
+const HEADING_EASE = 0.25;   // fraction of what is left, per step
+let headingNow = 0;
+let headingTarget = 0;
+let headingTimer = 0;
+
+const shortWay = (from, to) => ((((to - from) % 360) + 540) % 360) - 180;
+
+function stepHeading() {
+  if (!map || !vector) {
+    clearInterval(headingTimer);
+    headingTimer = 0;
+    return;
+  }
+  const delta = shortWay(headingNow, headingTarget);
+  if (Math.abs(delta) < 0.4) {
+    headingNow = headingTarget;
+    clearInterval(headingTimer);
+    headingTimer = 0;
+  } else {
+    headingNow = (headingNow + delta * HEADING_EASE + 360) % 360;
+  }
+  map.setHeading(headingNow);
+  applyUserIcon();
+}
+
+/**
+ * Point the map so `deg` (a compass bearing) is up the screen. 0 is north-up,
+ * which is also all a raster map can do — there the call does nothing.
+ */
+export function setMapHeading(deg) {
+  if (!map || !vector) return;
+  headingTarget = ((deg % 360) + 360) % 360;
+  if (Math.abs(shortWay(headingNow, headingTarget)) < 0.4) return;
+  // One step immediately, so the map turns even if timers are being throttled.
+  stepHeading();
+  if (!headingTimer) headingTimer = setInterval(stepHeading, HEADING_STEP_MS);
+}
+
+/**
+ * Where the top of the screen currently points RIGHT NOW — read back from the
+ * map rather than from our own target, because the two differ while a turn is
+ * still easing, and the car has to be drawn against what is actually on screen.
+ */
+export function getMapHeading() {
+  if (!vector || !map) return 0;
+  const h = map.getHeading();
+  return Number.isFinite(h) ? h : headingNow;
 }
 
 export function getMap() {
   return map;
 }
 
-/** Repaint the map for 'light' / 'dark'. Silent before the map exists. */
+/**
+ * Repaint the map for 'light' / 'dark'. Silent before the map exists.
+ *
+ * The raster map just takes new styles. The vector one carries its scheme in an
+ * option that only applies at construction, so switching theme mid-drive means
+ * building it again — the same swap setVectorMode() does, and just as
+ * self-repairing.
+ */
 export function setMapTheme(theme) {
-  map?.setOptions({ styles: stylesFor(theme) });
+  if (!map) return;
+  if (!vector) {
+    map.setOptions({ styles: stylesFor(theme) });
+    return;
+  }
+  vector = false;      // force the rebuild past setVectorMode's early return
+  setVectorMode(true);
 }
 
 /** Station-level colour: any free port → free; else any busy → busy; else out. */
@@ -249,6 +433,12 @@ export function renderMarkers(stations, onSelect) {
     }
   }
 
+  rebuildClusterer();
+}
+
+/** Put every marker we hold onto the map that is on screen right now. */
+function rebuildClusterer() {
+  if (!map) return;
   const list = [...markers.values()];
   if (!clusterer) {
     clusterer = new markerClusterer.MarkerClusterer({
@@ -312,9 +502,24 @@ const DOT_ICON = () => ({
   strokeWeight: 3,
 });
 
+// Marker icons are drawn on the screen, not on the ground: rotate the map and
+// they stay upright. So the car is drawn at its heading MINUS the map's, which
+// on a heading-up map is zero — the car points up the screen, as it should, and
+// the world turns underneath it.
+let drawnCarBucket = null;
+
 function applyUserIcon() {
   if (!userMarker) return;
-  userMarker.setIcon(userStyle === 'car' ? carIcon(userHeading) : DOT_ICON());
+  if (userStyle !== 'car') {
+    drawnCarBucket = null;
+    userMarker.setIcon(DOT_ICON());
+    return;
+  }
+  const rel = ((userHeading - getMapHeading()) % 360 + 360) % 360;
+  const bucket = Math.round(rel / 3);
+  if (bucket === drawnCarBucket) return; // nothing visible would change
+  drawnCarBucket = bucket;
+  userMarker.setIcon(carIcon(rel));
 }
 
 // Changing car in the topbar has to show on a marker that is already drawn.
@@ -324,6 +529,7 @@ onCarChange(applyUserIcon);
 export function setUserStyle(style) {
   if (style === userStyle) return;
   userStyle = style;
+  drawnCarBucket = null;
   applyUserIcon();
 }
 
@@ -341,6 +547,7 @@ export function setUserLocation(pos, heading) {
     userHeading = heading;
     if (userStyle === 'car') applyUserIcon();
   }
+  if (!userMarker.getMap()) userMarker.setMap(map);
   userMarker.setPosition(pos);
 }
 

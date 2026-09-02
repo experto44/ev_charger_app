@@ -37,10 +37,9 @@
       <span class="topbar__title">GeoCharge <span class="accent" data-t="forTesla"></span></span>
     </button>
     <span id="access-badge" class="badge is-hidden"></span>
-    <span id="station-count" class="topbar__count"></span>
     <div class="topbar__actions">
-      <button id="btn-trip" class="btn" data-t="trip"></button>
-      <button id="btn-filters" class="btn" data-t="filters"></button>
+      <button id="btn-trip" class="btn btn--labelled"><svg class="btn__ico" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M15 5.1L9 3 3.4 4.9a.5.5 0 00-.4.5v15.1a.5.5 0 00.7.5L9 19l6 2.1 5.6-1.9a.5.5 0 00.4-.5V3.5a.5.5 0 00-.7-.5zM15 19.1l-6-2.1V4.9l6 2.1z"/></svg><span class="btn__txt" data-t="trip"></span></button>
+      <button id="btn-filters" class="btn btn--labelled"><svg class="btn__ico" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M10 18h4v-2h-4zM3 6v2h18V6zm3 7h12v-2H6z"/></svg><span class="btn__txt" data-t="filters"></span></button>
       <div class="country-select">
         <button id="btn-countries" class="btn btn--flags" aria-haspopup="true" aria-expanded="false">
           <span id="country-label" class="country-flags"></span>
@@ -89,9 +88,9 @@
     <!-- Search (stations + destinations) -->
     <div id="search-box">
       <div class="search-bar">
-        <span class="search-bar__ico">🔍</span>
+        <span class="search-bar__ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0A4.5 4.5 0 1114 9.5 4.5 4.5 0 019.5 14z"/></svg></span>
         <input id="search-input" type="text" autocomplete="off" data-t-placeholder="searchPlaceholder">
-        <button id="search-clear" class="search-bar__clear" hidden aria-label="Clear">✕</button>
+        <button id="search-clear" class="search-bar__clear" hidden aria-label="Clear"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M18.3 5.71L12 12.01l-6.29-6.3-1.42 1.42 6.3 6.29-6.3 6.29 1.42 1.42 6.29-6.3 6.29 6.3 1.42-1.42-6.3-6.29 6.3-6.29z"/></svg></button>
       </div>
       <div id="search-results"></div>
     </div>
@@ -129,7 +128,7 @@
 
     <!-- Destination action card (after picking a searched place) -->
     <div id="dest-card" class="dest-card is-hidden">
-      <button id="dest-close" class="panel__close" aria-label="Close">✕</button>
+      <button id="dest-close" class="panel__close" aria-label="Close"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M18.3 5.71L12 12.01l-6.29-6.3-1.42 1.42 6.3 6.29-6.3 6.29 1.42 1.42 6.29-6.3 6.29 6.3 1.42-1.42-6.3-6.29 6.3-6.29z"/></svg></button>
       <div class="dest-card__name"></div>
       <div class="dest-card__actions">
         <button id="dest-nav" class="btn btn--primary" data-t="navigate"></button>
@@ -139,7 +138,7 @@
 
     <!-- Station details -->
     <aside id="station-panel" class="panel">
-      <button id="panel-close" class="panel__close" aria-label="Close">✕</button>
+      <button id="panel-close" class="panel__close" aria-label="Close"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M18.3 5.71L12 12.01l-6.29-6.3-1.42 1.42 6.3 6.29-6.3 6.29 1.42 1.42 6.29-6.3 6.29 6.3 1.42-1.42-6.3-6.29 6.3-6.29z"/></svg></button>
       <div class="panel__head">
         <img class="panel__logo" alt="" hidden>
         <div>
@@ -174,7 +173,7 @@
     <aside id="filter-drawer" class="drawer">
       <div class="drawer__head">
         <h2 data-t="filters"></h2>
-        <button id="filter-close" class="panel__close" aria-label="Close">✕</button>
+        <button id="filter-close" class="panel__close" aria-label="Close"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M18.3 5.71L12 12.01l-6.29-6.3-1.42 1.42 6.3 6.29-6.3 6.29 1.42 1.42 6.29-6.3 6.29 6.3 1.42-1.42-6.3-6.29 6.3-6.29z"/></svg></button>
       </div>
       <h3 class="drawer__label" data-t="status"></h3>
       <div class="chip-row">
@@ -196,12 +195,12 @@
     <aside id="trip-drawer" class="drawer">
       <div class="drawer__head">
         <h2 data-t="trip"></h2>
-        <button id="trip-close" class="panel__close" aria-label="Close">✕</button>
+        <button id="trip-close" class="panel__close" aria-label="Close"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M18.3 5.71L12 12.01l-6.29-6.3-1.42 1.42 6.3 6.29-6.3 6.29 1.42 1.42 6.29-6.3 6.29 6.3 1.42-1.42-6.3-6.29 6.3-6.29z"/></svg></button>
       </div>
 
       <div id="trip-stops"></div>
       <button id="trip-add-stop" class="btn btn--ghost trip-add">
-        <span>＋</span> <span data-t="addStop"></span>
+        <span class="trip-add__ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></svg></span> <span data-t="addStop"></span>
       </button>
 
       <h3 class="drawer__label" data-t="connector"></h3>
@@ -246,6 +245,7 @@
           <span id="drive-remain"></span>
           <span id="drive-eta"></span>
         </div>
+        <button id="drive-heading" class="drive-foot__btn" type="button" aria-label="Heading"></button>
         <button id="drive-voice" class="drive-foot__btn" aria-label="Voice"></button>
         <button id="drive-exit" class="btn btn--primary drive-foot__exit" data-t="driveEnd"></button>
       </div>
@@ -293,7 +293,7 @@
       <div class="onboard__card history-card">
         <div class="drawer__head">
           <h2 data-t="historyTitle"></h2>
-          <button id="history-close" class="panel__close" aria-label="Close">✕</button>
+          <button id="history-close" class="panel__close" aria-label="Close"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M18.3 5.71L12 12.01l-6.29-6.3-1.42 1.42 6.3 6.29-6.3 6.29 1.42 1.42 6.29-6.3 6.29 6.3 1.42-1.42-6.3-6.29 6.3-6.29z"/></svg></button>
         </div>
         <div id="history-list" class="history-list"></div>
       </div>

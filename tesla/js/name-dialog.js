@@ -5,6 +5,8 @@
 // resolves a promise instead of taking callbacks: every caller wants exactly
 // one answer and then wants to get on with saving.
 
+import { favIcon } from './icons.js';
+
 const $ = (id) => document.getElementById(id);
 
 /** Longest name the field accepts. Rows and chips ellipsise past that. */
@@ -24,7 +26,7 @@ function renderIcons(icons, selected, onPick) {
     const b = document.createElement('button');
     b.className = `fav-icon${icon === selected ? ' is-on' : ''}`;
     b.type = 'button';
-    b.textContent = icon;
+    b.innerHTML = favIcon(icon, 26);
     b.addEventListener('click', () => onPick(icon));
     wrap.appendChild(b);
   }
