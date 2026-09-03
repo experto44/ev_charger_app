@@ -20,6 +20,7 @@ import {
   isVectorMap,
   locateMe,
   navFollow,
+  navSetCamera,
   onCameraWrite,
   navJump,
   navStop,
@@ -433,6 +434,7 @@ const state = {
   following: true,
   lastPos: null,
   dragListener: null,
+  pointerWatch: null,
   prevPos: null,
   prevAt: 0,
   speed: 0,
@@ -557,10 +559,14 @@ export async function startDrive({ destination, waypoints = [], route: routeRef 
   drawRoute();
   track('drive_start', { stops: waypoints.length });
 
-  // `dragstart` fires for the driver's finger only — our own panTo/setZoom do
-  // not raise it — so it is exactly the signal that they took the map over.
-  // Registered through map.js so it survives the map being rebuilt.
+  // Two ways of noticing that the driver has taken the map over, because one is
+  // not enough any more. `dragstart` is the map's own signal and never fires for
+  // our camera writes — but those writes now happen every frame, and a gesture
+  // that is overruled sixty times a second may never become a drag at all. So
+  // the pointer itself is watched too: once a finger has moved a few pixels
+  // across the map, the camera is theirs.
   state.dragListener = onMap('dragstart', () => setFollowing(false));
+  state.pointerWatch = watchMapPointer();
 
   // First report goes out straight away: a trip that is interrupted two minutes
   // in should still be resumable.
@@ -596,6 +602,8 @@ export function endDrive() {
   }
   state.dragListener?.remove();
   state.dragListener = null;
+  state.pointerWatch?.();
+  state.pointerWatch = null;
   state.following = true;
   state.lastPos = null;
   $('drive-recenter').classList.add('is-hidden');
@@ -747,6 +755,36 @@ function onPosition(pos, geoHeading, geoSpeed) {
 }
 
 /**
+ * Watch for a finger dragging the map. Returns a function that stops watching.
+ *
+ * A tap is deliberately NOT enough: a driver who prods a charger should not lose
+ * the camera. Only real movement counts.
+ */
+function watchMapPointer() {
+  const el = document.getElementById('map');
+  if (!el) return () => {};
+  let from = null;
+  const down = (e) => { from = { x: e.clientX, y: e.clientY }; };
+  const move = (e) => {
+    if (!from) return;
+    if (Math.hypot(e.clientX - from.x, e.clientY - from.y) < 6) return;
+    from = null;
+    setFollowing(false);
+  };
+  const up = () => { from = null; };
+  el.addEventListener('pointerdown', down, { capture: true, passive: true });
+  el.addEventListener('pointermove', move, { capture: true, passive: true });
+  el.addEventListener('pointerup', up, { capture: true, passive: true });
+  el.addEventListener('pointercancel', up, { capture: true, passive: true });
+  return () => {
+    el.removeEventListener('pointerdown', down, { capture: true });
+    el.removeEventListener('pointermove', move, { capture: true });
+    el.removeEventListener('pointerup', up, { capture: true });
+    el.removeEventListener('pointercancel', up, { capture: true });
+  };
+}
+
+/**
  * Re-aim the camera after something other than a fix changed: the heading-up
  * switch, or the map being rebuilt. Without this a parked car would sit facing
  * the old way until it moved again.
@@ -769,6 +807,7 @@ function applyHeadingMode() {
  */
 function setFollowing(on) {
   state.following = on;
+  navSetCamera(on); // takes effect now, not at the next fix
   $('drive-recenter').classList.toggle('is-hidden', on);
   if (!on || !state.lastPos) return;
   getMap().setZoom(DRIVE_ZOOM);

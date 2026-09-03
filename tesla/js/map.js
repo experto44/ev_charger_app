@@ -506,6 +506,18 @@ function stopNavLoop() {
   navLastStep = 0;
 }
 
+/**
+ * Hand the camera over, or take it back, THIS INSTANT.
+ *
+ * The loop writes the camera on every frame, so a driver dragging the map was
+ * overruled sixty times a second and the map would not move at all. Waiting for
+ * the next fix to carry `camera: false` is a second too late — by then the
+ * gesture has been fought off. This flips it on the spot.
+ */
+export function navSetCamera(on) {
+  if (navTarget) navTarget.camera = !!on;
+}
+
 /** Snap to the latest fix instead of easing to it (first fix, recenter). */
 export function navJump() {
   if (!navTarget) return;
