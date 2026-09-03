@@ -150,6 +150,8 @@ export function initMap(container) {
   // heading over several frames, and the silhouette has to turn with it rather
   // than with the value we asked for.
   onMap('heading_changed', () => applyUserIcon());
+  // Redraw whatever rides on our own canvas while the driver moves the map.
+  onMap('bounds_changed', publishMapCamera);
   return map;
 }
 
@@ -277,6 +279,33 @@ let navTimer = 0;
 let navTarget = null;       // where the last fix says we are
 let navShown = null;        // where we are currently drawn
 let navLastStep = 0;        // when the easing last ran, for time-based easing
+// Anything that has to be drawn in step with the camera — the route line is
+// drawn on its own canvas for exactly this reason — is told here, in the same
+// frame, from the same numbers.
+let cameraHook = null;
+
+/** Be told, per frame, the camera that was just written. */
+export function onCameraWrite(fn) {
+  cameraHook = fn;
+}
+
+/**
+ * The same message, but for the camera the MAP is showing rather than the one
+ * we wrote. While the driver has the map in their hand we are not moving it, so
+ * without this anything drawn against our camera — the route line — would stay
+ * where it was and slide off the road as they drag.
+ */
+function publishMapCamera() {
+  if (!map || !cameraHook || !navShown || navTarget?.camera) return;
+  const c = map.getCenter();
+  if (!c) return;
+  cameraHook({
+    center: { lat: c.lat(), lng: c.lng() },
+    zoom: map.getZoom(),
+    heading: vector ? map.getHeading() || 0 : 0,
+    car: { lat: navShown.pos.lat, lng: navShown.pos.lng, heading: navShown.heading },
+  });
+}
 let headingNow = 0;         // what the map is turned to right now
 
 const shortWay = (from, to) => ((((to - from) % 360) + 540) % 360) - 180;
@@ -286,6 +315,11 @@ export function getMapHeading() {
   return vector ? headingNow : 0;
 }
 
+// The camera is written here, once per animation frame, and never handed to
+// the map's own panTo. Letting Google animate it does keep the route line
+// glued to the ground — the map moves the base and its overlays in one pass —
+// but it arrives in short glides that judder badly at driving speed, which was
+// worse than the thing it fixed. Tried and rejected on the road, 2026-09-03.
 function writeCamera() {
   if (!map || !navShown) return;
   // The car is drawn where we have eased it to, not where the fix was.
@@ -310,6 +344,12 @@ function writeCamera() {
   } else {
     map.setCenter(center);
   }
+  cameraHook?.({
+    center: { lat: center.lat(), lng: center.lng() },
+    zoom: map.getZoom(),
+    heading: vector ? headingNow : 0,
+    car: { lat: navShown.pos.lat, lng: navShown.pos.lng, heading: navShown.heading },
+  });
 }
 
 function stepNav() {
@@ -322,24 +362,44 @@ function stepNav() {
   navLastStep = now;
   const ease = 1 - Math.exp(-dt / NAV_TAU_MS);
   const t = navTarget;
-  const aim = predicted();
-  // Metres apart, near enough: a degree of latitude is ~111 km, and longitude
-  // shrinks with the cosine, which at Georgian latitudes is about 0.74.
-  const gapM = Math.hypot(
-    (aim.lat - navShown.pos.lat) * 111320,
-    (aim.lng - navShown.pos.lng) * 111320 * 0.74,
-  );
-  if (gapM > NAV_SNAP_M) {
-    navJump();
-    return;
+
+  if (t.locate) {
+    // Everything happens on one number: how far along the route we are drawn.
+    // Turn it back into a point only at the end, so the car can only ever be ON
+    // the road, whatever the corner does.
+    const aimAlong = t.along + carriedM();
+    if (Math.abs(aimAlong - navShown.along) > NAV_SNAP_M) {
+      navJump();
+      return;
+    }
+    navShown.along += (aimAlong - navShown.along) * ease;
+    const at = t.locate(navShown.along);
+    if (at && at.pos) navShown.pos = at.pos;
+    const headTo = Number.isFinite(at?.heading) ? at.heading : t.heading;
+    navShown.heading =
+      (navShown.heading + shortWay(navShown.heading, headTo) * ease + 360) % 360;
+  } else {
+    const aim = predicted();
+    // Metres apart, near enough: a degree of latitude is ~111 km, and longitude
+    // shrinks with the cosine, which at Georgian latitudes is about 0.74.
+    const gapM = Math.hypot(
+      (aim.lat - navShown.pos.lat) * 111320,
+      (aim.lng - navShown.pos.lng) * 111320 * 0.74,
+    );
+    if (gapM > NAV_SNAP_M) {
+      navJump();
+      return;
+    }
+    navShown.pos = {
+      lat: navShown.pos.lat + (aim.lat - navShown.pos.lat) * ease,
+      lng: navShown.pos.lng + (aim.lng - navShown.pos.lng) * ease,
+    };
+    navShown.heading =
+      (navShown.heading + shortWay(navShown.heading, t.heading) * ease + 360) % 360;
   }
-  navShown.pos = {
-    lat: navShown.pos.lat + (aim.lat - navShown.pos.lat) * ease,
-    lng: navShown.pos.lng + (aim.lng - navShown.pos.lng) * ease,
-  };
-  navShown.heading =
-    (navShown.heading + shortWay(navShown.heading, t.heading) * ease + 360) % 360;
-  const mapTarget = vector && t.rotate ? navShown.heading : 0;
+  const mapTarget = vector && t.rotate
+    ? (Number.isFinite(t.mapHeading) ? t.mapHeading : navShown.heading)
+    : 0;
   const turnEase = 1 - Math.exp(-dt / NAV_TURN_TAU_MS);
   const turnMax = (NAV_TURN_MAX_DPS * dt) / 1000;
   let turn = shortWay(headingNow, mapTarget) * turnEase;
@@ -348,12 +408,33 @@ function stepNav() {
   writeCamera();
 }
 
-/** Where the car should be by now, carrying the last fix forward at its speed. */
+/** How far the car has carried on since the fix, at the speed it was doing. */
+function carriedM() {
+  const t = navTarget;
+  if (!t) return 0;
+  const ms = Math.min(NAV_PREDICT_MAX_MS, Date.now() - t.at);
+  return (t.speed || 0) * (ms / 1000);
+}
+
+/**
+ * Where the car should be by now.
+ *
+ * On a route this is a DISTANCE ALONG IT, which the caller turns back into a
+ * point — that is what makes the car go round a corner instead of across it.
+ * Easing straight from one fix to the next in latitude and longitude cuts every
+ * bend, and carrying the car forward along its heading walks it off the road
+ * entirely, both of which showed as the car leaving the line at junctions.
+ * Off the route (or with no route at all) there is nothing to follow, and the
+ * straight line between two fixes is the honest answer.
+ */
 function predicted() {
   const t = navTarget;
   if (!t) return null;
-  const ms = Math.min(NAV_PREDICT_MAX_MS, Date.now() - t.at);
-  const ahead = (t.speed || 0) * (ms / 1000);
+  if (t.locate) {
+    const at = t.locate(t.along + carriedM());
+    return at && at.pos ? at.pos : t.pos;
+  }
+  const ahead = carriedM();
   if (ahead < 1) return t.pos;
   const p = google.maps.geometry.spherical.computeOffset(
     new google.maps.LatLng(t.pos.lat, t.pos.lng),
@@ -368,25 +449,36 @@ function predicted() {
  * — the prediction and the easing — is this module's job.
  *
  * @param {{pos:{lat,lng}, heading:number|null, speed:number|null,
+ *          along:number|null, locate:function|null,
  *          camera:boolean, rotate:boolean}} t
- *        `speed` in m/s; `camera` false leaves the map where the driver dragged
+ *        `speed` in m/s. `along` + `locate` say we are on a route: `along` is
+ *        how far along it this fix is, and `locate(metres)` gives back
+ *        `{pos, heading}` at any distance along it, which is what the easing
+ *        then runs on. `camera` false leaves the map where the driver dragged
  *        it and only moves the car; `rotate` false keeps north up.
  */
 export function navFollow(t) {
   const heading = Number.isFinite(t.heading) ? t.heading : navShown?.heading ?? 0;
+  const onRoute = typeof t.locate === 'function' && Number.isFinite(t.along);
   navTarget = {
     pos: t.pos,
     heading,
     speed: Number.isFinite(t.speed) && t.speed > 0.5 ? t.speed : 0,
+    along: onRoute ? t.along : null,
+    locate: onRoute ? t.locate : null,
+    mapHeading: Number.isFinite(t.mapHeading) ? t.mapHeading : null,
     at: Date.now(),
     camera: !!t.camera,
     rotate: !!t.rotate,
   };
   if (!navShown) {
-    navShown = { pos: { ...t.pos }, heading };
+    navShown = { pos: { ...t.pos }, heading, along: onRoute ? t.along : null };
     headingNow = vector && navTarget.rotate ? heading : 0;
     writeCamera();
   }
+  // A route the driver has just been put on (or rerouted onto) measures its
+  // distances differently from the last one, so there is nothing to ease from.
+  if (onRoute && navShown.along == null) navShown.along = t.along;
   startNavLoop();
 }
 
@@ -418,9 +510,19 @@ function stopNavLoop() {
 export function navJump() {
   if (!navTarget) return;
   navLastStep = 0;
-  navShown = { pos: { ...(predicted() || navTarget.pos) }, heading: navTarget.heading };
+  const t = navTarget;
+  navShown = {
+    pos: { ...(predicted() || t.pos) },
+    heading: t.heading,
+    along: t.locate ? t.along + carriedM() : null,
+  };
   headingNow = vector && navTarget.rotate ? navTarget.heading : 0;
   writeCamera();
+}
+
+/** Debug handle: where the car is actually being drawn right now. */
+export function navState() {
+  return navShown ? { ...navShown, mapHeading: headingNow } : null;
 }
 
 /** Navigation is over: stop moving anything. */
@@ -664,6 +766,10 @@ let drawnCarBucket = null;
 
 function applyUserIcon() {
   if (!userMarker) return;
+  if (userStyle === 'none') {
+    userMarker.setMap(null);
+    return;
+  }
   if (userStyle !== 'car') {
     drawnCarBucket = null;
     userMarker.setIcon(DOT_ICON());
@@ -684,6 +790,7 @@ export function setUserStyle(style) {
   if (style === userStyle) return;
   userStyle = style;
   drawnCarBucket = null;
+  if (style !== 'none' && userMarker && !userMarker.getMap()) userMarker.setMap(map);
   applyUserIcon();
 }
 

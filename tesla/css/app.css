@@ -343,6 +343,17 @@ button {
 .stage { position: relative; flex: 1; overflow: hidden; }
 #map   { position: absolute; inset: 0; }
 
+/* The route line while navigating. Ours rather than the map's, because Google's
+   own overlay layer is re-projected on a slower schedule than the ground it
+   sits on and the line swam over the road (js/route-canvas.js). It is painted
+   from the same camera, in the same frame, and never takes a tap. */
+.route-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
 /* Google draws its own furniture inside the map — the logo strip, "Map data
    ©2026", the scale bar, "keyboard shortcuts" — and writes it in Georgian,
    because the API is loaded with language=ka. It also hard-codes

@@ -20,6 +20,7 @@ import {
   isVectorMap,
   locateMe,
   navFollow,
+  onCameraWrite,
   navJump,
   navStop,
   onMap,
@@ -29,6 +30,8 @@ import {
   setVectorMode,
 } from './map.js';
 import { icon } from './icons.js';
+import { createRouteCanvas } from './route-canvas.js';
+import { carSvg, onCarChange } from './car.js';
 import {
   distanceClip,
   hasVoice,
@@ -303,12 +306,37 @@ function project(pos) {
   return { offM, alongM, snapped, bearing };
 }
 
-// How far down the route to look when working out which way we are pointing.
-const LOOKAHEAD_M = 60;
+// Two different questions, two different distances. The CAMERA wants to know
+// where the road is going, far enough ahead that the little kinks in it average
+// out; the CAR wants to know which way it is actually travelling right now. Use
+// the camera's distance for the silhouette and it points across the road
+// through every bend, which is what "the car is moving sideways" looked like.
+const LOOKAHEAD_CAMERA_M = 60;
+const LOOKAHEAD_CAR_M = 15;
 
-function bearingAhead(from, alongM) {
+/**
+ * The point on the route at `alongM`, and the way the road runs there. This is
+ * what the camera eases along: give it a distance and it gives back a place on
+ * the line, so a car being animated between two fixes goes round the bend
+ * rather than across it.
+ */
+function routePointAt(alongM) {
   const { path, cum } = state.route;
-  const want = alongM + LOOKAHEAD_M;
+  const end = cum[cum.length - 1] || 0;
+  const m = Math.max(0, Math.min(end, alongM));
+  let i = 1;
+  while (i < cum.length && cum[i] < m) i++;
+  const a = path[i - 1];
+  const b = path[i] || a;
+  const seg = (cum[i] ?? cum[i - 1]) - cum[i - 1];
+  const tt = seg > 0 ? (m - cum[i - 1]) / seg : 0;
+  const pos = { lat: a.lat + (b.lat - a.lat) * tt, lng: a.lng + (b.lng - a.lng) * tt };
+  return { pos, heading: bearingAhead(pos, m, LOOKAHEAD_CAR_M) };
+}
+
+function bearingAhead(from, alongM, lookahead = LOOKAHEAD_CAMERA_M) {
+  const { path, cum } = state.route;
+  const want = alongM + lookahead;
   let i = 1;
   while (i < cum.length && cum[i] < want) i++;
   const to = path[Math.min(i, path.length - 1)];
@@ -397,8 +425,6 @@ const state = {
   destination: null,
   waypoints: [],         // original stop coords (for rerouting through those still ahead)
   watchId: null,
-  casing: null,
-  line: null,
   destMarker: null,
   firstFix: true,
   // The camera follows the car until the driver drags the map — looking ahead
@@ -413,6 +439,7 @@ const state = {
   heading: null,
   announced: new Set(),  // "<stepIdx>:far" / ":near" voice guards
   offCount: 0,
+  snapNext: false,
   lastReroute: 0,
   arrived: false,
   voiceOn: localStorage.getItem(VOICE_KEY) !== '0',
@@ -503,6 +530,7 @@ export async function startDrive({ destination, waypoints = [], route: routeRef 
   state.heading = null;
   state.announced = new Set();
   state.offCount = 0;
+  state.snapNext = false;
   state.lastReroute = Date.now();
   state.arrived = false;
   state.routeRef = routeRef;
@@ -522,7 +550,9 @@ export async function startDrive({ destination, waypoints = [], route: routeRef 
   // mode simply runs north-up on the map we already had.
   state.rotatable = setVectorMode(true);
   syncHeadingBtn();
-  setUserStyle('car'); // the driver is a Tesla now, not a blue dot
+  // The car is drawn on the route canvas from here on: the canvas covers the
+  // map, so Google's own marker would be under the line.
+  setUserStyle('none');
   setUserLocation(origin);
   drawRoute();
   track('drive_start', { stops: waypoints.length });
@@ -575,10 +605,9 @@ export function endDrive() {
   // Take the route off the map and mark the drive over BEFORE the map is
   // swapped back: the swap announces itself, and a drive that still looked
   // active would answer by drawing the line again on the new map.
-  state.line?.setMap(null);
-  state.casing?.setMap(null);
+  routeLine.detach();
   state.destMarker?.setMap(null);
-  state.line = state.casing = state.destMarker = null;
+  state.destMarker = null;
   state.active = false;
   state.route = null;
   state.routeRef = null;
@@ -592,32 +621,30 @@ export function endDrive() {
 }
 
 // ── Map drawing ──────────────────────────────────────────────────────────────
+// The route line. Ours, on our own canvas, drawn from the same camera values in
+// the same frame — see js/route-canvas.js for why Google's own polyline could
+// not stay still on the road.
+const routeLine = createRouteCanvas({ color: '#2bd594', casing: '#0a3b2b', widthPx: 7, casingPx: 12 });
+// A different car or colour has to reach the canvas as well.
+onCarChange(() => routeLine.setCarImage(carSvg(0)));
+onCameraWrite((cam) => {
+  routeLine.setCar(cam.car);
+  routeLine.draw(cam);
+});
+
 function drawRoute() {
   // Idempotent on purpose: the route is drawn again whenever the map object
   // underneath is rebuilt (entering drive mode, switching theme mid-drive) and
-  // after every reroute, and a second line drawn over the first is both a leak
-  // and a visible smear.
-  state.line?.setMap(null);
-  state.casing?.setMap(null);
-  state.destMarker?.setMap(null);
-  const path = state.route.path;
+  // after every reroute.
   setMarkersDimmed(true);
-  state.casing = new google.maps.Polyline({
-    map: getMap(),
-    path,
-    strokeColor: '#0a3b2b',
-    strokeOpacity: 0.9,
-    strokeWeight: 11,
-    zIndex: 1900,
-  });
-  state.line = new google.maps.Polyline({
-    map: getMap(),
-    path,
-    strokeColor: '#2bd594',
-    strokeOpacity: 0.95,
-    strokeWeight: 6,
-    zIndex: 1901,
-  });
+  routeLine.attach(document.getElementById('map').parentElement);
+  routeLine.setRoute(state.route.path, state.route.cum);
+  routeLine.setCarImage(carSvg(0));
+  drawDestination();
+}
+
+function drawDestination() {
+  state.destMarker?.setMap(null);
   state.destMarker = new google.maps.Marker({
     map: getMap(),
     position: state.destination,
@@ -685,9 +712,20 @@ function onPosition(pos, geoHeading, geoSpeed) {
     pos: shown,
     heading: moving ? state.heading : null,
     speed: moving ? state.speed : 0,
+    // On the road, the camera follows the road: it is handed the distance we
+    // have reached and a way to turn any distance back into a place.
+    along: onRoute ? alongM : null,
+    locate: onRoute ? routePointAt : null,
+    // Which way to point the MAP, as opposed to the car: further down the road,
+    // so the view leans into a bend instead of following every kink.
+    mapHeading: onRoute ? bearingAhead(shown, alongM) : null,
     camera: state.following,
     rotate: state.headingUp && state.rotatable,
   });
+  if (state.snapNext) {
+    navJump(); // a new route measures distances differently; do not ease across
+    state.snapNext = false;
+  }
   if (state.firstFix) {
     getMap().setZoom(DRIVE_ZOOM);
     navJump();
@@ -702,6 +740,7 @@ function onPosition(pos, geoHeading, geoSpeed) {
     return;
   }
 
+  routeLine.setAlong(alongM);
   markPassedWaypoints(pos, alongM);
   report(pos, Math.max(0, state.route.totalM - alongM));
   updateBanner(alongM);
@@ -805,6 +844,7 @@ function onArrived() {
 async function reroute(pos, currentAlong) {
   state.lastReroute = Date.now();
   state.offCount = 0;
+  state.snapNext = true; // the new route's distances are not the old one's
   $('drive-reroute').classList.remove('is-hidden');
 
   // Keep only the planned stops that are still ahead of us on the old route,
