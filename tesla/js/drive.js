@@ -646,7 +646,7 @@ function drawRoute() {
   // after every reroute.
   setMarkersDimmed(true);
   routeLine.attach(document.getElementById('map').parentElement);
-  routeLine.setRoute(state.route.path, state.route.cum);
+  routeLine.setRoute(state.route.path);
   routeLine.setCarImage(carSvg(0));
   drawDestination();
 }
@@ -748,7 +748,6 @@ function onPosition(pos, geoHeading, geoSpeed) {
     return;
   }
 
-  routeLine.setAlong(alongM);
   markPassedWaypoints(pos, alongM);
   report(pos, Math.max(0, state.route.totalM - alongM));
   updateBanner(alongM);

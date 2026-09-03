@@ -406,6 +406,12 @@ function stepNav() {
   turn = Math.max(-turnMax, Math.min(turnMax, turn));
   headingNow = (headingNow + turn + 360) % 360;
   writeCamera();
+  // While the driver has the map, we do not write the camera — but whatever is
+  // drawn against it still has to keep up every frame. Google's own zoom
+  // animation scales the ground smoothly while `bounds_changed` arrives in
+  // jumps, and a canvas listening only to those jumped and changed size under
+  // the driver's fingers.
+  if (!navTarget.camera) publishMapCamera();
 }
 
 /** How far the car has carried on since the fix, at the speed it was doing. */

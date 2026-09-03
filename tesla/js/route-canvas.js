@@ -38,8 +38,6 @@ export function createRouteCanvas(opts = {}) {
 
   let host = null;
   let world = [];      // the route in world pixels, computed once per route
-  let cum = [];        // metres along the route, one per point
-  let along = 0;       // how far along the car is, for deciding what to draw
   let dpr = 1;
   let w = 0;
   let h = 0;
@@ -76,21 +74,11 @@ export function createRouteCanvas(opts = {}) {
       canvas.remove();
       host = null;
       world = [];
-      cum = [];
     },
 
-    /**
-     * @param {{lat:number,lng:number}[]} path
-     * @param {number[]} cumM  distance along the route at each point
-     */
-    setRoute(path, cumM) {
+    /** @param {{lat:number,lng:number}[]} path */
+    setRoute(path) {
       world = (path || []).map((p) => worldPoint(p.lat, p.lng));
-      cum = cumM || [];
-    },
-
-    /** Where the car is along the route; only the road near it is drawn. */
-    setAlong(m) {
-      along = m;
     },
 
     /** The car silhouette, drawn pointing north; rotated here as it drives. */
@@ -126,31 +114,45 @@ export function createRouteCanvas(opts = {}) {
       const halfW = w / 2;
       const halfH = h / 2;
 
-      // Only the stretch of road that can be on screen. A Tbilisi to Batumi
-      // route is tens of thousands of points and projecting all of them every
-      // frame would cost more than it shows: the visible half-diagonal, plus a
-      // margin, is all that can matter.
-      const mPerPx = (156543.03392 * Math.cos(rad(cam.center.lat))) / scale;
-      const reach = (Math.hypot(w, h) / 2) * mPerPx + 400;
-      let from = 0;
-      let to = world.length - 1;
-      if (cum.length === world.length) {
-        while (from < to && cum[from] < along - reach) from++;
-        while (to > from && cum[to] > along + reach) to--;
-        from = Math.max(0, from - 1);
-        to = Math.min(world.length - 1, to + 1);
-      }
-      if (to - from < 1) return;
+      // Only what can be on screen is drawn — a Tbilisi to Batumi route is tens
+      // of thousands of points — and "on screen" is measured from the CAMERA,
+      // not from the car. It used to be measured from the car, so panning away
+      // to look at the destination ran off the end of the drawn stretch and the
+      // line simply stopped halfway.
+      //
+      // The test is a circle around the camera rather than the screen rectangle,
+      // because the map may be turned to any angle; the radius is the screen's
+      // own half-diagonal with a margin, in world units.
+      const reach = (Math.hypot(w, h) / 2 + 200) / scale;
+      const reach2 = reach * reach;
 
       ctx.beginPath();
-      for (let i = from; i <= to; i++) {
+      let pen = false;       // is the path currently at the previous point?
+      let prevX = 0;
+      let prevY = 0;
+      let prevNear = false;
+      for (let i = 0; i < world.length; i++) {
         const p = world[i];
-        const dx = (p.x - c.x) * scale;
-        const dy = (p.y - c.y) * scale;
+        const wx = p.x - c.x;
+        const wy = p.y - c.y;
+        const near = wx * wx + wy * wy <= reach2;
+        const dx = wx * scale;
+        const dy = wy * scale;
         const x = halfW + dx * cos - dy * sin;
         const y = halfH + dx * sin + dy * cos;
-        if (i === from) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+        // A segment is drawn when either of its ends could be seen, so the line
+        // still crosses the screen when both of its points are off the edges of
+        // a long straight.
+        if (i > 0 && (near || prevNear)) {
+          if (!pen) ctx.moveTo(prevX, prevY);
+          ctx.lineTo(x, y);
+          pen = true;
+        } else {
+          pen = false;
+        }
+        prevX = x;
+        prevY = y;
+        prevNear = near;
       }
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
