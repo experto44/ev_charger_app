@@ -24,17 +24,23 @@ code = "\n".join(l[pad:] if len(l) >= pad else l for l in body)
 # Keep only the definitions we care about, so importing does not run the
 # pipeline (which would hit every provider's API).
 tree = ast.parse(code)
-wanted = {"load_known_ids", "_site_label", "notify_new_stations"}
-consts = {"KNOWN_FILE", "MAX_NEW_PER_PROVIDER", "CONFIG_FILE"}
+wanted = {"load_known_ids", "_site_label", "notify_new_stations",
+          "_load_georgia_ring", "in_georgia"}
+consts = {"KNOWN_FILE", "MAX_NEW_PER_PROVIDER", "CONFIG_FILE", "BORDER_FILE",
+          "GEORGIA_RING"}
 keep = [n for n in tree.body
         if (isinstance(n, ast.FunctionDef) and n.name in wanted)
         or (isinstance(n, ast.Assign) and getattr(n.targets[0], "id", None) in consts)]
 assert len(keep) == len(wanted) + len(consts), f"found {[getattr(n,'name',None) or n.targets[0].id for n in keep]}"
 
+# GEORGIA_RING is built at import time from a path relative to the checkout,
+# which is where the workflow runs from.
+os.chdir(ROOT)
 ns = {"json": json, "os": os, "requests": None, "headers": {}}
 exec(compile(ast.Module(body=keep, type_ignores=[]), "<pipeline>", "exec"), ns)
 notify = ns["notify_new_stations"]
 label = ns["_site_label"]
+in_georgia = ns["in_georgia"]
 
 def st(sid, provider="mart EV", lat=41.7, lng=44.8, name="Site", city="Tbilisi",
        connectors=("CCS2",)):
@@ -78,7 +84,7 @@ check("stale provider cannot announce", "[dry-run]" not in log, log)
 check("stale provider is still recorded", "zz" in out, out)
 
 # 5. A burst is recorded but not announced.
-burst = [st(f"b{i}", lat=41.0 + i) for i in range(9)]
+burst = [st(f"b{i}", lat=41.7 + i / 10.0) for i in range(9)]
 out, log = run(set(), burst, ALL)
 check("burst is suppressed", "[dry-run]" not in log, log)
 check("burst is still recorded", len(out) == 9, out)
@@ -92,7 +98,8 @@ check("one site -> one push per language", log.count("[dry-run]") == 2, log)
 check("connectors merge", "CCS2, GB/T" in log, log)
 
 # 7. Two distinct sites -> two pushes per language.
-two = [st("d1", lat=41.10, name="A"), st("d2", lat=42.90, name="B")]
+two = [st("d1", lat=41.64, lng=41.64, name="A"),
+       st("d2", lat=42.27, lng=42.70, name="B")]
 out, log = run(set(["seed"]), two + [st("seed")], ALL)
 check("two sites -> four dry-run lines", log.count("[dry-run]") == 4, log)
 
@@ -121,6 +128,35 @@ out, log = run({"a1"}, [st("a1"), st("a2")], ALL)
 check("english topic used", "new_stations_en" in log, log)
 check("georgian topic used", "new_stations_ka" in log, log)
 check("provider named in copy", "mart EV" in log, log)
+
+# 11. Georgia only. The feed carries Armenian and Turkish stations, and the
+#     bounding box people reach for first contains several of them.
+check("Tbilisi is inside", in_georgia(41.716, 44.783))
+check("Batumi is inside", in_georgia(41.651, 41.667))
+check("Sadakhlo is inside", in_georgia(41.222, 44.821))
+check("Kazbegi is inside", in_georgia(42.66, 44.64))
+check("Bagratashen (AM) is outside", not in_georgia(41.232, 44.839))
+check("Alaverdi (AM) is outside", not in_georgia(41.092, 44.686))
+check("Ashotsk (AM) is outside", not in_georgia(41.031, 43.872))
+check("Noyemberyan (AM) is outside", not in_georgia(41.207, 44.906))
+check("Yerevan (AM) is outside", not in_georgia(40.18, 44.51))
+check("Hopa (TR) is outside", not in_georgia(41.402, 41.427))
+check("Vladikavkaz (RU) is outside", not in_georgia(43.03, 44.68))
+check("a missing coordinate is outside", not in_georgia(None, None))
+
+out, log = run({"seed"}, [st("seed"),
+                          st("e1", provider="EcoCars", lat=41.092, lng=44.686,
+                             name="Alaverdi", city="Alaverdi")], ALL)
+check("an Armenian opening is not announced", "[dry-run]" not in log, log)
+check("...but it is recorded", "e1" in out, out)
+check("...and the log says why", "outside Georgia" in log, log)
+
+mixed = [st("seed"),
+         st("f1", provider="EcoCars", lat=41.092, lng=44.686, name="Alaverdi"),
+         st("f2", provider="EcoCars", lat=41.651, lng=41.667, name="Batumi")]
+out, log = run({"seed"}, mixed, ALL)
+check("a Georgian opening in the same cycle still goes out",
+      log.count("[dry-run]") == 2 and "Batumi" in log, log)
 
 print()
 if FAIL:

@@ -1772,6 +1772,49 @@ jobs:
           # means an id scheme changed or an API started paginating differently.
           MAX_NEW_PER_PROVIDER = 5
 
+          # Georgia only. This feed is regional -- Da-Tene and EcoCars publish
+          # sites in Armenia and Turkey as well -- and a driver in Tbilisi has
+          # no use for a charger that opened outside Yerevan. A bounding box
+          # cannot draw that line: the box that holds Georgia also holds
+          # Alaverdi, Bagratashen, Noyemberyan, Ashotsk and Hopa, and this feed
+          # has a station in every one of them. So the border itself is the
+          # test, from a simplified outline kept beside the pipeline.
+          BORDER_FILE = "tools/georgia_border.json"
+
+          def _load_georgia_ring():
+              try:
+                  with open(BORDER_FILE, encoding="utf-8") as f:
+                      ring = json.load(f)["ring"]
+                  pts = [(float(x), float(y)) for x, y in ring]
+                  return pts if len(pts) > 3 else None
+              except Exception as e:
+                  print("Georgia outline unreadable:", e)
+                  return None
+
+          GEORGIA_RING = _load_georgia_ring()
+
+          def in_georgia(lat, lng):
+              """True only when the point is provably inside Georgia.
+
+              A missing outline or an unusable coordinate answers False, which
+              costs at most a silence. The opposite default would broadcast a
+              foreign charger to every phone, and that cannot be taken back.
+              """
+              if not GEORGIA_RING:
+                  return False
+              try:
+                  x, y = float(lng), float(lat)
+              except (TypeError, ValueError):
+                  return False
+              inside = False
+              j = len(GEORGIA_RING) - 1
+              for i, (xi, yi) in enumerate(GEORGIA_RING):
+                  xj, yj = GEORGIA_RING[j]
+                  if (yi > y) != (yj > y) and x < (xj - xi) * (y - yi) / (yj - yi) + xi:
+                      inside = not inside
+                  j = i
+              return inside
+
           def load_known_ids(gist_files):
               """Ids already published, or None when we must not announce.
 
@@ -1823,6 +1866,18 @@ jobs:
               unseen = [s for s in new_stations
                         if s.get("id") and s["id"] not in known_ids
                         and s.get("provider") in fresh_providers]
+              if not unseen:
+                  return known_ids | all_ids
+
+              # Foreign openings are recorded like any other first sighting --
+              # they must never read as new again if this ever widens -- but
+              # they are not announced.
+              abroad = [s for s in unseen
+                        if not in_georgia(s.get("lat"), s.get("lng"))]
+              if abroad:
+                  print(f"new-charger alerts: {len(abroad)} first-seen station(s) "
+                        f"outside Georgia — recorded, not announced")
+              unseen = [s for s in unseen if in_georgia(s.get("lat"), s.get("lng"))]
               if not unseen:
                   return known_ids | all_ids
 
