@@ -2501,7 +2501,7 @@ ${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></de
 const ARTICLE_SLUGS = ['datenvis-fasi', 'konektorebi', 'ac-da-dc', 'shori-mgzavroba',
   'amerikuli-importi', 'chinuri-importi', 'zamtari', 'sakhlis-damteni', '100-km-fasi', 'batarea',
   'batareis-cveta', 'tbilisi-stambuli', 'turketshi-mgzavroba', 'meoradi-shemowmeba',
-  'tesla-model-3-y', 'datenvis-kharjebi'];
+  'tesla-model-3-y', 'datenvis-kharjebi', 'nisan-lifi-chademo'];
 
 // Every indexable URL on geocharge.ge that this script does not itself render:
 // the two hand-written home pages and everything under /blog/.

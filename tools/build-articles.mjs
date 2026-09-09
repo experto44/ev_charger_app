@@ -99,6 +99,28 @@ async function liveNumbers() {
     const l = atCity(name);
     return { n: l.length, dc: l.filter((s) => s.type === 'Fast DC').length };
   };
+  // The Leaf guide needs more than a count of CHAdeMO points: it needs the
+  // towns they sit in, the notable towns that have none, and who runs them.
+  // Derived here, so the prose, the figures and the catalogue cannot disagree.
+  const chad = ge.filter((s) => has(s, 'CHAdeMO'));
+  const dcAll = ge.filter((s) => s.type === 'Fast DC');
+  const cityRows = (list) => {
+    const m = new Map();
+    for (const s of list) {
+      const c = assignCity(s);
+      if (!c) continue;
+      const row = m.get(c[0]) || { en: c[0], ka: c[1], loc: c[2], n: 0 };
+      row.n += 1;
+      m.set(c[0], row);
+    }
+    return [...m.values()].sort((a, b) => b.n - a.n || a.en.localeCompare(b.en));
+  };
+  const chadCities = cityRows(chad);
+  // Towns worth naming as a gap. Kept as data rather than written into the
+  // sentence, so the day one of them gets a CHAdeMO cabinet the guide corrects
+  // itself instead of lying.
+  const NOTABLE = [['Rustavi', 'რუსთავი'], ['Kutaisi', 'ქუთაისი'], ['Zugdidi', 'ზუგდიდი'],
+    ['Gudauri', 'გუდაური'], ['Bakuriani', 'ბაკურიანი'], ['Stepantsminda', 'სტეფანწმინდა']];
   const tar = tariffStats(ge);
   return {
     total: ge.length,
@@ -113,6 +135,13 @@ async function liveNumbers() {
     usSpec: usSpec.length,
     usTopProvider: byProv(usSpec)[0],
     gudauri: town('Gudauri'), bakuriani: town('Bakuriani'), kazbegi: town('Stepantsminda'),
+    dc: dcAll.length,
+    chademoPct: ((chad.length / dcAll.length) * 100).toFixed(1),
+    chademoWithCcs2: chad.filter((s) => has(s, 'CCS2')).length,
+    chademoCities: chadCities,
+    chademoProviders: byProv(chad),
+    chademoMissing: NOTABLE.filter(([en]) => !chadCities.some((c) => c.en === en)),
+    type1Providers: byProv(ge.filter((s) => has(s, 'Type 1'))),
   };
 }
 
@@ -630,6 +659,73 @@ const MY_ROWS = {
     { label: 'Lithium 12 volt battery', from: 2021.95, to: 2026.8 },
     { label: 'Parking sensors', from: 2020.2, to: 2022.78 },
   ],
+};
+
+// ---------------------------------------------------------------------------
+// Figures for the Leaf guide. Both are drawn from the live counts in N rather
+// than from constants, so the picture cannot drift away from the catalogue or
+// from the sentence next to it.
+// ---------------------------------------------------------------------------
+
+// Stations per connector, on one shared scale. CHAdeMO is painted in the warm
+// colour because the point of the figure is that the reader's own connector is
+// the short bar at the bottom.
+const CONN_CAP = {
+  ka: 'საჯარო დამტენების რაოდენობა კონექტორის მიხედვით. ერთსა და იმავე დამტენს რამდენიმე კონექტორი აქვს, ამიტომ ჯამი მთლიან რაოდენობაზე მეტია.',
+  en: 'Public stations by connector. One station often carries several connectors, so the rows add up to more than the total.',
+};
+
+const figConn = (lang, N) => {
+  const rows = [
+    { label: 'CCS2', n: N.ccs2 }, { label: 'GB/T', n: N.gbt }, { label: 'Type 2', n: N.type2 },
+    { label: 'Type 1', n: N.type1 }, { label: 'CHAdeMO', n: N.chademo, lit: true },
+  ];
+  const max = Math.max(...rows.map((r) => r.n));
+  const X0 = 116, W = 540, H = 20 + rows.length * 46;
+  return `<figure class="fig">
+<div class="fs"><svg viewBox="0 0 760 ${H}" role="img" aria-label="${esc(lang === 'ka'
+    ? 'დამტენების რაოდენობა კონექტორის მიხედვით საქართველოში'
+    : 'Chargers by connector in Georgia')}">
+${rows.map((r, i) => {
+    const y = 10 + i * 46;
+    const w = Math.max(4, (r.n / max) * W);
+    return `<text x="10" y="${y + 21}" class="fk">${esc(r.label)}</text>
+<rect x="${X0}" y="${y}" width="${w.toFixed(1)}" height="30" rx="9"
+fill="${r.lit ? '#F2B279' : 'var(--accent)'}" stroke="${r.lit ? '#D68A44' : 'var(--accent-d)'}" stroke-width="1.5"/>
+<text x="${(X0 + w + 14).toFixed(1)}" y="${y + 21}" class="fk">${r.n}</text>`;
+  }).join('\n')}
+</svg></div>
+<figcaption>${CONN_CAP[lang]}</figcaption>
+</figure>`;
+};
+
+// The same CHAdeMO points again, this time by town: a chip each, biggest first.
+// A second bar chart would have said it more slowly.
+const CHAD_CAP = {
+  ka: 'ყველა დამტენი, რომელსაც საქართველოში CHAdeMO კონექტორი აქვს, ქალაქების მიხედვით.',
+  en: 'Every station in Georgia that carries a CHAdeMO connector, by town.',
+};
+
+const figChad = (lang, N) => {
+  const rows = N.chademoCities;
+  const PER = 5, CW = 138, CH = 68, G = 12, X0 = 12;
+  const lines = Math.ceil(rows.length / PER);
+  const H = lines * (CH + G) + 2;
+  return `<figure class="fig">
+<div class="fs"><svg viewBox="0 0 760 ${H}" role="img" aria-label="${esc(lang === 'ka'
+    ? 'CHAdeMO დამტენები საქართველოს ქალაქების მიხედვით'
+    : 'CHAdeMO chargers by town in Georgia')}">
+${rows.map((r, i) => {
+    const x = X0 + (i % PER) * (CW + G);
+    const y = Math.floor(i / PER) * (CH + G) + 2;
+    return `<rect x="${x}" y="${y}" width="${CW}" height="${CH}" rx="16"
+fill="var(--mint)" stroke="var(--mint-b)" stroke-width="1.5"/>
+<text x="${x + 16}" y="${y + 28}" class="fx">${esc(lang === 'ka' ? r.ka : r.en)}</text>
+<text x="${x + 16}" y="${y + 55}" class="fk" font-size="21">${r.n}</text>`;
+  }).join('\n')}
+</svg></div>
+<figcaption>${CHAD_CAP[lang]}</figcaption>
+</figure>`;
 };
 
 const buildArticles = (N, F, T) => [
@@ -3312,6 +3408,162 @@ ${figYears(MY_ROWS.en, 'The axis is the same as the Model 3 chart above, so the 
       ],
     },
   },
+  {
+    slug: 'nisan-lifi-chademo',
+    date: '2026-09-09',
+    ka: {
+      title: 'ნისან ლიფი საქართველოში: სად დაიტენება, როცა CHAdeMO ქრება',
+      metaTitle: 'ნისან ლიფის დატენვა საქართველოში: სად არის CHAdeMO',
+      desc: `საქართველოს ${N.total} დამტენიდან CHAdeMO მხოლოდ ${N.chademo}-ს აქვს. სად დგანან ისინი, რა განსხვავებაა Type 1-სა და Type 2-ს შორის და რა უნდა იცოდეთ ლიფის ყიდვამდე.`,
+      key: [
+        `მოკლე პასუხი: საქართველოში ${N.total} საჯარო დამტენია, აქედან ${N.dc} სწრაფი. CHAdeMO, ანუ ლიფის სწრაფი კონექტორი, მხოლოდ ${N.chademo}-ს აქვს.`,
+        `ეს ${N.chademo} დამტენი ძირითადად თბილისსა და ბათუმის მაგისტრალზეა. მთაში ან კახეთის სიღრმეში წასვლა წინასწარ უნდა დაიგეგმოს.`,
+      ],
+      body: `
+<h2>რატომ ეხება ეს სწორედ ლიფის მფლობელს</h2>
+<p>Forbes Georgia-მ 2026 წლის მარტში დაწერა, რომ საქართველოში ყველაზე ხშირად ნაყიდი ელექტრომობილი მეორადი ნისან ლიფია, რადგან შედარებით იაფი ვარიანტი ბაზარზე ცოტაა. სწორედ ამ მანქანას აქვს ქვეყანაში ყველაზე იშვიათი სწრაფი კონექტორი. ორივე დებულება ერთდროულად მართალია და პრობლემაც აქედან იწყება.</p>
+<p>ლიფის სწრაფი კონექტორი CHAdeMO-ა. ეს იაპონური სტანდარტია, რომელიც 2010 წელს პირველ ლიფთან ერთად გავრცელდა. მას შემდეგ ევროპამ CCS2 აირჩია, ჩინეთმა GB/T, ჩრდილოეთ ამერიკა კი ტესლას NACS-ზე გადავიდა. CHAdeMO ამ სამიდან არცერთ გზას არ გაჰყვა.</p>
+<p>ბოლოს თავად ნისანმაც მიატოვა. 2026 წლის ახალ ლიფს ევროპაში CCS კონექტორი აქვს და 150 კილოვატამდე იტენება, ჩრდილოეთ ამერიკაში კი NACS. ანუ CHAdeMO დღეს უკვე მხოლოდ იმ მანქანების კონექტორია, რომლებიც უკვე გაყიდულია, და მათი რიცხვი აღარ გაიზრდება.</p>
+
+<h2>რამდენი CHAdeMO დამტენია საქართველოში</h2>
+<p>ჩვენს კატალოგში ამჟამად ${N.total} საჯარო დამტენია, აქედან ${N.dc} სწრაფი DC დამტენი. CHAdeMO კონექტორი მათგან მხოლოდ ${N.chademo}-ს აქვს, ანუ სწრაფი დამტენების ${N.chademoPct} პროცენტს. შედარებისთვის, CCS2 ${N.ccs2} დამტენზეა, GB/T კი ${N.gbt}-ზე.</p>
+${figConn('ka', N)}
+<p>ამ ${N.chademo}-დან ${N.chademoWithCcs2} ისეთ დამტენზეა, სადაც იმავე ყუთს CCS2 კონექტორიც აქვს. ბევრი ასეთი ყუთი ერთდროულად მხოლოდ ერთ მანქანას ტენის, ამიტომ ადგილზე მისვლისას თავისუფალი CHAdeMO კაბელიც შეიძლება დაკავებული აღმოჩნდეს, თუ იმავე ყუთზე CCS2-იანი მანქანა დგას.</p>
+<p>ოპერატორების მიხედვით სურათი ასეთია: ${N.chademoProviders.map(([p, n]) => `${p} ${n}`).join(', ')}. ანუ თითქმის ყველა CHAdeMO წერტილი ორ ქსელზე მოდის და სწორედ მათ გადაწყვეტილებაზეა დამოკიდებული, კიდევ რამდენ ხანს იმუშავებს ეს კონექტორი.</p>
+
+<h2>სად დგანან ეს დამტენები</h2>
+${figChad('ka', N)}
+<p>ყველაზე მეტი CHAdeMO ${N.chademoCities[0].loc} არის, სულ ${N.chademoCities[0].n}. დანარჩენი დასავლეთის მიმართულებით არის გაწელილი, თბილისიდან ბათუმისკენ მიმავალ მაგისტრალზე. ეს კარგი ამბავია: ზღვაზე ლიფით ჩასვლა შესაძლებელია და გზაზე რამდენიმე წერტილი გაქვთ.</p>
+<p>ისიც მნიშვნელოვანია, რაც ამ სიაში არ არის: ${N.chademoMissing.map(([, k]) => k).join(', ')}. ანუ დიდ ქალაქშიც კი შეიძლება CHAdeMO არ დაგხვდეთ, მთის კურორტზე მით უმეტეს. ასეთ მიმართულებაზე დაბრუნების მარაგი გასვლისთანავე უნდა გქონდეთ. თითოეული მარშრუტი ცალკე <a href="/marshruti/">გვერდზეა</a> გარჩეული.</p>
+
+<h2>ნელი დატენვა: Type 1 თუ Type 2</h2>
+<p>სწრაფი დატენვა ლიფის თვალსაჩინო შეზღუდვაა. მეორე, უფრო ჩუმი შეზღუდვა ნელ დატენვაშია და იმაზეა დამოკიდებული, რომელი თაობის მანქანაა.</p>
+<ul>
+<li><strong>2011 წლიდან 2017 წლამდე.</strong> AC კონექტორი Type 1-ია, საიდანაც არ უნდა იყოს მანქანა ჩამოყვანილი. ბორტის დამტენი 3.3 ან 6.6 კილოვატია.</li>
+<li><strong>2018 წლიდან.</strong> ევროპულ ვერსიას Type 2 აქვს, ამერიკულსა და იაპონურს კი კვლავ Type 1. ბორტის დამტენი 6.6 კილოვატია.</li>
+</ul>
+<p>საქართველოში Type 2 კონექტორი ${N.type2} დამტენს აქვს, Type 1 კი მხოლოდ ${N.type1}-ს, და Type 1 მხოლოდ ამ ოპერატორებთან გხვდებათ: ${N.type1Providers.map(([p]) => p).join(' და ')}.</p>
+<p>კარგი ისაა, რომ ეს სხვაობა იოლად და იაფად გვარდება. თუ დამტენს Type 2 ბუდე აქვს და კაბელი მიმაგრებული არ არის, საკმარისია Type 2-დან Type 1-ზე გადამყვანი კაბელი. იმ დამტენზე, რომელსაც კაბელი მიმაგრებული აქვს, ეს არ იმუშავებს. DC, ანუ სწრაფი დატენვის მხარეს კი ასეთი იაფი გამოსავალი არ არსებობს.</p>
+
+<h2>რამდენად სწრაფად იტენება ლიფი სინამდვილეში</h2>
+<p>ლიფის ბატარეას აქტიური გაგრილება არ აქვს და სითბოს ჰაერით იცილებს. ერთი სწრაფი დატენვა პრობლემას არ ქმნის, ზედიზედ რამდენიმე კი ქმნის.</p>
+<p>ამ მოვლენას rapidgate უწოდეს. დამოუკიდებელ ტესტში 40 კილოვატსაათიანი ლიფი პიკზე 47 კილოვატამდე ავიდა და 10-დან 80 პროცენტამდე 37 წუთში დაიტენა, ოღონდ ეს ცივი ბატარეის შედეგია. გახურებულზე იგივე მანქანა გაცილებით ნელია: 41 გრადუსამდე გახურებულ ბატარეაზე 70 პროცენტის აღდგენას 54 წუთი სჭირდებოდა, 45 გრადუსზე კი 72.</p>
+<p>2019 წელს ნისანმა პროგრამული განახლება გამოუშვა და იგივე ორი შემთხვევა 40 და 48 წუთამდე შემცირდა. ეს გაუმჯობესებაა, მაგრამ არა გამოსავალი. ბატარეის გაგრილების სისტემა უცვლელი დარჩა, ამიტომ ზედიზედ მეორე და მესამე სწრაფი დატენვა კვლავ ნელია.</p>
+<p>საქართველოში ამას პირდაპირი შედეგი აქვს. თბილისიდან ბათუმამდე 40 კილოვატსაათიანი ლიფით ორი ან სამი გაჩერება დაგჭირდებათ და მეორე შესამჩნევად ნელი იქნება. ზაფხულში, როცა ჰაერის ტემპერატურა ოცდაათ გრადუსს აჭარბებს, ეს უფრო ადრე იჩენს თავს. <a href="/blog/shori-mgzavroba/">შორ გზაზე მგზავრობის</a> გზამკვლევში მარშრუტი ეტაპობრივადაა გარჩეული.</p>
+
+<h2>ადაპტერი არსებობს, ოღონდ ძვირი</h2>
+<p>DC მხარეს ერთადერთი გამოსავალი CCS2-დან CHAdeMO-ზე ადაპტერია. ევროპულ ბაზარზე ასეთი პროდუქტი უკვე იყიდება: 200 ამპერზეა გათვლილი და 62 კილოვატსაათიან ლიფ e+-ზე რეალურ პირობებში 75 კილოვატი აჩვენა. ფასი 600-დან 1000 დოლარამდე მერყეობს, იმის მიხედვით, ჩინეთიდან გამოიწერთ თუ ადგილზე იყიდით.</p>
+<p>ღირს თუ არა, არითმეტიკის საკითხია. თუ ლიფი ქალაქის მანქანაა და ძირითადად სახლში იტენება, ეს თანხა ძნელად გამართლდება. თუ ხშირად ხართ გზაზე, ${N.chademo} დამტენის ნაცვლად ${N.ccs2} დამტენს იღებთ და ეს პრაქტიკულად სხვა მანქანაა.</p>
+
+<h2>რას ნიშნავს ეს ყიდვისას</h2>
+<ul>
+<li><strong>კონექტორი ფასის ნაწილია.</strong> ორ ერთნაირ ლიფს შორის ევროპული, Type 2-იანი ვერსია საქართველოში უფრო მოსახერხებელია, რადგან ნელი დატენვის ${N.type2} წერტილი მაშინვე ხელმისაწვდომია. სწრაფი დატენვა ორივესთვის ერთნაირად შეზღუდულია.</li>
+<li><strong>ბატარეა მაინც პირველ ადგილზეა.</strong> ლიფს აქტიური გაგრილება არ აქვს, ამიტომ ცხელ კლიმატში ნამყოფი მანქანა უფრო მეტად ცვდება. როგორ უნდა შეამოწმოთ, <a href="/blog/meoradi-shemowmeba/">ცალკე გზამკვლევშია</a> აღწერილი, ცვეთის რეალური ციფრები კი <a href="/blog/batareis-cveta/">აქ</a>.</li>
+<li><strong>სახლის დატენვა ყველაფერს ცვლის.</strong> თუ სახლში დატენვის საშუალება გაქვთ, CHAdeMO-ს სიმცირე ყოველდღიურობაში თითქმის არ შეგაწუხებთ. თუ არ გაქვთ, ეს ${N.chademo} წერტილი თქვენი მთელი სამყაროა.</li>
+</ul>
+<p>ლიფი ცუდი მანქანა არ არის და ქალაქისთვის დღემდე ერთ-ერთი ყველაზე გონივრული არჩევანია. უბრალოდ ისე უნდა შეიძინოთ, რომ იცოდეთ: შეზღუდვა მანქანაში კი არა, კონექტორშია.</p>
+<p>რომელი დამტენია ახლა თავისუფალი, აპლიკაციაში ცოცხლად ჩანს და კონექტორის ფილტრით მხოლოდ CHAdeMO-ს დატოვებთ. სრული სია <a href="/damtenebi/">დამტენების გვერდზეა</a>.</p>
+`,
+      faq: [
+        ['ნისან ლიფი CCS დამტენზე დაიტენება?',
+          'პირდაპირ არა. ლიფის სწრაფი კონექტორი CHAdeMO-ა და CCS2-ის კაბელი მას ფიზიკურად არ უდგება. ერთადერთი გამოსავალი CCS2-დან CHAdeMO-ზე ადაპტერია, რომელიც 600-დან 1000 დოლარამდე ჯდება, იმის მიხედვით, ჩინეთიდან გამოიწერთ თუ ადგილზე იყიდით.'],
+        ['რამდენი CHAdeMO დამტენია საქართველოში?',
+          `${N.chademo}, ანუ ${N.dc} სწრაფი დამტენიდან ${N.chademoPct} პროცენტი. ყველაზე მეტი ${N.chademoCities[0].loc} არის, დანარჩენი კი ძირითადად თბილისიდან ბათუმისკენ მიმავალ მაგისტრალზე.`],
+        ['ლიფი Type 2 დამტენზე იტენება?',
+          '2018 წლიდან გამოშვებული ევროპული ლიფი კი, რადგან მას Type 2 კონექტორი აქვს. ამერიკულ და იაპონურ ვერსიებს, ასევე 2017 წლამდე გამოშვებულ ყველა ლიფს Type 1 აქვს და გადამყვანი კაბელი სჭირდება.'],
+        ['რატომ ნელდება ლიფის დატენვა მეორე გაჩერებაზე?',
+          'იმიტომ, რომ ბატარეას აქტიური გაგრილება არ აქვს. პირველი სწრაფი დატენვისას ბატარეა თბება და მანქანა შემდეგ სესიაზე სიმძლავრეს თავად ზღუდავს. ამას rapidgate ჰქვია და მთლიანად არც 2019 წლის განახლებას გამოუსწორებია.'],
+        ['ახალ ნისან ლიფს CHAdeMO აქვს?',
+          'არა. 2026 წლის ახალ ლიფს ევროპაში CCS კონექტორი აქვს და 150 კილოვატამდე იტენება, ჩრდილოეთ ამერიკაში კი NACS. CHAdeMO ახალ მანქანებზე აღარ დგება.'],
+        ['ღირს თუ არა ლიფის ყიდვა საქართველოში?',
+          `ქალაქისთვის და სახლში დატენვის შემთხვევაში კი. თუ სახლში დატენვა არ შეგიძლიათ ან ხშირად დადიხართ შორ გზაზე, სწრაფი დატენვის მხოლოდ ${N.chademo} წერტილი სერიოზული შეზღუდვაა და უმჯობესია CCS2-იანი მანქანა განიხილოთ.`],
+      ],
+      sources: [
+        ['Forbes Georgia: ელექტრომობილზე გადასვლის დაბრკოლებები საქართველოში, 2026 წლის მარტი', 'https://forbes.ge/en/the-roadblocks-to-going-electric-the-second-look-in-georgia/'],
+        ['Autocar: ახალი ნისან ლიფის ტესტი და მახასიათებლები', 'https://www.autocar.co.uk/car-review/nissan/leaf'],
+        ['InsideEVs: 2026 წლის ლიფის დატენვის პორტები ჩრდილოეთ ამერიკაში', 'https://insideevs.com/news/762582/nissan-leaf-j1772-nacs-slow-charging/'],
+        ['Ever: 40 კილოვატსაათიანი ლიფის დატენვის გაზომილი ტესტი', 'https://www.evercars.com/resources/2018-2025-nissan-leaf-s-charging-test-10-80-chademo-results'],
+        ['CleanTechnica: rapidgate და 2019 წლის პროგრამული განახლება', 'https://cleantechnica.com/2019/01/05/nissan-leaf-rapidgate-mostly-solved-by-software-update/'],
+        ['EVniculus: CCS2-დან CHAdeMO-ზე ადაპტერი, მახასიათებლები და გაზომილი სიმძლავრე', 'https://evniculus.eu/products/adapter-ccs2-to-chademo-for-nissan-leaf'],
+      ],
+    },
+    en: {
+      title: 'The Nissan Leaf in Georgia: where to charge as CHAdeMO disappears',
+      metaTitle: 'Charging a Nissan Leaf in Georgia: where the CHAdeMO points are',
+      desc: `Of the ${N.total} public chargers in Georgia, only ${N.chademo} carry CHAdeMO. Where they stand, what separates Type 1 from Type 2, and what to know before buying a Leaf.`,
+      key: [
+        `Short answer: Georgia has ${N.total} public chargers, ${N.dc} of them fast. CHAdeMO, the Leaf's fast connector, is on only ${N.chademo} of them.`,
+        `Those ${N.chademo} sit mostly in Tbilisi and along the western motorway, so the coast is reachable. The mountains and the far side of Kakheti need planning before you leave.`,
+      ],
+      body: `
+<h2>Why this is the Leaf owner's problem specifically</h2>
+<p>Forbes Georgia wrote in March 2026 that the most commonly bought EV in the country is a used Nissan Leaf, because there are few genuinely affordable alternatives. That same car carries the rarest fast connector in Georgia. Both statements are true at once, and that is where the problem starts.</p>
+<p>The Leaf's fast connector is CHAdeMO, a Japanese standard that spread in 2010 alongside the first Leaf. Europe went on to pick CCS2, China went with GB/T, and North America moved to Tesla's NACS. CHAdeMO followed none of those three.</p>
+<p>Nissan itself has now left it behind. The new 2026 Leaf comes with CCS in Europe and charges at up to 150 kW, and with NACS in North America. CHAdeMO is now the connector of cars that have already been sold, and that number will not grow.</p>
+
+<h2>How many CHAdeMO chargers Georgia has</h2>
+<p>Our catalogue currently holds ${N.total} public chargers, ${N.dc} of them fast DC. Only ${N.chademo} of those carry a CHAdeMO connector, which is ${N.chademoPct} percent of the fast network. For comparison, CCS2 is on ${N.ccs2} chargers and GB/T on ${N.gbt}.</p>
+${figConn('en', N)}
+<p>Of those ${N.chademo}, ${N.chademoWithCcs2} sit on a cabinet that also carries a CCS2 cable. Many such cabinets serve only one car at a time, so a free looking CHAdeMO cable can still be unusable when a CCS2 car is plugged into the same unit.</p>
+<p>By operator the picture is this: ${N.chademoProviders.map(([p, n]) => `${p} ${n}`).join(', ')}. Almost every CHAdeMO point in the country belongs to two networks, so how long the connector survives here is largely their decision.</p>
+
+<h2>Where they actually are</h2>
+${figChad('en', N)}
+<p>The largest cluster is in ${N.chademoCities[0].en}, with ${N.chademoCities[0].n}. The rest are strung out westwards along the motorway from Tbilisi towards Batumi. That is the good news: the coast is reachable in a Leaf, with several points on the way.</p>
+<p>What the list does not contain matters just as much: ${N.chademoMissing.map(([e]) => e).join(', ')}. Even a large city may have no CHAdeMO at all, and a mountain resort certainly does not. On those routes you need the return leg in the battery before you set off. Each route is broken down on its own <a href="/en/routes/">page</a>.</p>
+
+<h2>Slow charging: Type 1 or Type 2</h2>
+<p>Fast charging is the Leaf's visible limit. The second, quieter one is on the AC side, and it depends on which generation the car is.</p>
+<ul>
+<li><strong>2011 to 2017.</strong> The AC connector is Type 1, whichever market the car was imported from. The on-board charger is 3.3 or 6.6 kW.</li>
+<li><strong>2018 onwards.</strong> The European version has Type 2; American and Japanese cars kept Type 1. The on-board charger is 6.6 kW.</li>
+</ul>
+<p>In Georgia, ${N.type2} chargers carry Type 2 and only ${N.type1} carry Type 1, and those belong to ${N.type1Providers.map(([p]) => p).join(' and ')}.</p>
+<p>The good news is that this gap is cheap to close. If the charger has a Type 2 socket rather than a tethered cable, a Type 2 to Type 1 cable is all you need. On a charger with its own attached cable it will not work. On the DC side there is no cheap equivalent at all.</p>
+
+<h2>How fast a Leaf really charges</h2>
+<p>The Leaf's pack has no active cooling and sheds heat into the air. One fast charge is not a problem. Several in a row is.</p>
+<p>The effect got the name rapidgate. In an independent test a 40 kWh Leaf peaked at 47 kW and went from 10 to 80 percent in 37 minutes, but that is a cold pack. Warm, the same car is far slower: at a battery temperature of 41°C, recovering 70 percent took 54 minutes, and at 45°C it took 72.</p>
+<p>Nissan shipped a software update in 2019 that brought those same two cases down to 40 and 48 minutes. That is an improvement, not a fix. The cooling hardware did not change, so a second and third fast charge in a row are still slow.</p>
+<p>In Georgia this has a direct consequence. Tbilisi to Batumi in a 40 kWh Leaf takes two or three stops, and the second one will be noticeably slower than the first. In summer, with air temperatures above thirty degrees, it shows up sooner. The <a href="/en/blog/shori-mgzavroba/">long distance guide</a> breaks the route down stop by stop.</p>
+
+<h2>The adapter exists, but it is expensive</h2>
+<p>On the DC side there is exactly one way out: a CCS2 to CHAdeMO adapter. One is already sold in Europe, rated at 200 A, and it delivered 75 kW in real conditions to a 62 kWh Leaf e+. It costs between 600 and 1000 dollars, depending on whether you order one from China or buy it locally.</p>
+<p>Whether that is worth it is arithmetic. If the Leaf is a city car that charges at home, that money is hard to justify. If you are often on the road, it turns ${N.chademo} usable chargers into ${N.ccs2}, which is effectively a different car.</p>
+
+<h2>What this means when buying</h2>
+<ul>
+<li><strong>The connector is part of the price.</strong> Between two otherwise identical Leafs, the European Type 2 car is the easier one to live with here, because ${N.type2} slow charging points open up immediately. Fast charging is equally limited for both.</li>
+<li><strong>The battery still comes first.</strong> With no active cooling, a Leaf that spent its life in a hot climate wears faster. How to check one is in a <a href="/en/blog/meoradi-shemowmeba/">separate guide</a>, and the measured wear figures are <a href="/en/blog/batareis-cveta/">here</a>.</li>
+<li><strong>Home charging changes everything.</strong> If you can charge at home, the shortage of CHAdeMO barely touches your week. If you cannot, those ${N.chademo} points are your entire world.</li>
+</ul>
+<p>None of this makes the Leaf a bad car. For city driving it remains one of the most sensible things you can buy here. Just buy it knowing that the constraint sits in the connector, not in the car.</p>
+<p>Which charger is free right now is live in the app, and the connector filter leaves only CHAdeMO on the map. The full list is on the <a href="/en/chargers/">chargers page</a>.</p>
+`,
+      faq: [
+        ['Can a Nissan Leaf charge at a CCS charger?',
+          'Not directly. The Leaf uses CHAdeMO and a CCS2 cable does not physically fit it. The only route is a CCS2 to CHAdeMO adapter, which costs between 600 and 1000 dollars depending on whether you order one from China or buy it locally.'],
+        ['How many CHAdeMO chargers are there in Georgia?',
+          `${N.chademo}, which is ${N.chademoPct} percent of the ${N.dc} fast chargers in the country. The largest cluster is in ${N.chademoCities[0].en}; the rest are mostly on the motorway from Tbilisi to Batumi.`],
+        ['Can a Leaf use a Type 2 charger?',
+          'A European Leaf built from 2018 can, because it has a Type 2 inlet. American and Japanese cars, and every Leaf built up to 2017, have Type 1 and need an adapter cable.'],
+        ['Why does a Leaf charge slower at the second stop?',
+          'Because the pack has no active cooling. The first fast charge heats it, and the car then limits power itself on the next session. This is rapidgate, and the 2019 software update only softened it.'],
+        ['Does the new Nissan Leaf still have CHAdeMO?',
+          'No. The 2026 Leaf uses CCS in Europe, charging at up to 150 kW, and NACS in North America. CHAdeMO is no longer fitted to new cars.'],
+        ['Is a Leaf worth buying in Georgia?',
+          `For city use with home charging, yes. If you cannot charge at home or you often drive long distances, having only ${N.chademo} fast charging points is a serious constraint and a CCS2 car is worth considering instead.`],
+      ],
+      sources: [
+        ['Forbes Georgia: the roadblocks to going electric in Georgia, March 2026', 'https://forbes.ge/en/the-roadblocks-to-going-electric-the-second-look-in-georgia/'],
+        ['Autocar: new Nissan Leaf review and specifications', 'https://www.autocar.co.uk/car-review/nissan/leaf'],
+        ['InsideEVs: the 2026 Leaf charging ports in North America', 'https://insideevs.com/news/762582/nissan-leaf-j1772-nacs-slow-charging/'],
+        ['Ever: measured CHAdeMO charging test of the 40 kWh Leaf', 'https://www.evercars.com/resources/2018-2025-nissan-leaf-s-charging-test-10-80-chademo-results'],
+        ['CleanTechnica: rapidgate and the 2019 software update', 'https://cleantechnica.com/2019/01/05/nissan-leaf-rapidgate-mostly-solved-by-software-update/'],
+        ['EVniculus: CCS2 to CHAdeMO adapter, specifications and measured output', 'https://evniculus.eu/products/adapter-ccs2-to-chademo-for-nissan-leaf'],
+      ],
+    },
+  },
 ];
 
 const L = {
@@ -3389,19 +3641,20 @@ const ART_META = {
   'datenvis-fasi':      { cat: 'charging', pop: 1, icon: '<circle cx="12" cy="12" r="8.4"/><path d="M12 7.6v8.8M9.4 10.2h5.2M9.4 13.8h5.2"/>' },
   konektorebi:          { cat: 'charging', pop: 2, icon: '<path d="M9 3v4.6M15 3v4.6"/><path d="M6.2 7.6h11.6v3.1a5.8 5.8 0 0 1-11.6 0V7.6Z"/><path d="M12 16.5V21"/>' },
   '100-km-fasi':        { cat: 'charging', pop: 3, icon: '<path d="M4 18.5a8 8 0 1 1 16 0"/><path d="m12 14.5 4-4.2"/><circle cx="12" cy="18.5" r="1.3"/>' },
-  'datenvis-kharjebi':  { cat: 'charging', pop: 5, icon: '<rect x="2.8" y="6.6" width="18.4" height="12.6" rx="2.6"/><path d="M16.4 11.6h4.8v4.4h-4.8a2.2 2.2 0 0 1 0-4.4Z"/><circle cx="17.9" cy="13.8" r="0.9"/>' },
-  'sakhlis-damteni':    { cat: 'charging', pop: 6, icon: '<path d="m3.4 10.2 8.6-6.7 8.6 6.7v9.3a1 1 0 0 1-1 1H4.4a1 1 0 0 1-1-1v-9.3Z"/><path d="M12.6 9.6 10.4 13.6h3.2L11.4 17.6"/>' },
-  'shori-mgzavroba':    { cat: 'travel',   pop: 7, icon: '<path d="M12 3.4v3M12 10.5v3M12 17.6v3"/><path d="M5.2 20.6 8 3.4M18.8 20.6 16 3.4"/>' },
-  batarea:              { cat: 'battery',  pop: 8, icon: '<rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="M6.4 10.6v2.8M10.2 10.6v2.8"/>' },
-  'chinuri-importi':    { cat: 'buying',   pop: 9, icon: '<path d="M3.4 8.2 12 4.1l8.6 4.1v7.6L12 19.9l-8.6-4.1V8.2Z"/><path d="m3.4 8.2 8.6 4.1 8.6-4.1M12 12.3v7.6"/>' },
-  'amerikuli-importi':  { cat: 'buying',   pop: 10, icon: '<path d="M3 17.4c1.4 1 2.8 1 4.2 0s2.8-1 4.2 0 2.8 1 4.2 0 2.8-1 4.2 0"/><path d="M5.4 13.8V9.2h13.2l-1.8 4.6"/><path d="M9.2 9.2V5h5.6v4.2"/>' },
-  'ac-da-dc':           { cat: 'charging', pop: 11, icon: '<path d="M13.2 2.6 4.6 14.2h6.6L10 21.4l8.6-11.6H12l1.2-7.2Z"/>' },
-  zamtari:              { cat: 'travel',   pop: 12, icon: '<path d="M12 2.6v18.8M4.2 6.6l15.6 10.8M19.8 6.6 4.2 17.4"/><path d="m9.2 4.6 2.8 2.8 2.8-2.8M9.2 19.4l2.8-2.8 2.8 2.8"/>' },
-  'batareis-cveta':     { cat: 'battery',  pop: 13, icon: '<rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="m5.4 14.2 3-3 2.6 2 3.6-4"/>' },
-  'meoradi-shemowmeba': { cat: 'buying',   pop: 14, icon: '<circle cx="10.8" cy="10.8" r="6.8"/><path d="m20.4 20.4-4.6-4.6"/><path d="m7.8 10.8 2.2 2.2 4-4.2"/>' },
-  'tbilisi-stambuli':   { cat: 'travel',   pop: 15, icon: '<path d="M12 3v18"/><path d="M12 5.2h6.6l2 2.4-2 2.4H12z"/><path d="M12 13.4H5.4l-2 2.4 2 2.4H12z"/>' },
-  'turketshi-mgzavroba':{ cat: 'travel',   pop: 16, icon: '<circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/><path d="M12 3.4a14 14 0 0 1 0 17.2 14 14 0 0 1 0-17.2Z"/>' },
+  'datenvis-kharjebi':  { cat: 'charging', pop: 6, icon: '<rect x="2.8" y="6.6" width="18.4" height="12.6" rx="2.6"/><path d="M16.4 11.6h4.8v4.4h-4.8a2.2 2.2 0 0 1 0-4.4Z"/><circle cx="17.9" cy="13.8" r="0.9"/>' },
+  'sakhlis-damteni':    { cat: 'charging', pop: 7, icon: '<path d="m3.4 10.2 8.6-6.7 8.6 6.7v9.3a1 1 0 0 1-1 1H4.4a1 1 0 0 1-1-1v-9.3Z"/><path d="M12.6 9.6 10.4 13.6h3.2L11.4 17.6"/>' },
+  'shori-mgzavroba':    { cat: 'travel',   pop: 8, icon: '<path d="M12 3.4v3M12 10.5v3M12 17.6v3"/><path d="M5.2 20.6 8 3.4M18.8 20.6 16 3.4"/>' },
+  batarea:              { cat: 'battery',  pop: 9, icon: '<rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="M6.4 10.6v2.8M10.2 10.6v2.8"/>' },
+  'chinuri-importi':    { cat: 'buying',   pop: 10, icon: '<path d="M3.4 8.2 12 4.1l8.6 4.1v7.6L12 19.9l-8.6-4.1V8.2Z"/><path d="m3.4 8.2 8.6 4.1 8.6-4.1M12 12.3v7.6"/>' },
+  'amerikuli-importi':  { cat: 'buying',   pop: 11, icon: '<path d="M3 17.4c1.4 1 2.8 1 4.2 0s2.8-1 4.2 0 2.8 1 4.2 0 2.8-1 4.2 0"/><path d="M5.4 13.8V9.2h13.2l-1.8 4.6"/><path d="M9.2 9.2V5h5.6v4.2"/>' },
+  'ac-da-dc':           { cat: 'charging', pop: 12, icon: '<path d="M13.2 2.6 4.6 14.2h6.6L10 21.4l8.6-11.6H12l1.2-7.2Z"/>' },
+  zamtari:              { cat: 'travel',   pop: 13, icon: '<path d="M12 2.6v18.8M4.2 6.6l15.6 10.8M19.8 6.6 4.2 17.4"/><path d="m9.2 4.6 2.8 2.8 2.8-2.8M9.2 19.4l2.8-2.8 2.8 2.8"/>' },
+  'batareis-cveta':     { cat: 'battery',  pop: 14, icon: '<rect x="2.6" y="7.4" width="15.4" height="9.2" rx="3"/><path d="M21.4 10.4v3.2"/><path d="m5.4 14.2 3-3 2.6 2 3.6-4"/>' },
+  'meoradi-shemowmeba': { cat: 'buying',   pop: 15, icon: '<circle cx="10.8" cy="10.8" r="6.8"/><path d="m20.4 20.4-4.6-4.6"/><path d="m7.8 10.8 2.2 2.2 4-4.2"/>' },
+  'tbilisi-stambuli':   { cat: 'travel',   pop: 16, icon: '<path d="M12 3v18"/><path d="M12 5.2h6.6l2 2.4-2 2.4H12z"/><path d="M12 13.4H5.4l-2 2.4 2 2.4H12z"/>' },
+  'turketshi-mgzavroba':{ cat: 'travel',   pop: 17, icon: '<circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/><path d="M12 3.4a14 14 0 0 1 0 17.2 14 14 0 0 1 0-17.2Z"/>' },
   'tesla-model-3-y':    { cat: 'buying',   pop: 4, icon: '<path d="M3.2 15.4v-3.6l1.9-4.4a1 1 0 0 1 .9-.6h11.8a1 1 0 0 1 .9.6l1.9 4.4v3.6"/><path d="M3.2 11.8h17.6"/><circle cx="7.2" cy="15.6" r="1.9"/><circle cx="16.8" cy="15.6" r="1.9"/>' },
+  'nisan-lifi-chademo':  { cat: 'charging', pop: 5, icon: '<path d="M4.2 12.6h15.6"/><path d="M7.6 8.4h8.8l3.4 4.2v4.2H4.2v-4.2Z"/><circle cx="8" cy="18.4" r="1.7"/><circle cx="16" cy="18.4" r="1.7"/><path d="M12 3.2v3.4"/>' },
 };
 
 const CATS = {
