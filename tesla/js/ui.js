@@ -159,6 +159,9 @@ export function showStation(s) {
       total: r.station.total,
       ports: r.station.ports,
       lastUpdated: r.station.lastUpdated,
+      // Carried too: a read can find the cabinet frozen (or answering again),
+      // and stationStatus() reads exactly this flag to decide what to draw.
+      live: r.station.live,
     });
     s.liveRead = true;
     renderLive(panel, s);

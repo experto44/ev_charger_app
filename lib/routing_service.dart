@@ -178,16 +178,22 @@ class Station {
   /// (name, price, connector list, city, coordinates) left exactly as the feed
   /// published it. Used when a station is re-read straight from its operator,
   /// where only the live parts are worth preferring over the feed.
+  /// [live] is passed only by a reader that has just learned whether the
+  /// operator is publishing a state at all — a cabinet that has dropped off the
+  /// network answers with a frozen frame, and the reading, not the feed's older
+  /// opinion, is what should decide.
   Station withLiveStatus({
     required int available,
     required int total,
     required List<ConnectorPort> ports,
     required String lastUpdated,
+    bool? live,
   }) => Station(
         name: name, location: location, available: available, lat: lat, lng: lng,
         isDC: isDC, kw: kw, price: price, id: id, total: total, distance: distance,
         provider: provider, lastUpdated: lastUpdated, connectors: connectors,
-        ports: ports, country: country, live: live, priceNote: priceNote,
+        ports: ports, country: country, live: live ?? this.live,
+        priceNote: priceNote,
       );
 
   /// Copy carrying a formatted [distance] label (e.g. "2.3 km"). Used by the

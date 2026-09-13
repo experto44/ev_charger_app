@@ -223,6 +223,7 @@ jobs:
                   bodies = list(pool.map(load_location, ids))
 
               stations = []
+              frozen_locs = []   # cabinets whose last frame is stuck (logged below)
               for loc_id, body in bodies:
                   # A location that failed to load is simply absent from this
                   # cycle's rows, exactly as the sequential `continue` left it.
@@ -269,17 +270,45 @@ jobs:
                               # unit (those report "out of order"). Counting it
                               # back fixes the bug without masking broken plugs.
                               st = str(e.get("status") or "").strip().lower()
-                              is_free = bool(e.get("isAvailable")) or st == "unavailable"
-                              if is_free:
-                                  avail += ports
-                              # Per-plug status for the detail sheet. "unavailable"
-                              # (sibling busy) shows as free, matching the count.
-                              if is_free:
+                              # The operator has taken this unit out of service.
+                              # AMPECO keeps republishing whatever the hardware
+                              # last reported next to the flag -- "available" and
+                              # "charging" both show up on flagged units -- so the
+                              # flag has to win: a session on a plug nobody can
+                              # reach is not a session, and neither is a free one.
+                              # (isTemporarilyUnavailable is the maintenance-window
+                              # sibling of this flag; it has never once been true
+                              # in the live data, so it is left alone.)
+                              if e.get("isLongTermUnavailable"):
+                                  pstatus = "out"
+                              # A spot is free if the platform says isAvailable,
+                              # OR its status is exactly "unavailable". On a
+                              # dual-connector DC cabinet (CCS2 + GB/T sharing one
+                              # power module) AMPECO marks the idle sibling
+                              # status=unavailable / isAvailable=false while the
+                              # other charges, which made a station with ONE car
+                              # charging read "0 of 2". Verified on the live API
+                              # that status=unavailable never appears without a
+                              # concurrent charging session at the same location,
+                              # so it always means "sibling busy", never a broken
+                              # unit (those report "out of order"). Counting it
+                              # back fixes the bug without masking broken plugs.
+                              elif bool(e.get("isAvailable")) or st == "unavailable":
                                   pstatus = "free"
                               elif st in SESSION:
-                                  pstatus = "busy"
+                                  # A session we cannot date and nobody booked is
+                                  # not yet a reading: see the frozen-cabinet pass
+                                  # below. On its own it means little (mart EV
+                                  # publishes plenty of undated real sessions), so
+                                  # it is only downgraded when the whole location
+                                  # looks frozen; otherwise it reads busy as before.
+                                  pstatus = ("busy"
+                                             if (e.get("startedAt") or e.get("reservationId"))
+                                             else "stale")
                               else:
                                   pstatus = "out"
+                              if pstatus == "free":
+                                  avail += ports
                               since = e.get("startedAt") if pstatus == "busy" else None
                               try: max_power = max(max_power, float(e.get("maxPower") or 0))
                               except: pass
@@ -298,10 +327,36 @@ jobs:
                               if not price:
                                   price = tariff_price(e.get("tariffId"), tariffs, currencies)
 
+                      # ── Frozen cabinet ──────────────────────────────────────
+                      # When a charger drops off the network AMPECO keeps serving
+                      # its last frame: the gun that was mid-session still reports
+                      # one (with no start time, because the platform never got a
+                      # start), its sibling reports faulted, and nothing at the
+                      # location is free. That is not "occupied and broken", it is
+                      # "we cannot see this station" -- and publishing it as
+                      # "0 of 2, one busy one out of order" sent a driver away from
+                      # a charger that was standing there working (EV Power
+                      # ორთაჭალა, 2026-09-07, the state held for 20 minutes and the
+                      # operator's own API said the same, so this is the only place
+                      # it can be caught). Say we do not know instead: the app
+                      # prints "live status not published" for live=False.
+                      # Deliberately narrow -- one dated session or one free plug
+                      # anywhere at the location means the cabinet is talking, and
+                      # the undated session goes back to reading busy.
+                      states = {p["status"] for p in port_details}
+                      frozen = ("stale" in states and "out" in states
+                                and "free" not in states and "busy" not in states)
+                      for p in port_details:
+                          if frozen:
+                              p["status"] = "unknown"
+                              p.pop("since", None)
+                          elif p["status"] == "stale":
+                              p["status"] = "busy"
+
                       kw = round(max_power / 1000) if max_power > 1000 else round(max_power)
                       addr = loc.get("address") or ""
                       name = loc.get("name") or addr or provider_name
-                      stations.append({
+                      row = {
                           "id": f"{id_prefix}_{loc.get('id')}",
                           "name": name,
                           "lat": lat,
@@ -316,8 +371,16 @@ jobs:
                           "connectors": sorted(conns),
                           "ports": port_details,
                           "last_updated": "Just now",
-                      })
-              print(f"{provider_name}: {len(stations)} stations")
+                      }
+                      # Same flag Tegeta's stateless plugs use: plug COUNT is real,
+                      # availability is not published right now.
+                      if frozen:
+                          row["live"] = False
+                          frozen_locs.append(row["id"])
+                      stations.append(row)
+              print(f"{provider_name}: {len(stations)} stations"
+                    + (f" ({len(frozen_locs)} frozen: {', '.join(frozen_locs)})"
+                       if frozen_locs else ""))
               return stations
 
           # Every AMPECO network we read, keyed by the station-id prefix each one
@@ -739,12 +802,22 @@ jobs:
               def sort_conns(cs):
                   return sorted(cs, key=lambda c:(ORDER.index(c) if c in ORDER else len(ORDER), c))
 
-              # OCPP status int -> our canonical port state.
+              # OCPP status int -> our canonical port state. The four out codes
+              # are named ones (Unavailable/Faulted/Offline/EMO); anything else,
+              # a code EcoCars adds later or a connector shipped with no status at
+              # all, is NOT evidence of a fault and must not be drawn as a broken
+              # plug. "unknown" says what we actually know, and unseen_codes below
+              # puts the value in the log so a new code gets a mapping instead of
+              # sitting in the unknown bucket forever.
               BUSY_ST = {2, 3, 4, 5, 6, 7}
+              OUT_ST  = {8, 9, 10, 11}
+              unseen_codes = {}
               def port_state(st):
                   if st == 1:        return "free"
                   if st in BUSY_ST:  return "busy"
-                  return "out"       # 8/9/10/11 (Unavailable/Faulted/Offline/EMO) + unknown
+                  if st in OUT_ST:   return "out"
+                  unseen_codes[st] = unseen_codes.get(st, 0) + 1
+                  return "unknown"
 
               SIGN = {"GEL":"₾","AMD":"֏","USD":"$","EUR":"€","TRY":"₺","UAH":"₴"}
               def derive_city(addr):
@@ -837,7 +910,7 @@ jobs:
                               price = pstr
                       port_details.append(port)
                   kw = round(maxkw)
-                  stations.append({
+                  row = {
                       "id": f"ecocars_{s.get('id')}",
                       "name": derive_name(s),
                       "lat": lat,
@@ -852,8 +925,17 @@ jobs:
                       "connectors": sort_conns(conns),
                       "ports": port_details,
                       "last_updated": "Just now",
-                  })
-              print(f"EcoCars: {len(stations)} stations")
+                  }
+                  # Nothing here carries a state we recognise: the same flag
+                  # Tegeta's stateless plugs use, so the app says "live status not
+                  # published" instead of drawing a station nobody can read as
+                  # fully occupied.
+                  if port_details and all(p["status"] == "unknown" for p in port_details):
+                      row["live"] = False
+                  stations.append(row)
+              print(f"EcoCars: {len(stations)} stations"
+                    + (f" — unmapped connector status codes: {unseen_codes}"
+                       if unseen_codes else ""))
               return stations
 
           # ── Solar Station (custom OCPP backend — public, no auth needed) ───
@@ -1742,6 +1824,69 @@ jobs:
               print(f"ZZZ: {len(stations)} stations")
               return stations
 
+          # ── Hold a single "out of order" reading ───────────────────────────
+          # Every one of these feeds flickers. Over seven hours of snapshots, 14
+          # of EV Power's 22 "out of order" episodes lasted exactly one cycle
+          # (~2.5 min) and Solar Station's plugs flapped free<->out all day, so
+          # most of what we published as a broken charger was never broken. To a
+          # driver "out of order" on a working charger is the same lie as "free"
+          # on a dead one, so a fault must now be seen TWICE IN A ROW before it
+          # reaches anybody: the first reading keeps the last confirmed state and
+          # leaves a marker in the row, and the next cycle sees the marker and
+          # publishes the fault. A real outage is late by one cycle, no more.
+          # Nothing else is held back -- free and busy still move immediately,
+          # which is what the map and the freed-up alerts run on.
+          PENDING_OUT = "_out_unconfirmed"
+
+          def _port_keys(ports):
+              # Ports are matched by connector type and by which plug of that type
+              # they are, never by position: AMPECO reorders a location's EVSEs
+              # between reads (3% of EV Power comparisons, 27% of Solar Station's),
+              # and position matching would then hold the wrong plug's fault.
+              seen, keys = {}, []
+              for p in ports:
+                  t = p.get("type") or "?"
+                  seen[t] = seen.get(t, 0) + 1
+                  keys.append(f"{t}#{seen[t]}")
+              return keys
+
+          def hold_unconfirmed_out(old_stations, new_stations):
+              prev = {}
+              for s in old_stations:
+                  if s.get("id"):
+                      ports = s.get("ports") or []
+                      prev[s["id"]] = dict(zip(_port_keys(ports), ports))
+              held = 0
+              for s in new_stations:
+                  old_ports = prev.get(s.get("id"))
+                  if not old_ports:
+                      continue          # first time we publish this station
+                  ports = s.get("ports") or []
+                  touched = False
+                  for key, p in zip(_port_keys(ports), ports):
+                      if p.get("status") != "out":
+                          continue
+                      o = old_ports.get(key)
+                      if not o:
+                          continue      # a plug that was not there last cycle
+                      was = o.get("status")
+                      # Confirmed by a second reading, or there is no working
+                      # state to hold on to (an unknown plug going out is a
+                      # sharper claim than the one it replaces, so it stands).
+                      if was not in ("free", "busy") or o.get(PENDING_OUT):
+                          continue
+                      p["status"] = was
+                      if o.get("since"):
+                          p["since"] = o["since"]
+                      p[PENDING_OUT] = True
+                      touched = True
+                      held += 1
+                  if touched:
+                      free = sum(1 for p in ports if p.get("status") == "free")
+                      s["available_spots"] = f"{free} available"
+              if held:
+                  print(f"Held {held} unconfirmed out-of-order plug(s) for one cycle")
+
           # ── Push "charger freed up" alerts ─────────────────────────────────
           # Diffs the previous gist availability against the freshly built one:
           # any station that went fully-busy → has-a-free-plug triggers an FCM
@@ -1791,6 +1936,8 @@ jobs:
               for loc in (body.get("locations") or []):
                   for zone in (loc.get("zones") or []):
                       for e in (zone.get("evses") or []):
+                          if e.get("isLongTermUnavailable"):
+                              continue   # out of service, whatever it reports
                           st = str(e.get("status") or "").strip().lower()
                           if bool(e.get("isAvailable")) or st == "unavailable":
                               return True
@@ -2237,6 +2384,7 @@ jobs:
           # ── Fire push alerts for stations that just freed up ───────────────
           # Uses the gist we just fetched as the "previous" state (it still holds
           # the last cycle's availability, since we haven't patched yet).
+          old_stations = []
           try:
               f0 = (gist_data.get("files") or {}).get("chargers.json") or {}
               if f0.get("truncated") and f0.get("raw_url"):
@@ -2244,6 +2392,18 @@ jobs:
                       f0["raw_url"], headers=headers, timeout=30).json()
               else:
                   old_stations = json.loads(f0.get("content") or "[]")
+          except Exception as e:
+              print("previous snapshot unreadable:", e)
+
+          # Runs BEFORE the alert diff on purpose: a flickered "out" that never
+          # gets published cannot come back as a bogus "it's free again!" push.
+          try:
+              if old_stations:
+                  hold_unconfirmed_out(old_stations, stations)
+          except Exception as e:
+              print("out-of-order hold skipped:", e)
+
+          try:
               notify_freed(old_stations, stations, fresh_providers)
           except Exception as e:
               print("charger-free alerts skipped:", e)

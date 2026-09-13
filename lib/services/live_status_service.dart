@@ -61,6 +61,12 @@ const _kAmpecoHeaders = <String, String>{
   'X-Internal-App-Version': '3.130.0',
 };
 
+/// Internal marker for a session the operator reports without a start time and
+/// without a reservation. Never published: the frozen-cabinet check in
+/// [LiveStatusService._applyAmpeco] turns every one of these into 'busy' or
+/// 'unknown' before the ports leave the method.
+const _kStale = '_stale';
+
 /// EVSE statuses that mean a session is under way. Mirrors `SESSION` in the
 /// updater workflow.
 const _kSessionStatuses = <String>{
@@ -393,17 +399,30 @@ class LiveStatusService {
           total += plugs;
 
           final st = (e['status'] as String? ?? '').trim().toLowerCase();
-          // On a dual-connector DC cabinet (CCS2 + GB/T sharing one power
-          // module) AMPECO marks the idle sibling status=unavailable while the
-          // other charges. That means "sibling busy", never a broken unit —
-          // those report out of order — so it counts as free, exactly as the
-          // pipeline counts it.
-          final isFree = e['isAvailable'] == true || st == 'unavailable';
-          if (isFree) { available += plugs; }
-
-          final status = isFree
-              ? 'free'
-              : (_kSessionStatuses.contains(st) ? 'busy' : 'out');
+          final String status;
+          if (e['isLongTermUnavailable'] == true) {
+            // The operator has taken this unit out of service. AMPECO keeps
+            // republishing whatever the hardware last said next to the flag
+            // ("charging" and "available" both appear on flagged units), so the
+            // flag wins over the status string.
+            status = 'out';
+          } else if (e['isAvailable'] == true || st == 'unavailable') {
+            // On a dual-connector DC cabinet (CCS2 + GB/T sharing one power
+            // module) AMPECO marks the idle sibling status=unavailable while the
+            // other charges. That means "sibling busy", never a broken unit —
+            // those report out of order — so it counts as free, exactly as the
+            // pipeline counts it.
+            status = 'free';
+          } else if (_kSessionStatuses.contains(st)) {
+            // A session nobody booked and that carries no start time is not yet
+            // a reading; see the frozen-cabinet check after the loop.
+            status = (e['startedAt'] != null || e['reservationId'] != null)
+                ? 'busy'
+                : _kStale;
+          } else {
+            status = 'out';
+          }
+          if (status == 'free') { available += plugs; }
           final since = status == 'busy'
               ? DateTime.tryParse(e['startedAt'] as String? ?? '')
               : null;
@@ -422,11 +441,37 @@ class LiveStatusService {
     // something to render — let the caller fall back to the feed.
     if (!matched || total == 0) { return null; }
 
+    // A cabinet that has dropped off the network keeps serving its last frame:
+    // the gun that was mid-session still reports one with no start time, the
+    // sibling reports faulted, and nothing here is free. That is not "occupied
+    // and broken", it is "we cannot see this station", and rendering it as
+    // "0 of 2" sent a driver away from a working charger. One dated session or
+    // one free plug anywhere means the cabinet is talking, and an undated
+    // session then reads busy as before. Mirrors fetch_ampeco in the updater.
+    final states = ports.map((p) => p.status).toSet();
+    final frozen = states.contains(_kStale) &&
+        states.contains('out') &&
+        !states.contains('free') &&
+        !states.contains('busy');
+    final resolved = <ConnectorPort>[
+      for (final p in ports)
+        if (frozen)
+          ConnectorPort(type: p.type, status: 'unknown')
+        else if (p.status == _kStale)
+          ConnectorPort(type: p.type, status: 'busy', since: p.since)
+        else
+          p,
+    ];
+
     return station.withLiveStatus(
-      available: available,
+      available: frozen ? 0 : available,
       total: total,
-      ports: ports,
+      ports: resolved,
       lastUpdated: _stampNow(),
+      // This read, not the feed's older opinion, decides: a station the pipeline
+      // caught mid-freeze must go back to showing live numbers the moment the
+      // operator starts answering properly again.
+      live: !frozen,
     );
   }
 

@@ -13,9 +13,11 @@ Station _station({
   String provider = 'mart EV',
   int available = 2,
   int total = 2,
+  bool live = true,
   List<ConnectorPort> ports = const [],
 }) =>
     Station(
+      live: live,
       id: id,
       name: 'Beri Gabriel Salosi 135',
       location: 'Tbilisi',
@@ -322,6 +324,117 @@ void main() {
         ConnectorPort(type: 'Type 2', status: 'free'),
       ]);
       expect(sameLiveState(before, after), isFalse);
+    });
+  });
+
+  // These rules are shared with fetch_ampeco in .github/workflows/update_gist.yml
+  // and applyAmpeco in tesla/js/live.js. All three read the same operator
+  // response, so a change to one that is not made in the others makes the map,
+  // this sheet and the Tesla screen disagree about the same charger.
+  group('a cabinet that stopped answering', () {
+    String body(List<Map<String, Object?>> evses) => jsonEncode({
+          'locations': [
+            {
+              'id': 220,
+              'zones': [
+                {
+                  'evses': [
+                    for (final e in evses)
+                      {
+                        'maxPower': 200000,
+                        'currentType': 'dc',
+                        'isAvailable': false,
+                        ...e,
+                        'connectors': [
+                          {'icon': e['icon'] ?? 'ccs2', 'name': 'CCS 2'},
+                        ],
+                      },
+                  ],
+                },
+              ],
+            },
+          ],
+        });
+
+    test('reads as unknown, not as a station that is busy and broken', () {
+      // EV Power ორთაჭალა on 2026-09-07: the CCS2 gun reported a session with no
+      // start time, the GB/T sibling reported faulted, and the station stood
+      // there with both plugs working. "0 of 2" is the answer that sent the
+      // driver away; "live status not published" is the honest one.
+      final s = svc.applyAmpecoForTest(
+          _station(),
+          body([
+            {'status': 'charging'},
+            {'status': 'faulted', 'icon': 'gb-t-dc'},
+          ]),
+          '220')!;
+      expect(s.ports.every((p) => p.isUnknown), isTrue);
+      expect(s.available, 0);
+      expect(s.total, 2);
+      expect(s.live, isFalse);
+    });
+
+    test('a booked plug with no start time is a real session, not a freeze', () {
+      // mart EV publishes reservations exactly this way: status reserved, no
+      // startedAt, a reservationId. Someone is holding that plug.
+      final s = svc.applyAmpecoForTest(
+          _station(),
+          body([
+            {'status': 'reserved', 'reservationId': '43131'},
+            {'status': 'faulted', 'icon': 'gb-t-dc'},
+          ]),
+          '220')!;
+      expect(s.ports.map((p) => p.status).toList(), ['busy', 'out']);
+      expect(s.live, isTrue);
+    });
+
+    test('one free plug means the cabinet is talking, so the session stands', () {
+      final s = svc.applyAmpecoForTest(
+          _station(),
+          body([
+            {'status': 'charging'},
+            {'status': 'available', 'isAvailable': true, 'icon': 'gb-t-dc'},
+          ]),
+          '220')!;
+      expect(s.ports.map((p) => p.status).toList(), ['busy', 'free']);
+      expect(s.available, 1);
+      expect(s.live, isTrue);
+    });
+
+    test('a unit the operator retired is out, whatever status it reports', () {
+      // AMPECO keeps republishing the hardware's last frame next to the flag, so
+      // a decommissioned charge point can sit there claiming to be charging.
+      final s = svc.applyAmpecoForTest(
+          _station(),
+          body([
+            {
+              'status': 'charging',
+              'startedAt': '2026-09-13T15:00:00.000000Z',
+              'isLongTermUnavailable': true,
+            },
+            {'status': 'available', 'isAvailable': true, 'icon': 'gb-t-dc'},
+          ]),
+          '220')!;
+      expect(s.ports.map((p) => p.status).toList(), ['out', 'free']);
+      expect(s.available, 1);
+    });
+
+    test('a station the feed froze goes live again on a clean read', () {
+      // The feed row still carries live:false from the pipeline's freeze. This
+      // read can see the operator answering properly, and it wins.
+      final frozenRow = _station(available: 0, live: false, ports: const [
+        ConnectorPort(type: 'CCS2', status: 'unknown'),
+        ConnectorPort(type: 'GB/T', status: 'unknown'),
+      ]);
+      final s = svc.applyAmpecoForTest(
+          frozenRow,
+          body([
+            {'status': 'available', 'isAvailable': true},
+            {'status': 'available', 'isAvailable': true, 'icon': 'gb-t-dc'},
+          ]),
+          '220')!;
+      expect(s.live, isTrue);
+      expect(s.available, 2);
     });
   });
 }

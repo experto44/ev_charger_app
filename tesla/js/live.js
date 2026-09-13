@@ -42,6 +42,13 @@ const SESSION = new Set([
   'suspendedev', 'suspendedevse', 'inuse', 'intransaction',
 ]);
 
+/**
+ * Internal marker for a session reported with no start time and no reservation.
+ * Never leaves applyAmpeco: the frozen-cabinet check turns each one into 'busy'
+ * or 'unknown' before the ports are returned.
+ */
+const STALE = '_stale';
+
 /** Connector aliases → the labels the rest of the app uses. Mirrors CONN_MAP. */
 const CONNECTORS = {
   ccs: 'CCS2', ccs2: 'CCS2', combo2: 'CCS2', iec62196t2combo: 'CCS2',
@@ -147,9 +154,19 @@ export function applyAmpeco(station, body, locId) {
         // charges. That means "sibling busy", never a broken unit — those report
         // out of order — so it counts as free, exactly as upstream counts it.
         const isFree = e.isAvailable === true || st === 'unavailable';
-        if (isFree) available += cs.length || 1;
-
-        const status = isFree ? 'free' : SESSION.has(st) ? 'busy' : 'out';
+        // The operator has taken this unit out of service. AMPECO keeps
+        // republishing the hardware's last frame next to the flag ("charging"
+        // and "available" both turn up on flagged units), so the flag wins.
+        // A session with neither a start time nor a reservation is not yet a
+        // reading either — see the frozen-cabinet check below.
+        const status = e.isLongTermUnavailable
+          ? 'out'
+          : isFree
+            ? 'free'
+            : SESSION.has(st)
+              ? (e.startedAt || e.reservationId ? 'busy' : STALE)
+              : 'out';
+        if (status === 'free') available += cs.length || 1;
         const since = status === 'busy' ? e.startedAt : undefined;
         for (const c of cs) {
           ports.push({
@@ -166,7 +183,37 @@ export function applyAmpeco(station, body, locId) {
   // something to render.
   if (!matched || total === 0) return null;
 
-  return { ...station, available, total, ports, lastUpdated: stampNow() };
+  // A cabinet that has dropped off the network keeps serving its last frame: the
+  // gun that was mid-session still reports one with no start time, its sibling
+  // reports faulted, and nothing here is free. That is not "occupied and
+  // broken", it is "we cannot see this station" — rendering it as "0 of 2" sent
+  // a driver away from a charger that worked. One dated session or one free plug
+  // means the cabinet is talking, and the undated session reads busy as before.
+  // Mirrors fetch_ampeco in update_gist.yml and _applyAmpeco in the phone app.
+  const states = new Set(ports.map((p) => p.status));
+  const frozen =
+    states.has(STALE) &&
+    states.has('out') &&
+    !states.has('free') &&
+    !states.has('busy');
+  const resolved = ports.map((p) =>
+    frozen
+      ? { type: p.type, status: 'unknown' }
+      : p.status === STALE
+        ? { ...p, status: 'busy' }
+        : p,
+  );
+
+  return {
+    ...station,
+    available: frozen ? 0 : available,
+    total,
+    ports: resolved,
+    lastUpdated: stampNow(),
+    // This read decides, not the feed's older opinion: a station the pipeline
+    // caught mid-freeze shows live numbers again as soon as the operator answers.
+    live: !frozen,
+  };
 }
 
 /** "YYYY-MM-DD HH:MM UTC", the shape formatVerified() already understands. */
