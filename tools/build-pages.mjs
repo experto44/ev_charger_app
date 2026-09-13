@@ -223,12 +223,14 @@ const PROVIDER_KA = {
   'EV Power GE': 'EV Power (ივი პაუერ)', 'Tegeta': 'Tegeta (თეგეტა)',
   'Electrify Georgia': 'Electrify Georgia (ელექტრიფაი)', 'Solar Station': 'Solar Station (სოლარ სტეიშენ)',
   'MOVEO': 'MOVEO (მოვეო)', 'Gadatene': 'Gadatene (გადატენე)',
+  // Latin-only brand with no established Georgian spelling, like mart EV.
+  'ZZZ': 'ZZZ',
 };
 const PROVIDER_LOGO = {
   'mart EV': 'martev.svg', 'E-Space': 'espace.svg', 'EcoCars': 'ecocars.png',
   'Da-Tene': 'datene.png', 'Charger Plus': 'chargerplus.png', 'EV Power GE': 'evpower.png',
   'Tegeta': 'tegeta.png', 'Electrify Georgia': 'electrify.png', 'Solar Station': 'solarstation.png',
-  'MOVEO': 'moveo.png', 'Gadatene': 'gadatene-dark.svg',
+  'MOVEO': 'moveo.png', 'Gadatene': 'gadatene-dark.svg', 'ZZZ': 'zzz.png',
 };
 
 /* ── i18n ────────────────────────────────────────────────────────────────── */
