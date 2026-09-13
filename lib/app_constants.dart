@@ -4,10 +4,36 @@
 const kDefaultConnector = 'default_connector';   // JSON list of connector labels
 const kActiveCountries  = 'active_countries';     // JSON list of country names
 const kSelectedProviders = 'selected_providers';  // JSON list of provider names
+const kKnownProviders   = 'known_providers';      // JSON list: provider rows this install was already offered
 const kSupportPopupLastShown = 'support_popup_last_shown'; // int: epoch ms of last show
 const kMinPowerEnabled  = 'min_power_enabled';    // bool: min-power map filter on/off
 const kMinPowerKw       = 'min_power_kw';         // int: minimum charger power in kW
 const kNewStationAlerts = 'new_station_alerts';   // bool: broadcast push when a provider opens a station
+
+// ── New-network migration ─────────────────────────────────────────────────────
+/// Local providers to switch on for an install whose saved selection predates
+/// them, i.e. networks we added after the user last chose.
+///
+/// [saved] is the selection restored from [kSelectedProviders], [known] is what
+/// that install was already offered ([kKnownProviders], or the historical list
+/// for an install from before that key existed) and [local] is every local
+/// provider we offer now. Without this a new network is invisible to every
+/// upgrader, because restoring keeps only names that were saved and a name
+/// added later never could be.
+///
+/// An empty [saved] set means "no filter, show everything", so nothing is added
+/// to it — one name would turn that into "show only that one network".
+Set<String> providersToAutoEnable({
+  required Set<String> saved,
+  required Set<String> known,
+  required Iterable<String> local,
+}) {
+  if (saved.isEmpty) { return const <String>{}; }
+  return {
+    for (final p in local)
+      if (!known.contains(p) && !saved.contains(p)) p,
+  };
+}
 
 // ── Minimum-power presets (kW) ────────────────────────────────────────────────
 // Shared by the profile filter and the route planner. Values mirror the real

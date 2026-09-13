@@ -139,6 +139,20 @@ final _kDefaultProviders = <String>[
     if (p != OcmService.kProvider && p != TurkeyService.kProvider) p,
 ];
 
+// The local providers an install was offered before it could record that list
+// for itself (kKnownProviders shipped with ZZZ). A saved selection is a
+// statement about THESE names only, so any local provider missing from an
+// install's known list is a network added after the user last chose, and
+// _loadPrefs switches it on for them. Without this every network we add stays
+// invisible to everyone who has ever touched the provider sheet: the restore
+// intersects the saved list with what exists, so a name that could not have
+// been saved is quietly filtered off the map. Never extend this list — new
+// providers belong in _kAllProviders alone.
+const _kProvidersKnownBeforeMigration = <String>[
+  'E-Space', 'mart EV', 'MOVEO', 'Electrify Georgia', 'EV Power GE', 'Da-Tene',
+  'Gadatene', 'EcoCars', 'Solar Station', 'Tegeta', 'Charger Plus',
+];
+
 // CartoDB basemaps (retina-capable, great coverage for Georgia).
 //  • Voyager     — bright, colourful streets + labels (Light Mode, default)
 //  • Dark Matter — dark theme with clear, high-contrast roads & city names
@@ -517,6 +531,7 @@ class _MapScreenState extends State<MapScreen>
     final rawConn  = p.getString(kDefaultConnector);
     final rawCntry = p.getString(kActiveCountries);
     final rawProv  = p.getString(kSelectedProviders);
+    final rawKnown = p.getString(kKnownProviders);
     if (!mounted) { return; }
     // Back-compat: older versions stored a single connector as a plain string
     // (not JSON). Try the new list format first, then fall back.
@@ -528,6 +543,7 @@ class _MapScreenState extends State<MapScreen>
         defConns = [rawConn];
       }
     }
+    var addedNewProviders = false;
     setState(() {
       _filterConnectors
         ..clear()
@@ -558,7 +574,32 @@ class _MapScreenState extends State<MapScreen>
             ..addAll(saved);
         } catch (_) {/* keep default */}
       }
+      // A network we added since this install last saved its selection was
+      // never a choice the user made, so it is switched on rather than left
+      // filtered out. Only local providers: the two group rows stay opt-in
+      // through the country selection, which is their own decision.
+      //
+      // An EMPTY selection is skipped on purpose — it is this screen's way of
+      // saying "no filter, show everything" (see _providerFilterActive), so
+      // adding one name to it would turn "show all" into "show only ZZZ".
+      final known = <String>{};
+      if (rawKnown != null) {
+        try {
+          known.addAll((jsonDecode(rawKnown) as List).map((e) => e as String));
+        } catch (_) {/* treat as pre-migration */}
+      }
+      if (known.isEmpty) { known.addAll(_kProvidersKnownBeforeMigration); }
+      final fresh = providersToAutoEnable(
+          saved: _selectedProviders, known: known, local: _kDefaultProviders);
+      if (fresh.isNotEmpty) {
+        _selectedProviders.addAll(fresh);
+        addedNewProviders = true;
+      }
     });
+    // Record what this install has now been offered, so a provider the user
+    // unticks after the migration stays unticked on the next launch.
+    await p.setString(kKnownProviders, jsonEncode(_kDefaultProviders));
+    if (addedNewProviders) { await _saveProviders(); }
     // Both datasets are also kicked off by the map's onMapReady, but that can
     // fire BEFORE this async prefs read completes — in which case it ran against
     // the defaults and would leave a restored "International"/"Turkey" selection
