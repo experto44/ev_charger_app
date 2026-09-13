@@ -127,7 +127,13 @@ h2{font-size:clamp(21px,2.6vw,26px);font-weight:700;letter-spacing:-.02em;margin
 .upd{color:#8B98A1;font-size:13px;margin:16px 0 0}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:28px 0 0}
 .stat{background:var(--mint);border:1px solid var(--mint-b);border-radius:16px;padding:20px 18px;text-align:center}
-.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em}
+/* overflow-wrap keeps any value inside its rounded box. Nearly every stat is a
+   short number, but two on the tariffs page hold a network's name, and
+   "Electrify Georgia (ელექტრიფაი)" has no space to break at inside the
+   parenthesis, so at 34px it ran straight out through the right edge. */
+.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em;overflow-wrap:anywhere}
+/* A name is not a number and does not want a number's size. */
+.stat--name b{font-size:clamp(17px,2.1vw,21px);line-height:1.25;letter-spacing:0}
 .stat span{display:block;font-size:13.5px;font-weight:500;color:#3D4A52;margin-top:6px;line-height:1.35}
 .tw{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
 table{border-collapse:collapse;width:100%;min-width:560px;font-size:14.5px}
@@ -235,7 +241,7 @@ border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white
   <div class="stat"><b>21</b><span>networks</span></div>
   <div class="stat"><b>360 kW</b><span>Max power</span></div>
 </div>
-<p class="upd">Data from the official EPDK registry. Last update: 2026-09-13 07:29</p>
+<p class="upd">Data from the official EPDK registry. Last update: 2026-09-09 07:24</p>
 
 <h2>Networks</h2>
 <div class="tw"><table>
@@ -254,12 +260,12 @@ border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white
 <tr><td>Shell Recharge</td><td>2</td></tr>
 <tr><td>Miggo</td><td>2</td></tr>
 <tr><td>D-Charge</td><td>2</td></tr>
-<tr><td>Elaris Elektrikli Araç Şarj Hizmetleri</td><td>1</td></tr>
 <tr><td>Astor Şarj</td><td>1</td></tr>
+<tr><td>Elaris Elektrikli Araç Şarj Hizmetleri</td><td>1</td></tr>
 <tr><td>Zeplin</td><td>1</td></tr>
 <tr><td>Wattarya</td><td>1</td></tr>
-<tr><td>Tüvturk</td><td>1</td></tr>
 <tr><td>GelDol</td><td>1</td></tr>
+<tr><td>Tüvturk</td><td>1</td></tr>
 <tr><td>Ovolt</td><td>1</td></tr>
 </tbody></table></div>
 
@@ -326,15 +332,15 @@ border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white
 <tr><td>Uniport AVM  Ordu</td><td>ZES</td><td><span class="tag dc">DC</span></td><td>60 kW</td><td>CCS2, Type 2</td><td>12,99 - 16,49 ₺/kWh</td></tr>
 <tr><td>Gölköy Belediyesi Otoparkı</td><td>OnCharge</td><td><span class="tag dc">DC</span></td><td>40 kW</td><td>CCS2, Type 2</td><td>13,50 ₺/kWh</td></tr>
 <tr><td>Otojet - Derin Deniz Otel</td><td>Otojet</td><td><span class="tag dc">DC</span></td><td>30 kW</td><td>CCS2</td><td>15,49 ₺/kWh</td></tr>
-<tr><td>Aktuğ Elegance Otel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,99 ₺/kWh</td></tr>
-<tr><td>Anemon Ordu Hotel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,99 ₺/kWh</td></tr>
+<tr><td>Aktuğ Elegance Otel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
+<tr><td>Anemon Ordu Hotel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
 <tr><td>Atakale Restaurant</td><td>Elaris Elektrikli Araç Şarj Hizmetleri</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>—</td></tr>
-<tr><td>Beni Luxury Resort Katyora Hotel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,99 ₺/kWh</td></tr>
-<tr><td>Bolaman Park</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,99 ₺/kWh</td></tr>
+<tr><td>Beni Luxury Resort Katyora Hotel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
+<tr><td>Bolaman Park</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
 <tr><td>Bölükbaş Petrol</td><td>Sharz.Net</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,49 ₺/kWh</td></tr>
 <tr><td>Çambaşı Kayak Merkezi</td><td>Ovolt</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
-<tr><td>Flora Ordu Hotel Apart Suite</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,99 ₺/kWh</td></tr>
-<tr><td>Grand Ayzek Otel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,99 ₺/kWh</td></tr>
+<tr><td>Flora Ordu Hotel Apart Suite</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
+<tr><td>Grand Ayzek Otel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
 <tr><td>GRAND TESK OTEL</td><td>Voltrun</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,90 ₺/kWh</td></tr>
 <tr><td>HAMARAT PETROL</td><td>Sharz.Net</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,49 ₺/kWh</td></tr>
 <tr><td>KARAMOLLA PETROL</td><td>Sharz.Net</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,49 ₺/kWh</td></tr>
@@ -342,10 +348,10 @@ border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white
 <tr><td>KOZZA RESTAURANT</td><td>Voltrun</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,90 ₺/kWh</td></tr>
 <tr><td>Kumru - Fatsa yolu</td><td>Sharz.Net</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,49 ₺/kWh</td></tr>
 <tr><td>Kumru Belediyesi Otoparkı</td><td>GelDol</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
-<tr><td>Mavi Ay Otel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,99 ₺/kWh</td></tr>
+<tr><td>Mavi Ay Otel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
 <tr><td>MİGROS ORDU MMM</td><td>Miggo</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,50 ₺/kWh</td></tr>
 <tr><td>Ordu Mesudiye Belediyesi</td><td>OnCharge</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
-<tr><td>Pikola Otel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,99 ₺/kWh</td></tr>
+<tr><td>Pikola Otel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
 <tr><td>RADISSON BLU ORDU HOTEL</td><td>Voltrun</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,90 ₺/kWh</td></tr>
 <tr><td>THE WYSPY HOTEL ORDU</td><td>Voltrun</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,90 ₺/kWh</td></tr>
 <tr><td>TÜVTÜRK Araç Muayene İstasyonu-Merkez/ORDU</td><td>Tüvturk</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>—</td></tr>
@@ -353,7 +359,7 @@ border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white
 <tr><td>Ünye Belediyesi Binicilik Tesisleri, Ünye - AC</td><td>OtoPriz</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,90 ₺/kWh</td></tr>
 <tr><td>Ünye Belediyesi Hizmet Binası Otoparkı, Ünye - AC</td><td>OtoPriz</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,90 ₺/kWh</td></tr>
 <tr><td>Wyndham Garden Cambasi Otel</td><td>WAT Mobilite</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
-<tr><td>Yalçın Hotel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,99 ₺/kWh</td></tr>
+<tr><td>Yalçın Hotel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
 <tr><td>YASON BLUE HOTEL</td><td>Voltrun</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,90 ₺/kWh</td></tr>
 <tr><td>OTEL HASAN BEY GRANDE</td><td>Voltrun</td><td><span class="tag ac">AC</span></td><td>11 kW</td><td>Type 2</td><td>10,90 ₺/kWh</td></tr>
 <tr><td>YAŞAROĞLU OPET</td><td>Sharz.Net</td><td><span class="tag ac">AC</span></td><td>11 kW</td><td>Type 2</td><td>9,49 ₺/kWh</td></tr>

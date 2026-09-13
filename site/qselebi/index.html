@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ელექტრომობილის დამტენი ქსელები საქართველოში | GeoCharge</title>
-<meta name="description" content="საქართველოს 12 დამტენი ქსელი ერთ ცხრილში: დაფარვა, სიმძლავრე, კონექტორები და ტარიფები.">
+<meta name="description" content="საქართველოს 13 დამტენი ქსელი ერთ ცხრილში: დაფარვა, სიმძლავრე, კონექტორები და ტარიფები.">
 <meta name="theme-color" content="#11161A">
 <link rel="canonical" href="https://geocharge.ge/qselebi/">
 <link rel="alternate" hreflang="ka" href="https://geocharge.ge/qselebi/">
@@ -15,13 +15,13 @@
 <meta property="og:locale" content="ka_GE">
 <meta property="og:url" content="https://geocharge.ge/qselebi/">
 <meta property="og:title" content="ელექტრომობილის დამტენი ქსელები საქართველოში | GeoCharge">
-<meta property="og:description" content="საქართველოს 12 დამტენი ქსელი ერთ ცხრილში: დაფარვა, სიმძლავრე, კონექტორები და ტარიფები.">
+<meta property="og:description" content="საქართველოს 13 დამტენი ქსელი ერთ ცხრილში: დაფარვა, სიმძლავრე, კონექტორები და ტარიფები.">
 <meta property="og:image" content="https://geocharge.ge/assets/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="ელექტრომობილის დამტენი ქსელები საქართველოში | GeoCharge">
-<meta name="twitter:description" content="საქართველოს 12 დამტენი ქსელი ერთ ცხრილში: დაფარვა, სიმძლავრე, კონექტორები და ტარიფები.">
+<meta name="twitter:description" content="საქართველოს 13 დამტენი ქსელი ერთ ცხრილში: დაფარვა, სიმძლავრე, კონექტორები და ტარიფები.">
 <meta name="twitter:image" content="https://geocharge.ge/assets/og-image.png">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
@@ -61,7 +61,7 @@
    "name": "ელექტრომობილის დამტენი ქსელები საქართველოში | GeoCharge",
    "url": "https://geocharge.ge/qselebi/",
    "inLanguage": "ka",
-   "description": "საქართველოს 12 დამტენი ქსელი ერთ ცხრილში: დაფარვა, სიმძლავრე, კონექტორები და ტარიფები.",
+   "description": "საქართველოს 13 დამტენი ქსელი ერთ ცხრილში: დაფარვა, სიმძლავრე, კონექტორები და ტარიფები.",
    "isPartOf": {
     "@type": "WebSite",
     "@id": "https://geocharge.ge/#website"
@@ -127,7 +127,13 @@ h2{font-size:clamp(21px,2.6vw,26px);font-weight:700;letter-spacing:-.02em;margin
 .upd{color:#8B98A1;font-size:13px;margin:16px 0 0}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:28px 0 0}
 .stat{background:var(--mint);border:1px solid var(--mint-b);border-radius:16px;padding:20px 18px;text-align:center}
-.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em}
+/* overflow-wrap keeps any value inside its rounded box. Nearly every stat is a
+   short number, but two on the tariffs page hold a network's name, and
+   "Electrify Georgia (ელექტრიფაი)" has no space to break at inside the
+   parenthesis, so at 34px it ran straight out through the right edge. */
+.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em;overflow-wrap:anywhere}
+/* A name is not a number and does not want a number's size. */
+.stat--name b{font-size:clamp(17px,2.1vw,21px);line-height:1.25;letter-spacing:0}
 .stat span{display:block;font-size:13.5px;font-weight:500;color:#3D4A52;margin-top:6px;line-height:1.35}
 .tw{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
 table{border-collapse:collapse;width:100%;min-width:560px;font-size:14.5px}
@@ -227,8 +233,8 @@ border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white
 <main>
 <nav class="crumbs" aria-label="breadcrumb"><a href="/">მთავარი</a><span aria-hidden="true">›</span><a href="/damtenebi/">დამტენები</a><span aria-hidden="true">›</span><span>ქსელები</span></nav>
 <h1>ელექტრომობილის დამტენი ქსელები საქართველოში</h1>
-<p class="intro">საქართველოში 12 საჯარო დამტენი ქსელი მუშაობს. ქვემოთ თითოეულის დაფარვა, სიმძლავრე, კონექტორები და ტარიფია, ერთ ცხრილში, რომ ერთმანეთს შეადაროთ.</p>
-<p class="upd">მონაცემები ავტომატურად ახლდება პროვაიდერებისგან. ბოლო განახლება: 2026-09-13 21:22</p>
+<p class="intro">საქართველოში 13 საჯარო დამტენი ქსელი მუშაობს. ქვემოთ თითოეულის დაფარვა, სიმძლავრე, კონექტორები და ტარიფია, ერთ ცხრილში, რომ ერთმანეთს შეადაროთ.</p>
+<p class="upd">მონაცემები ავტომატურად ახლდება პროვაიდერებისგან. ბოლო განახლება: 2026-09-13 21:31</p>
 
 <div class="tw"><table>
 <thead><tr><th>ქსელი</th><th>დამტენი</th><th>ქალაქი</th><th>სწრაფი (DC)</th><th>მაქს. სიმძლავრე</th><th>კონექტორები</th><th>DC ₾/kWh</th></tr></thead>
@@ -240,6 +246,7 @@ border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white
 <tr><td><a href="/qselebi/da-tene/">Da-Tene (დატენე)</a></td><td>43</td><td>15</td><td>39</td><td>160 kW</td><td>CCS2, GB/T, Type 2</td><td>0.69</td></tr>
 <tr><td><a href="/qselebi/ecocars/">EcoCars (ეკოკარსი)</a></td><td>42</td><td>12</td><td>30</td><td>240 kW</td><td>GB/T, Type 2, CCS2, Type 1</td><td>0.78</td></tr>
 <tr><td><a href="/qselebi/tegeta/">Tegeta (თეგეტა)</a></td><td>34</td><td>16</td><td>9</td><td>—</td><td>Type 2, CCS2, CHAdeMO</td><td>1.00</td></tr>
+<tr><td><a href="/qselebi/tbilisi-city-hall/">მერიის უფასო დამტენები</a></td><td>33</td><td>1</td><td>0</td><td>—</td><td>Type 2, Type 1</td><td>—</td></tr>
 <tr><td><a href="/qselebi/electrify-georgia/">Electrify Georgia (ელექტრიფაი)</a></td><td>26</td><td>7</td><td>17</td><td>320 kW</td><td>CCS2, Type 2, NACS, Type 1</td><td>0.55</td></tr>
 <tr><td><a href="/qselebi/solar-station/">Solar Station (სოლარ სტეიშენ)</a></td><td>15</td><td>9</td><td>11</td><td>160 kW</td><td>GB/T, CCS2, Type 2</td><td>0.70</td></tr>
 <tr><td><a href="/qselebi/moveo/">MOVEO (მოვეო)</a></td><td>9</td><td>5</td><td>9</td><td>240 kW</td><td>CCS2, GB/T</td><td>0.85</td></tr>

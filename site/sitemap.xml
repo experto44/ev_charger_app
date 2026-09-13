@@ -938,6 +938,24 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://geocharge.ge/qselebi/tbilisi-city-hall/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/qselebi/tbilisi-city-hall/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/networks/tbilisi-city-hall/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/qselebi/tbilisi-city-hall/"/>
+    <lastmod>2026-09-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/networks/tbilisi-city-hall/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/qselebi/tbilisi-city-hall/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/networks/tbilisi-city-hall/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/qselebi/tbilisi-city-hall/"/>
+    <lastmod>2026-09-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://geocharge.ge/qselebi/electrify-georgia/</loc>
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/qselebi/electrify-georgia/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/networks/electrify-georgia/"/>

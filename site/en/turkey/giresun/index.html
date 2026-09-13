@@ -76,7 +76,7 @@
      "name": "How many chargers are there in Giresun?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "53 public stations: 35 fast DC and 18 standard AC, run by 17 operators. The largest is Trugo with 9 stations."
+      "text": "53 public stations: 35 fast DC and 18 standard AC, run by 17 operators. The largest is ZES with 9 stations."
      }
     },
     {
@@ -127,7 +127,13 @@ h2{font-size:clamp(21px,2.6vw,26px);font-weight:700;letter-spacing:-.02em;margin
 .upd{color:#8B98A1;font-size:13px;margin:16px 0 0}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:28px 0 0}
 .stat{background:var(--mint);border:1px solid var(--mint-b);border-radius:16px;padding:20px 18px;text-align:center}
-.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em}
+/* overflow-wrap keeps any value inside its rounded box. Nearly every stat is a
+   short number, but two on the tariffs page hold a network's name, and
+   "Electrify Georgia (ელექტრიფაი)" has no space to break at inside the
+   parenthesis, so at 34px it ran straight out through the right edge. */
+.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em;overflow-wrap:anywhere}
+/* A name is not a number and does not want a number's size. */
+.stat--name b{font-size:clamp(17px,2.1vw,21px);line-height:1.25;letter-spacing:0}
 .stat span{display:block;font-size:13.5px;font-weight:500;color:#3D4A52;margin-top:6px;line-height:1.35}
 .tw{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
 table{border-collapse:collapse;width:100%;min-width:560px;font-size:14.5px}
@@ -235,17 +241,17 @@ border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white
   <div class="stat"><b>17</b><span>networks</span></div>
   <div class="stat"><b>240 kW</b><span>Max power</span></div>
 </div>
-<p class="upd">Data from the official EPDK registry. Last update: 2026-09-13 07:29</p>
+<p class="upd">Data from the official EPDK registry. Last update: 2026-09-09 07:24</p>
 
 <h2>Networks</h2>
 <div class="tw"><table>
 <thead><tr><th>Network</th><th>chargers</th></tr></thead>
 <tbody>
-<tr><td>Trugo</td><td>9</td></tr>
 <tr><td>ZES</td><td>9</td></tr>
+<tr><td>Trugo</td><td>9</td></tr>
 <tr><td>WAT Mobilite</td><td>7</td></tr>
-<tr><td>Voltrun</td><td>4</td></tr>
 <tr><td>Aksa Şarj</td><td>4</td></tr>
+<tr><td>Voltrun</td><td>4</td></tr>
 <tr><td>OtoPriz</td><td>3</td></tr>
 <tr><td>Green Science</td><td>3</td></tr>
 <tr><td>Eşarj</td><td>3</td></tr>
@@ -254,9 +260,9 @@ border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white
 <tr><td>Otojet</td><td>1</td></tr>
 <tr><td>Elaris Elektrikli Araç Şarj Hizmetleri</td><td>1</td></tr>
 <tr><td>Shell Recharge</td><td>1</td></tr>
-<tr><td>Vale</td><td>1</td></tr>
 <tr><td>Sharz.Net</td><td>1</td></tr>
 <tr><td>Tora</td><td>1</td></tr>
+<tr><td>Vale</td><td>1</td></tr>
 <tr><td>D-Charge</td><td>1</td></tr>
 </tbody></table></div>
 
@@ -304,21 +310,21 @@ border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white
 <tr><td>YKD AKARYAKIT</td><td>Ovolt</td><td><span class="tag dc">DC</span></td><td>50 kW</td><td>CCS2</td><td>11,99 ₺/kWh</td></tr>
 <tr><td>Opet, Hancılar Petrol, Giresun</td><td>Eşarj</td><td><span class="tag dc">DC</span></td><td>30 kW</td><td>CCS2</td><td>9,90 - 14,90 ₺/kWh</td></tr>
 <tr><td>ASTERİA GARDEN OTEL</td><td>Voltrun</td><td><span class="tag ac">AC</span></td><td>44 kW</td><td>Type 2</td><td>10,90 ₺/kWh</td></tr>
-<tr><td>Bal Otel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,99 ₺/kWh</td></tr>
+<tr><td>Bal Otel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
 <tr><td>Batı Sitesi</td><td>Elaris Elektrikli Araç Şarj Hizmetleri</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>—</td></tr>
 <tr><td>BULANCAK MİLLET BAHÇESİ</td><td>Tora</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>—</td></tr>
-<tr><td>Chef Garden Restoran</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,99 ₺/kWh</td></tr>
-<tr><td>Efendi Restaurant</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,99 ₺/kWh</td></tr>
+<tr><td>Chef Garden Restoran</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
+<tr><td>Efendi Restaurant</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
 <tr><td>Gaffaro Hotel</td><td>WAT Mobilite</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
 <tr><td>GİRESUN SABAH CENTER AVM</td><td>Aksa Şarj</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>8,70 - 10,90 ₺/kWh</td></tr>
 <tr><td>KARPET PETROL</td><td>Sharz.Net</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,49 ₺/kWh</td></tr>
-<tr><td>La Quinta by Wyndham Giresun</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,99 ₺/kWh</td></tr>
-<tr><td>My Sunset Beach Hotel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,99 ₺/kWh</td></tr>
-<tr><td>Pentahor Hotel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,99 ₺/kWh</td></tr>
+<tr><td>La Quinta by Wyndham Giresun</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
+<tr><td>My Sunset Beach Hotel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
+<tr><td>Pentahor Hotel</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
 <tr><td>Petrol Ofisi - Adabük</td><td>Petrol Ofisi e-Power</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>8,99 ₺/kWh</td></tr>
 <tr><td>RAMADA BY WYNDHAM GİRESUN PİRAZİZ</td><td>Aksa Şarj</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>8,70 - 10,90 ₺/kWh</td></tr>
-<tr><td>Ramada Hotel Giresun</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,99 ₺/kWh</td></tr>
-<tr><td>TP HRS Akaryakıt</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,99 ₺/kWh</td></tr>
+<tr><td>Ramada Hotel Giresun</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
+<tr><td>TP HRS Akaryakıt</td><td>ZES</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>9,99 ₺/kWh</td></tr>
 <tr><td>YILGIN OTEL</td><td>Voltrun</td><td><span class="tag ac">AC</span></td><td>22 kW</td><td>Type 2</td><td>10,90 ₺/kWh</td></tr>
 <tr><td>FERHAT ÖNAL PETROL</td><td>Voltrun</td><td><span class="tag ac">AC</span></td><td>11 kW</td><td>Type 2</td><td>10,90 ₺/kWh</td></tr>
 </tbody></table></div>
@@ -332,7 +338,7 @@ border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white
 
 <h2>Frequently asked questions</h2>
 <div class="faq">
-<details><summary>How many chargers are there in Giresun?</summary><p>53 public stations: 35 fast DC and 18 standard AC, run by 17 operators. The largest is Trugo with 9 stations.</p></details>
+<details><summary>How many chargers are there in Giresun?</summary><p>53 public stations: 35 fast DC and 18 standard AC, run by 17 operators. The largest is ZES with 9 stations.</p></details>
 <details><summary>Which connectors are used in Giresun?</summary><p>CCS2 (35), Type 2 (20), CHAdeMO (2). You need CCS2 for fast charging.</p></details>
 <details><summary>What does fast charging cost in Giresun?</summary><p>The median DC tariff is 13.90 ₺ per kWh. Operators publish one national tariff, so the price is effectively the same as in the rest of the country.</p></details>
 </div>

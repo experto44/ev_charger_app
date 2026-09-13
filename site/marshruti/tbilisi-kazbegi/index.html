@@ -159,7 +159,13 @@ h2{font-size:clamp(21px,2.6vw,26px);font-weight:700;letter-spacing:-.02em;margin
 .upd{color:#8B98A1;font-size:13px;margin:16px 0 0}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:28px 0 0}
 .stat{background:var(--mint);border:1px solid var(--mint-b);border-radius:16px;padding:20px 18px;text-align:center}
-.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em}
+/* overflow-wrap keeps any value inside its rounded box. Nearly every stat is a
+   short number, but two on the tariffs page hold a network's name, and
+   "Electrify Georgia (ელექტრიფაი)" has no space to break at inside the
+   parenthesis, so at 34px it ran straight out through the right edge. */
+.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em;overflow-wrap:anywhere}
+/* A name is not a number and does not want a number's size. */
+.stat--name b{font-size:clamp(17px,2.1vw,21px);line-height:1.25;letter-spacing:0}
 .stat span{display:block;font-size:13.5px;font-weight:500;color:#3D4A52;margin-top:6px;line-height:1.35}
 .tw{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
 table{border-collapse:collapse;width:100%;min-width:560px;font-size:14.5px}
@@ -270,7 +276,7 @@ border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white
   <div class="stat"><b>120 km</b><span>ყველაზე გრძელი მონაკვეთი სწრაფის გარეშე</span></div>
   <div class="stat"><b>სწრაფი დამტენი არ არის</b><span>სწრაფი ყაზბეგში</span></div>
 </div>
-<p class="upd">მონაცემები ავტომატურად ახლდება პროვაიდერებისგან. ბოლო განახლება: 2026-09-13 21:22</p>
+<p class="upd">მონაცემები ავტომატურად ახლდება პროვაიდერებისგან. ბოლო განახლება: 2026-09-13 21:31</p>
 
 <h2>რამდენი გაჩერება დასჭირდება</h2>
 <p class="intro">155 კილომეტრზე დაახლოებით 28 კილოვატსაათი ენერგია იხარჯება. გაანგარიშება 18 კილოვატსაათს იღებს 100 კილომეტრზე, რაც ზომიერ ამინდში საშუალო მაჩვენებელია. 60 კილოვატსაათიანი ბატარეა 20-დან 80 პროცენტამდე დატენვისას დაახლოებით 200 კილომეტრს ფარავს, ამიტომ სავსე ბატარეით გასვლის შემთხვევაში გზაში გაჩერება საერთოდ არ დაგჭირდებათ. თუ თქვენი მანქანის ბატარეა ამაზე პატარაა ან ხარჯი მეტია, ერთი გაჩერება დაამატეთ.</p>
@@ -280,7 +286,7 @@ border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white
 <div class="tw"><table>
 <thead><tr><th>გაჩერება</th><th>კმ თბილისიდან</th><th>დამტენი</th><th>სწრაფი (DC)</th><th>მაქს. სიმძლავრე</th></tr></thead>
 <tbody>
-<tr><td><a href="/damtenebi/tbilisi/">თბილისი</a></td><td>0</td><td>420</td><td>274</td><td>320 kW</td></tr>
+<tr><td><a href="/damtenebi/tbilisi/">თბილისი</a></td><td>0</td><td>453</td><td>274</td><td>320 kW</td></tr>
 <tr><td>მცხეთა</td><td>20</td><td>—</td><td>—</td><td>—</td></tr>
 <tr><td><a href="/damtenebi/gudauri/">გუდაური</a></td><td>120</td><td>7</td><td>3</td><td>120 kW</td></tr>
 <tr><td>სტეფანწმინდა</td><td>155</td><td>2</td><td>—</td><td>22 kW</td></tr>

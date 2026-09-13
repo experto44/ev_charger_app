@@ -131,7 +131,13 @@ h2{font-size:clamp(21px,2.6vw,26px);font-weight:700;letter-spacing:-.02em;margin
 .upd{color:#8B98A1;font-size:13px;margin:16px 0 0}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:28px 0 0}
 .stat{background:var(--mint);border:1px solid var(--mint-b);border-radius:16px;padding:20px 18px;text-align:center}
-.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em}
+/* overflow-wrap keeps any value inside its rounded box. Nearly every stat is a
+   short number, but two on the tariffs page hold a network's name, and
+   "Electrify Georgia (ელექტრიფაი)" has no space to break at inside the
+   parenthesis, so at 34px it ran straight out through the right edge. */
+.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em;overflow-wrap:anywhere}
+/* A name is not a number and does not want a number's size. */
+.stat--name b{font-size:clamp(17px,2.1vw,21px);line-height:1.25;letter-spacing:0}
 .stat span{display:block;font-size:13.5px;font-weight:500;color:#3D4A52;margin-top:6px;line-height:1.35}
 .tw{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
 table{border-collapse:collapse;width:100%;min-width:560px;font-size:14.5px}
@@ -239,7 +245,7 @@ border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white
   <div class="stat"><b>2</b><span>networks</span></div>
   <div class="stat"><b>22 kW</b><span>Max power</span></div>
 </div>
-<p class="upd">Data refreshes automatically from the providers. Last update: 2026-09-13 21:22</p>
+<p class="upd">Data refreshes automatically from the providers. Last update: 2026-09-13 21:31</p>
 
 <h2>Chargers by network</h2>
 <div class="tw"><table>
@@ -272,7 +278,7 @@ border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white
 <h2>Other cities</h2>
 <div class="links">
 <a href="/en/chargers/">All chargers in Georgia</a>
-<a href="/en/chargers/tbilisi/">Tbilisi (420)</a>
+<a href="/en/chargers/tbilisi/">Tbilisi (453)</a>
 <a href="/en/chargers/batumi/">Batumi (26)</a>
 <a href="/en/chargers/terjola/">Terjola (18)</a>
 <a href="/en/chargers/gori/">Gori (17)</a>

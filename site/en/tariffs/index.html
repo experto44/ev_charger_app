@@ -84,7 +84,7 @@
      "name": "Why do some chargers show no price?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "Of Georgia's 634 stations, 139 publish no tariff in their public API. These are typically at hotels, shopping centres and restaurants, where charging is free for customers or the price is shown on site."
+      "text": "Of Georgia's 667 stations, 172 publish no tariff in their public API. These are typically at hotels, shopping centres and restaurants, where charging is free for customers or the price is shown on site."
      }
     },
     {
@@ -135,7 +135,13 @@ h2{font-size:clamp(21px,2.6vw,26px);font-weight:700;letter-spacing:-.02em;margin
 .upd{color:#8B98A1;font-size:13px;margin:16px 0 0}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:28px 0 0}
 .stat{background:var(--mint);border:1px solid var(--mint-b);border-radius:16px;padding:20px 18px;text-align:center}
-.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em}
+/* overflow-wrap keeps any value inside its rounded box. Nearly every stat is a
+   short number, but two on the tariffs page hold a network's name, and
+   "Electrify Georgia (ელექტრიფაი)" has no space to break at inside the
+   parenthesis, so at 34px it ran straight out through the right edge. */
+.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em;overflow-wrap:anywhere}
+/* A name is not a number and does not want a number's size. */
+.stat--name b{font-size:clamp(17px,2.1vw,21px);line-height:1.25;letter-spacing:0}
 .stat span{display:block;font-size:13.5px;font-weight:500;color:#3D4A52;margin-top:6px;line-height:1.35}
 .tw{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
 table{border-collapse:collapse;width:100%;min-width:560px;font-size:14.5px}
@@ -235,14 +241,14 @@ border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white
 <main>
 <nav class="crumbs" aria-label="breadcrumb"><a href="/en/">Home</a><span aria-hidden="true">›</span><a href="/en/chargers/">Chargers</a><span aria-hidden="true">›</span><span>Tariffs</span></nav>
 <h1>EV charging tariffs in Georgia</h1>
-<p class="intro">Below is what each charging network in Georgia charges. The figures come straight from the providers' public data and refresh daily. Right now 495 of 634 stations publish a tariff.</p>
+<p class="intro">Below is what each charging network in Georgia charges. The figures come straight from the providers' public data and refresh daily. Right now 495 of 667 stations publish a tariff.</p>
 <div class="stats">
   <div class="stat"><b>0.78 ₾</b><span>DC median</span></div>
   <div class="stat"><b>0.65 ₾</b><span>AC median</span></div>
-  <div class="stat"><b>Electrify Georgia</b><span>Cheapest DC</span></div>
-  <div class="stat"><b>Tegeta</b><span>Most expensive DC</span></div>
+  <div class="stat stat--name"><b>Electrify Georgia</b><span>Cheapest DC</span></div>
+  <div class="stat stat--name"><b>Tegeta</b><span>Most expensive DC</span></div>
 </div>
-<p class="upd">Data refreshes automatically from the providers. Last update: 2026-09-13 21:22</p>
+<p class="upd">Data refreshes automatically from the providers. Last update: 2026-09-13 21:31</p>
 <div class="links" style="margin-top:22px">
   <a href="/en/calculator/" style="background:var(--mint);border-color:var(--mint-b);color:var(--mint-ink,#137A4C);font-weight:600">Work out what your charge will cost</a>
   <a href="/en/chargers/">All chargers in Georgia</a>
@@ -260,6 +266,7 @@ border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white
 <tr><td><a href="/en/networks/da-tene/">Da-Tene</a></td><td>43</td><td>0.69 .. 0.69 <span style="color:#8A97A0">(median 0.69)</span></td><td>0.58 .. 0.69 <span style="color:#8A97A0">(median 0.69)</span></td><td>—</td></tr>
 <tr><td><a href="/en/networks/ecocars/">EcoCars</a></td><td>42</td><td>0.75 .. 0.85 <span style="color:#8A97A0">(median 0.78)</span></td><td>0.70 .. 0.75 <span style="color:#8A97A0">(median 0.71)</span></td><td>6</td></tr>
 <tr><td><a href="/en/networks/tegeta/">Tegeta</a></td><td>34</td><td>1.00 .. 1.00 <span style="color:#8A97A0">(median 1.00)</span></td><td>0.60 .. 1.00 <span style="color:#8A97A0">(median 0.60)</span></td><td>4</td></tr>
+<tr><td><a href="/en/networks/tbilisi-city-hall/">City Hall free chargers</a></td><td>33</td><td>—</td><td>—</td><td>33</td></tr>
 <tr><td><a href="/en/networks/electrify-georgia/">Electrify Georgia</a></td><td>26</td><td>0.50 .. 0.80 <span style="color:#8A97A0">(median 0.55)</span></td><td>0.45 .. 0.65 <span style="color:#8A97A0">(median 0.45)</span></td><td>—</td></tr>
 <tr><td><a href="/en/networks/solar-station/">Solar Station</a></td><td>15</td><td>0.70 .. 0.70 <span style="color:#8A97A0">(median 0.70)</span></td><td>0.70 .. 0.70 <span style="color:#8A97A0">(median 0.70)</span></td><td>1</td></tr>
 <tr><td><a href="/en/networks/moveo/">MOVEO</a></td><td>9</td><td>0.70 .. 0.95 <span style="color:#8A97A0">(median 0.85)</span></td><td>—</td><td>—</td></tr>
@@ -275,7 +282,7 @@ border:1px solid #D7E0DB;border-radius:9px;padding:7px 11px;cursor:pointer;white
 <h2>Frequently asked questions</h2>
 <div class="faq">
 <details><summary>Which network is cheapest in Georgia?</summary><p>For fast DC it is Electrify Georgia, with a median tariff of 0.55 GEL. For slow AC it is Electrify Georgia at 0.45 GEL.</p></details>
-<details><summary>Why do some chargers show no price?</summary><p>Of Georgia's 634 stations, 139 publish no tariff in their public API. These are typically at hotels, shopping centres and restaurants, where charging is free for customers or the price is shown on site.</p></details>
+<details><summary>Why do some chargers show no price?</summary><p>Of Georgia's 667 stations, 172 publish no tariff in their public API. These are typically at hotels, shopping centres and restaurants, where charging is free for customers or the price is shown on site.</p></details>
 <details><summary>How often do these figures change?</summary><p>The table refreshes daily, straight from the providers. Operators themselves change tariffs every few months.</p></details>
 <details><summary>DC or AC, which is better value?</summary><p>AC is cheaper on average: a median of 0.65 GEL against 0.78 for DC. AC charging takes hours, though.</p></details>
 </div>
