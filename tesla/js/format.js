@@ -59,6 +59,7 @@ const PROVIDER_LOGOS = {
   'tegeta': 'tegeta.png',
   'charger plus': 'chargerplus.png',
   'socar': 'socar.png',
+  'zzz': 'zzz.png',
 };
 
 /** Logo asset path for a provider name, or null (e.g. International/OCM). */

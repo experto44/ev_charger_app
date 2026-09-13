@@ -125,7 +125,7 @@ const _tbilisi = LatLng(41.7151, 44.8271);
 // Local Georgian providers + a single "International" group for all Open Charge
 // Map networks (so international chargers never clutter the local provider list).
 const _kAllProviders = [
-  'E-Space', 'mart EV', 'MOVEO', 'Electrify Georgia', 'EV Power GE', 'Da-Tene', 'Gadatene', 'EcoCars', 'Solar Station', 'Tegeta', 'Charger Plus',
+  'E-Space', 'mart EV', 'MOVEO', 'Electrify Georgia', 'EV Power GE', 'Da-Tene', 'Gadatene', 'EcoCars', 'Solar Station', 'Tegeta', 'Charger Plus', 'ZZZ',
   TurkeyService.kProvider,  // 'Turkey'        — the EPDK registry, one row for ~200 brands
   OcmService.kProvider,     // 'International' — every other OCM network
 ];

@@ -60,6 +60,10 @@ jobs:
           GADATENE_PASSWORD:   ${{ secrets.GADATENE_PASSWORD }}
           ECOCARS_USERNAME:    ${{ secrets.ECOCARS_USERNAME }}
           ECOCARS_PASSWORD:    ${{ secrets.ECOCARS_PASSWORD }}
+          # ZZZ / Keystone service account — its charge-point list is JWT-gated,
+          # so the fetcher logs in with these each cycle to mint a fresh token.
+          KEYSTONE_USERNAME:   ${{ secrets.KEYSTONE_USERNAME }}
+          KEYSTONE_PASSWORD:   ${{ secrets.KEYSTONE_PASSWORD }}
           # Firebase Admin service-account JSON (single line). Enables the
           # "charger freed up" push alerts; if unset, alerts are silently skipped.
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
@@ -1566,6 +1570,178 @@ jobs:
               print(f"E-Space: {len(stations)} stations")
               return stations
 
+          # ── ZZZ / Keystone (own OCPP backend — auth-gated JSON API) ────────
+          # The "ZZZ app" (com.keystone.zzzapp) runs its own OCPP backend at
+          # client.keystone.ge (NestJS). Unlike E-Space there is no public app
+          # key: the charge-point list is behind a JWT, so we log in with a
+          # dedicated read-only service account (KEYSTONE_USERNAME/PASSWORD)
+          # each cycle to mint a fresh token, then GET /client/chargepoints —
+          # which returns the WHOLE network with live OCPP status at both the
+          # station and connector level. New chargers the operator adds show up
+          # here automatically. The feed publishes no session start time, so
+          # "since" (how long a plug has been busy) is carried forward from the
+          # previous gist snapshot, exactly like E-Space.
+          def fetch_keystone():
+              base = "https://client.keystone.ge"
+              user = os.environ.get("KEYSTONE_USERNAME")
+              pw   = os.environ.get("KEYSTONE_PASSWORD")
+              if not (user and pw):
+                  print("ZZZ: KEYSTONE_USERNAME/PASSWORD not set, skipping")
+                  return []
+
+              tok = requests.post(f"{base}/auth/login",
+                                  json={"username": user, "password": pw},
+                                  timeout=30)
+              tok.raise_for_status()
+              token = tok.json().get("accessToken")
+              if not token:
+                  print("ZZZ: login returned no token")
+                  return []
+              H = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+
+              r = requests.get(f"{base}/client/chargepoints", headers=H, timeout=60)
+              r.raise_for_status()
+              raw = r.json()
+              if not isinstance(raw, list):
+                  raw = raw.get("data") or []
+
+              # Keystone connector enum -> our canonical chip labels.
+              CONN_MAP = {
+                  "type1 (ac)": "Type 1", "type2 (ac)": "Type 2",
+                  "ccs1 (dc)": "CCS1", "ccs2 (dc)": "CCS2",
+                  "chademo (dc)": "CHAdeMO", "chademo 2.0 (dc)": "CHAdeMO",
+                  "gb/t ac (ac)": "GB/T", "gb/t dc (dc)": "GB/T",
+                  "nacs (ac/dc)": "NACS", "tesla proprietary (ac/dc)": "NACS",
+                  "pantograph (dc)": "Pantograph", "other": None,
+              }
+              ORDER = ["CCS2", "GB/T", "CHAdeMO", "Type 2", "NACS", "CCS1", "Type 1", "Pantograph"]
+              def norm_conn(t):
+                  return CONN_MAP.get(str(t or "").strip().lower())
+              def sort_conns(cs):
+                  return sorted(cs, key=lambda c: (ORDER.index(c) if c in ORDER else len(ORDER), c))
+
+              # OCPP connector status -> our live state. free=Available;
+              # busy=an active/booked session; out=nothing you can plug into now.
+              FREE = {"available"}
+              BUSY = {"preparing", "charging", "suspendedevse", "suspendedev",
+                      "finishing", "reserved", "occupied"}
+              OUT  = {"faulted", "unavailable"}
+              def port_state(cst, occupied, is_avail):
+                  s = str(cst or "").strip().lower()
+                  if s in OUT: return "out"
+                  if s in BUSY or occupied: return "busy"
+                  if s in FREE: return "free"
+                  if is_avail is False: return "busy"
+                  return "unknown"
+
+              GE_CITIES = ["Tbilisi", "Batumi", "Kutaisi", "Rustavi", "Gori", "Telavi",
+                           "Zugdidi", "Poti", "Ozurgeti", "Akhaltsikhe", "Mtskheta",
+                           "Borjomi", "Bakuriani", "Gudauri", "Marneuli", "Khashuri",
+                           "Zestaponi", "Senaki", "Kobuleti", "Samtredia", "Kaspi"]
+              GE_CITIES_KA = {"თბილისი": "Tbilisi", "ბათუმი": "Batumi", "ქუთაისი": "Kutaisi",
+                              "რუსთავი": "Rustavi", "გორი": "Gori", "თელავი": "Telavi",
+                              "ზუგდიდი": "Zugdidi", "ფოთი": "Poti", "მცხეთა": "Mtskheta"}
+              def derive_city(addr):
+                  low = (addr or "").lower()
+                  for c in GE_CITIES:
+                      if c.lower() in low: return c
+                  for ka, en in GE_CITIES_KA.items():
+                      if ka in (addr or ""): return en
+                  return "Tbilisi"   # ZZZ is Tbilisi-only for now
+
+              # Carry "busy since" forward from the previous gist (best effort).
+              prev_since = {}
+              try:
+                  g = requests.get(f"https://api.github.com/gists/{GIST_ID}",
+                                   headers=headers, timeout=30).json()
+                  fmeta = (g.get("files") or {}).get("chargers.json") or {}
+                  content = fmeta.get("content")
+                  if fmeta.get("truncated") and fmeta.get("raw_url"):
+                      content = requests.get(fmeta["raw_url"], timeout=30).text
+                  for st0 in json.loads(content or "[]"):
+                      if st0.get("provider") != "ZZZ":
+                          continue
+                      for i, p in enumerate(st0.get("ports") or []):
+                          if p.get("since"):
+                              prev_since[f"{st0.get('id')}#{i}"] = p["since"]
+              except Exception as e:
+                  print("ZZZ: prev-since lookup failed:", e)
+              now_iso = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+              stations = []
+              for s in raw:
+                  try:
+                      lat = float(s.get("latitude")); lng = float(s.get("longitude"))
+                  except (TypeError, ValueError):
+                      continue
+                  if lat == 0 or lng == 0:
+                      continue
+
+                  full_id = f"keystone_{s.get('id')}"
+                  st_status  = str(s.get("status") or "").strip().lower()
+                  st_offline = st_status in OUT or s.get("isAvailable") is False
+
+                  conns, any_dc, ports = set(), False, []
+                  for c in (s.get("connectors") or []):
+                      raw_type = str(c.get("type") or "")
+                      ct = norm_conn(raw_type)
+                      if ct: conns.add(ct)
+                      if "(dc)" in raw_type.lower(): any_dc = True
+                      state = "out" if st_offline else port_state(
+                          c.get("status"), c.get("occupied"), c.get("isAvailable"))
+                      ports.append({"type": ct or raw_type or "?", "status": state})
+
+                  # Station reads Charging while every plug still says Available
+                  # (feed lag): flip the first free plug to busy so availability
+                  # never claims free while a car is plugged in.
+                  if not st_offline and st_status in BUSY \
+                          and not any(p["status"] == "busy" for p in ports):
+                      for p in ports:
+                          if p["status"] == "free":
+                              p["status"] = "busy"; break
+
+                  for i, p in enumerate(ports):
+                      if p["status"] == "busy":
+                          p["since"] = prev_since.get(f"{full_id}#{i}") or now_iso
+
+                  # DC when any plug is DC or the station type carries "DC"
+                  # ("DC" and "(AC/DC) Mixed" both count; pure "AC" does not).
+                  is_dc = any_dc or "DC" in str(s.get("connectroTypes") or "").upper()
+
+                  try: kw = round(float(s.get("maxPower") or 0))
+                  except (TypeError, ValueError): kw = 0
+
+                  # kilowattTariff is stored in tetri: 80 -> 0.80 ₾/kWh.
+                  price = ""
+                  try:
+                      kt = float(s.get("kilowattTariff") or 0)
+                      if kt > 0: price = f"{kt / 100:.2f} ₾/kWh"
+                  except (TypeError, ValueError):
+                      pass
+
+                  total = len(ports)
+                  avail = sum(1 for p in ports if p["status"] == "free")
+                  name  = (s.get("description") or s.get("address") or "ZZZ").strip()
+
+                  stations.append({
+                      "id": full_id,
+                      "name": name,
+                      "lat": lat,
+                      "lng": lng,
+                      "power": (f"{kw} kW" if kw else "—"),
+                      "type": "Fast DC" if is_dc else "AC",
+                      "price": price,
+                      "available_spots": f"{avail} available",
+                      "total_spots": total,
+                      "city": derive_city(s.get("address") or s.get("description")),
+                      "provider": "ZZZ",
+                      "connectors": sort_conns(conns),
+                      "ports": ports,
+                      "last_updated": "Just now",
+                  })
+              print(f"ZZZ: {len(stations)} stations")
+              return stations
+
           # ── Push "charger freed up" alerts ─────────────────────────────────
           # Diffs the previous gist availability against the freshly built one:
           # any station that went fully-busy → has-a-free-plug triggers an FCM
@@ -1986,7 +2162,8 @@ jobs:
                             (fetch_solarstation, "Solar Station"),
                             (fetch_tegeta, "Tegeta"),
                             (fetch_chargerplus, "Charger Plus"),
-                            (fetch_espace, "E-Space")]:
+                            (fetch_espace, "E-Space"),
+                            (fetch_keystone, "ZZZ")]:
               fresh = []
               try:
                   fresh = fn()

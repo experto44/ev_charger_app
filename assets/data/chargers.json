@@ -16002,5 +16002,89 @@
       }
     ],
     "last_updated": "2026-07-02 17:30 UTC"
-  }
+  },
+ {
+  "id": "keystone_59",
+  "name": "კახეთის გზატკეცილი",
+  "lat": 41.6837054,
+  "lng": 44.8809773,
+  "power": "180 kW",
+  "type": "Fast DC",
+  "price": "0.80 ₾/kWh",
+  "available_spots": "2 available",
+  "total_spots": 2,
+  "city": "Tbilisi",
+  "provider": "ZZZ",
+  "connectors": [
+   "CCS2",
+   "GB/T"
+  ],
+  "ports": [
+   {
+    "type": "CCS2",
+    "status": "free"
+   },
+   {
+    "type": "GB/T",
+    "status": "free"
+   }
+  ],
+  "last_updated": "2026-09-13 15:27 UTC"
+ },
+ {
+  "id": "keystone_58",
+  "name": "კოსმონავტების სანაპირო",
+  "lat": 41.7358602,
+  "lng": 44.7738338,
+  "power": "180 kW",
+  "type": "Fast DC",
+  "price": "0.80 ₾/kWh",
+  "available_spots": "2 available",
+  "total_spots": 2,
+  "city": "Tbilisi",
+  "provider": "ZZZ",
+  "connectors": [
+   "CCS2",
+   "GB/T"
+  ],
+  "ports": [
+   {
+    "type": "CCS2",
+    "status": "free"
+   },
+   {
+    "type": "GB/T",
+    "status": "free"
+   }
+  ],
+  "last_updated": "2026-09-13 15:27 UTC"
+ },
+ {
+  "id": "keystone_57",
+  "name": "აღმაშენებელის ხეივანი 49",
+  "lat": 41.7985258,
+  "lng": 44.771049,
+  "power": "180 kW",
+  "type": "Fast DC",
+  "price": "0.80 ₾/kWh",
+  "available_spots": "2 available",
+  "total_spots": 2,
+  "city": "Tbilisi",
+  "provider": "ZZZ",
+  "connectors": [
+   "CCS2",
+   "GB/T"
+  ],
+  "ports": [
+   {
+    "type": "CCS2",
+    "status": "free"
+   },
+   {
+    "type": "GB/T",
+    "status": "free"
+   }
+  ],
+  "last_updated": "2026-09-13 15:27 UTC"
+ }
 ]

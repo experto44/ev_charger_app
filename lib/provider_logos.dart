@@ -18,6 +18,7 @@ const Map<String, String> _providerLogoFiles = {
   'tegeta':            'tegeta.png',
   'charger plus':      'chargerplus.png',
   'socar':             'socar.png',
+  'zzz':               'zzz.png',
 };
 
 /// Asset path for a provider's logo, or null when none is bundled.
