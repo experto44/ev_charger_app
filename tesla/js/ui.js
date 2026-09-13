@@ -2,7 +2,7 @@
 
 import { t } from './i18n.js';
 import { stationStatus } from './map.js';
-import { busyForLabel, formatVerified, providerLogo } from './format.js';
+import { busyForLabel, formatVerified, isCityHall, providerLabel, providerLogo } from './format.js';
 import { startDrive } from './drive.js';
 import { track } from './analytics.js';
 import { canRefresh, refreshStation } from './live.js';
@@ -74,7 +74,13 @@ export function applyFilters(stations) {
   const conns = filters.connectors.map((c) => c.toLowerCase());
   return stations.filter(
     (s) =>
-      (!filters.providers.length || filters.providers.includes(s.provider)) &&
+      // City Hall has to be PICKED, not merely left unfiltered. "No provider
+      // filter" means "every network I was shown by default", and 33 free
+      // posts whose state nobody publishes are not among them — same rule the
+      // mobile app applies to the same rows.
+      (isCityHall(s.provider)
+        ? filters.providers.includes(s.provider)
+        : !filters.providers.length || filters.providers.includes(s.provider)) &&
       (!conns.length || s.connectors.some((c) => conns.includes(c.toLowerCase()))) &&
       (!filters.fastDcOnly || s.isDC) &&
       (!filters.availableOnly || s.available > 0) &&
@@ -89,8 +95,9 @@ export function showStation(s) {
   const status = stationStatus(s);
 
   panel.querySelector('.panel__name').textContent = s.name;
+  // One charger is open, so City Hall's line is singular here.
   panel.querySelector('.panel__provider').textContent =
-    s.provider + (s.city ? ` · ${s.city}` : '');
+    providerLabel(s.provider, { singular: true }) + (s.city ? ` · ${s.city}` : '');
 
   // Provider logo (hidden when the provider has no asset, e.g. International).
   const logo = panel.querySelector('.panel__logo');
@@ -210,21 +217,26 @@ document.getElementById('port-info')?.addEventListener('click', (e) => {
 /** The parts of the panel a refresh replaces: status, plugs, freshness. */
 function renderLive(panel, s) {
   const status = stationStatus(s);
+  const cityHall = isCityHall(s.provider);
   const badge = panel.querySelector('.panel__status');
   // Registry stations show how many plugs EXIST; saying "Available" there would
-  // invent a live reading we never had.
-  badge.textContent =
-    status === 'unknown' && s.total > 0
+  // invent a live reading we never had. City Hall does not even have that much
+  // — no operator, no feed, nothing to count — so it says only what is true.
+  badge.textContent = cityHall
+    ? t('cityHallStatusUnknown')
+    : status === 'unknown' && s.total > 0
       ? `${s.total} ${t('plugsCount')} · ${t('statusUnknown')}`
       : t(PORT_LABEL[status]);
   badge.className = `panel__status status--${status}`;
 
   panel.querySelector('.panel__power').textContent =
-    s.kw ? `${s.kw} kW ${s.isDC ? 'DC' : 'AC'}` : '—';
+    s.kw ? `${s.kw} kW ${s.isDC ? 'DC' : 'AC'}` : (cityHall ? 'AC' : '—');
   // Price, plus where it came from when it is a brand tariff rather than this
-  // charger's own published rate (every Turkish station).
-  panel.querySelector('.panel__price').textContent =
-    s.price ? (s.priceNote ? `${s.price} · ${s.priceNote}` : s.price) : '—';
+  // charger's own published rate (every Turkish station). City Hall's price is
+  // spelled in Georgian in the feed; here it follows the reader's language.
+  panel.querySelector('.panel__price').textContent = cityHall
+    ? t('cityHallFree')
+    : s.price ? (s.priceNote ? `${s.price} · ${s.priceNote}` : s.price) : '—';
 
   const portsEl = panel.querySelector('.panel__ports');
   portsEl.innerHTML = '';
@@ -254,9 +266,17 @@ function renderLive(panel, s) {
     portsEl.appendChild(row);
   }
   if (!s.ports.length) {
-    portsEl.innerHTML = `<div class="port"><span class="port__type">${s.connectors.join(
-      ', ',
-    )}</span><span class="port__status">${s.available}/${s.total}</span></div>`;
+    // "0/1" next to a City Hall socket would read as "occupied" — it only ever
+    // meant "no count published". The plug type, and why there is no status, is
+    // everything we actually know.
+    portsEl.innerHTML = cityHall
+      ? `<div class="port"><span class="port__type">${s.connectors.join(
+          ', ',
+        )}</span><span class="port__status">${t('cityHallBringCable')}</span></div>` +
+        `<div class="port port--note">${t('cityHallNoLiveStatus')}</div>`
+      : `<div class="port"><span class="port__type">${s.connectors.join(
+          ', ',
+        )}</span><span class="port__status">${s.available}/${s.total}</span></div>`;
   }
 
   panel.querySelector('.panel__updated').textContent = s.lastUpdated
@@ -317,7 +337,9 @@ export function buildFilterDrawer(stations, onChange) {
 
   provEl.replaceChildren(
     chip(t('allProviders'), 'providers', null, true),
-    ...providers.map((p) => chip(p, 'providers', p, true)),
+    // The chip carries the feed's spelling as its value and the reader's
+    // language as its label — see providerLabel.
+    ...providers.map((p) => chip(providerLabel(p), 'providers', p, true)),
   );
   connEl.replaceChildren(
     chip(t('allConnectors'), 'connectors', null, true),

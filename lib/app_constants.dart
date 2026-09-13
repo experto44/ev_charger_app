@@ -10,6 +10,32 @@ const kMinPowerEnabled  = 'min_power_enabled';    // bool: min-power map filter 
 const kMinPowerKw       = 'min_power_kw';         // int: minimum charger power in kW
 const kNewStationAlerts = 'new_station_alerts';   // bool: broadcast push when a provider opens a station
 
+// ── Tbilisi City Hall's free chargers ─────────────────────────────────────────
+/// Provider key for the free posts the city itself runs.
+///
+/// Unlike every other row on the map this is not an operator: City Hall has no
+/// API, no live status and no way to tell us whether a post is working right
+/// now. The list is an official spreadsheet, so the app may say where the posts
+/// are and nothing more — see [kCityHallOptIn] for why they are also off until
+/// asked for, and the station sheet for the wording that goes with them.
+///
+/// Stored in the feed, in the saved provider selection and in the logo maps, so
+/// the spelling is fixed; the name the user READS is localised separately.
+const kCityHallProvider = 'Tbilisi City Hall';
+
+/// Providers that stay off until the user ticks them, and are never switched on
+/// for anyone by us.
+///
+/// Every other provider we add is switched on for existing installs (see
+/// [providersToAutoEnable]) because a new network is something the user wants to
+/// see. City Hall is the opposite: the posts have no live status, so putting 33
+/// pins of unknown state on everyone's map uninvited would make the map less
+/// trustworthy, not more. Until the user opts in, these stations do not exist
+/// as far as the map, the carousel and the route planner are concerned — which
+/// is also why an empty selection ("no filter, show everything") still leaves
+/// them out.
+bool requiresExplicitOptIn(String provider) => provider == kCityHallProvider;
+
 // ── New-network migration ─────────────────────────────────────────────────────
 /// Local providers to switch on for an install whose saved selection predates
 /// them, i.e. networks we added after the user last chose.

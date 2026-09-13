@@ -318,6 +318,41 @@ class AppStrings {
           'right now, and we will not quote a price we cannot confirm.\n\n'
           'Worth checking before you make the trip.';
 
+  // ── Tbilisi City Hall's free chargers ──────────────────────────────────────
+  // The one group on the map with no operator behind it. City Hall sent a
+  // spreadsheet; there is no feed, no status and no way to ask. The list they
+  // sent does mark some posts as broken, but it was already a month old when it
+  // arrived, so repeating that would be presenting a guess as a fact — hence
+  // "unknown" for all of them, with the reason spelled out underneath rather
+  // than left for the user to wonder about.
+
+  /// Row label in the provider sheet, where it names the whole group.
+  static String get cityHallProviderName =>
+      isGeorgian ? 'მერიის უფასო დამტენები' : 'City Hall free chargers';
+
+  /// The chip on one open station, which is a single charger and says so.
+  static String get cityHallStationName =>
+      isGeorgian ? 'მერიის უფასო დამტენი' : 'City Hall free charger';
+
+  /// Replaces the availability line ("2 of 3 plugs available").
+  static String get cityHallStatusUnknown =>
+      isGeorgian ? 'სტატუსი უცნობია' : 'Status unknown';
+
+  /// The small print under it. Says whose limitation this is, because "we don't
+  /// know" on its own reads like the app is broken.
+  static String get cityHallNoLiveStatus => isGeorgian
+      ? 'დამტენების შესახებ ცოცხალი სტატუსების განახლება არ ხდება, რადგან '
+          'მერია ტექნიკურად ვერ გვაწვდის ინფორმაციას'
+      : 'There is no live status for these chargers: City Hall has no technical '
+          'way to send it to us';
+
+  /// These are bare sockets, so the cable is the driver's problem.
+  static String get cityHallBringCable =>
+      isGeorgian ? 'გჭირდება გადამყვანი კაბელი' : 'You need your own cable';
+
+  /// Price chip. The stations are free, which is the whole point of them.
+  static String get cityHallFree => isGeorgian ? 'უფასო' : 'Free';
+
   /// Approximate "charging for ~N" line shown under a busy connector. Buckets to
   /// 5-min steps (and to hours past 60 min) since the exact figure isn't known.
   static String chargingFor(int minutes) {

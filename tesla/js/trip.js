@@ -11,7 +11,7 @@ import { saveRoute } from './routes.js';
 import { track } from './analytics.js';
 import { icon } from './icons.js';
 import { MIN_POWER_STEPS, hideToast, showToast, sortConnectors, toggleFilterDrawer } from './ui.js';
-import { providerLogo } from './format.js';
+import { isCityHall, providerLogo } from './format.js';
 import { t } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
@@ -65,6 +65,11 @@ function canPlan() {
 function tripFilteredStations() {
   const conns = [...state.connectors].map((c) => c.toLowerCase());
   return [...getStations(), ...getTurkeyStations()].filter((s) => {
+    // City Hall's free posts never plan a trip. A plan is a promise that the
+    // car can charge at each stop, and nobody publishes whether those posts
+    // work — building a leg around one could leave a driver at a dead socket
+    // with no cable. Same rule as the mobile planner.
+    if (isCityHall(s.provider)) return false;
     if (conns.length && !s.connectors.some((c) => conns.includes(c.toLowerCase()))) return false;
     if (state.minKw > 0 && s.kw > 0 && s.kw < state.minKw) return false;
     return true;

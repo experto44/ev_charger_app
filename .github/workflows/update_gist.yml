@@ -2297,6 +2297,13 @@ jobs:
           # Only replace a provider's bundled rows when its fetch actually
           # returns data; on a transient failure or missing secret we keep the
           # last-known bundled snapshot instead of dropping the provider.
+          # Tbilisi City Hall ("Tbilisi City Hall") is deliberately absent from
+          # the loop below: it has no API, so its rows come from the bundled
+          # asset and are never replaced. That also keeps it out of every alert
+          # in this file for free -- notify_freed and notify_new_stations both
+          # act only on providers in `fresh_providers`, and a provider nobody
+          # fetches never lands there. Edit those rows with
+          # tools/build_cityhall.py, not here.
           stations = list(bundled)
           fresh_providers = set()   # providers we actually re-fetched this cycle
           for fn, pname in [(fetch_martev, "mart EV"),

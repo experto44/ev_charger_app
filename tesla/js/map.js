@@ -2,6 +2,7 @@
 
 import { MAPS_API_KEY, MAP_ID, MAP_CENTER, MAP_ZOOM } from './config.js';
 import { carIcon, onCarChange } from './car.js';
+import { isCityHall } from './format.js';
 
 // Dark style tuned to the app palette (surface #151c22 family).
 const NIGHT_STYLE = [
@@ -42,6 +43,7 @@ const STATUS_COLORS = {
   busy: '#f5a623',
   out: '#6b7a85',
   unknown: '#4F7C9E', // no live availability published
+  cityhall: '#4FC3F7', // City Hall's free posts — no status at all
 };
 
 // Marker pie colours — match the app's _AvailabilityPainter exactly.
@@ -52,6 +54,11 @@ const PIN_OUT  = '#6B7A85'; // grey — fully out-of-order charger
 // registry). Drawing those green would claim the plugs are free when we simply
 // do not know. Matches _unknownSlate in lib/main.dart.
 const PIN_UNKNOWN = '#4F7C9E';
+// Light blue — City Hall's free posts. Not an operator and not a plug whose
+// operator stays quiet: a whole group with no status of any kind, so it reads
+// as its own thing rather than borrowing the slate above. Matches
+// _cityHallBlue in lib/main.dart.
+const PIN_CITY_HALL = '#4FC3F7';
 
 // A station is fully out of order: no free plug and every published plug reads
 // "out" (neither free nor busy). Such pins are drawn grey, not busy-orange.
@@ -575,6 +582,7 @@ export function setMapTheme(theme) {
 
 /** Station-level colour: any free port → free; else any busy → busy; else out. */
 export function stationStatus(s) {
+  if (isCityHall(s.provider)) return 'cityhall';
   if (s.live === false) return 'unknown';
   if (s.available > 0) return 'free';
   if (s.ports.some((p) => p.status === 'busy')) return 'busy';
@@ -597,7 +605,9 @@ function arcPoint(frac) {
 function markerIcon(s) {
   const f = freeFraction(s);
   let body;
-  if (s.live === false) {
+  if (isCityHall(s.provider)) {
+    body = `<circle cx="22" cy="22" r="15" fill="${PIN_CITY_HALL}"/>`;
+  } else if (s.live === false) {
     body = `<circle cx="22" cy="22" r="15" fill="${PIN_UNKNOWN}"/>`;
   } else if (stationOut(s)) {
     body = `<circle cx="22" cy="22" r="15" fill="${PIN_OUT}"/>`;

@@ -56,6 +56,15 @@ const STRINGS = {
       'თავისუფალი, და ფასსაც იმიტომ არ ვწერთ, რომ დადასტურებული არ არის.\n\n' +
       'სანამ გზას გაუყვებით, ჯობია წინასწარ გადაამოწმოთ.',
     unknownInfoAria: 'რას ნიშნავს ეს სტატუსი',
+    // Tbilisi City Hall's free posts. Not an operator: no feed, no status, and
+    // a bare socket, so the driver brings the cable. Same wording as the phone
+    // app — see AppStrings.cityHall* in lib/l10n/app_strings.dart.
+    cityHallStatusUnknown: 'სტატუსი უცნობია',
+    cityHallNoLiveStatus:
+      'დამტენების შესახებ ცოცხალი სტატუსების განახლება არ ხდება, რადგან ' +
+      'მერია ტექნიკურად ვერ გვაწვდის ინფორმაციას',
+    cityHallBringCable: 'გჭირდება გადამყვანი კაბელი',
+    cityHallFree: 'უფასო',
     countries: 'ქვეყნები',
     reloadHint: 'განახლება',
     countryGeorgia: 'საქართველო',
@@ -257,6 +266,12 @@ const STRINGS = {
       'right now, and we will not quote a price we cannot confirm.\n\n' +
       'Worth checking before you make the trip.',
     unknownInfoAria: 'What this status means',
+    cityHallStatusUnknown: 'Status unknown',
+    cityHallNoLiveStatus:
+      'There is no live status for these chargers: City Hall has no technical ' +
+      'way to send it to us',
+    cityHallBringCable: 'You need your own cable',
+    cityHallFree: 'Free',
     countries: 'Countries',
     reloadHint: 'Reload',
     countryGeorgia: 'Georgia',

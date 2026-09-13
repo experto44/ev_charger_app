@@ -60,10 +60,38 @@ const PROVIDER_LOGOS = {
   'charger plus': 'chargerplus.png',
   'socar': 'socar.png',
   'zzz': 'zzz.png',
+  'tbilisi city hall': 'tbilisi.png',
 };
 
 /** Logo asset path for a provider name, or null (e.g. International/OCM). */
 export function providerLogo(name) {
   const file = PROVIDER_LOGOS[(name || '').trim().toLowerCase()];
   return file ? `assets/providers/${file}` : null;
+}
+
+// ── Tbilisi City Hall ────────────────────────────────────────────────────────
+// Matches kCityHallProvider in lib/app_constants.dart. The one row in the feed
+// that is not an operator: free posts run by the city, with no live status and
+// no way for us to get one. Kept in one place because three different screens
+// have to treat it differently.
+export const CITY_HALL = 'Tbilisi City Hall';
+
+/** True for City Hall's free posts. */
+export function isCityHall(provider) {
+  return (provider || '').trim() === CITY_HALL;
+}
+
+/**
+ * What to print for a provider. Operators are brands and keep their spelling in
+ * any language; City Hall is a description of who runs the posts, so it is the
+ * one name that gets translated — and the only one whose wording depends on
+ * what is being named. A filter chip stands for all of them; the line on an
+ * open station is one post, so pass `{ singular: true }` there.
+ */
+export function providerLabel(name, { singular = false } = {}) {
+  if (!isCityHall(name)) return name || '';
+  if (getLang() === 'ka') {
+    return singular ? 'მერიის უფასო დამტენი' : 'მერიის უფასო დამტენები';
+  }
+  return singular ? 'City Hall free charger' : 'City Hall free chargers';
 }

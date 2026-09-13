@@ -16003,88 +16003,715 @@
     ],
     "last_updated": "2026-07-02 17:30 UTC"
   },
- {
-  "id": "keystone_59",
-  "name": "კახეთის გზატკეცილი",
-  "lat": 41.6837054,
-  "lng": 44.8809773,
-  "power": "180 kW",
-  "type": "Fast DC",
-  "price": "0.80 ₾/kWh",
-  "available_spots": "2 available",
-  "total_spots": 2,
-  "city": "Tbilisi",
-  "provider": "ZZZ",
-  "connectors": [
-   "CCS2",
-   "GB/T"
-  ],
-  "ports": [
-   {
-    "type": "CCS2",
-    "status": "free"
-   },
-   {
-    "type": "GB/T",
-    "status": "free"
-   }
-  ],
-  "last_updated": "2026-09-13 15:27 UTC"
- },
- {
-  "id": "keystone_58",
-  "name": "კოსმონავტების სანაპირო",
-  "lat": 41.7358602,
-  "lng": 44.7738338,
-  "power": "180 kW",
-  "type": "Fast DC",
-  "price": "0.80 ₾/kWh",
-  "available_spots": "2 available",
-  "total_spots": 2,
-  "city": "Tbilisi",
-  "provider": "ZZZ",
-  "connectors": [
-   "CCS2",
-   "GB/T"
-  ],
-  "ports": [
-   {
-    "type": "CCS2",
-    "status": "free"
-   },
-   {
-    "type": "GB/T",
-    "status": "free"
-   }
-  ],
-  "last_updated": "2026-09-13 15:27 UTC"
- },
- {
-  "id": "keystone_57",
-  "name": "აღმაშენებელის ხეივანი 49",
-  "lat": 41.7985258,
-  "lng": 44.771049,
-  "power": "180 kW",
-  "type": "Fast DC",
-  "price": "0.80 ₾/kWh",
-  "available_spots": "2 available",
-  "total_spots": 2,
-  "city": "Tbilisi",
-  "provider": "ZZZ",
-  "connectors": [
-   "CCS2",
-   "GB/T"
-  ],
-  "ports": [
-   {
-    "type": "CCS2",
-    "status": "free"
-   },
-   {
-    "type": "GB/T",
-    "status": "free"
-   }
-  ],
-  "last_updated": "2026-09-13 15:27 UTC"
- }
+  {
+    "id": "keystone_59",
+    "name": "კახეთის გზატკეცილი",
+    "lat": 41.6837054,
+    "lng": 44.8809773,
+    "power": "180 kW",
+    "type": "Fast DC",
+    "price": "0.80 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Tbilisi",
+    "provider": "ZZZ",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-09-13 15:27 UTC"
+  },
+  {
+    "id": "keystone_58",
+    "name": "კოსმონავტების სანაპირო",
+    "lat": 41.7358602,
+    "lng": 44.7738338,
+    "power": "180 kW",
+    "type": "Fast DC",
+    "price": "0.80 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Tbilisi",
+    "provider": "ZZZ",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-09-13 15:27 UTC"
+  },
+  {
+    "id": "keystone_57",
+    "name": "აღმაშენებელის ხეივანი 49",
+    "lat": 41.7985258,
+    "lng": 44.771049,
+    "power": "180 kW",
+    "type": "Fast DC",
+    "price": "0.80 ₾/kWh",
+    "available_spots": "2 available",
+    "total_spots": 2,
+    "city": "Tbilisi",
+    "provider": "ZZZ",
+    "connectors": [
+      "CCS2",
+      "GB/T"
+    ],
+    "ports": [
+      {
+        "type": "CCS2",
+        "status": "free"
+      },
+      {
+        "type": "GB/T",
+        "status": "free"
+      }
+    ],
+    "last_updated": "2026-09-13 15:27 UTC"
+  },
+  {
+    "id": "meria_011939028087",
+    "name": "საქართველოს ერთიანობისთვის მებრძოლთა ქუჩა",
+    "lat": 41.698682,
+    "lng": 44.871779,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 1"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.19.39.028.087"
+  },
+  {
+    "id": "meria_011939011036",
+    "name": "ვარკეთილის 3, 3ა მკრ, კორპ N325 მიმდებარედ",
+    "lat": 41.706994,
+    "lng": 44.876406,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.19.39.011.036"
+  },
+  {
+    "id": "meria_011202012100",
+    "name": "ზღვის უბნის დასახლება 3 მკრ, კვრ 5,კორპ N2 მიდებარედ",
+    "lat": 41.776206,
+    "lng": 44.821727,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 1"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.12.02.012.100"
+  },
+  {
+    "id": "meria_011405007721",
+    "name": "ელიზბარ მინდელის ქუჩა N4 ა",
+    "lat": 41.72499,
+    "lng": 44.71388,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.14.05.007.721"
+  },
+  {
+    "id": "meria_011402011064",
+    "name": "ნუცუბიძის ფერდობი, მე-3 და მე-4 მკრ შორის",
+    "lat": 41.731518,
+    "lng": 44.731456,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.14.02.011.064"
+  },
+  {
+    "id": "meria_011403042429",
+    "name": "კალისტრატე ქუთათელაძის ქუჩა N2",
+    "lat": 41.723253,
+    "lng": 44.743813,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.14.03.042.429"
+  },
+  {
+    "id": "meria_011012032020",
+    "name": "ცხინვალის ქუჩა N7",
+    "lat": 41.731192,
+    "lng": 44.760482,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.10.12.032.020"
+  },
+  {
+    "id": "meria_011017007038",
+    "name": "ბახტრიონის ქუჩა N28",
+    "lat": 41.719653,
+    "lng": 44.760536,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.10.17.007.038"
+  },
+  {
+    "id": "meria_011017040028",
+    "name": "მელიტონ და ანდრია ბალანჩივაძეების ქუჩა",
+    "lat": 41.715807,
+    "lng": 44.772588,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.10.17.040.028"
+  },
+  {
+    "id": "meria_011303022006",
+    "name": "დიღმის მასივი კვრ 4 კორპ 14",
+    "lat": 41.762867,
+    "lng": 44.778987,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.13.03.022.006"
+  },
+  {
+    "id": "meria_011206001092",
+    "name": "ჩარგლის ქუჩა N73",
+    "lat": 41.770455,
+    "lng": 44.801334,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.12.06.001.092"
+  },
+  {
+    "id": "meria_011211051023",
+    "name": "ბენდელიანის ქუჩა N16",
+    "lat": 41.740873,
+    "lng": 44.794958,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.12.11.051.023"
+  },
+  {
+    "id": "meria_011304019055",
+    "name": "აგლაძის ქუჩა N38",
+    "lat": 41.743926,
+    "lng": 44.7741,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.13.04.019.055"
+  },
+  {
+    "id": "meria_011307007018",
+    "name": "ბათუმის ქუჩა N5",
+    "lat": 41.726849,
+    "lng": 44.790845,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.13.07.007.018"
+  },
+  {
+    "id": "meria_011605019010",
+    "name": "ჯავახიშვილის ქუჩა N19",
+    "lat": 41.706174,
+    "lng": 44.805478,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.16.05.019.010"
+  },
+  {
+    "id": "meria_011414011201",
+    "name": "ატენის ქუჩა N1",
+    "lat": 41.709634,
+    "lng": 44.771952,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.14.14.011.201"
+  },
+  {
+    "id": "meria_011505012017",
+    "name": "ალექსანდრე ჭავჭვაძის ქუჩა N10ა",
+    "lat": 41.699862,
+    "lng": 44.793533,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.15.05.012.017"
+  },
+  {
+    "id": "meria_011502033049",
+    "name": "იაკობ გოგებაშვილის ქუჩა N43",
+    "lat": 41.703718,
+    "lng": 44.781157,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.15.02.033.049"
+  },
+  {
+    "id": "meria_011505003105",
+    "name": "ძმების კაკაბაძეების ქუჩა",
+    "lat": 41.703196,
+    "lng": 44.789936,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.15.05.003.105"
+  },
+  {
+    "id": "meria_011707031113",
+    "name": "თეოფანე დავითაიას ქუჩა N1ბ",
+    "lat": 41.700206,
+    "lng": 44.852092,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.17.07.031.113"
+  },
+  {
+    "id": "meria_011103003108",
+    "name": "ლიბანის ქუჩა N18",
+    "lat": 41.818113,
+    "lng": 44.795139,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.11.03.003.108"
+  },
+  {
+    "id": "meria_011920007118",
+    "name": "ხომლელის ქუჩა N17 მიმდებარედ",
+    "lat": 41.693396,
+    "lng": 44.875526,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.19.20.007.118"
+  },
+  {
+    "id": "meria_011920015078",
+    "name": "კალაუბნის ქუჩა N14",
+    "lat": 41.689309,
+    "lng": 44.875348,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.19.20.015.078"
+  },
+  {
+    "id": "meria_011713040217",
+    "name": "ლ. კაჩინსკის ქუჩაN1",
+    "lat": 41.685482,
+    "lng": 44.832928,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.17.13.040.217"
+  },
+  {
+    "id": "meria_011605003138",
+    "name": "მარჯანიშვილის ქუჩაN27",
+    "lat": 41.709887,
+    "lng": 44.798204,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.16.05.003.138"
+  },
+  {
+    "id": "meria_011305005061",
+    "name": "ხოშარაულის ქუჩა N1",
+    "lat": 41.735282,
+    "lng": 44.7804,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.13.05.005.061"
+  },
+  {
+    "id": "meria_011411008036",
+    "name": "ილია ჭავჭავაძის გამზირი N20",
+    "lat": 41.708869,
+    "lng": 44.774877,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.14.11.008.036"
+  },
+  {
+    "id": "meria_011707018028",
+    "name": "ვაზისუბნის დასახლება მე-2 მკრ, კორპ 13",
+    "lat": 41.705033,
+    "lng": 44.84346,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.17.07.018.028"
+  },
+  {
+    "id": "meria_011013034097",
+    "name": "მერაბ ალექსიძის ქუჩა N1",
+    "lat": 41.716705,
+    "lng": 44.781095,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.10.13.034.097"
+  },
+  {
+    "id": "meria_011933002096",
+    "name": "ზ.იარაჯულის ქუჩაN7",
+    "lat": 41.668916,
+    "lng": 44.890597,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.19.33.002.096"
+  },
+  {
+    "id": "meria_011806001098",
+    "name": "გორგასლის ქუჩა N41",
+    "lat": 41.680752,
+    "lng": 44.823992,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.18.06.001.098"
+  },
+  {
+    "id": "meria_011935006104",
+    "name": "ბოგდან ხმელნიცკის ქუჩა N1",
+    "lat": 41.670411,
+    "lng": 44.875578,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.19.35.006.104"
+  },
+  {
+    "id": "meria_011710010067",
+    "name": "კახეთის გზატკეცილი კორპ 17",
+    "lat": 41.687708,
+    "lng": 44.857731,
+    "power": "",
+    "type": "AC",
+    "price": "უფასო",
+    "available_spots": "0 available",
+    "total_spots": 1,
+    "city": "Tbilisi",
+    "provider": "Tbilisi City Hall",
+    "connectors": [
+      "Type 2"
+    ],
+    "ports": [],
+    "live": false,
+    "cadastral": "01.17.10.010.067"
+  }
 ]

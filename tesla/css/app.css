@@ -26,6 +26,10 @@
   /* Slate: the source publishes no live availability (Turkey's registry). */
   --unknown:     #4F7C9E;
   --unknown-ink: #8FB6D1;
+  /* Light blue: City Hall's free posts, which have no status at all. Distinct
+     from the slate above so the two are never read as the same thing. */
+  --cityhall:     #4FC3F7;
+  --cityhall-ink: #9BDBFA;
   --scrim:     rgba(13, 18, 22, 0.7);
   --shadow-sm: 0 6px 20px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 8px 26px rgba(0, 0, 0, 0.4);
@@ -49,6 +53,7 @@
   --accent-ink: #067a52;
   --busy-ink:   #96590a;
   --unknown-ink: #3a6d94;
+  --cityhall-ink: #0d6c98;
   --scrim:     rgba(20, 32, 41, 0.45);
   --shadow-sm: 0 4px 14px rgba(16, 32, 45, 0.12);
   --shadow-md: 0 8px 22px rgba(16, 32, 45, 0.16);
@@ -770,6 +775,8 @@ button {
 .status--out  { background: rgba(107, 122, 133, 0.2);  color: var(--out); }
 /* Registry data (Turkey): no live availability, so neither green nor orange. */
 .status--unknown { background: rgba(79, 124, 158, 0.18); color: var(--unknown-ink); }
+/* City Hall's free posts: no status of any kind, and a colour of their own. */
+.status--cityhall { background: rgba(79, 195, 247, 0.18); color: var(--cityhall-ink); }
 
 .panel__meta {
   display: flex;
@@ -828,6 +835,17 @@ button {
 .port--free .port__status { color: var(--accent-ink); }
 .port--busy .port__status { color: var(--busy-ink); }
 .port--unknown .port__status { color: var(--unknown-ink); }
+/* The line under a City Hall socket saying why there is no status. It wraps, so
+   it drops the row's fixed height and reads as prose rather than a value. */
+.port--note {
+  display: block;
+  min-height: 0;
+  padding: 12px 16px;
+  border-left-color: var(--cityhall);
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.45;
+}
 
 /* Freshness line + refresh button. The button is a full touch target rather
    than a small icon: this is read and pressed in a car, often while parked

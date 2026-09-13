@@ -121,22 +121,33 @@ const _textSec   = Color(0xFF9E9E9E);
 // Fallback centre used only when GPS is unavailable
 const _tbilisi = LatLng(41.7151, 44.8271);
 
-// Known providers, in display order. "All selected" is the default (no filter).
-// Local Georgian providers + a single "International" group for all Open Charge
-// Map networks (so international chargers never clutter the local provider list).
-const _kAllProviders = [
+// Known providers, in display order. Local Georgian operators, then City Hall's
+// free posts, then the two group rows: a single "Turkey" for the EPDK registry
+// and a single "International" for all Open Charge Map networks (so
+// international chargers never clutter the local provider list).
+// See [kDefaultProviders] for which of these a fresh install starts with.
+const kAllProviders = [
   'E-Space', 'mart EV', 'MOVEO', 'Electrify Georgia', 'EV Power GE', 'Da-Tene', 'Gadatene', 'EcoCars', 'Solar Station', 'Tegeta', 'Charger Plus', 'ZZZ',
+  // Last of the Georgian rows: not an operator, no live status, off by default.
+  kCityHallProvider,        // 'Tbilisi City Hall' — the city's own free posts
   TurkeyService.kProvider,  // 'Turkey'        — the EPDK registry, one row for ~200 brands
   OcmService.kProvider,     // 'International' — every other OCM network
 ];
 
-// Provider selection a fresh install starts with: the Georgian providers only.
+// Provider selection a fresh install starts with: the operators only.
 // The two group rows are opt-in — "International" because it streams Open Charge
 // Map live, "Turkey" because it is a multi-megabyte registry that is only
-// offered once the user has added Turkey to their countries in Settings.
-final _kDefaultProviders = <String>[
-  for (final p in _kAllProviders)
-    if (p != OcmService.kProvider && p != TurkeyService.kProvider) p,
+// offered once the user has added Turkey to their countries in Settings. City
+// Hall is opt-in for a different reason (see [requiresExplicitOptIn]): nobody
+// publishes whether those posts work, so they are shown only if asked for.
+//
+// Doubles as the "local providers" list the new-network migration works from,
+// so anything left out here is also never switched on for an existing install.
+final kDefaultProviders = <String>[
+  for (final p in kAllProviders)
+    if (p != OcmService.kProvider &&
+        p != TurkeyService.kProvider &&
+        !requiresExplicitOptIn(p)) p,
 ];
 
 // The local providers an install was offered before it could record that list
@@ -147,7 +158,7 @@ final _kDefaultProviders = <String>[
 // invisible to everyone who has ever touched the provider sheet: the restore
 // intersects the saved list with what exists, so a name that could not have
 // been saved is quietly filtered off the map. Never extend this list — new
-// providers belong in _kAllProviders alone.
+// providers belong in kAllProviders alone.
 const _kProvidersKnownBeforeMigration = <String>[
   'E-Space', 'mart EV', 'MOVEO', 'Electrify Georgia', 'EV Power GE', 'Da-Tene',
   'Gadatene', 'EcoCars', 'Solar Station', 'Tegeta', 'Charger Plus',
@@ -259,10 +270,11 @@ class _MapScreenState extends State<MapScreen>
   bool             _filterAvail      = false;
   // Multi-select provider filter, persisted in SharedPreferences (kSelectedProviders)
   // so the last choice is still in force after the app is killed and reopened.
-  // The default is every GEORGIAN provider selected; the two opt-in group rows
-  // ("International" / OCM and "Turkey" / EPDK) start OFF — they each pull a
-  // large remote dataset, so the user turns them on deliberately.
-  final Set<String> _selectedProviders = {..._kDefaultProviders};
+  // The default is every Georgian OPERATOR selected. The two group rows
+  // ("International" / OCM and "Turkey" / EPDK) start OFF because they each
+  // pull a large remote dataset, and City Hall starts off because its posts
+  // have no status at all — see [requiresExplicitOptIn].
+  final Set<String> _selectedProviders = {...kDefaultProviders};
   final Set<String> _filterConnectors = {};  // empty = no connector filter
 
   // Minimum-power filter, configured in the profile ("Minimum Charger Power").
@@ -292,7 +304,7 @@ class _MapScreenState extends State<MapScreen>
   // sheet only ever lists things that will actually put pins on the map. Drives
   // the sheet, "Select all" and the filter badge alike.
   List<String> get _availableProviders => [
-        for (final p in _kAllProviders)
+        for (final p in kAllProviders)
           if (p != TurkeyService.kProvider || _turkeyAvailable)
             if (p != OcmService.kProvider || _internationalAvailable) p,
       ];
@@ -326,11 +338,18 @@ class _MapScreenState extends State<MapScreen>
   bool get _turkeyOn =>
       _selectedProviders.contains(TurkeyService.kProvider) && _turkeyAvailable;
 
-  // Filter is "active" (badge shown) only for a proper, non-empty subset.
-  // Empty set or all-selected both mean "show every provider".
+  // Filter is "active" (badge shown) when the user has narrowed the map: some
+  // row that would be on by default is unticked. An empty set is not narrowing
+  // — it is this screen's way of saying "no filter, show everything".
+  //
+  // Opt-in rows (City Hall) are excluded from the test on purpose. They are off
+  // on a fresh install and are MEANT to be, so counting them would badge every
+  // install as filtered from the moment it is opened, which says "you are not
+  // seeing everything" to someone who has changed nothing.
   bool get _providerFilterActive =>
       _selectedProviders.isNotEmpty &&
-      _selectedProviders.length != _availableProviders.length;
+      _availableProviders.any((p) =>
+          !requiresExplicitOptIn(p) && !_selectedProviders.contains(p));
 
   LatLng?               _userPos;
   // Live GPS subscription so the location pin follows the device as it moves;
@@ -590,7 +609,7 @@ class _MapScreenState extends State<MapScreen>
       }
       if (known.isEmpty) { known.addAll(_kProvidersKnownBeforeMigration); }
       final fresh = providersToAutoEnable(
-          saved: _selectedProviders, known: known, local: _kDefaultProviders);
+          saved: _selectedProviders, known: known, local: kDefaultProviders);
       if (fresh.isNotEmpty) {
         _selectedProviders.addAll(fresh);
         addedNewProviders = true;
@@ -598,7 +617,7 @@ class _MapScreenState extends State<MapScreen>
     });
     // Record what this install has now been offered, so a provider the user
     // unticks after the migration stays unticked on the next launch.
-    await p.setString(kKnownProviders, jsonEncode(_kDefaultProviders));
+    await p.setString(kKnownProviders, jsonEncode(kDefaultProviders));
     if (addedNewProviders) { await _saveProviders(); }
     // Both datasets are also kicked off by the map's onMapReady, but that can
     // fire BEFORE this async prefs read completes — in which case it ran against
@@ -1233,8 +1252,9 @@ class _MapScreenState extends State<MapScreen>
         builder: (_) => RoutePlannerScreen(
           // Everything loaded, not just the Georgian feed: a route that crosses
           // into Turkey has to see Turkish chargers (the planner pulls them in
-          // itself if they aren't loaded yet).
-          stations:           _allStations,
+          // itself if they aren't loaded yet). See [_routePlannerStations] for
+          // the one group left out.
+          stations:           _routePlannerStations,
           initialOrigin:      _userPos,
           initialDestination: destination,
         ),
@@ -1326,6 +1346,19 @@ class _MapScreenState extends State<MapScreen>
     ];
   }
 
+  // What the route planner is allowed to plan around.
+  //
+  // Deliberately NOT the provider selection: a route that crosses into Turkey
+  // has to see Turkish chargers whether or not that row is ticked. City Hall is
+  // the one exception, and it is excluded outright rather than by selection —
+  // a plan is a promise that the car can charge at each stop, and nobody
+  // publishes whether those posts work. Building a 300 km leg around one would
+  // strand a driver at a dead socket.
+  List<Station> get _routePlannerStations => [
+        for (final s in _allStations)
+          if (s.provider != kCityHallProvider) s,
+      ];
+
   List<Station> get _filtered {
     // NOTE: the search bar is a Google Places *destination* search — it must NOT
     // filter the station list (doing so wiped every station off the map once a
@@ -1349,10 +1382,22 @@ class _MapScreenState extends State<MapScreen>
       final filterName = s.country == TurkeyService.kCountry
           ? TurkeyService.kProvider
           : s.provider;
-      if (_selectedProviders.isNotEmpty &&
+      // An opt-in row has to be TICKED, not merely unfiltered: "show
+      // everything" is a statement about the networks the user was shown by
+      // default, and City Hall's posts are not among them.
+      if (requiresExplicitOptIn(filterName)) {
+        if (!_selectedProviders.contains(filterName)) { return false; }
+      } else if (_selectedProviders.isNotEmpty &&
           !_selectedProviders.contains(filterName)) { return false; }
       if (_filterDC    && !s.isDC)          { return false; }
-      if (_filterAvail && s.available == 0) { return false; }
+      // "Only available" is a claim we cannot make for City Hall's posts, so
+      // they drop out of that filter instead of passing a plug count off as a
+      // free plug. (Turkey and OCM are left as they were — their registry rows
+      // have the same weakness, but changing that is its own decision.)
+      if (_filterAvail &&
+          (s.available == 0 || requiresExplicitOptIn(filterName))) {
+        return false;
+      }
       // Minimum-power filter (profile setting): hide stations with a known
       // rating below the threshold; unknown ratings (kw == 0) stay visible.
       if (_minPowerOn && _minPowerKw > 0 &&
@@ -1470,6 +1515,9 @@ class _MapScreenState extends State<MapScreen>
                         total:     s.total,
                         isOut:     _stationOutOfOrder(s),
                         unknown:   !s.live,
+                        solidColor: s.provider == kCityHallProvider
+                            ? _cityHallBlue
+                            : null,
                       ),
                     ),
                   )).toList(),
@@ -1478,12 +1526,13 @@ class _MapScreenState extends State<MapScreen>
                   // reads orange from far out instead of a misleading green.
                   builder: (context, markers) {
                     int avail = 0, tot = 0, count = 0, outCount = 0;
-                    int unknownCount = 0;
+                    int unknownCount = 0, cityHallCount = 0;
                     for (final m in markers) {
                       final s = stationByPoint[
                           '${m.point.latitude},${m.point.longitude}'];
                       if (s == null) { continue; }
                       count++;
+                      if (s.provider == kCityHallProvider) { cityHallCount++; }
                       // Stations with no live feed can't be counted as free or
                       // busy — they'd tint the whole bubble on a guess.
                       if (!s.live) { unknownCount++; continue; }
@@ -1500,6 +1549,10 @@ class _MapScreenState extends State<MapScreen>
                     final allOut = count > 0 && outCount == count;
                     // Slate when the whole cluster is registry-only data.
                     final allUnknown = count > 0 && unknownCount == count;
+                    // Light blue when it is nothing but City Hall's posts, so a
+                    // bunch of them zoomed out still reads as what it is rather
+                    // than borrowing the registry slate.
+                    final allCityHall = count > 0 && cityHallCount == count;
                     return Container(
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
@@ -1507,7 +1560,8 @@ class _MapScreenState extends State<MapScreen>
                       ),
                       child: CustomPaint(
                         painter: _AvailabilityPainter(freeFraction,
-                            isOut: allOut, unknown: allUnknown),
+                            isOut: allOut, unknown: allUnknown,
+                            solidColor: allCityHall ? _cityHallBlue : null),
                         child: Center(
                           child: Text(
                             '${markers.length}',
@@ -1684,7 +1738,7 @@ class _MapScreenState extends State<MapScreen>
                       context,
                       MaterialPageRoute(
                         builder: (_) =>
-                            RoutePlannerScreen(stations: _allStations),
+                            RoutePlannerScreen(stations: _routePlannerStations),
                       ),
                     );
                   },
@@ -2044,7 +2098,9 @@ class _ProviderFilterSheet extends StatelessWidget {
                             ? 'Every licensed network (EPDK registry)'
                             : p == OcmService.kProvider
                                 ? 'Open Charge Map, outside Georgia'
-                                : null;
+                                : p == kCityHallProvider
+                                    ? AppStrings.cityHallNoLiveStatus
+                                    : null;
                         return InkWell(
                           onTap: () => onToggle(p),
                           child: Padding(
@@ -2061,16 +2117,18 @@ class _ProviderFilterSheet extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      p == TurkeyService.kProvider ? '🇹🇷 Turkey' : p,
-                                      style: const TextStyle(
+                                      p == TurkeyService.kProvider
+                                          ? '🇹🇷 Turkey'
+                                          : providerDisplayName(p),
+                                      style: AppStrings.font(const TextStyle(
                                           color: _textPri,
                                           fontSize: 15,
-                                          fontWeight: FontWeight.w500),
+                                          fontWeight: FontWeight.w500)),
                                     ),
                                     if (subtitle != null)
                                       Text(subtitle,
-                                          style: const TextStyle(
-                                              color: _textSec, fontSize: 11)),
+                                          style: AppStrings.font(const TextStyle(
+                                              color: _textSec, fontSize: 11))),
                                   ],
                                 ),
                               ),
@@ -2219,6 +2277,11 @@ bool _stationOutOfOrder(Station s) =>
 const _outGrey = Color(0xFF6B7A85);
 // Slate used for stations whose source publishes no live availability.
 const _unknownSlate = Color(0xFF4F7C9E);
+// Light blue: City Hall's free posts. They are the one group on the map that is
+// not an operator and carries no status at all, so they are given a colour of
+// their own rather than the slate that means "this operator publishes nothing
+// for this plug" — a driver should be able to tell the two apart at a glance.
+const _cityHallBlue = Color(0xFF4FC3F7);
 
 /// The map's permanent credit line: basemap tiles and station data.
 ///
@@ -2320,11 +2383,15 @@ class _AvailabilityPin extends StatelessWidget {
     required this.total,
     this.isOut = false,
     this.unknown = false,
+    this.solidColor,
   });
   final int  available;
   final int  total;
   final bool isOut;   // fully out of order → grey pin
   final bool unknown; // no live availability published → slate pin
+  // One flat colour for the whole circle, whatever the numbers say. Set for
+  // City Hall's posts, where every other reading would be invented.
+  final Color? solidColor;
 
   @override
   Widget build(BuildContext context) {
@@ -2341,7 +2408,7 @@ class _AvailabilityPin extends StatelessWidget {
       ),
       child: CustomPaint(
         painter: _AvailabilityPainter(freeFraction,
-            isOut: isOut, unknown: unknown),
+            isOut: isOut, unknown: unknown, solidColor: solidColor),
         child: const Center(child: Icon(Icons.bolt, color: Colors.black, size: 20)),
       ),
     );
@@ -2350,13 +2417,15 @@ class _AvailabilityPin extends StatelessWidget {
 
 class _AvailabilityPainter extends CustomPainter {
   const _AvailabilityPainter(this.freeFraction,
-      {this.isOut = false, this.unknown = false});
+      {this.isOut = false, this.unknown = false, this.solidColor});
   final double freeFraction; // 0..1 portion of the circle drawn green
   final bool   isOut;        // fully out of order → solid grey
   // Source publishes no real-time availability (Turkey's EPDK registry, OCM).
   // A green pin there would claim the plugs are free when we simply don't know,
   // so those stations get their own neutral slate colour.
   final bool   unknown;
+  // Overrides every rule below — see [_AvailabilityPin.solidColor].
+  final Color? solidColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -2365,7 +2434,10 @@ class _AvailabilityPainter extends CustomPainter {
     final green  = Paint()..color = _emerald..style = PaintingStyle.fill;
     final orange = Paint()..color = Colors.orangeAccent..style = PaintingStyle.fill;
 
-    if (isOut) {
+    if (solidColor != null) {
+      canvas.drawCircle(center, radius,
+          Paint()..color = solidColor!..style = PaintingStyle.fill);
+    } else if (isOut) {
       canvas.drawCircle(center, radius,
           Paint()..color = _outGrey..style = PaintingStyle.fill);
     } else if (unknown) {
@@ -2403,7 +2475,8 @@ class _AvailabilityPainter extends CustomPainter {
   bool shouldRepaint(_AvailabilityPainter old) =>
       old.freeFraction != freeFraction ||
       old.isOut != isOut ||
-      old.unknown != unknown;
+      old.unknown != unknown ||
+      old.solidColor != solidColor;
 }
 
 // ── Zoom +/- button ───────────────────────────────────────────────────────────
@@ -2549,8 +2622,12 @@ class _StationSheetState extends State<_StationSheet> {
   // data (OCM/International, etc.). Providers that publish ports get a per-
   // connector button on each busy row instead. Needs a stable id and a fully
   // occupied station (no free plug to grab right now).
+  // Never for City Hall: an alert promises to tell the user when a plug frees
+  // up, and nothing about those posts is ever reported to us — the push would
+  // simply never come.
   bool get _canAlert => _station.id.isNotEmpty &&
-      _station.ports.isEmpty && _station.available == 0;
+      _station.ports.isEmpty && _station.available == 0 && !_isCityHall;
+  bool get _isCityHall => _station.provider == kCityHallProvider;
   bool get _alertOn  => NotificationService.I.isSubscribed(_station.id);
 
   // True if a user is signed in. Auth state can be spuriously null for a moment
@@ -2900,14 +2977,17 @@ class _StationSheetState extends State<_StationSheet> {
             ),
             _InfoChip(
               icon:  Icons.sell_outlined,
-              label: s.price,
-              color: _textSec,
+              // The feed spells City Hall's price in Georgian (it is their
+              // word for it); the chip follows the app's language instead.
+              label: _isCityHall ? AppStrings.cityHallFree : s.price,
+              color: _isCityHall ? _cityHallBlue : _textSec,
             ),
             if (s.provider.isNotEmpty)
               _InfoChip(
                 icon:  Icons.ev_station_rounded,
-                label: s.provider,
-                color: _emerald,
+                // One charger is open, so City Hall's chip is singular here.
+                label: providerDisplayName(s.provider, singular: true),
+                color: _isCityHall ? _cityHallBlue : _emerald,
               ),
             // Plain connector chips only when there's no per-plug status data
             // (the live status block below replaces them when available).
@@ -2976,15 +3056,83 @@ class _StationSheetState extends State<_StationSheet> {
               ],
             ),
           ] else if (providerLogoAsset(s.provider) != null) ...[
-            // No timestamp to anchor beside — still show the logo, right-aligned.
+            // No timestamp to anchor beside. Right-aligning it here left the
+            // logo marooned at the end of an otherwise empty row — the
+            // alignment only reads as deliberate when there is something on the
+            // left for it to balance. On its own it lines up with the name, the
+            // chips and the status, like everything else in this sheet.
             const SizedBox(height: 6),
             Align(
-              alignment: Alignment.centerRight,
-              child: ProviderLogo(provider: s.provider, height: 56),
+              alignment: Alignment.centerLeft,
+              child: ProviderLogo(provider: s.provider, height: 46),
             ),
           ],
           const SizedBox(height: 10),
 
+          // ── City Hall: the status we do not have ──────────────────────────
+          // No operator, no feed, nothing to refresh — so this replaces the
+          // availability row rather than sitting beside it. The spreadsheet we
+          // were sent does say which posts were broken, but it was a month old
+          // on arrival, so passing that on would be presenting stale guesswork
+          // as a live reading. Say what is true instead: we do not know, and
+          // here is why.
+          if (_isCityHall) ...[
+            Row(children: [
+              Container(
+                width: 9, height: 9,
+                decoration: const BoxDecoration(
+                    color: _cityHallBlue, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                AppStrings.cityHallStatusUnknown,
+                style: AppStrings.font(const TextStyle(
+                    color: _cityHallBlue, fontSize: 14,
+                    fontWeight: FontWeight.w600)),
+              ),
+            ]),
+            const SizedBox(height: 8),
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 2),
+                child: Icon(Icons.info_outline_rounded,
+                    color: _textSec, size: 13),
+              ),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  AppStrings.cityHallNoLiveStatus,
+                  style: AppStrings.font(const TextStyle(
+                      color: _textSec, fontSize: 11, height: 1.4)),
+                ),
+              ),
+            ]),
+            const SizedBox(height: 10),
+            // A bare socket: the driver brings the cable. Worth as much weight
+            // as the status line — turning up without one wastes the trip just
+            // as surely as a dead post does.
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: _cityHallBlue.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _cityHallBlue.withValues(alpha: 0.5)),
+              ),
+              child: Row(children: [
+                const Icon(Icons.cable_rounded, color: _cityHallBlue, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    AppStrings.cityHallBringCable,
+                    style: AppStrings.font(const TextStyle(
+                        color: _textPri, fontSize: 13,
+                        fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ]),
+            ),
+          ] else
           // Availability row + refresh button
           Row(children: [
             Container(

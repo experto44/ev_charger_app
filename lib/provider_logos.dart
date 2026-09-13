@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'app_constants.dart';
+import 'l10n/app_strings.dart';
+
 // ── Provider logos ────────────────────────────────────────────────────────────
 // Maps a station's `provider` string to its bundled logo asset. Mirrors the
 // Tesla web build's providerLogo() mapping (tesla/js/format.js) so both clients
@@ -19,12 +22,28 @@ const Map<String, String> _providerLogoFiles = {
   'charger plus':      'chargerplus.png',
   'socar':             'socar.png',
   'zzz':               'zzz.png',
+  'tbilisi city hall': 'tbilisi.png',
 };
 
 /// Asset path for a provider's logo, or null when none is bundled.
 String? providerLogoAsset(String provider) {
   final file = _providerLogoFiles[provider.trim().toLowerCase()];
   return file == null ? null : 'assets/providers/$file';
+}
+
+/// What to print for a provider key.
+///
+/// Operators are brands and are shown exactly as the feed spells them, in any
+/// language. City Hall is not a brand — it is a description of who runs the
+/// posts — so it is the one row that is translated, and the only one whose
+/// wording depends on what is being named: a list row stands for all of them
+/// ("მერიის უფასო დამტენები"), while the chip on an open station is one post
+/// ("მერიის უფასო დამტენი"). Pass [singular] there.
+String providerDisplayName(String provider, {bool singular = false}) {
+  if (provider != kCityHallProvider) { return provider; }
+  return singular
+      ? AppStrings.cityHallStationName
+      : AppStrings.cityHallProviderName;
 }
 
 /// Small logo chip for a provider. The logos are drawn for light backgrounds
