@@ -35,7 +35,15 @@ const APPSTORE = 'https://apps.apple.com/ge/app/geocharge/id6785467389';
 const CITIES = [
   ['Tbilisi',         'თბილისი',        'თბილისში',        41.7151, 44.8271, 28],
   ['Rustavi',         'რუსთავი',        'რუსთავში',        41.5495, 44.9930, 12],
-  ['Mtskheta',        'მცხეთა',         'მცხეთაში',        41.8450, 44.7200, 9],
+  // 4 km, not 9. assignCity gives a station to the NEAREST city whose radius
+  // reaches it, so a generous radius on a small town next to a big one wins
+  // outright: at 9 km Mtskheta took the whole north-west of Tbilisi — Tbilisi
+  // Mall, the length of Aghmashenebeli Alley, Didi Dighomi, Gldani Bridge,
+  // Sarajishvili Ave — 38 stations, every one of them inside Tbilisi, on a page
+  // headed "chargers in Mtskheta". Mtskheta town is barely 2 km across and the
+  // nearest real station to its centre is 5.4 km away, so 4 km covers the town
+  // with room to spare and reaches nothing that belongs to the capital.
+  ['Mtskheta',        'მცხეთა',         'მცხეთაში',        41.8450, 44.7200, 4],
   ['Gardabani',       'გარდაბანი',      'გარდაბანში',      41.4600, 45.0900, 12],
   ['Marneuli',        'მარნეული',       'მარნეულში',       41.4750, 44.8090, 12],
   ['Bolnisi',         'ბოლნისი',        'ბოლნისში',        41.4470, 44.5390, 12],
@@ -225,12 +233,28 @@ const PROVIDER_KA = {
   'MOVEO': 'MOVEO (მოვეო)', 'Gadatene': 'Gadatene (გადატენე)',
   // Latin-only brand with no established Georgian spelling, like mart EV.
   'ZZZ': 'ZZZ',
+  // Not a brand at all: the free posts Tbilisi City Hall runs. The Georgian is
+  // the real name and the English is a translation of it, which is the reverse
+  // of every row above. Matches kCityHallProvider in lib/app_constants.dart.
+  'Tbilisi City Hall': 'მერიის უფასო დამტენები',
 };
+/* Matches kCityHallProvider in lib/app_constants.dart. */
+const CITY_HALL = 'Tbilisi City Hall';
+const PROVIDER_EN = {
+  'Tbilisi City Hall': 'City Hall free chargers',
+};
+/* What to print for a provider in `lang`. Brands keep their own spelling in
+   English and get a transliteration in Georgian; City Hall is the one row whose
+   English is the translation rather than the original. */
+const providerName = (lang, p) =>
+  (lang === 'ka' ? PROVIDER_KA[p] : PROVIDER_EN[p]) || p;
+
 const PROVIDER_LOGO = {
   'mart EV': 'martev.svg', 'E-Space': 'espace.svg', 'EcoCars': 'ecocars.png',
   'Da-Tene': 'datene.png', 'Charger Plus': 'chargerplus.png', 'EV Power GE': 'evpower.png',
   'Tegeta': 'tegeta.png', 'Electrify Georgia': 'electrify.png', 'Solar Station': 'solarstation.png',
   'MOVEO': 'moveo.png', 'Gadatene': 'gadatene-dark.svg', 'ZZZ': 'zzz.png',
+  'Tbilisi City Hall': 'tbilisi.png',
 };
 
 /* ── i18n ────────────────────────────────────────────────────────────────── */
@@ -250,7 +274,7 @@ const L = {
     ctaBody: 'ამ გვერდზე ხედავთ, რომელი დამტენები არსებობს და სად. რუკა, ზუსტი მდებარეობა, ცოცხალი სტატუსი (თავისუფალია თუ დაკავებული) და მარშრუტის დაგეგმვა უფასო აპლიკაციაშია.',
     ctaPlay: 'ჩამოტვირთვა Google Play-დან', ctaStore: 'ჩამოტვირთვა App Store-დან',
     otherCities: 'სხვა ქალაქები', otherNetworks: 'სხვა ქსელები', backToAll: 'ყველა დამტენი საქართველოში',
-    noPrice: '—', faq: 'ხშირად დასმული კითხვები',
+    noPrice: '—', faq: 'ხშირად დასმული კითხვები', free: 'უფასო',
     priceNote: 'ტარიფები ინფორმაციული ხასიათისაა და პროვაიდერის მიერაა გამოქვეყნებული.',
     tariffsDir: 'tarifebi', routesDir: 'marshruti', calcDir: 'kalkulatori', calc: 'კალკულატორი',
     timeDir: 'datenvis-dro', timeCalc: 'დატენვის დრო',
@@ -290,7 +314,7 @@ const L = {
     ctaBody: 'This page shows which chargers exist and where. The map, exact locations, real-time availability and route planning live in the free app.',
     ctaPlay: 'Get it on Google Play', ctaStore: 'Download on the App Store',
     otherCities: 'Other cities', otherNetworks: 'Other networks', backToAll: 'All chargers in Georgia',
-    noPrice: '—', faq: 'Frequently asked questions',
+    noPrice: '—', faq: 'Frequently asked questions', free: 'Free',
     priceNote: 'Tariffs are indicative and published by the provider.',
     tariffsDir: 'tariffs', routesDir: 'routes', calcDir: 'calculator', calc: 'Calculator',
     timeDir: 'charging-time', timeCalc: 'Charging time',
@@ -554,7 +578,7 @@ function buildStationRows(list, lang, { showCity = false, showProvider = true } 
     const cells = [`<td>${esc(s.name || '—')}</td>`];
     if (showProvider) {
       const pslug = slug(s.provider);
-      cells.push(`<td><a href="${t.base}/${t.networksDir}/${pslug}/">${esc(lang === 'ka' ? (PROVIDER_KA[s.provider] || s.provider) : s.provider)}</a></td>`);
+      cells.push(`<td><a href="${t.base}/${t.networksDir}/${pslug}/">${esc(providerName(lang, s.provider))}</a></td>`);
     }
     if (showCity) {
       cells.push(s._city
@@ -565,7 +589,13 @@ function buildStationRows(list, lang, { showCity = false, showProvider = true } 
     cells.push(`<td><span class="tag ${dc ? 'dc' : 'ac'}">${dc ? 'DC' : 'AC'}</span></td>`);
     cells.push(`<td>${esc(s.power && s.power !== '—' ? s.power : '—')}</td>`);
     cells.push(`<td>${esc((s.connectors || []).join(', ') || '—')}</td>`);
-    if (SHOW_PRICE) cells.push(`<td>${esc(s.price || t.noPrice)}</td>`);
+    // City Hall's rows carry their price as the Georgian word for free, which
+    // is the right label on a Georgian page and the wrong one on an English
+    // one, so it is translated rather than printed through.
+    if (SHOW_PRICE) {
+      cells.push(`<td>${esc(
+        s.provider === CITY_HALL ? t.free : (s.price || t.noPrice))}</td>`);
+    }
     return `<tr>${cells.join('')}</tr>`;
   });
   return `<div class="tw"><table>
@@ -675,7 +705,7 @@ ${cities.map(([cityEn, list]) => {
 <tbody>
 ${provs.map(([p, list]) => {
     const s = summarise(list);
-    return `<tr><td><a href="${t.base}/${t.networksDir}/${slug(p)}/">${esc(lang === 'ka' ? (PROVIDER_KA[p] || p) : p)}</a></td><td>${s.total}</td><td>${s.dc}</td><td>${s.ac}</td><td>${s.maxKw ? s.maxKw + ' kW' : '—'}</td></tr>`;
+    return `<tr><td><a href="${t.base}/${t.networksDir}/${slug(p)}/">${esc(providerName(lang, p))}</a></td><td>${s.total}</td><td>${s.dc}</td><td>${s.ac}</td><td>${s.maxKw ? s.maxKw + ' kW' : '—'}</td></tr>`;
   }).join('\n')}
 </tbody></table></div>
 
@@ -730,11 +760,11 @@ function cityPage(lang, city, list, allCities, updated) {
     : `EV charging stations ${loc} — ${sum.total} stations | GeoCharge`;
   const desc = lang === 'ka'
     ? `${name}: ${sum.total} საჯარო დამტენი სადგური, ${sum.dc} სწრაფი DC. ქსელები: ${top.slice(0, 3).map((x) => x[0]).join(', ')}. სიმძლავრე, კონექტორები და ტარიფები.`
-    : `${name}: ${sum.total} public EV chargers, ${sum.dc} fast DC. Networks: ${top.slice(0, 3).map((x) => x[0]).join(', ')}. Power, connectors and tariffs.`;
+    : `${name}: ${sum.total} public EV chargers, ${sum.dc} fast DC. Networks: ${top.slice(0, 3).map((x) => providerName(lang, x[0])).join(', ')}. Power, connectors and tariffs.`;
 
   const intro = lang === 'ka'
-    ? `${loc} ${sum.total} საჯარო დამტენი სადგურია: ${sum.dc} სწრაფი DC და ${sum.ac} ჩვეულებრივი AC. ისინი ${sum.providers.length} ქსელს ეკუთვნის, ყველაზე დიდი წილი ${PROVIDER_KA[top[0][0]] || top[0][0]}-ს აქვს (${top[0][1]} სადგური).${sum.maxKw ? ` ყველაზე მძლავრი დამტენი ${sum.maxKw} kW-ია.` : ''}`
-    : `${name} has ${sum.total} public charging stations — ${sum.dc} fast DC and ${sum.ac} standard AC. They belong to ${sum.providers.length} networks, with ${top[0][0]} operating the most (${top[0][1]} stations).${sum.maxKw ? ` The most powerful charger here delivers ${sum.maxKw} kW.` : ''}`;
+    ? `${loc} ${sum.total} საჯარო დამტენი სადგურია: ${sum.dc} სწრაფი DC და ${sum.ac} ჩვეულებრივი AC. ისინი ${sum.providers.length} ქსელს ეკუთვნის, ყველაზე დიდი წილი ${providerName(lang, top[0][0])}-ს აქვს (${top[0][1]} სადგური).${sum.maxKw ? ` ყველაზე მძლავრი დამტენი ${sum.maxKw} kW-ია.` : ''}`
+    : `${name} has ${sum.total} public charging stations — ${sum.dc} fast DC and ${sum.ac} standard AC. They belong to ${sum.providers.length} networks, with ${providerName(lang, top[0][0])} operating the most (${top[0][1]} stations).${sum.maxKw ? ` The most powerful charger here delivers ${sum.maxKw} kW.` : ''}`;
 
   const bc = [{ name: t.home, href: `${t.base}/` },
     { name: t.catalog, href: `${t.base}/${t.chargersDir}/` }, { name }];
@@ -743,11 +773,11 @@ function cityPage(lang, city, list, allCities, updated) {
 
   const faq = lang === 'ka' ? [
     [`რამდენი ელექტრო დამტენია ${loc}?`, `${sum.total} საჯარო დამტენი სადგური, აქედან ${sum.dc} სწრაფი DC.`],
-    [`რომელი ქსელების დამტენებია ${loc}?`, `${top.map((x) => `${PROVIDER_KA[x[0]] || x[0]} (${x[1]})`).join(', ')}.`],
+    [`რომელი ქსელების დამტენებია ${loc}?`, `${top.map((x) => `${providerName(lang, x[0])} (${x[1]})`).join(', ')}.`],
     [`რომელი კონექტორები გვხვდება ${loc}?`, `${sum.connectors.map(([c, n]) => `${c} (${n})`).join(', ')}.`],
   ] : [
     [`How many EV chargers are there ${loc}?`, `${sum.total} public charging stations, ${sum.dc} of them fast DC.`],
-    [`Which networks operate ${loc}?`, `${top.map((x) => `${x[0]} (${x[1]})`).join(', ')}.`],
+    [`Which networks operate ${loc}?`, `${top.map((x) => `${providerName(lang, x[0])} (${x[1]})`).join(', ')}.`],
     [`Which connectors are available ${loc}?`, `${sum.connectors.map(([c, n]) => `${c} (${n})`).join(', ')}.`],
   ];
 
@@ -761,7 +791,7 @@ ${statBlock(sum, lang)}
 <div class="tw"><table>
 <thead><tr><th>${esc(t.thProvider)}</th><th>${esc(t.thCount)}</th></tr></thead>
 <tbody>
-${top.map(([p, n]) => `<tr><td><a href="${t.base}/${t.networksDir}/${slug(p)}/">${esc(lang === 'ka' ? (PROVIDER_KA[p] || p) : p)}</a></td><td>${n}</td></tr>`).join('\n')}
+${top.map(([p, n]) => `<tr><td><a href="${t.base}/${t.networksDir}/${slug(p)}/">${esc(providerName(lang, p))}</a></td><td>${n}</td></tr>`).join('\n')}
 </tbody></table></div>
 
 <h2>${esc(t.allStations)}</h2>
@@ -814,40 +844,77 @@ function providerPage(lang, provider, list, allProviders, updated) {
   const url = `${ORIGIN}${t.base}/${t.networksDir}/${s}/`;
   const o = L[lang === 'ka' ? 'en' : 'ka'];
   const alt = `${ORIGIN}${o.base}/${o.networksDir}/${s}/`;
-  const name = lang === 'ka' ? (PROVIDER_KA[provider] || provider) : provider;
+  const name = providerName(lang, provider);
+  const cityHall = provider === CITY_HALL;
   const cities = [...new Set(list.filter((x) => x._city).map((x) => x._city[0]))]
     .map((c) => [c, list.filter((x) => x._city && x._city[0] === c)])
     .sort((a, b) => b[1].length - a[1].length);
 
+  // City Hall's name already ends in "chargers", so the usual pattern would
+  // title the page "...free chargers chargers in Georgia".
+  const titleName = cityHall
+    ? name
+    : (lang === 'ka' ? `${name} დამტენები` : `${name} chargers`);
   const title = lang === 'ka'
-    ? `${provider} დამტენები საქართველოში, ${sum.total} სადგური | GeoCharge`
-    : `${provider} chargers in Georgia — ${sum.total} stations | GeoCharge`;
+    ? `${titleName} საქართველოში, ${sum.total} სადგური | GeoCharge`
+    : `${titleName} in Georgia — ${sum.total} stations | GeoCharge`;
   const desc = lang === 'ka'
     ? `${name}: ${sum.total} დამტენი სადგური საქართველოში, ${sum.dc} სწრაფი DC. მდებარეობები, სიმძლავრე, კონექტორები და ტარიფები.`
-    : `${provider}: ${sum.total} charging stations in Georgia, ${sum.dc} fast DC. Locations, power, connectors and tariffs.`;
+    : `${name}: ${sum.total} charging stations in Georgia, ${sum.dc} fast DC. Locations, power, connectors and tariffs.`;
 
-  const intro = lang === 'ka'
-    ? `${name} საქართველოში ${sum.total} საჯარო დამტენ სადგურს ოპერირებს: ${sum.dc} სწრაფი DC და ${sum.ac} AC.${sum.maxKw ? ` ქსელის ყველაზე მძლავრი დამტენი ${sum.maxKw} kW-ია.` : ''} სადგურები ${cities.length} ქალაქშია განთავსებული.`
-    : `${provider} operates ${sum.total} public charging stations in Georgia — ${sum.dc} fast DC and ${sum.ac} AC.${sum.maxKw ? ` Its most powerful charger delivers ${sum.maxKw} kW.` : ''} The stations are spread across ${cities.length} cities.`;
+  // City Hall is not an operator, and saying it "operates" a network would
+  // read as a commercial service with a tariff and a support line. It runs
+  // free posts, nobody publishes whether they work, and they are bare
+  // sockets. All three belong in the opening paragraph: someone who drives
+  // across town to one deserves to know before setting off, not after.
+  const intro = cityHall
+    ? (lang === 'ka'
+      ? `თბილისის მერიას ქალაქში ${sum.total} უფასო AC დამტენი აქვს განთავსებული. დატენვა უფასოა, მაგრამ თან უნდა გქონდეთ საკუთარი კაბელი, რადგან ბოძებზე მხოლოდ ბუდეებია. ასევე ვერ გეტყვით, ახლა თავისუფალია თუ დაკავებული, რადგან მერია ცოცხალ სტატუსებს არ ავრცელებს.`
+      : `Tbilisi City Hall runs ${sum.total} free AC posts around the city. Charging costs nothing, but you have to bring your own cable, since these are bare sockets. Nor can we tell you whether one is free or in use, because City Hall publishes no live status.`)
+    : (lang === 'ka'
+        ? `${name} საქართველოში ${sum.total} საჯარო დამტენ სადგურს ოპერირებს: ${sum.dc} სწრაფი DC და ${sum.ac} AC.${sum.maxKw ? ` ქსელის ყველაზე მძლავრი დამტენი ${sum.maxKw} kW-ია.` : ''} სადგურები ${cities.length} ქალაქშია განთავსებული.`
+        : `${name} operates ${sum.total} public charging stations in Georgia — ${sum.dc} fast DC and ${sum.ac} AC.${sum.maxKw ? ` Its most powerful charger delivers ${sum.maxKw} kW.` : ''} The stations are spread across ${cities.length} cities.`);
 
   const bc = [{ name: t.home, href: `${t.base}/` },
-    { name: t.catalog, href: `${t.base}/${t.chargersDir}/` }, { name: provider }];
+    { name: t.catalog, href: `${t.base}/${t.chargersDir}/` }, { name }];
 
   const logo = PROVIDER_LOGO[provider];
 
-  const faq = lang === 'ka' ? [
-    [`რამდენი ${provider} დამტენია საქართველოში?`, `${sum.total} საჯარო დამტენი სადგური, აქედან ${sum.dc} სწრაფი DC.`],
-    [`რომელ ქალაქებშია ${provider}-ის დამტენები?`, `${cities.slice(0, 8).map((c) => `${lang === 'ka' ? c[1][0]._city[1] : c[0]} (${c[1].length})`).join(', ')}${cities.length > 8 ? ' და სხვა.' : '.'}`],
-    [`რომელი კონექტორები აქვს ${provider}-ს?`, `${sum.connectors.map(([c, n]) => `${c} (${n})`).join(', ')}.`],
+  const genericFaq = lang === 'ka' ? [
+    [`რამდენი ${name} დამტენია საქართველოში?`, `${sum.total} საჯარო დამტენი სადგური, აქედან ${sum.dc} სწრაფი DC.`],
+    [`რომელ ქალაქებშია ${name}-ის დამტენები?`, `${cities.slice(0, 8).map((c) => `${lang === 'ka' ? c[1][0]._city[1] : c[0]} (${c[1].length})`).join(', ')}${cities.length > 8 ? ' და სხვა.' : '.'}`],
+    [`რომელი კონექტორები აქვს ${name}-ს?`, `${sum.connectors.map(([c, n]) => `${c} (${n})`).join(', ')}.`],
   ] : [
-    [`How many ${provider} chargers are there in Georgia?`, `${sum.total} public charging stations, ${sum.dc} of them fast DC.`],
-    [`Which cities have ${provider} chargers?`, `${cities.slice(0, 8).map((c) => `${c[0]} (${c[1].length})`).join(', ')}${cities.length > 8 ? ' and more.' : '.'}`],
-    [`Which connectors does ${provider} use?`, `${sum.connectors.map(([c, n]) => `${c} (${n})`).join(', ')}.`],
+    [`How many ${name} chargers are there in Georgia?`, `${sum.total} public charging stations, ${sum.dc} of them fast DC.`],
+    [`Which cities have ${name} chargers?`, `${cities.slice(0, 8).map((c) => `${c[0]} (${c[1].length})`).join(', ')}${cities.length > 8 ? ' and more.' : '.'}`],
+    [`Which connectors does ${name} use?`, `${sum.connectors.map(([c, n]) => `${c} (${n})`).join(', ')}.`],
   ];
+  // The generic questions glue a brand name into a sentence ("How many X
+  // chargers are there in Georgia?"). City Hall's name is a plural description
+  // rather than a brand, so that pattern yields "free chargers chargers" in
+  // English and a wrong case ending in Georgian. Its own three questions also
+  // let the answers carry what a reader actually came for: it is free, and
+  // there is no way to know whether a post is working.
+  const cityHallFaq = lang === 'ka' ? [
+    ['რამდენი უფასო დამტენია თბილისში?',
+      `მერიის სიით ${sum.total} უფასო დამტენია, ყველა AC.`],
+    ['რა ჯდება მერიის დამტენით სარგებლობა?',
+      'დატენვა უფასოა. თან უნდა გქონდეთ საკუთარი კაბელი, რადგან ბოძებზე მხოლოდ ბუდეებია.'],
+    ['როგორ ვიგებ, ახლა თავისუფალია თუ არა?',
+      'ვერ გეტყვით. მერია ამ დამტენების ცოცხალ სტატუსებს არ ავრცელებს, ამიტომ აპლიკაციაშიც სტატუსი უცნობად აღინიშნება.'],
+  ] : [
+    ['How many free chargers are there in Tbilisi?',
+      `City Hall lists ${sum.total} free chargers, all of them AC.`],
+    ['What does charging cost?',
+      'Nothing. You do have to bring your own cable, because these are bare sockets.'],
+    ['How do I know whether one is free?',
+      'You cannot. City Hall publishes no live status for these chargers, so the app marks them as unknown.'],
+  ];
+  const faq = cityHall ? cityHallFaq : genericFaq;
 
   const body = `${crumbs(bc)}
-${logo ? `<img src="/assets/providers/${logo}" alt="${esc(provider)}" style="max-height:44px;margin:0 0 14px;display:block">` : ''}
-<h1>${lang === 'ka' ? `${esc(provider)} დამტენები საქართველოში` : `${esc(provider)} chargers in Georgia`}</h1>
+${logo ? `<img src="/assets/providers/${logo}" alt="${esc(name)}" style="max-height:44px;margin:0 0 14px;display:block">` : ''}
+<h1>${esc(titleName)}${lang === 'ka' ? ' საქართველოში' : ' in Georgia'}</h1>
 <p class="intro">${intro}</p>
 ${statBlock(sum, lang)}
 <p class="upd">${esc(t.updated)} ${esc(updated)}</p>
@@ -872,7 +939,7 @@ ${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></de
 <h2>${esc(t.otherNetworks)}</h2>
 <div class="links">
 <a href="${t.base}/${t.chargersDir}/">${esc(t.backToAll)}</a>
-${allProviders.filter(([p]) => p !== provider).map(([p, l]) => `<a href="${t.base}/${t.networksDir}/${slug(p)}/">${esc(lang === 'ka' ? (PROVIDER_KA[p] || p) : p)} (${l.length})</a>`).join('\n')}
+${allProviders.filter(([p]) => p !== provider).map(([p, l]) => `<a href="${t.base}/${t.networksDir}/${slug(p)}/">${esc(providerName(lang, p))} (${l.length})</a>`).join('\n')}
 </div>`;
 
   return {
@@ -946,7 +1013,7 @@ function tariffPage(lang, ge, byProvider, updated) {
   const cheapDc = withDc.slice().sort((a, b) => median(a[1].dc) - median(b[1].dc))[0];
   const dearDc = withDc.slice().sort((a, b) => median(b[1].dc) - median(a[1].dc))[0];
   const cheapAc = withAc.slice().sort((a, b) => median(a[1].ac) - median(b[1].ac))[0];
-  const nm = (p) => (lang === 'ka' ? (PROVIDER_KA[p] || p) : p);
+  const nm = (p) => (providerName(lang, p));
 
   const title = lang === 'ka'
     ? 'დატენვის ტარიფები საქართველოში, ქსელების შედარება | GeoCharge'
@@ -1045,7 +1112,7 @@ function calculatorPage(lang, ge, byProvider, updated) {
   const o = L[lang === 'ka' ? 'en' : 'ka'];
   const url = `${ORIGIN}${t.base}/${t.calcDir}/`;
   const alt = `${ORIGIN}${o.base}/${o.calcDir}/`;
-  const nm = (p) => (lang === 'ka' ? (PROVIDER_KA[p] || p) : p);
+  const nm = (p) => (providerName(lang, p));
   const all = tariffStats(ge);
   const dcMed = median(all.dc), acMed = median(all.ac);
 
@@ -1818,7 +1885,7 @@ function networksIndexPage(lang, byProvider, updated) {
   const o = L[lang === 'ka' ? 'en' : 'ka'];
   const url = `${ORIGIN}${t.base}/${t.networksDir}/`;
   const alt = `${ORIGIN}${o.base}/${o.networksDir}/`;
-  const nm = (p) => (lang === 'ka' ? (PROVIDER_KA[p] || p) : p);
+  const nm = (p) => (providerName(lang, p));
   const rows = [...byProvider.entries()].map(([p, list]) => {
     const s = summarise(list);
     const cities = new Set(list.filter((x) => x._city).map((x) => x._city[0]));
@@ -1969,7 +2036,7 @@ function routePage(lang, route, byCity, byCityAll, raw, updated, byProvider) {
   const netCount = {};
   for (const s of onWay) for (const x of s.list) netCount[x.provider] = (netCount[x.provider] || 0) + 1;
   const nets = Object.entries(netCount).sort((x, y) => y[1] - x[1]);
-  const netName = (p) => (lang === 'ka' ? (PROVIDER_KA[p] || p) : p);
+  const netName = (p) => (providerName(lang, p));
   const hasNetPage = (p) => !byProvider || byProvider.has(p);
   const onWaySum = summarise(onWay.flatMap((s) => s.list));
 
@@ -2653,6 +2720,33 @@ async function main() {
     await writeFile(p.file, p.html, 'utf8');
   }
   console.log(`· wrote ${pages.length} pages`);
+
+  // City and network pages come and go: a city drops below MIN_CITY_STATIONS,
+  // or a bucketing fix moves its stations elsewhere. Nothing deletes the old
+  // file, so it stays live with whatever it said the day it was last written —
+  // Mtskheta sat there claiming 37 chargers that are all inside Tbilisi. The
+  // link checker below cannot catch it, because a stale page's own links are
+  // usually still valid. This says so out loud; deleting the directory and
+  // adding a redirect in firebase.json is the fix.
+  const written = new Set(pages.map((p) => path.resolve(p.file)));
+  const generatedDirs = [
+    ...new Set(pages.map((p) => path.dirname(path.dirname(path.resolve(p.file))))),
+  ].filter((d) => /[\\/](damtenebi|qselebi|chargers|networks)$/.test(d));
+  const orphans = [];
+  for (const dir of generatedDirs) {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      if (!e.isDirectory()) continue;
+      const f = path.join(dir, e.name, 'index.html');
+      if (existsSync(f) && !written.has(path.resolve(f))) {
+        orphans.push(path.relative(ROOT, f));
+      }
+    }
+  }
+  if (orphans.length) {
+    console.warn(`  !  ${orphans.length} page(s) on disk were not regenerated and are now stale:`);
+    for (const f of orphans) console.warn(`     ${f}`);
+    console.warn('     delete them and add a 301 in firebase.json, or they stay live as they are');
+  }
 
   // Safety net: coordinates and live status must never reach the output.
   const coords = new Set();

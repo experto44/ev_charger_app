@@ -74,6 +74,30 @@
         "**/.*",
         "**/node_modules/**",
         "uploads/geocharge-website-brief.md"
+      ],
+      "redirects": [
+        {
+          "comment": "Mtskheta had a city page only because assignCity gave it Tbilisi's north-west: Tbilisi Mall, Aghmashenebeli Alley, Didi Dighomi, all 37 of them inside the capital. The radius is fixed and the page is gone, so send its indexed URLs to the page those chargers are actually on.",
+          "source": "/damtenebi/mtskheta{,/**}",
+          "destination": "/damtenebi/tbilisi/",
+          "type": 301
+        },
+        {
+          "source": "/en/chargers/mtskheta{,/**}",
+          "destination": "/en/chargers/tbilisi/",
+          "type": 301
+        },
+        {
+          "comment": "Khashuri fell to two stations, below the threshold for a page of its own. They are still listed in the full catalogue.",
+          "source": "/damtenebi/khashuri{,/**}",
+          "destination": "/damtenebi/",
+          "type": 301
+        },
+        {
+          "source": "/en/chargers/khashuri{,/**}",
+          "destination": "/en/chargers/",
+          "type": 301
+        }
       ]
     },
     {

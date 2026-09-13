@@ -506,24 +506,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://geocharge.ge/damtenebi/mtskheta/</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/damtenebi/mtskheta/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/chargers/mtskheta/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/damtenebi/mtskheta/"/>
-    <lastmod>2026-09-13</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://geocharge.ge/en/chargers/mtskheta/</loc>
-    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/damtenebi/mtskheta/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/chargers/mtskheta/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/damtenebi/mtskheta/"/>
-    <lastmod>2026-09-13</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://geocharge.ge/damtenebi/batumi/</loc>
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/damtenebi/batumi/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/chargers/batumi/"/>
@@ -951,6 +933,24 @@
     <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/qselebi/tegeta/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/networks/tegeta/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/qselebi/tegeta/"/>
+    <lastmod>2026-09-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/qselebi/tbilisi-city-hall/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/qselebi/tbilisi-city-hall/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/networks/tbilisi-city-hall/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/qselebi/tbilisi-city-hall/"/>
+    <lastmod>2026-09-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://geocharge.ge/en/networks/tbilisi-city-hall/</loc>
+    <xhtml:link rel="alternate" hreflang="ka" href="https://geocharge.ge/qselebi/tbilisi-city-hall/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geocharge.ge/en/networks/tbilisi-city-hall/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://geocharge.ge/qselebi/tbilisi-city-hall/"/>
     <lastmod>2026-09-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
