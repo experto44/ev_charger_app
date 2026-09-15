@@ -26,6 +26,7 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
 <link rel="apple-touch-icon" href="/assets/icon-1024.png">
+<script src="/assets/pulse.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&amp;family=Noto+Sans+Georgian:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
@@ -87,7 +88,7 @@
      "name": "შესაძლებელია თბილისიდან სტამბოლამდე ელექტრო მანქანით ჩასვლა?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "დიახ. სარფის საზღვრიდან სტამბოლამდე გზიდან 5 კილომეტრში 847 სწრაფი დამტენია. 60 კილოვატსაათიანი ბატარეით ეს რვიდან ათამდე გაჩერებაა, ანუ ორი კომფორტული დღე."
+      "text": "დიახ. სარფის საზღვრიდან სტამბოლამდე გზიდან 5 კილომეტრში 850 სწრაფი დამტენია. 60 კილოვატსაათიანი ბატარეით ეს რვიდან ათამდე გაჩერებაა, ანუ ორი კომფორტული დღე."
      }
     },
     {
@@ -111,7 +112,7 @@
      "name": "რა ჯდება დატენვა თურქეთში?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "სწრაფ DC დამტენზე კილოვატსაათის მედიანური ტარიფი 14.74 ლირაა, ნელზე 9.99. მთელ თურქულ მონაკვეთზე დაახლოებით 3 263 ლირა გამოდის."
+      "text": "სწრაფ DC დამტენზე კილოვატსაათის მედიანური ტარიფი 14.74 ლირაა, ნელზე 10.90. მთელ თურქულ მონაკვეთზე დაახლოებით 3 263 ლირა გამოდის."
      }
     },
     {
@@ -162,7 +163,13 @@ h2{font-size:clamp(21px,2.6vw,26px);font-weight:700;letter-spacing:-.02em;margin
 .upd{color:#8B98A1;font-size:13px;margin:16px 0 0}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:28px 0 0}
 .stat{background:var(--mint);border:1px solid var(--mint-b);border-radius:16px;padding:20px 18px;text-align:center}
-.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em}
+/* overflow-wrap keeps any value inside its rounded box. Nearly every stat is a
+   short number, but two on the tariffs page hold a network's name, and
+   "Electrify Georgia (ელექტრიფაი)" has no space to break at inside the
+   parenthesis, so at 34px it ran straight out through the right edge. */
+.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em;overflow-wrap:anywhere}
+/* A name is not a number and does not want a number's size. */
+.stat--name b{font-size:clamp(17px,2.1vw,21px);line-height:1.25;letter-spacing:0}
 .stat span{display:block;font-size:13.5px;font-weight:500;color:#3D4A52;margin-top:6px;line-height:1.35}
 .tw{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
 table{border-collapse:collapse;width:100%;min-width:560px;font-size:14.5px}
@@ -343,7 +350,7 @@ background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px
 <div class="prose">
 <h1>თბილისიდან სტამბოლამდე ელექტრო მანქანით: მარშრუტი და დამტენები</h1>
 <p class="meta">განახლდა 2026 წლის აგვისტოში</p>
-<div class="key"><p>მოკლე პასუხი: გზა სრულიად გასავლელია. სარფის საზღვრიდან სტამბოლამდე გზიდან 5 კილომეტრში 847 სწრაფი დამტენია, აქედან 351 სადგური 150 კილოვატს ან მეტს იძლევა.</p><p>ერთი მონაკვეთი გამოირჩევა: სინოფსა და ზონგულდაქს შორის სანაპირო გზაზე სულ 28 სწრაფი დამტენია და ორ მეზობელს შორის ყველაზე გრძელი მანძილი დაახლოებით 95 კილომეტრია. სწორედ ეს ადგილი უნდა დაგეგმოთ წინასწარ.</p></div>
+<div class="key"><p>მოკლე პასუხი: გზა სრულიად გასავლელია. სარფის საზღვრიდან სტამბოლამდე გზიდან 5 კილომეტრში 850 სწრაფი დამტენია, აქედან 351 სადგური 150 კილოვატს ან მეტს იძლევა.</p><p>ერთი მონაკვეთი გამოირჩევა: სინოფსა და ზონგულდაქს შორის სანაპირო გზაზე სულ 28 სწრაფი დამტენია და ორ მეზობელს შორის ყველაზე გრძელი მანძილი დაახლოებით 95 კილომეტრია. სწორედ ეს ადგილი უნდა დაგეგმოთ წინასწარ.</p></div>
 <h2>რას ნიშნავს ეს გზა ციფრებში</h2>
 <p>თბილისიდან სტამბოლამდე ყველაზე სწრაფი გზა დაახლოებით 1 620 კილომეტრია და სუფთა სვლით დაახლოებით 20 საათსა და ნახევარს იკავებს. მარშრუტი მთლიანად შავი ზღვის სანაპიროზე მიდის: თბილისიდან ბათუმამდე, სარფის საზღვარი, შემდეგ ტრაბზონი, სამსუნი, სინოფი, ზონგულდაქი და ბოლოს სტამბოლი.</p>
 <p>ერთი გავრცელებული შეცდომა თავიდანვე უნდა გამოვასწოროთ: ეს გზა ანკარაზე არ გადის. ანკარის გავლით მარშრუტი არსებობს, მაგრამ ის დაახლოებით 150 კილომეტრით გრძელია და ცალკე ვარიანტია, რომელსაც ქვემოთ შევადარებთ.</p>
@@ -362,51 +369,51 @@ background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px
 <text x="575.5" y="232" class="fx" text-anchor="middle">ზონგულდაქი</text>
 <line x1="746.0" y1="26" x2="746.0" y2="210" stroke="var(--line)" stroke-width="1"/>
 <text x="746.0" y="232" class="fx" text-anchor="end">სტამბოლი</text>
-<line x1="46" y1="174.8" x2="746" y2="174.8" stroke="var(--line)" stroke-width="1" stroke-dasharray="4 4"/>
-<text x="38" y="179.8" class="fx" text-anchor="end">10</text>
-<line x1="46" y1="131.4" x2="746" y2="131.4" stroke="var(--line)" stroke-width="1" stroke-dasharray="4 4"/>
-<text x="38" y="136.4" class="fx" text-anchor="end">50</text>
+<line x1="46" y1="174.9" x2="746" y2="174.9" stroke="var(--line)" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="38" y="179.9" class="fx" text-anchor="end">10</text>
+<line x1="46" y1="131.5" x2="746" y2="131.5" stroke="var(--line)" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="38" y="136.5" class="fx" text-anchor="end">50</text>
 <rect x="46.0" y="182.8"
 width="26.2" height="27.2" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="75.2" y="168.4"
-width="26.2" height="41.6" rx="3"
+<rect x="75.2" y="168.5"
+width="26.2" height="41.5" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="104.3" y="168.4"
-width="26.2" height="41.6" rx="3"
+<rect x="104.3" y="168.5"
+width="26.2" height="41.5" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="133.5" y="134.6"
-width="26.2" height="75.4" rx="3"
+<rect x="133.5" y="134.7"
+width="26.2" height="75.3" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="162.7" y="173.1"
-width="26.2" height="36.9" rx="3"
+<rect x="162.7" y="173.2"
+width="26.2" height="36.8" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="191.8" y="157.8"
-width="26.2" height="52.2" rx="3"
+<rect x="191.8" y="157.9"
+width="26.2" height="52.1" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="221.0" y="150.1"
-width="26.2" height="59.9" rx="3"
+<rect x="221.0" y="150.2"
+width="26.2" height="59.8" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="250.2" y="153.3"
-width="26.2" height="56.7" rx="3"
+<rect x="250.2" y="153.4"
+width="26.2" height="56.6" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="279.3" y="169.9"
-width="26.2" height="40.1" rx="3"
+<rect x="279.3" y="170.0"
+width="26.2" height="40.0" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="308.5" y="121.0"
-width="26.2" height="89.0" rx="3"
+<rect x="308.5" y="121.2"
+width="26.2" height="88.8" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="337.7" y="174.8"
-width="26.2" height="35.2" rx="3"
+<rect x="337.7" y="174.9"
+width="26.2" height="35.1" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
 <rect x="366.8" y="198.9"
 width="26.2" height="11.1" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="396.0" y="190.7"
-width="26.2" height="19.3" rx="3"
+<rect x="396.0" y="190.8"
+width="26.2" height="19.2" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="425.2" y="190.7"
-width="26.2" height="19.3" rx="3"
+<rect x="425.2" y="190.8"
+width="26.2" height="19.2" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
 <rect x="454.3" y="210.0"
 width="26.2" height="0.0" rx="3"
@@ -414,26 +421,26 @@ fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
 <rect x="483.5" y="198.9"
 width="26.2" height="11.1" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="512.7" y="176.6"
-width="26.2" height="33.4" rx="3"
+<rect x="512.7" y="176.7"
+width="26.2" height="33.3" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="541.8" y="173.1"
-width="26.2" height="36.9" rx="3"
+<rect x="541.8" y="173.2"
+width="26.2" height="36.8" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="571.0" y="166.9"
-width="26.2" height="43.1" rx="3"
+<rect x="571.0" y="167.0"
+width="26.2" height="43.0" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="600.2" y="152.2"
-width="26.2" height="57.8" rx="3"
+<rect x="600.2" y="152.3"
+width="26.2" height="57.7" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="629.3" y="168.4"
-width="26.2" height="41.6" rx="3"
+<rect x="629.3" y="167.0"
+width="26.2" height="43.0" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="658.5" y="86.7"
-width="26.2" height="123.3" rx="3"
+<rect x="658.5" y="86.9"
+width="26.2" height="123.1" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
-<rect x="687.7" y="102.8"
-width="26.2" height="107.2" rx="3"
+<rect x="687.7" y="102.4"
+width="26.2" height="107.6" rx="3"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
 <rect x="716.8" y="20.0"
 width="26.2" height="190.0" rx="3"
@@ -451,7 +458,7 @@ fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
 <tr><td>ტრაბზონი სამსუნი</td><td>174</td><td>73</td><td>20 km</td></tr>
 <tr><td>სამსუნი სინოფი</td><td>68</td><td>32</td><td>60 km</td></tr>
 <tr><td>სინოფი ზონგულდაქი</td><td>28</td><td>9</td><td>95 km</td></tr>
-<tr><td>ზონგულდაქი სტამბოლი</td><td>575</td><td>241</td><td>30 km</td></tr>
+<tr><td>ზონგულდაქი სტამბოლი</td><td>578</td><td>241</td><td>30 km</td></tr>
 </tbody></table></div>
 <p class="note">სწრაფ დამტენად ითვლება 50 კილოვატი და მეტი, გზიდან 5 კილომეტრის რადიუსში. ბოლო სვეტში ორ მეზობელ დამტენს შორის ყველაზე დიდი მანძილია.</p>
 <p>პირველი სამი მონაკვეთი, ანუ სულ დაახლოებით ორი მესამედი გზისა, კარგად არის დაფარული. ტრაბზონსა და სამსუნს შორის ორ დამტენს შორის ყველაზე დიდი მანძილი დაახლოებით 20 კილომეტრია, ზონგულდაქიდან სტამბოლამდე კი დამტენების სიმჭიდროვე უკვე ევროპულია.</p>
@@ -462,7 +469,7 @@ fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
 
 <h2>ალტერნატივა: შიდა გზა ანკარაზე</h2>
 <p>თუ სანაპიროს თხელი მონაკვეთი გაწუხებთ, სამსუნიდან შიდა გზით, ჩორუმზე, ქირიქქალესა და ანკარაზე გავლით, სტამბოლში ასევე მიხვალთ. ეს გზა დაახლოებით 150 კილომეტრით გრძელია, სამაგიეროდ დამტენებით უფრო მდიდარია.</p>
-<p>ციფრებში: სამსუნიდან სტამბოლამდე სანაპიროთი 656 სწრაფი დამტენია და ყველაზე გრძელი მონაკვეთი დაახლოებით 95 კილომეტრი, ანკარაზე გავლით კი 889 დამტენი და 50 კილომეტრი. ანუ ანკარის ვარიანტი დროში წაგებაა, დატენვაში კი მოგება.</p>
+<p>ციფრებში: სამსუნიდან სტამბოლამდე სანაპიროთი 659 სწრაფი დამტენია და ყველაზე გრძელი მონაკვეთი დაახლოებით 95 კილომეტრი, ანკარაზე გავლით კი 893 დამტენი და 50 კილომეტრი. ანუ ანკარის ვარიანტი დროში წაგებაა, დატენვაში კი მოგება.</p>
 <p>გონივრული არჩევანი ასეთია: ზაფხულში, დიდი ბატარეით, სანაპირო გზა უფრო სწრაფი და ლამაზია. ზამთარში, პატარა ბატარეით ან ღამით მგზავრობისას, ანკარის ვარიანტი უფრო მშვიდია.</p>
 
 <h2>რამდენი გაჩერება დასჭირდება</h2>
@@ -501,7 +508,7 @@ fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
 <ul>
 <li><strong>სინოფი და ქასთამონუს სანაპირო.</strong> ერთადერთი მონაკვეთი, სადაც დამტენებს შორის დაახლოებით 95 კილომეტრია. სინოფიდან სავსე ბატარეით გადით.</li>
 <li><strong>ცოცხალი სტატუსი თურქეთში არ ქვეყნდება.</strong> თურქეთის რეესტრი არ ამბობს, დამტენი ახლა თავისუფალია თუ არა, ამიტომ სათადარიგო ვარიანტი წინასწარ შეარჩიეთ. საქართველოში ეს ინფორმაცია რეალურ დროშია.</li>
-<li><strong>დიდი ქალაქები.</strong> სტამბოლში 2 856 დამტენია, მაგრამ საცობი დროს ხარჯავს. ქალაქში შესვლამდე დატენვა ჯობია.</li>
+<li><strong>დიდი ქალაქები.</strong> სტამბოლში 2 868 დამტენია, მაგრამ საცობი დროს ხარჯავს. ქალაქში შესვლამდე დატენვა ჯობია.</li>
 <li><strong>ჯარიმები და HGS.</strong> გადაუხდელი ჯარიმა ან ავტობანის დავალიანება საზღვარზე გასვლას აჩერებს. წინასწარ შეამოწმეთ.</li>
 <li><strong>თბილისიდან ბათუმამდე.</strong> ეს გზა ყველაზე კარგად დაფარულია საქართველოში, თერჯოლასთან ყველაზე მძლავრი დამტენებით. დეტალები <a href="/blog/shori-mgzavroba/">შორი მგზავრობის გზამკვლევშია</a>.</li>
 <li><strong>მარშრუტის დაგეგმვა აპლიკაციაში.</strong> თუ მარშრუტი თურქეთს კვეთს, თურქული დამტენები ავტომატურად ჩამოიტვირთება და გაჩერებებში ჩაითვლება. ცალკე ჩართვა საჭირო არ არის.</li>
@@ -509,10 +516,10 @@ fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
 
 <h2>ხშირად დასმული კითხვები</h2>
 <div class="faq">
-<details><summary>შესაძლებელია თბილისიდან სტამბოლამდე ელექტრო მანქანით ჩასვლა?</summary><p>დიახ. სარფის საზღვრიდან სტამბოლამდე გზიდან 5 კილომეტრში 847 სწრაფი დამტენია. 60 კილოვატსაათიანი ბატარეით ეს რვიდან ათამდე გაჩერებაა, ანუ ორი კომფორტული დღე.</p></details>
+<details><summary>შესაძლებელია თბილისიდან სტამბოლამდე ელექტრო მანქანით ჩასვლა?</summary><p>დიახ. სარფის საზღვრიდან სტამბოლამდე გზიდან 5 კილომეტრში 850 სწრაფი დამტენია. 60 კილოვატსაათიანი ბატარეით ეს რვიდან ათამდე გაჩერებაა, ანუ ორი კომფორტული დღე.</p></details>
 <details><summary>გადის თუ არა ეს გზა ანკარაზე?</summary><p>ყველაზე სწრაფი მარშრუტი ანკარაზე არ გადის. ის მთლიანად შავი ზღვის სანაპიროთი მიდის, სამსუნის, სინოფისა და ზონგულდაქის გავლით. ანკარის ვარიანტი დაახლოებით 150 კილომეტრით გრძელია, სამაგიეროდ დამტენები უფრო ხშირად ხვდება.</p></details>
 <details><summary>სად არის ყველაზე გრძელი მონაკვეთი სწრაფი დამტენის გარეშე?</summary><p>სინოფსა და ზონგულდაქს შორის, სანაპირო გზაზე. მთელ ამ მონაკვეთზე 28 სწრაფი დამტენია და ორ მეზობელს შორის ყველაზე გრძელი მანძილი დაახლოებით 95 კილომეტრია.</p></details>
-<details><summary>რა ჯდება დატენვა თურქეთში?</summary><p>სწრაფ DC დამტენზე კილოვატსაათის მედიანური ტარიფი 14.74 ლირაა, ნელზე 9.99. მთელ თურქულ მონაკვეთზე დაახლოებით 3 263 ლირა გამოდის.</p></details>
+<details><summary>რა ჯდება დატენვა თურქეთში?</summary><p>სწრაფ DC დამტენზე კილოვატსაათის მედიანური ტარიფი 14.74 ლირაა, ნელზე 10.90. მთელ თურქულ მონაკვეთზე დაახლოებით 3 263 ლირა გამოდის.</p></details>
 <details><summary>რა ხდება, თუ თურქეთში სიჩქარის გადაჭარბებისთვის კამერა დამაჯარიმებს?</summary><p>ჯარიმა ნომრის ნიშანზე იწერება, ქართულ ნომერზეც. თუ ჯარიმა ან ავტობანის გადაუხდელი გასავლელი სისტემაშია, საბაჟო მანქანას ქვეყნიდან გასვლის უფლებას არ აძლევს, სანამ თანხას არ გადაიხდით. გადახდა შესაძლებელია გამშვებ პუნქტში, ბარათით ან ნაღდი ფულით.</p></details>
 <details><summary>რომელი კონექტორი მჭირდება თურქეთში?</summary><p>CCS2 სწრაფი დატენვისთვის და Type 2 ნელისთვის. CHAdeMO მხოლოდ 193 სადგურზეა, GB/T კი თურქეთში საერთოდ არ არსებობს, ამიტომ მხოლოდ GB/T კონექტორიანი ჩინური მანქანა ამ გზას ვერ გაივლის.</p></details>
 </div>
@@ -533,7 +540,7 @@ fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1"/>
 <a class="acard" href="/blog/nisan-lifi-chademo/" data-cat="charging"
 data-date="2026-09-09" data-pop="5"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 12.6h15.6"/><path d="M7.6 8.4h8.8l3.4 4.2v4.2H4.2v-4.2Z"/><circle cx="8" cy="18.4" r="1.7"/><circle cx="16" cy="18.4" r="1.7"/><path d="M12 3.2v3.4"/></svg></span><b>ნისან ლიფი საქართველოში: სად დაიტენება, როცა CHAdeMO ქრება</b>
-<span>საქართველოს 627 დამტენიდან CHAdeMO მხოლოდ 18-ს აქვს. სად დგანან ისინი, რა განსხვავებაა Type 1-სა და Type 2-ს შორის და რა უნდა იცოდეთ ლიფის ყიდვამდე.</span><span class="am"><time datetime="2026-09-09">სექტემბერი 2026</time>
+<span>საქართველოს 668 დამტენიდან CHAdeMO მხოლოდ 18-ს აქვს. სად დგანან ისინი, რა განსხვავებაა Type 1-სა და Type 2-ს შორის და რა უნდა იცოდეთ ლიფის ყიდვამდე.</span><span class="am"><time datetime="2026-09-09">სექტემბერი 2026</time>
 <span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/blog/datenvis-kharjebi/" data-cat="charging"
@@ -551,7 +558,7 @@ stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="t
 <a class="acard" href="/blog/turketshi-mgzavroba/" data-cat="travel"
 data-date="2026-08-19" data-pop="17"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/><path d="M12 3.4a14 14 0 0 1 0 17.2 14 14 0 0 1 0-17.2Z"/></svg></span><b>ელექტრო მანქანით საქართველოდან თურქეთში: რა უნდა იცოდეთ წასვლამდე</b>
-<span>თურქეთში 13 497 საჯარო დამტენია. რომელი საზღვრით წავიდეთ, რომელი კონექტორი გვჭირდება, რა ღირს დატენვა და რა განსხვავებაა საქართველოსთან.</span><span class="am"><time datetime="2026-08-19">აგვისტო 2026</time>
+<span>თურქეთში 13 533 საჯარო დამტენია. რომელი საზღვრით წავიდეთ, რომელი კონექტორი გვჭირდება, რა ღირს დატენვა და რა განსხვავებაა საქართველოსთან.</span><span class="am"><time datetime="2026-08-19">აგვისტო 2026</time>
 <span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/blog/meoradi-shemowmeba/" data-cat="buying"
@@ -593,13 +600,13 @@ stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="t
 <a class="acard" href="/blog/amerikuli-importi/" data-cat="buying"
 data-date="2026-07-30" data-pop="11"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.4c1.4 1 2.8 1 4.2 0s2.8-1 4.2 0 2.8 1 4.2 0 2.8-1 4.2 0"/><path d="M5.4 13.8V9.2h13.2l-1.8 4.6"/><path d="M9.2 9.2V5h5.6v4.2"/></svg></span><b>ამერიკიდან ჩამოყვანილი ელექტრომობილი: სად დატენავთ საქართველოში</b>
-<span>ამერიკული სპეციფიკაციის მანქანას CCS1, NACS ან Type 1 აქვს. საქართველოში ასეთი დამტენი სულ 32-ია. რა ვქნათ ადაპტერით და რა შევამოწმოთ ყიდვამდე.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
+<span>ამერიკული სპეციფიკაციის მანქანას CCS1, NACS ან Type 1 აქვს. საქართველოში ასეთი დამტენი სულ 35-ია. რა ვქნათ ადაპტერით და რა შევამოწმოთ ყიდვამდე.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
 <span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/blog/chinuri-importi/" data-cat="buying"
 data-date="2026-07-30" data-pop="10"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 8.2 12 4.1l8.6 4.1v7.6L12 19.9l-8.6-4.1V8.2Z"/><path d="m3.4 8.2 8.6 4.1 8.6-4.1M12 12.3v7.6"/></svg></span><b>ჩინური ელექტრომობილი საქართველოში: GB/T კონექტორი და დატენვა</b>
-<span>GB/T კონექტორი საქართველოში 363 სადგურზეა, თითქმის იმდენზე, რამდენზეც ევროპული CCS2. რატომ არის ეს კარგი ამბავი ჩინური მანქანის მფლობელისთვის.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
+<span>GB/T კონექტორი საქართველოში 370 სადგურზეა, თითქმის იმდენზე, რამდენზეც ევროპული CCS2. რატომ არის ეს კარგი ამბავი ჩინური მანქანის მფლობელისთვის.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
 <span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/blog/zamtari/" data-cat="travel"
@@ -617,7 +624,7 @@ stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="t
 <a class="acard" href="/blog/100-km-fasi/" data-cat="charging"
 data-date="2026-07-30" data-pop="3"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18.5a8 8 0 1 1 16 0"/><path d="m12 14.5 4-4.2"/><circle cx="12" cy="18.5" r="1.3"/></svg></span><b>ელექტრომობილი თუ ბენზინი: 100 კილომეტრის რეალური ღირებულება</b>
-<span>100 კილომეტრი სწრაფ დამტენზე 14.04 ლარია, ბენზინის მანქანით კი 29.12. სად ჩერდება ეს სხვაობა და რა არ შედის ამ ანგარიშში.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
+<span>100 კილომეტრი სწრაფ დამტენზე 14.04 ლარია, ბენზინის მანქანით კი 29.72. სად ჩერდება ეს სხვაობა და რა არ შედის ამ ანგარიშში.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
 <span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/blog/batarea/" data-cat="battery"

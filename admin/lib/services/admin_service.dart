@@ -4,8 +4,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/app_user.dart';
 import '../models/maps_usage.dart';
 import '../models/purchase.dart';
+import '../models/site_day.dart';
 import '../models/tesla_session.dart';
 import 'premium_terms.dart';
+import 'site_stats.dart';
 
 /// Data + auth layer for the admin panel.
 ///
@@ -107,6 +109,22 @@ class AdminService {
       rows.sort((a, b) => a.day.compareTo(b.day));
       return rows;
     });
+  }
+
+  // ── geocharge.ge visitor statistics ────────────────────────────────────────
+  /// Site traffic for the last [days] Tbilisi days, one document per day,
+  /// written by the `sitePulse` function. So the longest range the Site tab
+  /// offers costs 90 reads, however busy the site. The range is on the `day`
+  /// string (YYYY-MM-DD sorts as a date): one field, no composite index.
+  Stream<List<SiteDay>> siteStatsStream({int days = 90}) {
+    final today = SiteStats.tbilisiToday();
+    final from = SiteStats.dayKey(
+        DateTime(today.year, today.month, today.day - (days - 1)));
+    return _db
+        .collection('siteStats')
+        .where('day', isGreaterThanOrEqualTo: from)
+        .snapshots()
+        .map((snap) => snap.docs.map(SiteDay.fromDoc).toList());
   }
 
   // ── Manual premium (bank transfers) ────────────────────────────────────────

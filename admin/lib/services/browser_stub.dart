@@ -8,4 +8,6 @@ String? readLocal(String key) => null;
 
 void writeLocal(String key, String value) {}
 
+void openUrl(String url) {}
+
 void downloadBytes(List<int> bytes, String filename, String mimeType) {}

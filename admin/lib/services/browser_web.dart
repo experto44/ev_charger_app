@@ -23,6 +23,11 @@ void writeLocal(String key, String value) {
   } catch (_) {/* ignored on purpose */}
 }
 
+/// Open [url] in a new tab.
+void openUrl(String url) {
+  web.window.open(url, '_blank', 'noopener');
+}
+
 /// Save [bytes] to the user's machine via an object-URL anchor click.
 void downloadBytes(List<int> bytes, String filename, String mimeType) {
   final data = Uint8List.fromList(bytes).toJS;

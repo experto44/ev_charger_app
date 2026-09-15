@@ -213,3 +213,8 @@ Object.assign(exports, require("./maps-usage"));
 // app's trip planner. The ORS key stays in Secret Manager — see ors-route.js for
 // why this cannot be a fetch from the browser.
 Object.assign(exports, require("./ors-route"));
+
+// Visitor statistics for geocharge.ge: page views, visits and store-link clicks,
+// counted into one Firestore document per day for the panel's Site tab. No
+// cookie and no IP address. See site-pulse.js.
+Object.assign(exports, require("./site-pulse"));

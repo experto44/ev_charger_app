@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>US-spec EVs in Georgia: the charging problem | GeoCharge</title>
-<meta name="description" content="A US-spec car has CCS1, NACS or Type 1. Georgia has 32 such stations in total. What adapters do and what to check before you buy.">
+<meta name="description" content="A US-spec car has CCS1, NACS or Type 1. Georgia has 35 such stations in total. What adapters do and what to check before you buy.">
 <meta name="theme-color" content="#11161A">
 <link rel="canonical" href="https://geocharge.ge/en/blog/amerikuli-importi/">
 <link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/amerikuli-importi/">
@@ -15,17 +15,18 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:url" content="https://geocharge.ge/en/blog/amerikuli-importi/">
 <meta property="og:title" content="US-spec EVs in Georgia: the charging problem | GeoCharge">
-<meta property="og:description" content="A US-spec car has CCS1, NACS or Type 1. Georgia has 32 such stations in total. What adapters do and what to check before you buy.">
+<meta property="og:description" content="A US-spec car has CCS1, NACS or Type 1. Georgia has 35 such stations in total. What adapters do and what to check before you buy.">
 <meta property="og:image" content="https://geocharge.ge/assets/og/amerikuli-importi-en.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="US-spec EVs in Georgia: the charging problem | GeoCharge">
-<meta name="twitter:description" content="A US-spec car has CCS1, NACS or Type 1. Georgia has 32 such stations in total. What adapters do and what to check before you buy.">
+<meta name="twitter:description" content="A US-spec car has CCS1, NACS or Type 1. Georgia has 35 such stations in total. What adapters do and what to check before you buy.">
 <meta name="twitter:image" content="https://geocharge.ge/assets/og/amerikuli-importi-en.png">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
 <link rel="apple-touch-icon" href="/assets/icon-1024.png">
+<script src="/assets/pulse.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&amp;family=Noto+Sans+Georgian:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
@@ -59,7 +60,7 @@
    "@type": "Article",
    "@id": "https://geocharge.ge/en/blog/amerikuli-importi/#article",
    "headline": "Importing an EV from the US: where you will charge it in Georgia",
-   "description": "A US-spec car has CCS1, NACS or Type 1. Georgia has 32 such stations in total. What adapters do and what to check before you buy.",
+   "description": "A US-spec car has CCS1, NACS or Type 1. Georgia has 35 such stations in total. What adapters do and what to check before you buy.",
    "url": "https://geocharge.ge/en/blog/amerikuli-importi/",
    "inLanguage": "en",
    "datePublished": "2026-07-30",
@@ -87,7 +88,7 @@
      "name": "Can I charge a US-spec EV in Georgia?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "Yes, but with limits. CCS1 is on 2 stations, NACS on 11 and Type 1 on 21, which is 32 out of Georgia's 627. A Type 1 to Type 2 adapter opens up far more options for slow charging."
+      "text": "Yes, but with limits. CCS1 is on 2 stations, NACS on 11 and Type 1 on 24, which is 35 out of Georgia's 668. A Type 1 to Type 2 adapter opens up far more options for slow charging."
      }
     },
     {
@@ -138,7 +139,13 @@ h2{font-size:clamp(21px,2.6vw,26px);font-weight:700;letter-spacing:-.02em;margin
 .upd{color:#8B98A1;font-size:13px;margin:16px 0 0}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:28px 0 0}
 .stat{background:var(--mint);border:1px solid var(--mint-b);border-radius:16px;padding:20px 18px;text-align:center}
-.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em}
+/* overflow-wrap keeps any value inside its rounded box. Nearly every stat is a
+   short number, but two on the tariffs page hold a network's name, and
+   "Electrify Georgia (ელექტრიფაი)" has no space to break at inside the
+   parenthesis, so at 34px it ran straight out through the right edge. */
+.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em;overflow-wrap:anywhere}
+/* A name is not a number and does not want a number's size. */
+.stat--name b{font-size:clamp(17px,2.1vw,21px);line-height:1.25;letter-spacing:0}
 .stat span{display:block;font-size:13.5px;font-weight:500;color:#3D4A52;margin-top:6px;line-height:1.35}
 .tw{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
 table{border-collapse:collapse;width:100%;min-width:560px;font-size:14.5px}
@@ -319,7 +326,7 @@ background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px
 <div class="prose">
 <h1>Importing an EV from the US: where you will charge it in Georgia</h1>
 <p class="meta">Updated July 2026</p>
-<div class="key"><p>A US-market EV uses different plugs from a European one. In Georgia CCS1 is on just 2 stations, NACS on 11 and Type 1 on 21. European CCS2, for comparison, is on 385.</p><p>More to the point, most of those chargers belong to one network, EcoCars. In practice you depend on a single operator.</p></div>
+<div class="key"><p>A US-market EV uses different plugs from a European one. In Georgia CCS1 is on just 2 stations, NACS on 11 and Type 1 on 24. European CCS2, for comparison, is on 391.</p><p>More to the point, most of those chargers belong to one network, EcoCars. In practice you depend on a single operator.</p></div>
 <h2>Who this affects</h2>
 <p>A lot of the EVs arriving in Georgia come from US auctions, and a car built for the US market carries a different plug from a European one. This is not a detail. It decides whether you can charge at all.</p>
 <p>The models that turn up most often:</p>
@@ -333,10 +340,10 @@ background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px
 <ul>
 <li><strong>CCS1:</strong> 2 stations in the whole country.</li>
 <li><strong>NACS:</strong> 11 stations.</li>
-<li><strong>Type 1:</strong> 21 stations, for slow AC charging.</li>
+<li><strong>Type 1:</strong> 24 stations, for slow AC charging.</li>
 <li><strong>CHAdeMO:</strong> 18 stations.</li>
 </ul>
-<p>That is 32 stations out of Georgia's 627. European CCS2 sits on 385.</p>
+<p>That is 35 stations out of Georgia's 668. European CCS2 sits on 391.</p>
 
 <h2>The part most people miss</h2>
 <p>These chargers are not spread evenly across operators. Every Type 1 station and most of the NACS ones belong to EcoCars.</p>
@@ -344,7 +351,7 @@ background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px
 
 <h2>Adapters: what works and what does not</h2>
 <h3>Slow AC charging</h3>
-<p>A Type 1 to Type 2 adapter is simple, cheap and reliable. AC charging involves no complex negotiation between car and charger, so converting the plug is enough. With one of these, every Type 2 station in the country opens up, and that is 245 stations.</p>
+<p>A Type 1 to Type 2 adapter is simple, cheap and reliable. AC charging involves no complex negotiation between car and charger, so converting the plug is enough. With one of these, every Type 2 station in the country opens up, and that is 279 stations.</p>
 <p>This is the easiest fix available and worth budgeting for before you buy.</p>
 <h3>Fast DC charging</h3>
 <p>Here it is different. Fast charging involves the car and the charger talking over a protocol, and the adapter has to carry that conversation too. CCS1 to CCS2 adapters exist, but they are expensive, not every car supports them, and manufacturers often will not warrant them.</p>
@@ -370,7 +377,7 @@ background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px
 
 <h2>Frequently asked questions</h2>
 <div class="faq">
-<details><summary>Can I charge a US-spec EV in Georgia?</summary><p>Yes, but with limits. CCS1 is on 2 stations, NACS on 11 and Type 1 on 21, which is 32 out of Georgia's 627. A Type 1 to Type 2 adapter opens up far more options for slow charging.</p></details>
+<details><summary>Can I charge a US-spec EV in Georgia?</summary><p>Yes, but with limits. CCS1 is on 2 stations, NACS on 11 and Type 1 on 24, which is 35 out of Georgia's 668. A Type 1 to Type 2 adapter opens up far more options for slow charging.</p></details>
 <details><summary>Does a CCS1 to CCS2 adapter work?</summary><p>Such adapters exist, but they are expensive, not every car supports them and manufacturers often will not warrant them. For slow AC charging, a Type 1 to Type 2 adapter is simple and reliable.</p></details>
 <details><summary>Which network serves US cars in Georgia?</summary><p>Mainly EcoCars. Most Type 1 stations and a large share of the NACS ones belong to that network, so you effectively depend on a single operator.</p></details>
 </div>
@@ -382,7 +389,7 @@ background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px
 <a class="acard" href="/en/blog/nisan-lifi-chademo/" data-cat="charging"
 data-date="2026-09-09" data-pop="5"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 12.6h15.6"/><path d="M7.6 8.4h8.8l3.4 4.2v4.2H4.2v-4.2Z"/><circle cx="8" cy="18.4" r="1.7"/><circle cx="16" cy="18.4" r="1.7"/><path d="M12 3.2v3.4"/></svg></span><b>The Nissan Leaf in Georgia: where to charge as CHAdeMO disappears</b>
-<span>Of the 627 public chargers in Georgia, only 18 carry CHAdeMO. Where they stand, what separates Type 1 from Type 2, and what to know before buying a Leaf.</span><span class="am"><time datetime="2026-09-09">September 2026</time>
+<span>Of the 668 public chargers in Georgia, only 18 carry CHAdeMO. Where they stand, what separates Type 1 from Type 2, and what to know before buying a Leaf.</span><span class="am"><time datetime="2026-09-09">September 2026</time>
 <span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/en/blog/datenvis-kharjebi/" data-cat="charging"
@@ -406,7 +413,7 @@ stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="t
 <a class="acard" href="/en/blog/turketshi-mgzavroba/" data-cat="travel"
 data-date="2026-08-19" data-pop="17"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/><path d="M12 3.4a14 14 0 0 1 0 17.2 14 14 0 0 1 0-17.2Z"/></svg></span><b>Driving from Georgia into Turkey by electric car: what to know first</b>
-<span>Turkey has 13,497 public chargers. Which border to use, which connector you need, what charging costs, and how it differs from Georgia.</span><span class="am"><time datetime="2026-08-19">August 2026</time>
+<span>Turkey has 13,533 public chargers. Which border to use, which connector you need, what charging costs, and how it differs from Georgia.</span><span class="am"><time datetime="2026-08-19">August 2026</time>
 <span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/en/blog/meoradi-shemowmeba/" data-cat="buying"
@@ -448,7 +455,7 @@ stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="t
 <a class="acard" href="/en/blog/chinuri-importi/" data-cat="buying"
 data-date="2026-07-30" data-pop="10"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 8.2 12 4.1l8.6 4.1v7.6L12 19.9l-8.6-4.1V8.2Z"/><path d="m3.4 8.2 8.6 4.1 8.6-4.1M12 12.3v7.6"/></svg></span><b>Chinese EVs in Georgia: the GB/T connector and where to charge</b>
-<span>GB/T is on 363 stations in Georgia, almost as many as European CCS2. Why that is good news if you drive a Chinese import.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span>GB/T is on 370 stations in Georgia, almost as many as European CCS2. Why that is good news if you drive a Chinese import.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
 <span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/en/blog/zamtari/" data-cat="travel"
@@ -466,7 +473,7 @@ stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="t
 <a class="acard" href="/en/blog/100-km-fasi/" data-cat="charging"
 data-date="2026-07-30" data-pop="3"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18.5a8 8 0 1 1 16 0"/><path d="m12 14.5 4-4.2"/><circle cx="12" cy="18.5" r="1.3"/></svg></span><b>Electric or petrol: what 100 km actually costs in Georgia</b>
-<span>100 km on a fast charger is 14.04 GEL against 29.12 on petrol. Where that gap comes from and what the calculation leaves out.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span>100 km on a fast charger is 14.04 GEL against 29.72 on petrol. Where that gap comes from and what the calculation leaves out.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
 <span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/en/blog/batarea/" data-cat="battery"

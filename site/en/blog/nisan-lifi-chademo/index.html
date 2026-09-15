@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Charging a Nissan Leaf in Georgia: where the CHAdeMO points are | GeoCharge</title>
-<meta name="description" content="Of the 627 public chargers in Georgia, only 18 carry CHAdeMO. Where they stand, what separates Type 1 from Type 2, and what to know before buying a Leaf.">
+<meta name="description" content="Of the 668 public chargers in Georgia, only 18 carry CHAdeMO. Where they stand, what separates Type 1 from Type 2, and what to know before buying a Leaf.">
 <meta name="theme-color" content="#11161A">
 <link rel="canonical" href="https://geocharge.ge/en/blog/nisan-lifi-chademo/">
 <link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/nisan-lifi-chademo/">
@@ -15,17 +15,18 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:url" content="https://geocharge.ge/en/blog/nisan-lifi-chademo/">
 <meta property="og:title" content="Charging a Nissan Leaf in Georgia: where the CHAdeMO points are | GeoCharge">
-<meta property="og:description" content="Of the 627 public chargers in Georgia, only 18 carry CHAdeMO. Where they stand, what separates Type 1 from Type 2, and what to know before buying a Leaf.">
+<meta property="og:description" content="Of the 668 public chargers in Georgia, only 18 carry CHAdeMO. Where they stand, what separates Type 1 from Type 2, and what to know before buying a Leaf.">
 <meta property="og:image" content="https://geocharge.ge/assets/og/nisan-lifi-chademo-en.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Charging a Nissan Leaf in Georgia: where the CHAdeMO points are | GeoCharge">
-<meta name="twitter:description" content="Of the 627 public chargers in Georgia, only 18 carry CHAdeMO. Where they stand, what separates Type 1 from Type 2, and what to know before buying a Leaf.">
+<meta name="twitter:description" content="Of the 668 public chargers in Georgia, only 18 carry CHAdeMO. Where they stand, what separates Type 1 from Type 2, and what to know before buying a Leaf.">
 <meta name="twitter:image" content="https://geocharge.ge/assets/og/nisan-lifi-chademo-en.png">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
 <link rel="apple-touch-icon" href="/assets/icon-1024.png">
+<script src="/assets/pulse.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&amp;family=Noto+Sans+Georgian:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
@@ -59,7 +60,7 @@
    "@type": "Article",
    "@id": "https://geocharge.ge/en/blog/nisan-lifi-chademo/#article",
    "headline": "The Nissan Leaf in Georgia: where to charge as CHAdeMO disappears",
-   "description": "Of the 627 public chargers in Georgia, only 18 carry CHAdeMO. Where they stand, what separates Type 1 from Type 2, and what to know before buying a Leaf.",
+   "description": "Of the 668 public chargers in Georgia, only 18 carry CHAdeMO. Where they stand, what separates Type 1 from Type 2, and what to know before buying a Leaf.",
    "url": "https://geocharge.ge/en/blog/nisan-lifi-chademo/",
    "inLanguage": "en",
    "datePublished": "2026-09-09",
@@ -95,7 +96,7 @@
      "name": "How many CHAdeMO chargers are there in Georgia?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "18, which is 4.5 percent of the 404 fast chargers in the country. The largest cluster is in Tbilisi; the rest are mostly on the motorway from Tbilisi to Batumi."
+      "text": "18, which is 4.4 percent of the 410 fast chargers in the country. The largest cluster is in Tbilisi; the rest are mostly on the motorway from Tbilisi to Batumi."
      }
     },
     {
@@ -162,7 +163,13 @@ h2{font-size:clamp(21px,2.6vw,26px);font-weight:700;letter-spacing:-.02em;margin
 .upd{color:#8B98A1;font-size:13px;margin:16px 0 0}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:28px 0 0}
 .stat{background:var(--mint);border:1px solid var(--mint-b);border-radius:16px;padding:20px 18px;text-align:center}
-.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em}
+/* overflow-wrap keeps any value inside its rounded box. Nearly every stat is a
+   short number, but two on the tariffs page hold a network's name, and
+   "Electrify Georgia (ელექტრიფაი)" has no space to break at inside the
+   parenthesis, so at 34px it ran straight out through the right edge. */
+.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em;overflow-wrap:anywhere}
+/* A name is not a number and does not want a number's size. */
+.stat--name b{font-size:clamp(17px,2.1vw,21px);line-height:1.25;letter-spacing:0}
 .stat span{display:block;font-size:13.5px;font-weight:500;color:#3D4A52;margin-top:6px;line-height:1.35}
 .tw{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
 table{border-collapse:collapse;width:100%;min-width:560px;font-size:14.5px}
@@ -343,36 +350,36 @@ background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px
 <div class="prose">
 <h1>The Nissan Leaf in Georgia: where to charge as CHAdeMO disappears</h1>
 <p class="meta">Updated September 2026</p>
-<div class="key"><p>Short answer: Georgia has 627 public chargers, 404 of them fast. CHAdeMO, the Leaf's fast connector, is on only 18 of them.</p><p>Those 18 sit mostly in Tbilisi and along the western motorway, so the coast is reachable. The mountains and the far side of Kakheti need planning before you leave.</p></div>
+<div class="key"><p>Short answer: Georgia has 668 public chargers, 410 of them fast. CHAdeMO, the Leaf's fast connector, is on only 18 of them.</p><p>Those 18 sit mostly in Tbilisi and along the western motorway, so the coast is reachable. The mountains and the far side of Kakheti need planning before you leave.</p></div>
 <h2>Why this is the Leaf owner's problem specifically</h2>
 <p>Forbes Georgia wrote in March 2026 that the most commonly bought EV in the country is a used Nissan Leaf, because there are few genuinely affordable alternatives. That same car carries the rarest fast connector in Georgia. Both statements are true at once, and that is where the problem starts.</p>
 <p>The Leaf's fast connector is CHAdeMO, a Japanese standard that spread in 2010 alongside the first Leaf. Europe went on to pick CCS2, China went with GB/T, and North America moved to Tesla's NACS. CHAdeMO followed none of those three.</p>
 <p>Nissan itself has now left it behind. The new 2026 Leaf comes with CCS in Europe and charges at up to 150 kW, and with NACS in North America. CHAdeMO is now the connector of cars that have already been sold, and that number will not grow.</p>
 
 <h2>How many CHAdeMO chargers Georgia has</h2>
-<p>Our catalogue currently holds 627 public chargers, 404 of them fast DC. Only 18 of those carry a CHAdeMO connector, which is 4.5 percent of the fast network. For comparison, CCS2 is on 385 chargers and GB/T on 363.</p>
+<p>Our catalogue currently holds 668 public chargers, 410 of them fast DC. Only 18 of those carry a CHAdeMO connector, which is 4.4 percent of the fast network. For comparison, CCS2 is on 391 chargers and GB/T on 370.</p>
 <figure class="fig">
 <div class="fs"><svg viewBox="0 0 760 250" role="img" aria-label="Chargers by connector in Georgia">
 <text x="10" y="31" class="fk">CCS2</text>
 <rect x="116" y="10" width="540.0" height="30" rx="9"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1.5"/>
-<text x="670.0" y="31" class="fk">385</text>
+<text x="670.0" y="31" class="fk">391</text>
 <text x="10" y="77" class="fk">GB/T</text>
-<rect x="116" y="56" width="509.1" height="30" rx="9"
+<rect x="116" y="56" width="511.0" height="30" rx="9"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1.5"/>
-<text x="639.1" y="77" class="fk">363</text>
+<text x="641.0" y="77" class="fk">370</text>
 <text x="10" y="123" class="fk">Type 2</text>
-<rect x="116" y="102" width="343.6" height="30" rx="9"
+<rect x="116" y="102" width="385.3" height="30" rx="9"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1.5"/>
-<text x="473.6" y="123" class="fk">245</text>
+<text x="515.3" y="123" class="fk">279</text>
 <text x="10" y="169" class="fk">Type 1</text>
-<rect x="116" y="148" width="29.5" height="30" rx="9"
+<rect x="116" y="148" width="33.1" height="30" rx="9"
 fill="var(--accent)" stroke="var(--accent-d)" stroke-width="1.5"/>
-<text x="159.5" y="169" class="fk">21</text>
+<text x="163.1" y="169" class="fk">24</text>
 <text x="10" y="215" class="fk">CHAdeMO</text>
-<rect x="116" y="194" width="25.2" height="30" rx="9"
+<rect x="116" y="194" width="24.9" height="30" rx="9"
 fill="#F2B279" stroke="#D68A44" stroke-width="1.5"/>
-<text x="155.2" y="215" class="fk">18</text>
+<text x="154.9" y="215" class="fk">18</text>
 </svg></div>
 <figcaption>Public stations by connector. One station often carries several connectors, so the rows add up to more than the total.</figcaption>
 </figure>
@@ -385,7 +392,7 @@ fill="#F2B279" stroke="#D68A44" stroke-width="1.5"/>
 <rect x="12" y="2" width="138" height="68" rx="16"
 fill="var(--mint)" stroke="var(--mint-b)" stroke-width="1.5"/>
 <text x="28" y="30" class="fx">Tbilisi</text>
-<text x="28" y="57" class="fk" font-size="21">6</text>
+<text x="28" y="57" class="fk" font-size="21">8</text>
 <rect x="162" y="2" width="138" height="68" rx="16"
 fill="var(--mint)" stroke="var(--mint-b)" stroke-width="1.5"/>
 <text x="178" y="30" class="fx">Borjomi</text>
@@ -396,32 +403,28 @@ fill="var(--mint)" stroke="var(--mint-b)" stroke-width="1.5"/>
 <text x="328" y="57" class="fk" font-size="21">2</text>
 <rect x="462" y="2" width="138" height="68" rx="16"
 fill="var(--mint)" stroke="var(--mint-b)" stroke-width="1.5"/>
-<text x="478" y="30" class="fx">Mtskheta</text>
+<text x="478" y="30" class="fx">Terjola</text>
 <text x="478" y="57" class="fk" font-size="21">2</text>
 <rect x="612" y="2" width="138" height="68" rx="16"
 fill="var(--mint)" stroke="var(--mint-b)" stroke-width="1.5"/>
-<text x="628" y="30" class="fx">Terjola</text>
-<text x="628" y="57" class="fk" font-size="21">2</text>
+<text x="628" y="30" class="fx">Batumi</text>
+<text x="628" y="57" class="fk" font-size="21">1</text>
 <rect x="12" y="82" width="138" height="68" rx="16"
 fill="var(--mint)" stroke="var(--mint-b)" stroke-width="1.5"/>
-<text x="28" y="110" class="fx">Batumi</text>
+<text x="28" y="110" class="fx">Poti</text>
 <text x="28" y="137" class="fk" font-size="21">1</text>
 <rect x="162" y="82" width="138" height="68" rx="16"
 fill="var(--mint)" stroke="var(--mint-b)" stroke-width="1.5"/>
-<text x="178" y="110" class="fx">Poti</text>
+<text x="178" y="110" class="fx">Samtredia</text>
 <text x="178" y="137" class="fk" font-size="21">1</text>
 <rect x="312" y="82" width="138" height="68" rx="16"
 fill="var(--mint)" stroke="var(--mint-b)" stroke-width="1.5"/>
-<text x="328" y="110" class="fx">Samtredia</text>
+<text x="328" y="110" class="fx">Telavi</text>
 <text x="328" y="137" class="fk" font-size="21">1</text>
-<rect x="462" y="82" width="138" height="68" rx="16"
-fill="var(--mint)" stroke="var(--mint-b)" stroke-width="1.5"/>
-<text x="478" y="110" class="fx">Telavi</text>
-<text x="478" y="137" class="fk" font-size="21">1</text>
 </svg></div>
 <figcaption>Every station in Georgia that carries a CHAdeMO connector, by town.</figcaption>
 </figure>
-<p>The largest cluster is in Tbilisi, with 6. The rest are strung out westwards along the motorway from Tbilisi towards Batumi. That is the good news: the coast is reachable in a Leaf, with several points on the way.</p>
+<p>The largest cluster is in Tbilisi, with 8. The rest are strung out westwards along the motorway from Tbilisi towards Batumi. That is the good news: the coast is reachable in a Leaf, with several points on the way.</p>
 <p>What the list does not contain matters just as much: Rustavi, Kutaisi, Zugdidi, Gudauri, Bakuriani, Stepantsminda. Even a large city may have no CHAdeMO at all, and a mountain resort certainly does not. On those routes you need the return leg in the battery before you set off. Each route is broken down on its own <a href="/en/routes/">page</a>.</p>
 
 <h2>Slow charging: Type 1 or Type 2</h2>
@@ -430,7 +433,7 @@ fill="var(--mint)" stroke="var(--mint-b)" stroke-width="1.5"/>
 <li><strong>2011 to 2017.</strong> The AC connector is Type 1, whichever market the car was imported from. The on-board charger is 3.3 or 6.6 kW.</li>
 <li><strong>2018 onwards.</strong> The European version has Type 2; American and Japanese cars kept Type 1. The on-board charger is 6.6 kW.</li>
 </ul>
-<p>In Georgia, 245 chargers carry Type 2 and only 21 carry Type 1, and those belong to EcoCars and Electrify Georgia.</p>
+<p>In Georgia, 279 chargers carry Type 2 and only 24 carry Type 1, and those belong to EcoCars and Tbilisi City Hall and Electrify Georgia.</p>
 <p>The good news is that this gap is cheap to close. If the charger has a Type 2 socket rather than a tethered cable, a Type 2 to Type 1 cable is all you need. On a charger with its own attached cable it will not work. On the DC side there is no cheap equivalent at all.</p>
 
 <h2>How fast a Leaf really charges</h2>
@@ -441,11 +444,11 @@ fill="var(--mint)" stroke="var(--mint-b)" stroke-width="1.5"/>
 
 <h2>The adapter exists, but it is expensive</h2>
 <p>On the DC side there is exactly one way out: a CCS2 to CHAdeMO adapter. One is already sold in Europe, rated at 200 A, and it delivered 75 kW in real conditions to a 62 kWh Leaf e+. It costs between 600 and 1000 dollars, depending on whether you order one from China or buy it locally.</p>
-<p>Whether that is worth it is arithmetic. If the Leaf is a city car that charges at home, that money is hard to justify. If you are often on the road, it turns 18 usable chargers into 385, which is effectively a different car.</p>
+<p>Whether that is worth it is arithmetic. If the Leaf is a city car that charges at home, that money is hard to justify. If you are often on the road, it turns 18 usable chargers into 391, which is effectively a different car.</p>
 
 <h2>What this means when buying</h2>
 <ul>
-<li><strong>The connector is part of the price.</strong> Between two otherwise identical Leafs, the European Type 2 car is the easier one to live with here, because 245 slow charging points open up immediately. Fast charging is equally limited for both.</li>
+<li><strong>The connector is part of the price.</strong> Between two otherwise identical Leafs, the European Type 2 car is the easier one to live with here, because 279 slow charging points open up immediately. Fast charging is equally limited for both.</li>
 <li><strong>The battery still comes first.</strong> With no active cooling, a Leaf that spent its life in a hot climate wears faster. How to check one is in a <a href="/en/blog/meoradi-shemowmeba/">separate guide</a>, and the measured wear figures are <a href="/en/blog/batareis-cveta/">here</a>.</li>
 <li><strong>Home charging changes everything.</strong> If you can charge at home, the shortage of CHAdeMO barely touches your week. If you cannot, those 18 points are your entire world.</li>
 </ul>
@@ -455,7 +458,7 @@ fill="var(--mint)" stroke="var(--mint-b)" stroke-width="1.5"/>
 <h2>Frequently asked questions</h2>
 <div class="faq">
 <details><summary>Can a Nissan Leaf charge at a CCS charger?</summary><p>Not directly. The Leaf uses CHAdeMO and a CCS2 cable does not physically fit it. The only route is a CCS2 to CHAdeMO adapter, which costs between 600 and 1000 dollars depending on whether you order one from China or buy it locally.</p></details>
-<details><summary>How many CHAdeMO chargers are there in Georgia?</summary><p>18, which is 4.5 percent of the 404 fast chargers in the country. The largest cluster is in Tbilisi; the rest are mostly on the motorway from Tbilisi to Batumi.</p></details>
+<details><summary>How many CHAdeMO chargers are there in Georgia?</summary><p>18, which is 4.4 percent of the 410 fast chargers in the country. The largest cluster is in Tbilisi; the rest are mostly on the motorway from Tbilisi to Batumi.</p></details>
 <details><summary>Can a Leaf use a Type 2 charger?</summary><p>A European Leaf built from 2018 can, because it has a Type 2 inlet. American and Japanese cars, and every Leaf built up to 2017, have Type 1 and need an adapter cable.</p></details>
 <details><summary>Why does a Leaf charge slower at the second stop?</summary><p>Because the pack has no active cooling. The first fast charge heats it, and the car then limits power itself on the next session. This is rapidgate, and the 2019 software update only softened it.</p></details>
 <details><summary>Does the new Nissan Leaf still have CHAdeMO?</summary><p>No. The 2026 Leaf uses CCS in Europe, charging at up to 150 kW, and NACS in North America. CHAdeMO is no longer fitted to new cars.</p></details>
@@ -496,7 +499,7 @@ stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="t
 <a class="acard" href="/en/blog/turketshi-mgzavroba/" data-cat="travel"
 data-date="2026-08-19" data-pop="17"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/><path d="M12 3.4a14 14 0 0 1 0 17.2 14 14 0 0 1 0-17.2Z"/></svg></span><b>Driving from Georgia into Turkey by electric car: what to know first</b>
-<span>Turkey has 13,497 public chargers. Which border to use, which connector you need, what charging costs, and how it differs from Georgia.</span><span class="am"><time datetime="2026-08-19">August 2026</time>
+<span>Turkey has 13,533 public chargers. Which border to use, which connector you need, what charging costs, and how it differs from Georgia.</span><span class="am"><time datetime="2026-08-19">August 2026</time>
 <span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/en/blog/meoradi-shemowmeba/" data-cat="buying"
@@ -538,13 +541,13 @@ stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="t
 <a class="acard" href="/en/blog/amerikuli-importi/" data-cat="buying"
 data-date="2026-07-30" data-pop="11"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.4c1.4 1 2.8 1 4.2 0s2.8-1 4.2 0 2.8 1 4.2 0 2.8-1 4.2 0"/><path d="M5.4 13.8V9.2h13.2l-1.8 4.6"/><path d="M9.2 9.2V5h5.6v4.2"/></svg></span><b>Importing an EV from the US: where you will charge it in Georgia</b>
-<span>A US-spec car has CCS1, NACS or Type 1. Georgia has 32 such stations in total. What adapters do and what to check before you buy.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span>A US-spec car has CCS1, NACS or Type 1. Georgia has 35 such stations in total. What adapters do and what to check before you buy.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
 <span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/en/blog/chinuri-importi/" data-cat="buying"
 data-date="2026-07-30" data-pop="10"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 8.2 12 4.1l8.6 4.1v7.6L12 19.9l-8.6-4.1V8.2Z"/><path d="m3.4 8.2 8.6 4.1 8.6-4.1M12 12.3v7.6"/></svg></span><b>Chinese EVs in Georgia: the GB/T connector and where to charge</b>
-<span>GB/T is on 363 stations in Georgia, almost as many as European CCS2. Why that is good news if you drive a Chinese import.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span>GB/T is on 370 stations in Georgia, almost as many as European CCS2. Why that is good news if you drive a Chinese import.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
 <span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/en/blog/zamtari/" data-cat="travel"
@@ -562,7 +565,7 @@ stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="t
 <a class="acard" href="/en/blog/100-km-fasi/" data-cat="charging"
 data-date="2026-07-30" data-pop="3"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18.5a8 8 0 1 1 16 0"/><path d="m12 14.5 4-4.2"/><circle cx="12" cy="18.5" r="1.3"/></svg></span><b>Electric or petrol: what 100 km actually costs in Georgia</b>
-<span>100 km on a fast charger is 14.04 GEL against 29.12 on petrol. Where that gap comes from and what the calculation leaves out.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span>100 km on a fast charger is 14.04 GEL against 29.72 on petrol. Where that gap comes from and what the calculation leaves out.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
 <span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/en/blog/batarea/" data-cat="battery"

@@ -8,11 +8,18 @@
   <meta name="description" content="Download GeoCharge — every EV charger in Georgia, in one free app.">
   <link rel="icon" href="/favicon.ico">
 
+  <!-- Visitor statistics. Loaded synchronously, unlike on every other page: the
+       redirect below leaves before a deferred script would ever run, and these
+       redirects are the QR codes on the posters, the clicks most worth counting. -->
+  <script src="/assets/pulse.js"></script>
+
   <!-- Store links (kept in sync with the homepage CTA) -->
   <script>
     (function () {
       var PLAY = 'https://play.google.com/store/apps/details?id=ge.geocharge.app';
       var APPSTORE = 'https://apps.apple.com/ge/app/geocharge/id6785467389';
+      // A blocked or failed pulse.js must never cost the visitor the redirect.
+      var pulse = window.gcPulse || { click: function () {} };
 
       function detectOs() {
         try {
@@ -30,8 +37,10 @@
       window.__geoStore = { play: PLAY, appstore: APPSTORE, os: os };
 
       if (os === 'ios') {
+        pulse.click('appstore');
         window.location.replace(APPSTORE);
       } else if (os === 'android') {
+        pulse.click('play');
         window.location.replace(PLAY);
       } else {
         // Desktop / unknown → send to the main site.

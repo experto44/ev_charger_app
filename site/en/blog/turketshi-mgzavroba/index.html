@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Turkey by EV: chargers, border crossings and tariffs | GeoCharge</title>
-<meta name="description" content="Turkey has 13,497 public chargers. Which border to use, which connector you need, what charging costs, and how it differs from Georgia.">
+<meta name="description" content="Turkey has 13,533 public chargers. Which border to use, which connector you need, what charging costs, and how it differs from Georgia.">
 <meta name="theme-color" content="#11161A">
 <link rel="canonical" href="https://geocharge.ge/en/blog/turketshi-mgzavroba/">
 <link rel="alternate" hreflang="ka" href="https://geocharge.ge/blog/turketshi-mgzavroba/">
@@ -15,17 +15,18 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:url" content="https://geocharge.ge/en/blog/turketshi-mgzavroba/">
 <meta property="og:title" content="Turkey by EV: chargers, border crossings and tariffs | GeoCharge">
-<meta property="og:description" content="Turkey has 13,497 public chargers. Which border to use, which connector you need, what charging costs, and how it differs from Georgia.">
+<meta property="og:description" content="Turkey has 13,533 public chargers. Which border to use, which connector you need, what charging costs, and how it differs from Georgia.">
 <meta property="og:image" content="https://geocharge.ge/assets/og/turketshi-mgzavroba-en.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Turkey by EV: chargers, border crossings and tariffs | GeoCharge">
-<meta name="twitter:description" content="Turkey has 13,497 public chargers. Which border to use, which connector you need, what charging costs, and how it differs from Georgia.">
+<meta name="twitter:description" content="Turkey has 13,533 public chargers. Which border to use, which connector you need, what charging costs, and how it differs from Georgia.">
 <meta name="twitter:image" content="https://geocharge.ge/assets/og/turketshi-mgzavroba-en.png">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
 <link rel="apple-touch-icon" href="/assets/icon-1024.png">
+<script src="/assets/pulse.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&amp;family=Noto+Sans+Georgian:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
@@ -59,7 +60,7 @@
    "@type": "Article",
    "@id": "https://geocharge.ge/en/blog/turketshi-mgzavroba/#article",
    "headline": "Driving from Georgia into Turkey by electric car: what to know first",
-   "description": "Turkey has 13,497 public chargers. Which border to use, which connector you need, what charging costs, and how it differs from Georgia.",
+   "description": "Turkey has 13,533 public chargers. Which border to use, which connector you need, what charging costs, and how it differs from Georgia.",
    "url": "https://geocharge.ge/en/blog/turketshi-mgzavroba/",
    "inLanguage": "en",
    "datePublished": "2026-08-19",
@@ -87,7 +88,7 @@
      "name": "Can you drive to Turkey in an electric car?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "Yes. Turkey has 13,497 public chargers, 7,914 of them fast DC. On the stretch from the Sarp border gate to Trabzon alone there are 70 fast chargers within 5 km of the road."
+      "text": "Yes. Turkey has 13,533 public chargers, 7,947 of them fast DC. On the stretch from the Sarp border gate to Trabzon alone there are 70 fast chargers within 5 km of the road."
      }
     },
     {
@@ -111,7 +112,7 @@
      "name": "What does charging cost in Turkey in lira?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "The median fast tariff is 14.74 lira per kWh and the slow one 9.99. Charging a 60 kWh battery from 20 to 80 percent costs about 531 lira."
+      "text": "The median fast tariff is 14.74 lira per kWh and the slow one 10.90. Charging a 60 kWh battery from 20 to 80 percent costs about 531 lira."
      }
     },
     {
@@ -170,7 +171,13 @@ h2{font-size:clamp(21px,2.6vw,26px);font-weight:700;letter-spacing:-.02em;margin
 .upd{color:#8B98A1;font-size:13px;margin:16px 0 0}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:28px 0 0}
 .stat{background:var(--mint);border:1px solid var(--mint-b);border-radius:16px;padding:20px 18px;text-align:center}
-.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em}
+/* overflow-wrap keeps any value inside its rounded box. Nearly every stat is a
+   short number, but two on the tariffs page hold a network's name, and
+   "Electrify Georgia (ელექტრიფაი)" has no space to break at inside the
+   parenthesis, so at 34px it ran straight out through the right edge. */
+.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em;overflow-wrap:anywhere}
+/* A name is not a number and does not want a number's size. */
+.stat--name b{font-size:clamp(17px,2.1vw,21px);line-height:1.25;letter-spacing:0}
 .stat span{display:block;font-size:13.5px;font-weight:500;color:#3D4A52;margin-top:6px;line-height:1.35}
 .tw{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
 table{border-collapse:collapse;width:100%;min-width:560px;font-size:14.5px}
@@ -351,11 +358,11 @@ background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px
 <div class="prose">
 <h1>Driving from Georgia into Turkey by electric car: what to know first</h1>
 <p class="meta">Updated August 2026</p>
-<div class="key"><p>Short answer: Turkey has 13,497 public charging stations, 7,914 of them fast. You need CCS2 for fast charging and Type 2 for slow. GB/T does not exist in Turkey.</p><p>Of the three border crossings, only Sarpi makes sense in an EV: on the eastern road from Posof to Erzurum the longest gap between fast chargers is about 140 km.</p><p>Check for fines before you drive back: Turkish cameras ticket Georgian plates too, and customs will not let a car with an unpaid fine leave the country.</p></div>
+<div class="key"><p>Short answer: Turkey has 13,533 public charging stations, 7,947 of them fast. You need CCS2 for fast charging and Type 2 for slow. GB/T does not exist in Turkey.</p><p>Of the three border crossings, only Sarpi makes sense in an EV: on the eastern road from Posof to Erzurum the longest gap between fast chargers is about 140 km.</p><p>Check for fines before you drive back: Turkish cameras ticket Georgian plates too, and customs will not let a car with an unpaid fine leave the country.</p></div>
 <h2>The Turkish charging network at a glance</h2>
-<p>Turkey has 13,497 public charging stations today, with roughly 36,000 sockets between them, run by 185 operators across all 81 provinces. 7,914 are fast DC, and 3,710 of those deliver 150 kW or more.</p>
+<p>Turkey has 13,533 public charging stations today, with roughly 37,000 sockets between them, run by 185 operators across all 81 provinces. 7,947 are fast DC, and 3,735 of those deliver 150 kW or more.</p>
 <p>These figures come from the official registry of EPDK, the Turkish energy regulator, where every public charger is licensed. EPDK itself counted 45,660 charging points nationwide in the first half of 2026, private sites included, and 15.4 million charging sessions in those six months. Growth is quick: sessions almost doubled year on year.</p>
-<p>The comparison with Georgia shows the scale. Georgia has 627 public chargers, Turkey 13,497, about 22 times more. The full list by province is on the <a href="/en/turkey/">Turkey chargers page</a>.</p>
+<p>The comparison with Georgia shows the scale. Georgia has 668 public chargers, Turkey 13,533, about 20 times more. The full list by province is on the <a href="/en/turkey/">Turkey chargers page</a>.</p>
 
 <h2>Which border to use</h2>
 <p>Georgia and Turkey share three land customs crossings: Sarpi, Kartsakhi, and Vale on the Akhaltsikhe to Posof road. For a petrol car the choice depends on where you are going. For an electric one the data answers it.</p>
@@ -379,11 +386,11 @@ background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px
 <p>The eastern direction is another picture entirely. Ardahan has 8 chargers, Kars 18, Artvin 30. On the Posof to Erzurum stretch the longest gap between two fast chargers is about 140 km, and it is mountain road, where consumption is higher. That route is drivable, but it takes far more planning.</p>
 
 <h2>Which connector you need</h2>
-<p>Turkey is on the European standard. Fast charging runs on CCS2, present at 7,912 stations. Slow charging is Type 2, at 7,390. CHAdeMO survives on 193 stations, and GB/T on none in the entire country.</p>
+<p>Turkey is on the European standard. Fast charging runs on CCS2, present at 7,945 stations. Slow charging is Type 2, at 7,395. CHAdeMO survives on 193 stations, and GB/T on none in the entire country.</p>
 <p>That last sentence matters in Georgia, where GB/T is ordinary because Chinese imports arrive with it. If your car has GB/T only, there is nowhere in Turkey to fast charge it. If it has both GB/T and CCS2, you are fine. The <a href="/en/blog/chinuri-importi/">guide on Chinese imports</a> and the <a href="/en/blog/konektorebi/">connector guide</a> go through this in detail.</p>
 
 <h2>What charging costs</h2>
-<p>Turkish operators publish one national tariff each, so a network costs the same everywhere in the country. The median fast DC price is 14.74 lira per kWh, ranging from 8.99 to 15.90. On AC the median is 9.99 lira.</p>
+<p>Turkish operators publish one national tariff each, so a network costs the same everywhere in the country. The median fast DC price is 14.74 lira per kWh, ranging from 8.99 to 15.90. On AC the median is 10.90 lira.</p>
 <p>Charging a 60 kWh battery from 20 to 80 percent is 36 kWh, so about 531 lira at the median tariff. 69 percent of stations publish a tariff; for the rest you see the price on site in the operator's app.</p>
 
 <h2>How Turkey differs from Georgia</h2>
@@ -402,7 +409,7 @@ background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px
 
 <h2>Where to go for a weekend</h2>
 <p>Trabzon is about 200 km from Batumi and is the easiest trip out of Georgia in an EV. Trabzon province has 168 chargers, Rize 59. Hotels often have slow Type 2 chargers, which is plenty overnight, while fast charging sits at shopping centres and fuel stations in town.</p>
-<p>The same logic scales: Samsun has 185 chargers, Ankara 1,370, İstanbul 2,856. The whole drive to İstanbul has <a href="/en/blog/tbilisi-stambuli/">its own guide</a>.</p>
+<p>The same logic scales: Samsun has 186 chargers, Ankara 1,372, İstanbul 2,868. The whole drive to İstanbul has <a href="/en/blog/tbilisi-stambuli/">its own guide</a>.</p>
 
 <h2>What to do before you leave</h2>
 <ul>
@@ -415,10 +422,10 @@ background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px
 
 <h2>Frequently asked questions</h2>
 <div class="faq">
-<details><summary>Can you drive to Turkey in an electric car?</summary><p>Yes. Turkey has 13,497 public chargers, 7,914 of them fast DC. On the stretch from the Sarp border gate to Trabzon alone there are 70 fast chargers within 5 km of the road.</p></details>
+<details><summary>Can you drive to Turkey in an electric car?</summary><p>Yes. Turkey has 13,533 public chargers, 7,947 of them fast DC. On the stretch from the Sarp border gate to Trabzon alone there are 70 fast chargers within 5 km of the road.</p></details>
 <details><summary>Which border crossing is best for an EV?</summary><p>Sarpi. It is the only direction with a dense charger network. On the eastern road from Posof to Erzurum the longest gap between two fast chargers is about 140 km.</p></details>
 <details><summary>Does a Chinese car with GB/T work in Turkey?</summary><p>Not for fast charging. GB/T is not present at a single public station in Turkey. If the car also has CCS2, everything works normally.</p></details>
-<details><summary>What does charging cost in Turkey in lira?</summary><p>The median fast tariff is 14.74 lira per kWh and the slow one 9.99. Charging a 60 kWh battery from 20 to 80 percent costs about 531 lira.</p></details>
+<details><summary>What does charging cost in Turkey in lira?</summary><p>The median fast tariff is 14.74 lira per kWh and the slow one 10.90. Charging a 60 kWh battery from 20 to 80 percent costs about 531 lira.</p></details>
 <details><summary>Does Turkey show whether a charger is free?</summary><p>No. The official Turkish registry publishes no live status, so Turkish stations show connector counts and tariffs instead. In Georgia live status works in real time.</p></details>
 <details><summary>What happens if a camera fines me for speeding in Turkey?</summary><p>The ticket is written against the Georgian plate and no notice reaches you. With an unpaid fine or toll debt in the system, customs will not let the car leave the country until it is paid, and payment is made at the border gate by card or in cash.</p></details>
 <details><summary>How many chargers are there in Trabzon and Rize?</summary><p>Trabzon province has 168 public chargers, Rize 59 and Artvin 30. Batumi to Trabzon is about 200 km.</p></details>
@@ -440,7 +447,7 @@ background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px
 <a class="acard" href="/en/blog/nisan-lifi-chademo/" data-cat="charging"
 data-date="2026-09-09" data-pop="5"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 12.6h15.6"/><path d="M7.6 8.4h8.8l3.4 4.2v4.2H4.2v-4.2Z"/><circle cx="8" cy="18.4" r="1.7"/><circle cx="16" cy="18.4" r="1.7"/><path d="M12 3.2v3.4"/></svg></span><b>The Nissan Leaf in Georgia: where to charge as CHAdeMO disappears</b>
-<span>Of the 627 public chargers in Georgia, only 18 carry CHAdeMO. Where they stand, what separates Type 1 from Type 2, and what to know before buying a Leaf.</span><span class="am"><time datetime="2026-09-09">September 2026</time>
+<span>Of the 668 public chargers in Georgia, only 18 carry CHAdeMO. Where they stand, what separates Type 1 from Type 2, and what to know before buying a Leaf.</span><span class="am"><time datetime="2026-09-09">September 2026</time>
 <span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/en/blog/datenvis-kharjebi/" data-cat="charging"
@@ -500,13 +507,13 @@ stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="t
 <a class="acard" href="/en/blog/amerikuli-importi/" data-cat="buying"
 data-date="2026-07-30" data-pop="11"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.4c1.4 1 2.8 1 4.2 0s2.8-1 4.2 0 2.8 1 4.2 0 2.8-1 4.2 0"/><path d="M5.4 13.8V9.2h13.2l-1.8 4.6"/><path d="M9.2 9.2V5h5.6v4.2"/></svg></span><b>Importing an EV from the US: where you will charge it in Georgia</b>
-<span>A US-spec car has CCS1, NACS or Type 1. Georgia has 32 such stations in total. What adapters do and what to check before you buy.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span>A US-spec car has CCS1, NACS or Type 1. Georgia has 35 such stations in total. What adapters do and what to check before you buy.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
 <span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/en/blog/chinuri-importi/" data-cat="buying"
 data-date="2026-07-30" data-pop="10"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 8.2 12 4.1l8.6 4.1v7.6L12 19.9l-8.6-4.1V8.2Z"/><path d="m3.4 8.2 8.6 4.1 8.6-4.1M12 12.3v7.6"/></svg></span><b>Chinese EVs in Georgia: the GB/T connector and where to charge</b>
-<span>GB/T is on 363 stations in Georgia, almost as many as European CCS2. Why that is good news if you drive a Chinese import.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span>GB/T is on 370 stations in Georgia, almost as many as European CCS2. Why that is good news if you drive a Chinese import.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
 <span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/en/blog/zamtari/" data-cat="travel"
@@ -524,7 +531,7 @@ stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="t
 <a class="acard" href="/en/blog/100-km-fasi/" data-cat="charging"
 data-date="2026-07-30" data-pop="3"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18.5a8 8 0 1 1 16 0"/><path d="m12 14.5 4-4.2"/><circle cx="12" cy="18.5" r="1.3"/></svg></span><b>Electric or petrol: what 100 km actually costs in Georgia</b>
-<span>100 km on a fast charger is 14.04 GEL against 29.12 on petrol. Where that gap comes from and what the calculation leaves out.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
+<span>100 km on a fast charger is 14.04 GEL against 29.72 on petrol. Where that gap comes from and what the calculation leaves out.</span><span class="am"><time datetime="2026-07-30">July 2026</time>
 <span class="rd">Read <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/en/blog/batarea/" data-cat="battery"

@@ -26,6 +26,7 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/assets/mark.svg">
 <link rel="apple-touch-icon" href="/assets/icon-1024.png">
+<script src="/assets/pulse.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&amp;family=Noto+Sans+Georgian:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
@@ -154,7 +155,13 @@ h2{font-size:clamp(21px,2.6vw,26px);font-weight:700;letter-spacing:-.02em;margin
 .upd{color:#8B98A1;font-size:13px;margin:16px 0 0}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:28px 0 0}
 .stat{background:var(--mint);border:1px solid var(--mint-b);border-radius:16px;padding:20px 18px;text-align:center}
-.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em}
+/* overflow-wrap keeps any value inside its rounded box. Nearly every stat is a
+   short number, but two on the tariffs page hold a network's name, and
+   "Electrify Georgia (ელექტრიფაი)" has no space to break at inside the
+   parenthesis, so at 34px it ran straight out through the right edge. */
+.stat b{display:block;font-size:clamp(26px,3.6vw,34px);font-weight:800;color:var(--accent-d);letter-spacing:-.02em;overflow-wrap:anywhere}
+/* A name is not a number and does not want a number's size. */
+.stat--name b{font-size:clamp(17px,2.1vw,21px);line-height:1.25;letter-spacing:0}
 .stat span{display:block;font-size:13.5px;font-weight:500;color:#3D4A52;margin-top:6px;line-height:1.35}
 .tw{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
 table{border-collapse:collapse;width:100%;min-width:560px;font-size:14.5px}
@@ -414,7 +421,7 @@ background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 13px
 <a class="acard" href="/blog/nisan-lifi-chademo/" data-cat="charging"
 data-date="2026-09-09" data-pop="5"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 12.6h15.6"/><path d="M7.6 8.4h8.8l3.4 4.2v4.2H4.2v-4.2Z"/><circle cx="8" cy="18.4" r="1.7"/><circle cx="16" cy="18.4" r="1.7"/><path d="M12 3.2v3.4"/></svg></span><b>ნისან ლიფი საქართველოში: სად დაიტენება, როცა CHAdeMO ქრება</b>
-<span>საქართველოს 627 დამტენიდან CHAdeMO მხოლოდ 18-ს აქვს. სად დგანან ისინი, რა განსხვავებაა Type 1-სა და Type 2-ს შორის და რა უნდა იცოდეთ ლიფის ყიდვამდე.</span><span class="am"><time datetime="2026-09-09">სექტემბერი 2026</time>
+<span>საქართველოს 668 დამტენიდან CHAdeMO მხოლოდ 18-ს აქვს. სად დგანან ისინი, რა განსხვავებაა Type 1-სა და Type 2-ს შორის და რა უნდა იცოდეთ ლიფის ყიდვამდე.</span><span class="am"><time datetime="2026-09-09">სექტემბერი 2026</time>
 <span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/blog/tesla-model-3-y/" data-cat="buying"
@@ -432,7 +439,7 @@ stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="t
 <a class="acard" href="/blog/turketshi-mgzavroba/" data-cat="travel"
 data-date="2026-08-19" data-pop="17"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/><path d="M12 3.4a14 14 0 0 1 0 17.2 14 14 0 0 1 0-17.2Z"/></svg></span><b>ელექტრო მანქანით საქართველოდან თურქეთში: რა უნდა იცოდეთ წასვლამდე</b>
-<span>თურქეთში 13 497 საჯარო დამტენია. რომელი საზღვრით წავიდეთ, რომელი კონექტორი გვჭირდება, რა ღირს დატენვა და რა განსხვავებაა საქართველოსთან.</span><span class="am"><time datetime="2026-08-19">აგვისტო 2026</time>
+<span>თურქეთში 13 533 საჯარო დამტენია. რომელი საზღვრით წავიდეთ, რომელი კონექტორი გვჭირდება, რა ღირს დატენვა და რა განსხვავებაა საქართველოსთან.</span><span class="am"><time datetime="2026-08-19">აგვისტო 2026</time>
 <span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/blog/meoradi-shemowmeba/" data-cat="buying"
@@ -474,13 +481,13 @@ stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="t
 <a class="acard" href="/blog/amerikuli-importi/" data-cat="buying"
 data-date="2026-07-30" data-pop="11"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.4c1.4 1 2.8 1 4.2 0s2.8-1 4.2 0 2.8 1 4.2 0 2.8-1 4.2 0"/><path d="M5.4 13.8V9.2h13.2l-1.8 4.6"/><path d="M9.2 9.2V5h5.6v4.2"/></svg></span><b>ამერიკიდან ჩამოყვანილი ელექტრომობილი: სად დატენავთ საქართველოში</b>
-<span>ამერიკული სპეციფიკაციის მანქანას CCS1, NACS ან Type 1 აქვს. საქართველოში ასეთი დამტენი სულ 32-ია. რა ვქნათ ადაპტერით და რა შევამოწმოთ ყიდვამდე.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
+<span>ამერიკული სპეციფიკაციის მანქანას CCS1, NACS ან Type 1 აქვს. საქართველოში ასეთი დამტენი სულ 35-ია. რა ვქნათ ადაპტერით და რა შევამოწმოთ ყიდვამდე.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
 <span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/blog/chinuri-importi/" data-cat="buying"
 data-date="2026-07-30" data-pop="10"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 8.2 12 4.1l8.6 4.1v7.6L12 19.9l-8.6-4.1V8.2Z"/><path d="m3.4 8.2 8.6 4.1 8.6-4.1M12 12.3v7.6"/></svg></span><b>ჩინური ელექტრომობილი საქართველოში: GB/T კონექტორი და დატენვა</b>
-<span>GB/T კონექტორი საქართველოში 363 სადგურზეა, თითქმის იმდენზე, რამდენზეც ევროპული CCS2. რატომ არის ეს კარგი ამბავი ჩინური მანქანის მფლობელისთვის.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
+<span>GB/T კონექტორი საქართველოში 370 სადგურზეა, თითქმის იმდენზე, რამდენზეც ევროპული CCS2. რატომ არის ეს კარგი ამბავი ჩინური მანქანის მფლობელისთვის.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
 <span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/blog/zamtari/" data-cat="travel"
@@ -498,7 +505,7 @@ stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="t
 <a class="acard" href="/blog/100-km-fasi/" data-cat="charging"
 data-date="2026-07-30" data-pop="3"><span class="ai" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24"
 fill="none" stroke="var(--accent-d)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18.5a8 8 0 1 1 16 0"/><path d="m12 14.5 4-4.2"/><circle cx="12" cy="18.5" r="1.3"/></svg></span><b>ელექტრომობილი თუ ბენზინი: 100 კილომეტრის რეალური ღირებულება</b>
-<span>100 კილომეტრი სწრაფ დამტენზე 14.04 ლარია, ბენზინის მანქანით კი 29.12. სად ჩერდება ეს სხვაობა და რა არ შედის ამ ანგარიშში.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
+<span>100 კილომეტრი სწრაფ დამტენზე 14.04 ლარია, ბენზინის მანქანით კი 29.72. სად ჩერდება ეს სხვაობა და რა არ შედის ამ ანგარიშში.</span><span class="am"><time datetime="2026-07-30">ივლისი 2026</time>
 <span class="rd">წაკითხვა <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span></span></a>
 <a class="acard" href="/blog/batarea/" data-cat="battery"

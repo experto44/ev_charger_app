@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/app_user.dart';
 import '../models/maps_usage.dart';
 import '../models/purchase.dart';
+import '../models/site_day.dart';
 import '../models/tesla_session.dart';
 import '../services/admin_service.dart';
 import '../services/export_service.dart';
@@ -19,14 +20,16 @@ import '../widgets/revenue_chart.dart';
 import '../widgets/status_chip.dart';
 import '../widgets/user_tile.dart';
 import 'admins_screen.dart';
+import 'site_section.dart';
 import 'tesla_section.dart';
 
 /// Subscription-tier filter.
 enum StatusFilter { all, premium, free }
 
 /// Which top-level view is shown: the user directory, the manual-premium
-/// register, the revenue analytics, or the car app's own usage.
-enum SectionTab { users, premium, finance, tesla }
+/// register, the revenue analytics, the car app's own usage, or the visitors
+/// to geocharge.ge.
+enum SectionTab { users, premium, finance, tesla, site }
 
 /// Grants [grant] to [user] and resolves with the new expiry date.
 typedef GrantPremiumFn = Future<DateTime> Function(
@@ -44,7 +47,7 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final email = AdminService.I.currentUser?.email ?? '';
-    // Four independent streams, nested rather than combined: a slow or failed
+    // Five independent streams, nested rather than combined: a slow or failed
     // read of one (Tesla sessions, say) must never blank the user directory.
     // Each snapshot is handed to the same DashboardView, which decides for
     // itself what "still loading" looks like in the tab that needs it.
@@ -56,29 +59,35 @@ class DashboardScreen extends StatelessWidget {
           stream: AdminService.I.teslaSessionsStream(),
           builder: (context, sessionsSnap) => StreamBuilder<List<MapsUsageDay>>(
             stream: AdminService.I.mapsUsageStream(),
-            builder: (context, usageSnap) => DashboardView(
-              email: email,
-              users: usersSnap.data,
-              error: usersSnap.error?.toString(),
-              purchases: purchasesSnap.data,
-              purchasesError: purchasesSnap.error?.toString(),
-              sessions: sessionsSnap.data,
-              sessionsError: sessionsSnap.error?.toString(),
-              mapsUsage: usageSnap.data,
-              mapsUsageError: usageSnap.error?.toString(),
-              onSignOut: () => AdminService.I.signOut(),
-              onManageAdmins: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AdminsScreen()),
+            builder: (context, usageSnap) => StreamBuilder<List<SiteDay>>(
+              stream: AdminService.I.siteStatsStream(),
+              builder: (context, siteSnap) => DashboardView(
+                email: email,
+                users: usersSnap.data,
+                error: usersSnap.error?.toString(),
+                purchases: purchasesSnap.data,
+                purchasesError: purchasesSnap.error?.toString(),
+                sessions: sessionsSnap.data,
+                sessionsError: sessionsSnap.error?.toString(),
+                mapsUsage: usageSnap.data,
+                mapsUsageError: usageSnap.error?.toString(),
+                siteDays: siteSnap.data,
+                siteError: siteSnap.error?.toString(),
+                onSignOut: () => AdminService.I.signOut(),
+                onManageAdmins: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdminsScreen()),
+                ),
+                onGrantPremium: (user, grant) =>
+                    AdminService.I.grantManualPremium(
+                  uid: user.uid,
+                  plan: grant.plan,
+                  amountGel: grant.amountGel,
+                  note: grant.note,
+                ),
+                onRevokePremium: (user) => AdminService.I
+                    .revokePremium(user.uid, wasManual: user.isManual),
               ),
-              onGrantPremium: (user, grant) => AdminService.I.grantManualPremium(
-                uid: user.uid,
-                plan: grant.plan,
-                amountGel: grant.amountGel,
-                note: grant.note,
-              ),
-              onRevokePremium: (user) => AdminService.I
-                  .revokePremium(user.uid, wasManual: user.isManual),
             ),
           ),
         ),
@@ -102,6 +111,8 @@ class DashboardView extends StatefulWidget {
     this.sessionsError,
     this.mapsUsage,
     this.mapsUsageError,
+    this.siteDays,
+    this.siteError,
     this.initialSection = SectionTab.users,
     required this.onSignOut,
     required this.onManageAdmins,
@@ -135,6 +146,10 @@ class DashboardView extends StatefulWidget {
   /// Daily Google Maps Platform usage. `null` = loading.
   final List<MapsUsageDay>? mapsUsage;
   final String? mapsUsageError;
+
+  /// Daily geocharge.ge traffic for the last 90 days. `null` = loading.
+  final List<SiteDay>? siteDays;
+  final String? siteError;
 
   final VoidCallback onSignOut;
   final VoidCallback onManageAdmins;
@@ -305,6 +320,11 @@ class _DashboardViewState extends State<DashboardView> {
                   icon: Icon(Icons.electric_car_outlined, size: 18),
                   label: Text('Tesla'),
                 ),
+                ButtonSegment(
+                  value: SectionTab.site,
+                  icon: Icon(Icons.public, size: 18),
+                  label: Text('Site'),
+                ),
               ],
               selected: {_section},
               showSelectedIcon: false,
@@ -343,6 +363,11 @@ class _DashboardViewState extends State<DashboardView> {
             for (final u in widget.users ?? const <AppUser>[])
               u.uid: u.name.isNotEmpty ? u.name : u.email,
           },
+        );
+      case SectionTab.site:
+        return SiteAnalyticsView(
+          rows: widget.siteDays,
+          error: widget.siteError,
         );
     }
   }
